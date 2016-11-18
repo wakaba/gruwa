@@ -18,8 +18,23 @@ use Web::Transport::ConnectionClient;
 my $RootPath = path (__FILE__)->parent->parent->absolute;
 my $Port = 5521;
 my $Origin = Web::URL->parse_string (qq<http://localhost:$Port>);
+my $DBName = 'gruwa_local';
 
-sub web () {
+sub mysqld ($) {
+  my $set_dsn = shift;
+  my $mysqld = Promised::Mysqld->new;
+  return $mysqld->start->then (sub {
+    $set_dsn->($mysqld->get_dsn_string (dbname => $DBName));
+    my ($p_ok, $p_ng);
+    my $p = Promise->new (sub { ($p_ok, $p_ng) = @_ });
+    return [sub {
+      return $mysqld->stop->then ($p_ok, $p_ng);
+    }, $p];
+  });
+} # mysqld
+
+sub web ($) {
+  my $dsn_got = shift;
   my $command = Promised::Command->new
       ([$RootPath->child ('perl'), $RootPath->child ('bin/server.pl'), $Port]);
   $command->envs->{CONFIG_FILE} = $RootPath->child ('config/local.json');
@@ -29,7 +44,10 @@ sub web () {
   }; # $stop
   my ($ready, $failed);
   my $p = Promise->new (sub { ($ready, $failed) = @_ });
-  $command->run->then (sub {
+  $dsn_got->then (sub {
+    $command->envs->{DATABASE_DSN} = $_[0];
+    return $command->run;
+  })->then (sub {
     $command->wait->then (sub {
       $failed->($_[0]);
     });
@@ -52,8 +70,12 @@ sub web () {
   return $p;
 } # web
 
+my $set_dsn;
+my $dsn_got = Promise->new (sub { $set_dsn = $_[0] });
+
 Promise->all ([
-  web,
+  mysqld ($set_dsn),
+  web ($dsn_got),
 ])->then (sub {
   my $stops = $_[0];
   my @stopped = map { $_->[1] } @$stops;

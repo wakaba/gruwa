@@ -2,12 +2,21 @@
 use strict;
 use warnings;
 use Path::Tiny;
+use Promise;
+use Promised::Flow;
 use JSON::PS;
 use Wanage::HTTP;
 use Warabe::App;
+use Dongry::Database;
+
+use StaticFiles;
 
 my $config_path = path ($ENV{CONFIG_FILE} // die "No |CONFIG_FILE|");
 my $Config = json_bytes2perl $config_path->slurp;
+
+my $dsn = $ENV{DATABASE_DSN} // die "No |DATABASE_DSN|";
+my $DBSources = {master => {dsn => $dsn, anyevent => 1, writable => 1},
+                 default => {dsn => $dsn, anyevent => 1}};
 
 return sub {
   my $http = Wanage::HTTP->new_from_psgi_env ($_[0]);
@@ -24,8 +33,27 @@ return sub {
           ('Strict-Transport-Security',
            'max-age=10886400; includeSubDomains; preload');
 
-      
-      return $app->send_error (404, reason_phrase => 'Page not found');
+      my $db = Dongry::Database->new (%$DBSources);
+      return promised_cleanup {
+        return $db->disconnect;
+      } Promise->resolve->then (sub {
+        my $path = $app->path_segments;
+
+        if ($path->[0] eq 'robots.txt' or
+            $path->[0] eq 'favicon.ico' or
+            $path->[0] eq 'manifest.json' or
+            $path->[0] eq 'css' or
+            $path->[0] eq 'js' or
+            $path->[0] eq 'images') {
+          return StaticFiles->main ($app, $path, $Config, $db);
+        }
+
+        return $app->send_error (404, reason_phrase => 'Page not found');
+      })->catch (sub {
+        return if UNIVERSAL::isa ($_[0], 'Warabe::App::Done');
+        warn "ERROR: $_[0]\n";
+        return $app->send_error (500);
+      });
     } else {
       return $app->send_redirect ($Config->{origin});
     }
