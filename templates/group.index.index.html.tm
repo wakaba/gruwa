@@ -22,9 +22,9 @@
     </header>
     <main class=control data-name=body data-placeholder=本文 contenteditable></main>
     <footer>
-      <p>
-        <button type=button class=cancel-button>取り消し</button>
+      <p class=operations>
         <button type=submit class=save-button>保存する</button>
+        <button type=button class=cancel-button>取り消し</button>
     </footer>
   </form>
 </template>

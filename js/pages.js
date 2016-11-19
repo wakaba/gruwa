@@ -108,6 +108,8 @@ function editObject (optEl, object) {
   if (container) {
     container.hidden = false;
     article.classList.add ('editing');
+    var body = container.querySelector ('.control[data-name=body]');
+    if (body) body.focus ();
     return;
   }
 
@@ -172,6 +174,9 @@ function editObject (optEl, object) {
       });
     };
   });
+
+  var body = container.querySelector ('.control[data-name=body]');
+  if (body) body.focus ();
 } // editObject
 
 function saveObject (article, form, object) {
@@ -180,7 +185,19 @@ function saveObject (article, form, object) {
   var c = [];
   $$ (form, '.control[data-name]').forEach (function (control) {
     var name = control.getAttribute ('data-name');
-    var value = control.textContent;
+    var value = '';
+    var itr = document.createNodeIterator
+        (control, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
+    while (true) {
+      var node = itr.nextNode ();
+      if (!node) break;
+      if (node.localName === 'div' ||
+          node.localName === 'br') {
+        value += "\n";
+      } else if (node.nodeType === node.TEXT_NODE) {
+        value += node.nodeValue;
+      }
+    }
     fd.append (name, value);
     if (object) c.push (function () { object.data[name] = value });
   });

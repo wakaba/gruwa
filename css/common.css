@@ -10,6 +10,11 @@ p {
 
 }
 
+.operations {
+  direction: rtl;
+  text-align: right;
+}
+
 button {
   cursor: pointer;
 }
@@ -60,13 +65,16 @@ button {
 
 list-container > .operations {
   margin: 0 0.5em 0.5em 0.5em;
-  text-align: right;
 }
 
 article.object:not([hidden]) {
   margin: 0 0.5em 1em 0.5em;
   border: 1px solid rgb(200, 200, 255);
   padding: .5em;
+}
+
+article.object:not(.editing)#new-object {
+  display: none;
 }
 
 article.object.editing > *:not(edit-container) {
@@ -89,6 +97,10 @@ article.object > header h1 {
 edit-container [contenteditable] {
   border: 1px gray dotted;
   padding: .5em;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  max-height: 90vh;
+  overflow: auto;
 }
 
 edit-container [contenteditable]:empty[data-placeholder]::after {
