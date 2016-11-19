@@ -186,15 +186,19 @@ function saveObject (article, form, object) {
   $$ (form, '.control[data-name]').forEach (function (control) {
     var name = control.getAttribute ('data-name');
     var value = '';
-    var itr = document.createNodeIterator
-        (control, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
-    while (true) {
-      var node = itr.nextNode ();
-      if (!node) break;
-      if (node.localName === 'div' ||
-          node.localName === 'br') {
-        value += "\n";
-      } else if (node.nodeType === node.TEXT_NODE) {
+    var nodes = [control];
+    while (nodes.length) {
+      var node = nodes.shift ();
+      if (!(node instanceof Node)) {
+        value += node;
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.localName === 'div') {
+          nodes.unshift ("\n");
+        } else if (node.localName === 'br') {
+          value += "\n";
+        }
+        nodes = Array.prototype.slice.call (node.childNodes).concat (nodes);
+      } else {
         value += node.nodeValue;
       }
     }

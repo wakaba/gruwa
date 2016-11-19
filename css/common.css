@@ -118,6 +118,8 @@ edit-container [data-name=body] {
   margin-top: 1em;
   margin-bottom: 1em;
   min-height: 10em;
+  white-space: pre-wrap;
+  line-height: 1.5;
 }
 
 article.object > footer p,
