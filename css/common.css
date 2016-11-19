@@ -1,7 +1,123 @@
+article {
+  display: block;
+}
+
+main {
+  display: block;
+}
+
 p {
 
 }
 
+button {
+  cursor: pointer;
+}
+
+.edit-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin-left: 1em;
+  border-style: none;
+  padding: .5em;
+  min-width: 5em;
+  color: black;
+  background: rgba(236, 236, 255, 0.7);
+}
+
+.edit-button:hover {
+  background: rgb(236, 236, 255);
+}
+
+.save-button, .cancel-button {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: .2em .5em;
+  border-style: none;
+  padding: .5em;
+  min-width: 8em;
+}
+
+.save-button {
+  color: white;
+  background: rgb(19, 195, 19);
+}
+
+.save-button:hover {
+  background: rgba(19, 195, 19, 0.8);
+}
+
+.cancel-button {
+  color: white;
+  background: rgb(195, 19, 19);
+}
+
+.cancel-button:hover {
+  background: rgba(195, 19, 19, 0.8);
+}
+
+list-container > .operations {
+  margin: 0 0.5em 0.5em 0.5em;
+  text-align: right;
+}
+
+article.object:not([hidden]) {
+  margin: 0 0.5em 1em 0.5em;
+  border: 1px solid rgb(200, 200, 255);
+  padding: .5em;
+}
+
+article.object.editing > *:not(edit-container) {
+  display: none !important;
+}
+
+article.object.editing > edit-container {
+  display: block;
+}
+
+article.object > header h1 {
+  display: block;
+  margin: 0;
+  border-left: .3em solid blue;
+  padding-left: .5em;
+  font-size: 120%;
+  line-height: 1.4;
+}
+
+edit-container [contenteditable] {
+  border: 1px gray dotted;
+  padding: .5em;
+}
+
+edit-container [contenteditable]:empty[data-placeholder]::after {
+  content: attr(data-placeholder);
+  color: gray;
+  background: transparent;
+}
+
+edit-container p {
+  margin: 0;
+}
+
+article.object > main,
+edit-container [data-name=body] {
+  margin-top: 1em;
+  margin-bottom: 1em;
+  min-height: 10em;
+}
+
+article.object > footer p,
+edit-container > form > footer p {
+  display: block;
+  margin: 0;
+  font-size: 90%;
+  line-height: 1.0;
+  text-align: right;
+  color: gray;
+  background: transparent;
+}
                                           
 /*
 

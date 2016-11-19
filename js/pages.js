@@ -35,6 +35,11 @@ object.data = object.data || {index_ids: {}}; // XXX
           editObject (this, object);
         };
       });
+      $$ (item, '.edit-by-dblclick').forEach (function (button) {
+        button.ondblclick = function () {
+          editObject (this, object);
+        };
+      });
       $$ (item, 'article').forEach (function (article) {
         article.id = 'object-' + object.object_id;
         article.setAttribute ('data-object', object.object_id);
@@ -46,7 +51,13 @@ object.data = object.data || {index_ids: {}}; // XXX
         article.updateView = function () {
           $$ (article, '[data-field]').forEach (function (field) {
             var value = object[field.getAttribute ('data-field')];
-            field.textContent = value;
+            if (field.localName === 'time') {
+              var date = new Date (parseFloat (value) * 1000);
+              field.setAttribute ('datetime', date.toISOString ());
+              field.textContent = date.toLocaleString ();
+            } else {
+              field.textContent = value;
+            }
           });
           $$ (article, '[data-data-field]').forEach (function (field) {
             var value = object.data[field.getAttribute ('data-data-field')];
@@ -75,7 +86,7 @@ object.data = object.data || {index_ids: {}}; // XXX
 } // upgradeList
 
 function editObject (optEl, object) {
-  var template = $$ (document, optEl.getAttribute ('data-template'))[0];
+  var template = document.querySelector ('#edit-form-template');
 
   var article;
   if (optEl.hasAttribute ('data-article')) {
@@ -96,11 +107,13 @@ function editObject (optEl, object) {
   var container = article.querySelector ('edit-container');
   if (container) {
     container.hidden = false;
+    article.classList.add ('editing');
     return;
   }
 
   container = document.createElement ('edit-container');
   container.hidden = false;
+  article.classList.add ('editing');
   container.appendChild (template.content.cloneNode (true));
   article.appendChild (container);
 
@@ -122,17 +135,26 @@ function editObject (optEl, object) {
 
     // XXX autosave
 
+    $$ (form, '.cancel-button').forEach (function (button) {
+      button.onclick = function () {
+        container.hidden = true;
+        article.classList.remove ('editing');
+      };
+    });
+
     form.onsubmit = function () {
-      $$ (container, '[type=submit]').forEach (function (button) {
+      $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
         button.disabled = true;
 // XXX disable controls
       });
 
+// XXX progress
       saveObject (article, form, object).then (function (objectId) {
-        $$ (container, '[type=submit]').forEach (function (button) {
+        $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
           button.disabled = false;
         });
         container.hidden = true;
+        article.classList.remove ('editing');
         if (object) {
           article.updateView ();
         } else {
@@ -174,6 +196,7 @@ function saveObject (article, form, object) {
   }).then (function (objectId) {
     return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd}).then (function () {
       c.forEach (function (_) { _ () });
+      if (object) object.updated = (new Date).valueOf () / 1000;
       return objectId;
     });
   });

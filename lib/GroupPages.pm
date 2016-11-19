@@ -166,6 +166,7 @@ sub group ($$$$) {
               index_id => {-not_in => $index_ids},
               object_id => Dongry::Type->serialize ('text', $path->[3]),
             }),
+                                #XXX touch indexes
           ]);
         })->then (sub {
           return $db->update ('object', {

@@ -8,6 +8,7 @@
 <link rel=stylesheet href=/css/common.css>
 <!-- XXX Referrer -->
 <script src=/js/pages.js async />
+<!-- XXX beforeunload -->
 
 <hgroup>
 <h1><t:text value="$group->{title}"></h1>
@@ -16,25 +17,37 @@
 
 <template id=edit-form-template>
   <form method=post action=javascript:>
-    <p class=control data-name=title data-placeholder=題名 contenteditable></p>
+    <header>
+      <p class=control data-name=title data-placeholder=題名 contenteditable></p>
+    </header>
     <main class=control data-name=body data-placeholder=本文 contenteditable></main>
     <footer>
-      <button type=submit>保存</button>
+      <p>
+        <button type=button class=cancel-button>取り消し</button>
+        <button type=submit class=save-button>保存する</button>
     </footer>
   </form>
 </template>
 
-<article id=new-object hidden pl:data-index-list="$index->{index_id}" />
-
-<p><button type=button onclick="editObject (this, null)" data-article=#new-object data-list=list-container data-template=#edit-form-template>新しい記事</button></p>
-
 <list-container pl:index="$index->{index_id}">
   <template>
-    <article>
-      <h1 data-data-field=title data-empty=■></h1>
-      <p><button type=button class=edit-button data-template=#edit-form-template>編集</button></p>
+    <article class=object>
+      <header class=edit-by-dblclick>
+        <h1 data-data-field=title data-empty=■></h1>
+      </header>
       <main data-data-field=body></main>
+      <footer>
+        <p>
+          <time data-field=created />
+          (<time data-field=updated /> 編集)
+          <button type=button class=edit-button>編集</button>
+      </footer>
     </article>
   </template>
+
+  <p class=operations><button type=button class=edit-button onclick="editObject (this, null)" data-article=#new-object data-list=list-container>新しい記事</button></p>
+
+  <article class=object id=new-object hidden pl:data-index-list="$index->{index_id}" />
+
   <list-main></list-main>
 </list-container>
