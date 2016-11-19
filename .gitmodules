@@ -58,3 +58,15 @@
 	path = modules/anyevent-mysql-client
 	url = https://github.com/wakaba/perl-anyevent-mysql-client
 	track = master
+[submodule "modules/temma"]
+	path = modules/temma
+	url = https://github.com/wakaba/temma
+	track = master
+[submodule "modules/web-dom"]
+	path = modules/web-dom
+	url = https://github.com/manakai/perl-web-dom
+	track = master
+[submodule "modules/web-markup"]
+	path = modules/web-markup
+	url = https://github.com/manakai/perl-web-markup
+	track = master

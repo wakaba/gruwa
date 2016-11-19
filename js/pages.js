@@ -1,0 +1,191 @@
+function $$ (n, s) {
+  return Array.prototype.slice.call (n.querySelectorAll (s));
+} // $$
+
+function gFetch (pathquery, opts) {
+  return fetch (document.documentElement.getAttribute ('data-group-url') + '/' + pathquery, {
+    credentials: "same-origin",
+    method: opts.post ? 'POST' : 'GET',
+    body: opts.formData, // or undefined
+  }).then (function (res) {
+    if (!res.status === 200) throw res;
+    return res.json ();
+  });
+} // gFetch
+
+function upgradeList (el) {
+  if (el.upgraded) return;
+  el.upgraded = true;
+
+  el.clearObjects = function () {
+    var main = $$ (this, 'list-main')[0];
+    if (main) main.textContent = '';
+  }; // clearObjects
+  el.showObjects = function (objects) {
+    var template = $$ (this, 'template')[0];
+    var main = $$ (this, 'list-main')[0];
+    if (!template || !main) return;
+
+    objects.forEach (function (object) {
+      var item = document.createElement ('list-item');
+object.data = object.data || {index_ids: {}}; // XXX
+      item.appendChild (template.content.cloneNode (true));
+      $$ (item, '.edit-button').forEach (function (button) {
+        button.onclick = function () {
+          editObject (this, object);
+        };
+      });
+      $$ (item, 'article').forEach (function (article) {
+        article.id = 'object-' + object.object_id;
+        article.setAttribute ('data-object', object.object_id);
+        var ids = [];
+        for (var n in object.data.index_ids) {
+          ids.push (n);
+        }
+        article.setAttribute ('data-index-list', ids.join (' '));
+        article.updateView = function () {
+          $$ (article, '[data-field]').forEach (function (field) {
+            var value = object[field.getAttribute ('data-field')];
+            field.textContent = value;
+          });
+          $$ (article, '[data-data-field]').forEach (function (field) {
+            var value = object.data[field.getAttribute ('data-data-field')];
+            field.textContent = value || field.getAttribute ('data-empty') || '';
+          });
+        }; // updateView
+        article.updateView ();
+      });
+      main.appendChild (item);
+    });
+  }; // showObjects
+
+  return Promise.resolve ().then (function () {
+    var index = el.getAttribute ('index');
+    if (index) {
+      return gFetch ('o/get.json?index_id=' + index, {}).then (function (json) {
+        el.clearObjects ();
+        el.showObjects (json.objects);
+      });
+    } else {
+      el.clearObjects ();
+    }
+  }).catch (function (error) {
+    console.log (error); // XXX
+  });
+} // upgradeList
+
+function editObject (optEl, object) {
+  var template = $$ (document, optEl.getAttribute ('data-template'))[0];
+
+  var article;
+  if (optEl.hasAttribute ('data-article')) {
+    article = $$ (document, optEl.getAttribute ('data-article'))[0];
+    article.hidden = false;
+  } else {
+    while (optEl) {
+      if (optEl.localName === 'article' || optEl.localName === 'body') {
+        article = optEl;
+        break;
+      } else {
+        optEl = optEl.parentNode;
+      }
+    }
+    if (!optEl) throw "Bad /optEl/";
+  }
+
+  var container = article.querySelector ('edit-container');
+  if (container) {
+    container.hidden = false;
+    return;
+  }
+
+  container = document.createElement ('edit-container');
+  container.hidden = false;
+  container.appendChild (template.content.cloneNode (true));
+  article.appendChild (container);
+
+  $$ (container, 'form').forEach (function (form) {
+    article.getAttribute ('data-index-list').split (/ /).forEach (function (indexId) {
+      if (!indexId) return;
+      var input = document.createElement ('input');
+      input.type = 'hidden';
+      input.name = 'index_id';
+      input.value = indexId;
+      form.appendChild (input);
+    });
+
+    if (object) {
+      $$ (form, '.control[data-name]').forEach (function (control) {
+        control.textContent = object.data[control.getAttribute ('data-name')];
+      });
+    }
+
+    // XXX autosave
+
+    form.onsubmit = function () {
+      $$ (container, '[type=submit]').forEach (function (button) {
+        button.disabled = true;
+// XXX disable controls
+      });
+
+      saveObject (article, form, object).then (function (objectId) {
+        $$ (container, '[type=submit]').forEach (function (button) {
+          button.disabled = false;
+        });
+        container.hidden = true;
+        if (object) {
+          article.updateView ();
+        } else {
+          container.remove ();
+          return gFetch ('o/get.json?object_id=' + objectId, {}).then (function (json) {
+            var list = $$ (document, optEl.getAttribute ('data-list'))[0];
+            list.showObjects (json.objects);
+          });
+        }
+      }, function (error) {
+        $$ (container, '[type=submit]').forEach (function (button) {
+          button.disabled = false;
+        });
+        console.log (error); // XXX
+      });
+    };
+  });
+} // editObject
+
+function saveObject (article, form, object) {
+  // XXX if not modified
+  var fd = new FormData (form);
+  var c = [];
+  $$ (form, '.control[data-name]').forEach (function (control) {
+    var name = control.getAttribute ('data-name');
+    var value = control.textContent;
+    fd.append (name, value);
+    if (object) c.push (function () { object.data[name] = value });
+  });
+  return Promise.resolve ().then (function () {
+    var objectId = article.getAttribute ('data-object');
+    if (objectId) {
+      return objectId;
+    } else {
+      return gFetch ('o/create.json', {post: true}).then (function (json) {
+        return json.object_id;
+      });
+    }
+  }).then (function (objectId) {
+    return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd}).then (function () {
+      c.forEach (function (_) { _ () });
+      return objectId;
+    });
+  });
+} // saveObject
+
+(new MutationObserver (function (mutations) {
+  mutations.forEach (function (m) {
+    Array.prototype.forEach.call (m.addedNodes, function (x) {
+      if (x.localName === 'list-container') {
+        upgradeList (x);
+      }
+    });
+  });
+})).observe (document.documentElement, {childList: true, subtree: true});
+$$ (document, 'list-container').forEach (upgradeList);

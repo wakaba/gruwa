@@ -10,13 +10,17 @@ use Warabe::App;
 use Dongry::Database;
 
 use StaticFiles;
+use CommonPages;
+use GroupPages;
 
 my $config_path = path ($ENV{CONFIG_FILE} // die "No |CONFIG_FILE|");
 my $Config = json_bytes2perl $config_path->slurp;
 
 my $dsn = $ENV{DATABASE_DSN} // die "No |DATABASE_DSN|";
-my $DBSources = {master => {dsn => $dsn, anyevent => 1, writable => 1},
-                 default => {dsn => $dsn, anyevent => 1}};
+my $DBSources = {sources => {
+  master => {dsn => $dsn, anyevent => 1, writable => 1},
+  default => {dsn => $dsn, anyevent => 1},
+}};
 
 return sub {
   my $http = Wanage::HTTP->new_from_psgi_env ($_[0]);
@@ -46,6 +50,14 @@ return sub {
             $path->[0] eq 'js' or
             $path->[0] eq 'images') {
           return StaticFiles->main ($app, $path, $Config, $db);
+        }
+
+        if ($path->[0] eq 'g') {
+          return GroupPages->main ($app, $path, $Config, $db);
+        }
+
+        if (@$path == 1) {
+          return CommonPages->main ($app, $path, $Config, $db);
         }
 
         return $app->send_error (404, reason_phrase => 'Page not found');

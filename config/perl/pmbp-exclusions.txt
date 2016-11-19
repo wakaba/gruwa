@@ -19,3 +19,8 @@
 - "../../modules/promised-command" build tests
 - "../../modules/promised-file" build tests
 - "../../modules/anyevent-mysql-client" build tests
+- "../../modules/temma" build tests pathclass
+- "../../modules/web-dom" build tests
+- "../../modules/web-markup" build tests tests-json
+- "../../modules/web-encodings.2" build tests
+- "../../modules/web-url.2" build tests

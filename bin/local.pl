@@ -6,9 +6,11 @@ BEGIN {
   $ENV{WEBUA_DEBUG} //= 1;
   $ENV{WEBSERVER_DEBUG} //= 1;
   $ENV{PROMISED_COMMAND_DEBUG} //= 1;
+  $ENV{SQL_DEBUG} //= 1;
 }
 use Promise;
 use Promised::Flow;
+use Promised::File;
 use Promised::Command;
 use Promised::Command::Signals;
 use Promised::Mysqld;
@@ -23,7 +25,14 @@ my $DBName = 'gruwa_local';
 sub mysqld ($) {
   my $set_dsn = shift;
   my $mysqld = Promised::Mysqld->new;
+  $mysqld->set_db_dir ($RootPath->child ('local/local/mysqld'));
   return $mysqld->start->then (sub {
+    return promised_for {
+      return Promised::File->new_from_path ($_[0])->read_byte_string->then (sub {
+        return $mysqld->create_db_and_execute_sqls ($DBName, [grep { length } split /;/, $_[0]]);
+      });
+    } [sort { $a cmp $b } $RootPath->child ('db')->children (qr/^gruwa-[0-9]+\.sql$/)];
+  })->then (sub {
     $set_dsn->($mysqld->get_dsn_string (dbname => $DBName));
     my ($p_ok, $p_ng);
     my $p = Promise->new (sub { ($p_ok, $p_ng) = @_ });
