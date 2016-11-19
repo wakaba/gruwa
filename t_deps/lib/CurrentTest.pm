@@ -1,30 +1,30 @@
+package CurrentTest;
 use strict;
 use warnings;
-use Path::Tiny;
-use lib glob path (__FILE__)->parent->parent->child ('t_deps/lib');
-use lib glob path (__FILE__)->parent->parent->child ('t_deps/modules/*/lib');
-BEGIN {
-  $ENV{WEBUA_DEBUG} //= 1;
-  $ENV{WEBSERVER_DEBUG} //= 1;
-  $ENV{PROMISED_COMMAND_DEBUG} //= 1;
-  $ENV{SQL_DEBUG} //= 1;
-}
-use TestServers;
+use Web::Transport::ConnectionClient;
 
-my $RootPath = path (__FILE__)->parent->parent->absolute;
-my $Port = 5521;
-my $DBName = 'gruwa_local';
+sub new ($$) {
+  return bless $_[1], $_[0];
+} # new
 
-my $stop = TestServers->servers (
-  port => $Port,
-  db_name => $DBName,
-  db_dir => $RootPath->child ('local/local/mysqld'),
-  config_file => $RootPath->child ('config/local.json'),
-)->to_cv->recv->[1];
+sub c ($) {
+  return $_[0]->{c};
+} # c
 
-warn "Server is ready: <http://localhost:$Port>\n";
+sub client ($) {
+  my $self = $_[0];
+  return $self->{client}
+      ||= Web::Transport::ConnectionClient->new_from_url ($self->{url});
+} # client
 
-$stop->()->to_cv->recv;
+sub close ($) {
+  my $self = shift;
+  return Promise->all ([
+    defined $self->{client} ? $self->{client}->close : undef,
+  ]);
+} # close
+
+1;
 
 =head1 LICENSE
 

@@ -1,30 +1,20 @@
 use strict;
 use warnings;
 use Path::Tiny;
-use lib glob path (__FILE__)->parent->parent->child ('t_deps/lib');
-use lib glob path (__FILE__)->parent->parent->child ('t_deps/modules/*/lib');
-BEGIN {
-  $ENV{WEBUA_DEBUG} //= 1;
-  $ENV{WEBSERVER_DEBUG} //= 1;
-  $ENV{PROMISED_COMMAND_DEBUG} //= 1;
-  $ENV{SQL_DEBUG} //= 1;
-}
-use TestServers;
+use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps/lib');
+use Tests;
 
-my $RootPath = path (__FILE__)->parent->parent->absolute;
-my $Port = 5521;
-my $DBName = 'gruwa_local';
+Test {
+  my $current = shift;
+  return $current->client->request (path => [])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+    } $current->c;
+  });
+} n => 1, name => '/ GET';
 
-my $stop = TestServers->servers (
-  port => $Port,
-  db_name => $DBName,
-  db_dir => $RootPath->child ('local/local/mysqld'),
-  config_file => $RootPath->child ('config/local.json'),
-)->to_cv->recv->[1];
-
-warn "Server is ready: <http://localhost:$Port>\n";
-
-$stop->()->to_cv->recv;
+RUN;
 
 =head1 LICENSE
 
