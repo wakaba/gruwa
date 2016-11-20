@@ -15,6 +15,11 @@ p {
   text-align: right;
 }
 
+input:not([type]) {
+  box-sizing: border-box;
+  width: 100%;
+}
+
 button {
   cursor: pointer;
 }

@@ -133,6 +133,9 @@ function editObject (optEl, object) {
       $$ (form, '.control[data-name]').forEach (function (control) {
         control.textContent = object.data[control.getAttribute ('data-name')];
       });
+      $$ (form, 'input[name]').forEach (function (control) {
+        control.value = object.data[control.name];
+      });
     }
 
     // XXX autosave
@@ -187,21 +190,31 @@ function saveObject (article, form, object) {
     var name = control.getAttribute ('data-name');
     var value = '';
     var nodes = [control];
+    var wasText = false;
     while (nodes.length) {
       var node = nodes.shift ();
       if (!(node instanceof Node)) {
         value += node;
       } else if (node.nodeType === Node.ELEMENT_NODE) {
         if (node.localName === 'div') {
+          if (wasText) value += "\n";
           nodes.unshift ("\n");
         } else if (node.localName === 'br') {
           value += "\n";
         }
         nodes = Array.prototype.slice.call (node.childNodes).concat (nodes);
+        wasText = false;
       } else {
         value += node.nodeValue;
+        wasText = true;
       }
     }
+    fd.append (name, value);
+    if (object) c.push (function () { object.data[name] = value });
+  });
+  $$ (form, 'input[name]').forEach (function (control) {
+    var name = control.name;
+    var value = control.value;
     fd.append (name, value);
     if (object) c.push (function () { object.data[name] = value });
   });

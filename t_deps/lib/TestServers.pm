@@ -17,7 +17,7 @@ my $RootPath = path (__FILE__)->parent->parent->parent->absolute;
 
 sub mysqld ($$$) {
   my ($db_dir, $db_name, $set_dsn) = @_;
-  $db_name = 'test_' . int rand 100000;
+  $db_name = 'test_' . int rand 100000 unless defined $db_name;
   my $mysqld = Promised::Mysqld->new;
   $mysqld->set_db_dir ($db_dir) if defined $db_dir;
   return $mysqld->start->then (sub {

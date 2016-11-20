@@ -18,7 +18,7 @@
 <template id=edit-form-template>
   <form method=post action=javascript:>
     <header>
-      <p class=control data-name=title data-placeholder=題名 contenteditable></p>
+      <p><input name=title placeholder=題名>
     </header>
     <main class=control data-name=body data-placeholder=本文 contenteditable></main>
     <footer>
