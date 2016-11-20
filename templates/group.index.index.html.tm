@@ -35,7 +35,7 @@
       <header class=edit-by-dblclick>
         <h1 data-data-field=title data-empty=■></h1>
       </header>
-      <main data-data-field=body></main>
+      <main data-data-field=body data-field-type=html></main>
       <footer>
         <p>
           <time data-field=created />
