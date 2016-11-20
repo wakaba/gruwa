@@ -101,45 +101,30 @@ sub main ($$$$$$) {
     return temma $app, 'account.done.html.tm', {};
   }
 
-  if (@$path == 2 and $path->[1] eq 'info.json') {
-    # /account/info.json
-    my $with_profile = $app->bare_param ('with_profile');
-    my $with_linked = $app->bare_param ('with_links');
-    return $accounts->request (
-      method => 'POST',
-      path => ['info'],
-      bearer => $config->{accounts}->{key},
-      params => {
-        sk_context => $config->{accounts}->{context},
-        sk => $app->http->request_cookies->{sk},
-        with_data => $with_profile ? [] : [],
-        with_linked => $with_linked ? 'name' : undef,
-      },
-    )->then (sub {
-      die $_[0] unless $_[0]->status == 200;
-      my $data = json_bytes2perl $_[0]->body_bytes;
-      my $json = {
-        has_account => $data->{has_account},
-        account_id => defined $data->{account_id} ? ''.$data->{account_id} : undef,
-        name => $data->{name},
-      };
-      if ($with_profile) {
-        #
-      }
-      if ($with_linked) {
-        for (values %{$data->{links} or {}}) {
-          push @{$json->{links}->{$_->{service_name}} ||= []},
-              {service_name => $_->{service_name},
-               account_link_id => $_->{account_link_id},
-               id => $_->{id}, name => $_->{name}};
-        }
-      }
-      return json $app, $json;
-    });
-  } # /account/info.json
-
   return $app->send_error (404);
 } # main
+
+sub info ($$$) {
+  my ($class, $app, $data) = @_;
+  # /account/info.json
+  my $json = {
+    has_account => defined $data->{account_id},
+    account_id => defined $data->{account_id} ? ''.$data->{account_id} : undef,
+    name => $data->{name},
+  };
+  #if ($with_profile) {
+  #  #
+  #}
+  #if ($with_linked) {
+  #  for (values %{$data->{links} or {}}) {
+  #    push @{$json->{links}->{$_->{service_name}} ||= []},
+  #        {service_name => $_->{service_name},
+  #         account_link_id => $_->{account_link_id},
+  #         id => $_->{id}, name => $_->{name}};
+  #  }
+  #}
+  return json $app, $json;
+} # info
 
 1;
 

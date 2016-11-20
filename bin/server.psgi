@@ -57,15 +57,43 @@ return sub {
           return StaticFiles->main ($app, $path, $Config, $db);
         }
 
-        if ($path->[0] eq 'g') {
+        if ($path->[0] eq 'g' or
+            (@$path == 2 and $path->[0] eq 'account' and $path->[1] eq 'info.json')) {
+          # /g
+          # /account/info.json
           my $accounts = Web::Transport::ConnectionClient->new_from_url
               ($AccountsURL);
+
+          #my $with_profile = $app->bare_param ('with_profile');
+          #my $with_linked = $app->bare_param ('with_links');
           return promised_cleanup {
             return $accounts->close;
-          } GroupPages->main ($app, $path, $Config, $db, $accounts);
+          } $accounts->request (
+            method => 'POST',
+            path => ['info'],
+            bearer => $Config->{accounts}->{key},
+            params => {
+              sk_context => $Config->{accounts}->{context},
+              sk => $app->http->request_cookies->{sk},
+              #with_data => $with_profile ? [] : [],
+              #with_linked => $with_linked ? 'name' : undef,
+            },
+          )->then (sub {
+            die $_[0] unless $_[0]->status == 200;
+            my $account_data = json_bytes2perl $_[0]->body_bytes;
+
+            if ($path->[0] eq 'account') {
+              return AccountPages->info ($app, $account_data);
+            } elsif ($path->[0] eq 'g') {
+              return GroupPages->main ($app, $path, $Config, $db, $account_data);
+            } else {
+              die;
+            }
+          });
         }
 
         if ($path->[0] eq 'account') {
+          # /account (except for /account/info.json)
           my $accounts = Web::Transport::ConnectionClient->new_from_url
               ($AccountsURL);
           return promised_cleanup {
