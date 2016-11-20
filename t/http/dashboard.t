@@ -6,13 +6,30 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->client->request (path => ['account', 'done'])->then (sub {
+  return $current->client->request (
+    path => ['dashboard'],
+  )->then (sub {
     my $res = $_[0];
     test {
-      is $res->status, 200;
+      is $res->status, 302;
+      my $next_url = $current->resolve (q</account/login>);
+      $next_url->set_query_params ({next => $current->resolve (q</dashboard>)->stringify});
+      is $res->header ('Location'), $next_url->stringify;
     } $current->c;
   });
-} n => 1, name => '/account/done';
+} n => 2, name => '/dashboard no account';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->get_html (['dashboard'], {}, account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => '/dashboard';
 
 RUN;
 

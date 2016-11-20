@@ -6,29 +6,90 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->client->request (path => ['account', 'cb'])->then (sub {
+  return $current->client->request (path => ['account', 'login'], headers => {
+    origin => $current->client->origin->to_ascii,
+  }, method => 'POST', params => {
+    server => 'test1',
+  })->then (sub {
     my $res = $_[0];
-    test {
-      is $res->status, 400;
-      is $res->header ('Set-Cookie'), undef;
-      is $res->header ('Location'), undef;
-    } $current->c;
-  });
-} n => 3, name => '/account/cb no params';
-
-Test {
-  my $current = shift;
-  return $current->client->request (path => ['account', 'cb'], params => {
-    code => "abc de",
+    $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
+    my $sk = $1;
+    return $current->are_errors (
+      ['GET', ['account', 'cb'], {
+        code => "abc de",
+      }],
+      [
+        {params => {}, status => 400,
+         response_headers => {location => undef, 'set-cookie' => undef},
+         name => 'no |code|'},
+      ],
+      [
+        {account => undef, status => 400,
+         response_headers => {location => undef, 'set-cookie' => undef},
+         name => 'no |sk|'},
+      ],
+    )->then (sub {
+      return $current->client->request (path => ['account', 'cb'], params => {
+        code => "abc de",
+      }, cookies => {sk => $sk});
+    });
   })->then (sub {
     my $res = $_[0];
     test {
       is $res->status, 302;
       is $res->header ('Set-Cookie'), undef;
-      is $res->header ('Location'), $current->resolve ("/account/done")->stringify;
+      is $res->header ('Location'), $current->resolve ("/dashboard")->stringify;
     } $current->c;
   });
-} n => 3, name => '/account/cb with code';
+} n => 4, name => '/account/cb';
+
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['account', 'login'], headers => {
+    origin => $current->client->origin->to_ascii,
+  }, method => 'POST', params => {
+    server => 'test1',
+    next => $current->resolve ('/hoge/fuga?abc')->stringify,
+  })->then (sub {
+    my $res = $_[0];
+    $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
+    my $sk = $1;
+    return $current->client->request (path => ['account', 'cb'], params => {
+      code => "abc de",
+    }, cookies => {sk => $sk});
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 302;
+      is $res->header ('Set-Cookie'), undef;
+      is $res->header ('Location'), $current->resolve ("/hoge/fuga?abc")->stringify;
+    } $current->c;
+  });
+} n => 3, name => '/account/cb with next';
+
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['account', 'login'], headers => {
+    origin => $current->client->origin->to_ascii,
+  }, method => 'POST', params => {
+    server => 'test1',
+    next => 'https://hoge.test/foo',
+  })->then (sub {
+    my $res = $_[0];
+    $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
+    my $sk = $1;
+    return $current->client->request (path => ['account', 'cb'], params => {
+      code => "abc de",
+    }, cookies => {sk => $sk});
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 302;
+      is $res->header ('Set-Cookie'), undef;
+      is $res->header ('Location'), $current->resolve ("/dashboard")->stringify;
+    } $current->c;
+  });
+} n => 3, name => '/account/cb with bad next';
 
 RUN;
 

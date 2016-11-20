@@ -28,19 +28,28 @@ return sub {
   return $app->execute_by_promise (sub {
     my $path = $app->http->url->{path};
     if ($path eq '/session') {
+      my $sk = rand;
+      $Accounts->{$sk} = {cookies => {sk => $sk}};
       return json $app, {
-        sk => rand,
+        sk => $sk,
         set_sk => 1,
         sk_expires => time + 3600,
       };
     } elsif ($path eq '/login') {
+      my $data = $Accounts->{$app->text_param ('sk')// ''};
+      return $app->throw_error (400, reason_phrase => 'Bad |sk|')
+          unless defined $data;
+      $data->{login}->{app_data} = $app->text_param ('app_data');
       return json $app, {
         authorization_url => "https://test1/authorize",
       };
     } elsif ($path eq '/cb') {
+      my $data = $Accounts->{$app->text_param ('sk')// ''};
+      return error $app, {reason => 'Bad |sk|'}
+          unless defined $data;
       my $code = $app->text_param ('code');
       if (defined $code) {
-        return json $app, {};
+        return json $app, {app_data => $data->{login}->{app_data}};
       } else {
         return error $app, {reason => 'Bad |code|'};
       }

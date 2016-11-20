@@ -22,6 +22,27 @@ sub client ($) {
       ||= Web::Transport::ConnectionClient->new_from_url ($self->{url});
 } # client
 
+sub get_html ($$;$%) {
+  my ($self, $path, $params, %args) = @_;
+  my $cookies = {%{$args{cookies} or {}}};
+  return $self->_account ($args{account})->then (sub {
+    $cookies->{sk} = $_[0]->{cookies}->{sk}; # or undef
+    return $self->client->request (
+      path => $path,
+      params => $params,
+      cookies => $cookies,
+    );
+  })->then (sub {
+    my $res = $_[0];
+    die $res unless $res->status == 200;
+    my $mime = $res->header ('Content-Type') // '';
+    die "Bad MIME type |$mime|"
+        unless $mime eq 'text/html; charset=utf-8';
+    return {status => $res->status,
+            res => $res};
+  });
+} # get_html
+
 sub get_json ($$;$%) {
   my ($self, $path, $params, %args) = @_;
   my $cookies = {%{$args{cookies} or {}}};

@@ -59,9 +59,11 @@ return sub {
         }
 
         if ($path->[0] eq 'g' or
-            (@$path == 2 and $path->[0] eq 'account' and $path->[1] eq 'info.json')) {
+            (@$path == 2 and $path->[0] eq 'account' and $path->[1] eq 'info.json')or
+            (@$path == 1 and $path->[0] eq 'dashboard')) {
           # /g
           # /account/info.json
+          # /dashboard
           my $accounts = Web::Transport::ConnectionClient->new_from_url
               ($AccountsURL);
 
@@ -83,13 +85,27 @@ return sub {
             die $_[0] unless $_[0]->status == 200;
             my $account_data = json_bytes2perl $_[0]->body_bytes;
             $account_data->{has_account} = defined $account_data->{account_id};
-
             if ($path->[0] eq 'account') {
               return AccountPages->info ($app, $account_data);
-            } elsif ($path->[0] eq 'g') {
-              return GroupPages->main ($app, $path, $Config, $db, $account_data);
             } else {
-              die;
+              unless ($account_data->{has_account}) {
+                if ($app->http->request_method eq 'GET') {
+                  my $this_url = Web::URL->parse_string ($app->http->url->stringify);
+                  my $url = Web::URL->parse_string (q</account/login>, $this_url);
+                  $url->set_query_params ({next => $this_url->stringify});
+                  return $app->send_redirect ($url->stringify);
+                } else {
+                  return $app->throw_error (403, reason_phrase => 'No user account');
+                }
+              }
+
+              if ($path->[0] eq 'g') {
+                return GroupPages->main ($app, $path, $Config, $db, $account_data);
+              } elsif ($path->[0] eq 'dashboard') {
+                return AccountPages->dashboard ($app, $account_data);
+              } else {
+                die;
+              }
             }
           });
         }

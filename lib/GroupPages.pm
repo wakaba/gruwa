@@ -31,8 +31,6 @@ sub main ($$$$$$) {
     # /g/create.json
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
-    return $app->throw_error (403, reason_phrase => 'No user account')
-        unless $account_data->{has_account};
     my $title = $app->text_param ('title') // '';
     return $app->throw_error (400, reason_phrase => 'Bad |title|')
         unless length $title;

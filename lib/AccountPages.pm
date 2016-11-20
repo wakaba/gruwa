@@ -36,7 +36,7 @@ sub main ($$$$$$) {
             sk => $json1->{sk},
             server => $server,
             callback_url => $app->http->url->resolve_string (q</account/cb>)->stringify,
-            #app_data => ...,
+            app_data => $app->text_param ('next'),
           },
           bearer => $config->{accounts}->{key},
         )->then (sub {
@@ -81,7 +81,14 @@ sub main ($$$$$$) {
     )->then (sub {
       my $res = $_[0];
       if ($res->status == 200) {
-        return $app->send_redirect ('/account/done');
+        my $json = json_bytes2perl $res->body_bytes;
+        my $url = Web::URL->parse_string ($app->http->url->resolve_string ('/dashboard')->stringify);
+        my $next = Web::URL->parse_string ($json->{app_data} // '');
+        unless (defined $next and
+                $next->get_origin->same_origin_as ($url->get_origin)) {
+          $next = $url;
+        }
+        return $app->send_redirect ($next->stringify);
       } elsif ($res->status == 400) {
         my $json = json_bytes2perl $res->body_bytes;
         if (defined $json and ref $json eq 'HASH' and defined $json->{reason}) {
@@ -95,11 +102,6 @@ sub main ($$$$$$) {
       }
     });
   } # /account/cb
-
-  if (@$path == 2 and $path->[1] eq 'done') {
-    # /account/done
-    return temma $app, 'account.done.html.tm', {};
-  }
 
   return $app->send_error (404);
 } # main
@@ -125,6 +127,11 @@ sub info ($$$) {
   #}
   return json $app, $json;
 } # info
+
+sub dashboard ($$$) {
+  my ($class, $app, $account_data) = @_;
+  return temma $app, 'dashboard.html.tm', {account => $account_data};
+} # dashboard
 
 1;
 
