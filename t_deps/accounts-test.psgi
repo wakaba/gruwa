@@ -58,7 +58,8 @@ return sub {
       $data->{account_id} = int rand 100000000000;
       $data->{has_account} = 1;
       $Accounts->{$sk} = $data;
-      return json $app, {sk => $sk, account_id => $data->{account_id}};
+      return json $app, {cookies => {sk => $sk},
+                         account_id => $data->{account_id}};
     }
     return $app->send_error (404);
   });

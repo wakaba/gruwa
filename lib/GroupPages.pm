@@ -21,6 +21,7 @@ sub main ($$$$$$) {
       # XXX group_member
       $group->{title} = Dongry::Type->parse ('text', $group->{title});
       return $class->group ($app, $path, {
+        account => $account_data,
         config => $config, db => $db, group => $group,
       });
     });
@@ -30,7 +31,8 @@ sub main ($$$$$$) {
     # /g/create.json
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
-    # XXX account
+    return $app->throw_error (403, reason_phrase => 'No user account')
+        unless $account_data->{has_account};
     my $title = $app->text_param ('title') // '';
     return $app->throw_error (400, reason_phrase => 'Bad |title|')
         unless length $title;
@@ -60,11 +62,23 @@ sub group ($$$$) {
   my ($class, $app, $path, $opts) = @_;
   my $db = $opts->{db};
 
+  # XXX tests
   if (@$path == 3 and $path->[2] eq '') {
     # /g/{group_id}/
-    return temma $app, 'group.index.html.tm', {group => $opts->{group}};
+    return temma $app, 'group.index.html.tm', {
+      account => $opts->{account},
+      group => $opts->{group},
+    };
+  } elsif (@$path == 3 and $path->[2] eq 'info.json') {
+    # /g/{group_id}/info.json
+    my $g = $opts->{group};
+    return json $app, {
+      group_id => ''.$g->{group_id},
+      title => $g->{title},
+    };
   }
 
+  # XXX tests
   if (@$path >= 4 and $path->[2] eq 'i' and $path->[3] =~ /\A[0-9]+\z/) {
     # /g/{group_id}/i/{index_id}
     return $db->select ('index', {
@@ -79,6 +93,7 @@ sub group ($$$$) {
       if (@$path == 5 and $path->[4] eq '') {
         # /g/{group_id}/i/{index_id}/
         return temma $app, 'group.index.index.html.tm', {
+          account => $opts->{account},
           group => $opts->{group},
           index => $index,
         };
@@ -88,6 +103,7 @@ sub group ($$$$) {
     });
   }
 
+  # XXX tests
   if (@$path == 4 and $path->[2] eq 'i' and $path->[3] eq 'create.json') {
     # /g/{group_id}/i/create.json
     $app->requires_request_method ({POST => 1});
@@ -112,6 +128,7 @@ sub group ($$$$) {
     });
   }
 
+  # XXX tests
   if (@$path >= 4 and $path->[2] eq 'o' and $path->[3] =~ /\A[0-9]+\z/) {
     # /g/{group_id}/o/{object_id}
     return $db->select ('object', {
@@ -126,6 +143,7 @@ sub group ($$$$) {
       if (@$path == 4) {
         # /g/{group_id}/o/{object_id}
         return temma $app, 'group.object.html.tm', {
+          account => $opts->{account},
           group => $opts->{group},
           object => $object,
         };
@@ -186,6 +204,7 @@ sub group ($$$$) {
     });
   }
 
+  # XXX tests
   if (@$path >= 4 and $path->[2] eq 'o' and $path->[3] eq 'get.json') {
     # /g/{group_id}/o/get.json
     return Promise->resolve->then (sub {
@@ -225,7 +244,8 @@ sub group ($$$$) {
       } @$objects]};
     });
   }
-  
+
+  # XXX tests
   if (@$path == 4 and $path->[2] eq 'o' and $path->[3] eq 'create.json') {
     # /g/{group_id}/o/create.json
     $app->requires_request_method ({POST => 1});

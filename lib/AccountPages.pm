@@ -108,7 +108,7 @@ sub info ($$$) {
   my ($class, $app, $data) = @_;
   # /account/info.json
   my $json = {
-    has_account => defined $data->{account_id},
+    has_account => $data->{has_account},
     account_id => defined $data->{account_id} ? ''.$data->{account_id} : undef,
     name => $data->{name},
   };

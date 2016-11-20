@@ -48,6 +48,7 @@ return sub {
       } Promise->resolve->then (sub {
         my $path = $app->path_segments;
 
+        # XXX tests
         if ($path->[0] eq 'robots.txt' or
             $path->[0] eq 'favicon.ico' or
             $path->[0] eq 'manifest.json' or
@@ -81,6 +82,7 @@ return sub {
           )->then (sub {
             die $_[0] unless $_[0]->status == 200;
             my $account_data = json_bytes2perl $_[0]->body_bytes;
+            $account_data->{has_account} = defined $account_data->{account_id};
 
             if ($path->[0] eq 'account') {
               return AccountPages->info ($app, $account_data);
@@ -101,6 +103,7 @@ return sub {
           } AccountPages->main ($app, $path, $Config, $db, $accounts);
         }
 
+        # XXX tests
         if (@$path == 1) {
           return CommonPages->main ($app, $path, $Config, $db);
         }
@@ -112,6 +115,7 @@ return sub {
         return $app->send_error (500);
       });
     } else {
+      # XXX tests
       return $app->send_redirect ($Config->{origin});
     }
   });

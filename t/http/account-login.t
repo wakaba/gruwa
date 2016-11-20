@@ -16,46 +16,24 @@ Test {
 
 Test {
   my $current = shift;
-  return $current->client->request (path => ['account', 'login'], method => 'POST', headers => {
-    origin => $current->client->origin->to_ascii,
-  })->then (sub {
-    my $res = $_[0];
-    test {
-      is $res->status, 400;
-      is $res->header ('Set-Cookie'), undef;
-    } $current->c;
-  });
-} n => 2, name => '/account/login POST no server';
-
-Test {
-  my $current = shift;
-  return $current->client->request (path => ['account', 'login'], params => {
-    server => 'test1',
-  }, method => 'POST', headers => {
-    origin => 'foo',
-  })->then (sub {
-    my $res = $_[0];
-    test {
-      is $res->status, 400;
-      is $res->header ('Set-Cookie'), undef;
-    } $current->c;
-  });
-} n => 2, name => '/account/login POST bad origin';
-
-Test {
-  my $current = shift;
-  return $current->client->request (path => ['account', 'login'], params => {
-    server => 'hoge',
-  }, method => 'POST', headers => {
-    origin => $current->client->origin->to_ascii,
-  })->then (sub {
-    my $res = $_[0];
-    test {
-      is $res->status, 400;
-      is $res->header ('Set-Cookie'), undef;
-    } $current->c;
-  });
-} n => 2, name => '/account/login POST bad server';
+  return $current->are_errors (
+    ['POST', ['account', 'login'], {server => 'test1'}],
+    [
+      {origin => undef,
+       status => 400, response_headers => {'set-cookie' => undef},
+       name => 'Bad |Origin:|'},
+      {origin => 'foo',
+       status => 400, response_headers => {'set-cookie' => undef},
+       name => 'Bad |Origin:|'},
+      {params => {},
+       status => 400, response_headers => {'set-cookie' => undef},
+       name => 'no |server|'},
+      {params => {server => 'hoge'},
+       status => 400, response_headers => {'set-cookie' => undef},
+       name => 'Bad |server|'},
+    ],
+  );
+} n => 1, name => '/account/login POST bad request';
 
 Test {
   my $current = shift;
