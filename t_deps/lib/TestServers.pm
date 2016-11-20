@@ -85,6 +85,19 @@ sub web ($$$) {
   return $p;
 } # web
 
+sub accounts_for_test ($) {
+  my ($port) = @_;
+  require Sarze;
+  return Sarze->start (
+    hostports => [[0, $port]],
+    psgi_file_name => path (__FILE__)->parent->parent->child ('accounts-test.psgi'),
+    max_worker_count => 1,
+  )->then (sub {
+    my $sarze = $_[0];
+    return [sub { $sarze->stop }, $sarze->completed];
+  });
+} # accounts_for_test
+
 sub servers ($%) {
   shift;
   my %args = @_;
@@ -94,9 +107,10 @@ sub servers ($%) {
   return Promise->all ([
     mysqld ($args{db_dir}, $args{db_name}, $set_dsn),
     web ($args{port}, $args{config} // $args{config_file}, $dsn_got),
+    defined $args{accounts_for_test_port} ? accounts_for_test ($args{accounts_for_test_port}) : undef,
   ])->then (sub {
     my $stops = $_[0];
-    my @stopped = map { $_->[1] } @$stops;
+    my @stopped = grep { defined } map { $_->[1] } @$stops;
     my @signal;
 
     my $stop = sub {
@@ -106,7 +120,7 @@ sub servers ($%) {
         Promise->resolve->then ($stop)->catch (sub {
           warn "ERROR: $_[0]";
         });
-      } @$stops]);
+      } grep { defined } @$stops]);
     }; # $stop
 
     push @signal, Promised::Command::Signals->add_handler (INT => $stop);

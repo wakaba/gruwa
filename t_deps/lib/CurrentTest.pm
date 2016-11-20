@@ -1,6 +1,8 @@
 package CurrentTest;
 use strict;
 use warnings;
+use JSON::PS;
+use Web::URL;
 use Web::Transport::ConnectionClient;
 
 sub new ($$) {
@@ -17,10 +19,41 @@ sub client ($) {
       ||= Web::Transport::ConnectionClient->new_from_url ($self->{url});
 } # client
 
+sub accounts_client ($) {
+  my $self = $_[0];
+  return $self->{accounts_client}
+      ||= Web::Transport::ConnectionClient->new_from_url ($self->{accounts_url});
+} # accounts_client
+
+sub create_account ($$$) {
+  my ($self, $name => $account) = @_;
+  $account->{name} //= rand;
+  return $self->accounts_client->request (
+    method => 'POST',
+    path => ['create-for-test'],
+    params => {
+      data => perl2json_chars $account,
+    },
+  )->then (sub {
+    die $_[0] unless $_[0]->status == 200;
+    $self->{objects}->{$name} = json_bytes2perl $_[0]->body_bytes;
+  });
+} # create_account
+
+sub resolve ($$) {
+  my $self = shift;
+  return Web::URL->parse_string (shift, $self->{url});
+} # resolve
+
+sub o ($$) {
+  return $_[0]->{objects}->{$_[1]} // die "No object |$_[1]|";
+} # o
+
 sub close ($) {
   my $self = shift;
   return Promise->all ([
     defined $self->{client} ? $self->{client}->close : undef,
+    defined $self->{accounts_client} ? $self->{accounts_client}->close : undef,
   ]);
 } # close
 

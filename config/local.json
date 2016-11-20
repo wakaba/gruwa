@@ -1,3 +1,9 @@
 {
-  "origin": "http://budou:5521"
+  "origin": "http://budou:5521",
+  "accounts": {
+    "url": "https://invalid",
+    "key": "...",
+    "context": "gruwa:local",
+    "servers": ["github", "hatena"]
+  }
 }

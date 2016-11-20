@@ -8,9 +8,12 @@ use JSON::PS;
 use Wanage::HTTP;
 use Warabe::App;
 use Dongry::Database;
+use Web::URL;
+use Web::Transport::ConnectionClient;
 
 use StaticFiles;
 use CommonPages;
+use AccountPages;
 use GroupPages;
 
 my $config_path = path ($ENV{CONFIG_FILE} // die "No |CONFIG_FILE|");
@@ -21,6 +24,8 @@ my $DBSources = {sources => {
   master => {dsn => $dsn, anyevent => 1, writable => 1},
   default => {dsn => $dsn, anyevent => 1},
 }};
+
+my $AccountsURL = Web::URL->parse_string ($Config->{accounts}->{url});
 
 return sub {
   my $http = Wanage::HTTP->new_from_psgi_env ($_[0]);
@@ -53,7 +58,19 @@ return sub {
         }
 
         if ($path->[0] eq 'g') {
-          return GroupPages->main ($app, $path, $Config, $db);
+          my $accounts = Web::Transport::ConnectionClient->new_from_url
+              ($AccountsURL);
+          return promised_cleanup {
+            return $accounts->close;
+          } GroupPages->main ($app, $path, $Config, $db, $accounts);
+        }
+
+        if ($path->[0] eq 'account') {
+          my $accounts = Web::Transport::ConnectionClient->new_from_url
+              ($AccountsURL);
+          return promised_cleanup {
+            return $accounts->close;
+          } AccountPages->main ($app, $path, $Config, $db, $accounts);
         }
 
         if (@$path == 1) {

@@ -9,17 +9,24 @@ BEGIN {
   $ENV{PROMISED_COMMAND_DEBUG} //= 1;
   $ENV{SQL_DEBUG} //= 1;
 }
+use JSON::PS;
 use TestServers;
 
 my $RootPath = path (__FILE__)->parent->parent->absolute;
 my $Port = 5521;
 my $DBName = 'gruwa_local';
 
+my $Config = json_bytes2perl $RootPath->child ('config/local.json')->slurp;
+my $accounts = json_bytes2perl $RootPath->child ('local/local-accounts.json')->slurp;
+for (keys %$accounts) {
+  $Config->{accounts}->{$_} = $accounts->{$_};
+}
+
 my $stop = TestServers->servers (
   port => $Port,
   db_name => $DBName,
   db_dir => $RootPath->child ('local/local/mysqld'),
-  config_file => $RootPath->child ('config/local.json'),
+  config => $Config,
 )->to_cv->recv->[1];
 
 warn "Server is ready: <http://localhost:$Port>\n";

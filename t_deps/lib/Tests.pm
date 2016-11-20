@@ -6,6 +6,7 @@ use lib glob path (__FILE__)->parent->parent->parent->child
     ('t_deps/modules/*/lib');
 use Test::More;
 use Test::X1;
+use JSON::PS;
 use Promise;
 use Promised::Flow;
 use Exporter::Lite;
@@ -17,7 +18,8 @@ use CurrentTest;
 our @EXPORT = grep { not /^\$/ }
     @Test::More::EXPORT,
     @Test::X1::EXPORT,
-    @Promised::Flow::EXPORT;
+    @Promised::Flow::EXPORT,
+    @JSON::PS::EXPORT;
 
 {
   use Socket;
@@ -49,17 +51,30 @@ our @EXPORT = grep { not /^\$/ }
 }
 
 my $ServerURL;
+my $AccountsURL;
+my $AccountsKey = rand;
 
 push @EXPORT, qw(Test);
 sub Test (&;%) {
   my $code = shift;
   test {
     my $c = shift;
-    my $current = CurrentTest->new ({c => $c, url => $ServerURL});
-    promised_cleanup {
+    my $current = CurrentTest->new ({
+      c => $c,
+      url => $ServerURL,
+      accounts_url => $AccountsURL,
+      accounts_key => $AccountsKey,
+    });
+    Promise->resolve ($current)->then ($code)->catch (sub {
+      my $error = $_[0];
+      test {
+        ok 0, "promise resolved";
+        is $error, undef, "no exception";
+      } $c;
+    })->then (sub {
       done $c;
       return $current->close;
-    } Promise->resolve ($current)->then ($code);
+    });
   } @_;
 } # Test
 
@@ -67,11 +82,20 @@ push @EXPORT, qw(RUN);
 sub RUN () {
   my $port = find_listenable_port;
   $ServerURL = Web::URL->parse_string ("http://localhost:$port");
+  my $accounts_port = find_listenable_port;
+  $AccountsURL = Web::URL->parse_string ("http://localhost:$accounts_port");
   my $stop = TestServers->servers (
     port => $port,
-    db_name => undef,
-    db_dir => undef,
-    config => {origin => $ServerURL->get_origin->to_ascii},
+    accounts_for_test_port => $accounts_port,
+    config => {
+      origin => $ServerURL->get_origin->to_ascii,
+      accounts => {
+        url => $AccountsURL->get_origin->to_ascii,
+        key => $AccountsKey,
+        context => rand,
+        servers => ['test1'],
+      },
+    },
   )->to_cv->recv;
   run_tests;
   $stop->[0]->();
