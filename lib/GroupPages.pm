@@ -300,6 +300,7 @@ sub group ($$$$) {
     return temma $app, 'group.members.html.tm', {
       account => $opts->{account},
       group => $opts->{group},
+      group_member => $opts->{group_member},
     };
   }
 
@@ -310,31 +311,39 @@ sub group_members_json ($) {
   my ($class, $app, $path, $db, $group, $account_data) = @_;
   # /g/{group_id}/members.json
   if ($app->http->request_method eq 'POST') {
+    my $account_id = $app->bare_param ('account_id') // '';
+    return $app->throw_error (400, reason_phrase => 'Bad |account_id|')
+        unless $account_id =~ /\A[0-9]+\z/;
+
     return $db->select ('group_member', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
       account_id => Dongry::Type->serialize ('text', $account_data->{account_id}),
     }, fields => ['member_type', 'member_type', 'user_status', 'owner_status'])->then (sub {
       my $membership = $_[0]->first;
 
-      my $account_id = $app->bare_param ('account_id') // '';
-      return $app->throw_error (400, reason_phrase => 'Bad |account_id|')
-          unless $account_id =~ /\A[0-9]+\z/;
+      my $is_owner = (
+        $membership->{member_type} == 2 and # owner
+        $membership->{user_status} == 1 and # open
+        $membership->{owner_status} == 1 # open
+      );
 
       my %update;
       if ($account_id == $account_data->{account_id}) {
-        $update{user_status} = $app->bare_param ('user_status');
-        delete $update{user_status} unless defined $update{user_status};
+        unless ($is_owner) {
+          $update{user_status} = $app->bare_param ('user_status');
+          delete $update{user_status} unless defined $update{user_status};
+        }
       } else {
         return $app->throw_error (403, reason_phrase => 'Not an owner')
-            unless $membership->{member_type} == 2 and # owner
-                   $membership->{user_status} == 1 and # open
-                   $membership->{owner_status} == 1; # open
+            unless $is_owner;
 
         for my $key (qw(owner_status member_type)) {
           $update{$key} = $app->bare_param ($key);
           delete $update{$key} unless defined $update{$key};
         }
+      }
 
+      if ($is_owner) {
         $update{desc} = $app->text_param ('desc');
         if (defined $update{desc}) {
           $update{desc} = Dongry::Type->serialize ('text', $update{desc});

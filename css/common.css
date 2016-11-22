@@ -168,7 +168,27 @@ edit-container > form > footer p {
   color: gray;
   background: transparent;
 }
-                                          
+
+list-container[key=members] tr:not(.editing) input,
+list-container[key=members] tr:not(.editing) select,
+list-container[key=members] tr:not(.editing) .save-button,
+list-container[key=members] tr.editing enum-value,
+list-container[key=members] tr.editing span[data-field=desc],
+list-container[key=members] tr.editing .edit-button,
+html:not([data-group-member-type="2"]) list-container[key=members] input[name=desc],
+html[data-group-member-type="2"] list-container[key=members] tr.account-is-self select[name=user_status],
+list-container[key=members] tr.account-is-self select[name=member_type],
+list-container[key=members] tr.account-is-self select[name=owner_status] {
+  display: none;
+}
+
+html:not([data-group-member-type="2"]) list-container[key=members] span[data-field=desc],
+html[data-group-member-type="2"] list-container[key=members] tr.account-is-self enum-value[data-field=user_status],
+list-container[key=members] tr.editing enum-value[data-field=member_type],
+list-container[key=members] tr.editing enum-value[data-field=owner_status] {
+  display: inline;
+}
+
 /*
 
 Copyright 2016 Wakaba <wakaba@suikawiki.org>.

@@ -1,4 +1,7 @@
-<html t:params="$group $account $app" pl:data-group-url="'/g/'.$group->{group_id}">
+<html t:params="$group $account $app $group_member"
+  pl:data-group-url="'/g/'.$group->{group_id}"
+  pl:data-account="$account->{account_id}"
+  pl:data-group-member-type="$group_member->{member_type}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     メンバー一覧
@@ -37,8 +40,25 @@
           <span data-field=desc />
           <input name=desc data-field=desc>
         <td>
-          <button type=button class=edit-button>編集</>
-          <button type=button class=save-button>保存</>
+          <button type=button class=edit-button onclick="
+            parentNode.parentNode.classList.add ('editing');
+          ">編集</>
+          <button type=button class=save-button onclick="
+            // XXX progress
+            var saveButton = this;
+            saveButton.disabled = true;
+            var container = parentNode.parentNode;
+            var fd = new FormData;
+            $$ (container, 'input, select').forEach (function (e) {
+              fd.append (e.name, e.value);
+            });
+            gFetch ('members.json', {post: true, formData: fd}).then (function () {
+              saveButton.disabled = false;
+            }, function (error) {
+              saveButton.disabled = false;
+              console.log (error); // XXX
+            });
+          ">保存</>
       </template>
 
       <table>

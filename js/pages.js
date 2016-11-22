@@ -14,6 +14,10 @@ function gFetch (pathquery, opts) {
 } // gFetch
 
 function fillFields (el, object) {
+  if (object.account_id &&
+      object.account_id === document.documentElement.getAttribute ('data-account')) {
+    el.classList.add ('account-is-self');
+  }
   $$ (el, '[data-field]').forEach (function (field) {
     var value = object[field.getAttribute ('data-field')];
     if (field.localName === 'input' ||

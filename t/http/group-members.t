@@ -266,7 +266,7 @@ Test {
       is $member->{member_type}, 2, "not changed";
       is $member->{user_status}, 1, "same value";
       is $member->{owner_status}, 1, "not changed";
-      is $member->{desc}, '', "not changed";
+      is $member->{desc}, 'abcde', "a1 is owner";
     } $current->c, name => 'not in fact changed';
   })->then (sub {
     return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
@@ -278,14 +278,14 @@ Test {
   })->then (sub {
     my $result = $_[0];
     test {
-      is 0+keys %{$result->{json}->{members}}, 1;
+      is 0+keys %{$result->{json}->{members}}, 3;
       my $member = $result->{json}->{members}->{$current->o ('a1')->{account_id}};
       is $member->{account_id}, $current->o ('a1')->{account_id};
-      is $member->{member_type}, 0;
-      is $member->{user_status}, 2;
+      is $member->{member_type}, 2;
+      is $member->{user_status}, 1;
       is $member->{owner_status}, 1;
-      is $member->{desc}, '';
-    } $current->c, name => 'changed (closed)';
+      is $member->{desc}, 'abcde';
+    } $current->c, name => 'cannot be downgraded';
     return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
       account_id => $current->o ('a1')->{account_id},
       member_type => 2,
@@ -302,7 +302,7 @@ Test {
       my $member = $result->{json}->{members}->{$current->o ('a1')->{account_id}};
       is $member->{account_id}, $current->o ('a1')->{account_id};
       is $member->{member_type}, 0;
-      is $member->{user_status}, 2;
+      is $member->{user_status}, 1;
       is $member->{owner_status}, 4;
       is $member->{desc}, '';
     } $current->c, name => 'changed by owner';
@@ -314,7 +314,7 @@ Test {
       my $member = $result->{json}->{members}->{$current->o ('a1')->{account_id}};
       is $member->{account_id}, $current->o ('a1')->{account_id};
       is $member->{member_type}, 2;
-      is $member->{user_status}, 2;
+      is $member->{user_status}, 1;
       is $member->{owner_status}, 4;
       is $member->{desc}, 'abc';
     } $current->c, name => 'changed by owner';
