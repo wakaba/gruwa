@@ -91,6 +91,15 @@ sub post_json ($$$;%) {
   });
 } # post_json
 
+sub create_group ($$$) {
+  my ($self, $name, $opts) = @_;
+  return $self->post_json (['g', 'create.json'], {
+    title => $opts->{title} // rand,
+  }, account => $opts->{owner} // '')->then (sub {
+    $self->{objects}->{$name // 'X'} = $_[0]->{json};
+  });
+} # create_group
+
 sub group ($$;%) {
   my ($self, $group, %args) = @_;
   return $self->get_json (['g', $group->{group_id}, 'info.json'], {}, account => $args{account})->then (sub {

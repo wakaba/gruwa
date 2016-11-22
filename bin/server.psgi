@@ -89,7 +89,8 @@ return sub {
               return AccountPages->info ($app, $account_data);
             } else {
               unless ($account_data->{has_account}) {
-                if ($app->http->request_method eq 'GET') {
+                if ($app->http->request_method eq 'GET' and
+                    not $path->[-1] =~ /\.json\z/) {
                   my $this_url = Web::URL->parse_string ($app->http->url->stringify);
                   my $url = Web::URL->parse_string (q</account/login>, $this_url);
                   $url->set_query_params ({next => $this_url->stringify});

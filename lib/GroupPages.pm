@@ -18,11 +18,25 @@ sub main ($$$$$) {
       my $group = $_[0]->first;
       return $app->throw_error (404, reason_phrase => 'Group not found')
           unless defined $group;
-      # XXX group_member
       $group->{title} = Dongry::Type->parse ('text', $group->{title});
-      return $class->group ($app, $path, {
-        account => $account_data,
-        db => $db, group => $group,
+
+      return $db->select ('group_member', {
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
+        account_id => $account_data->{account_id},
+        member_type => {-in => [
+          1, # member
+          2, # owner
+        ]},
+        user_status => 1, # open
+        owner_status => 1, # open
+      }, fields => ['member_type'])->then (sub {
+        my $membership = $_[0]->first;
+        return $app->throw_error (403, reason_phrase => 'Not a group member')
+            unless defined $membership;
+        return $class->group ($app, $path, {
+          account => $account_data,
+          db => $db, group => $group,
+        });
       });
     });
   }
@@ -37,13 +51,24 @@ sub main ($$$$$) {
     my $time = time;
     return $db->execute ('select uuid_short() as uuid')->then (sub {
       my $gid = $_[0]->first->{uuid};
-      return $db->insert ('group', [{
-        group_id => $gid,
-        title => Dongry::Type->serialize ('text', $title),
-        created => $time,
-        updated => $time,
-      }])->then (sub {
-        # XXX group_member
+      return Promise->all ([
+        $db->insert ('group', [{
+          group_id => $gid,
+          title => Dongry::Type->serialize ('text', $title),
+          created => $time,
+          updated => $time,
+        }]),
+        $db->insert ('group_member', [{
+          group_id => $gid,
+          account_id => $account_data->{account_id},
+          member_type => 2, # owner
+          user_status => 1, # open
+          owner_status => 1, # open
+          desc => '',
+          created => $time,
+          updated => $time,
+        }]),
+      ])->then (sub {
         # XXX group log
         #     ipaddr
         return json $app, {
