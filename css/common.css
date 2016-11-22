@@ -169,6 +169,62 @@ edit-container > form > footer p {
   background: transparent;
 }
 
+list-container[key=members] table,
+list-container[key=groups] table {
+  border-collapse: collapse;
+}
+
+list-container[key=members] thead,
+list-container[key=groups] thead {
+  border-bottom: 3px green solid;
+}
+
+list-container[key=members] thead th,
+list-container[key=groups] thead th {
+  color: green;
+  font-weight: bolder;
+}
+
+list-container[key=members] th,
+list-container[key=groups] th,
+list-container[key=members] td,
+list-container[key=groups] td {
+  padding: .5em;
+}
+
+list-container[key=members] tbody tr:nth-child(2n+1),
+list-container[key=groups] tbody tr:nth-child(2n+1) {
+  background: rgb(245, 255, 245);
+  color: black;
+}
+
+list-container[key=members] tbody th,
+list-container[key=groups] tbody th {
+  font-weight: normal;
+  min-width: 20em;
+  text-align: left;
+}
+
+list-container[key=members] tbody th a,
+list-container[key=groups] tbody th a {
+  display: block;
+}
+
+list-container[key=members] td.user_status,
+list-container[key=members] td.owner_status,
+list-container[key=members] td.member_type,
+list-container[key=groups] td.user_status,
+list-container[key=groups] td.owner_status,
+list-container[key=groups] td.member_type {
+  text-align: center;
+  min-width: 5em;
+}
+
+list-container[key=members] td.desc,
+list-container[key=groups] td.desc {
+  min-width: 10em;
+}
+
 list-container[key=members] tr:not(.editing) input,
 list-container[key=members] tr:not(.editing) select,
 list-container[key=members] tr:not(.editing) .save-button,
@@ -187,6 +243,27 @@ html[data-group-member-type="2"] list-container[key=members] tr.account-is-self 
 list-container[key=members] tr.editing enum-value[data-field=member_type],
 list-container[key=members] tr.editing enum-value[data-field=owner_status] {
   display: inline;
+}
+
+/*
+list-container[key=members] td[data-value="1"],
+list-container[key=groups] td[data-value="1"],
+list-container[key=members] td[data-value="2"].member_type,
+list-container[key=groups] td[data-value="2"].member_type {
+  color: black;
+  background: rgb(230, 255, 230);
+}
+*/
+
+list-container[key=members] td[data-value]:not([data-value="1"]):not([data-value="2"]),
+list-container[key=groups] td[data-value]:not([data-value="1"]):not([data-value="2"]) {
+  color: black;
+  background: rgb(255, 230, 230);
+}
+
+list-container[key=members] td[data-value="2"].member_type,
+list-container[key=groups] td[data-value="2"].member_type {
+  font-weight: bolder;
 }
 
 /*

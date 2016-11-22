@@ -18,25 +18,25 @@
         <th>
           <account-name data-field=account_id />
           <input type=hidden name=account_id data-field=account_id>
-        <td>
+        <td class=member_type>
           <enum-value data-field=member_type text-1=一般 text-2=所有者 />
           <select name=member_type data-field=member_type>
             <option value=1>一般
             <option value=2>所有者
           </select>
-        <td>
+        <td class=user_status>
           <enum-value data-field=user_status text-1=参加中 text-2=招待中 />
           <select name=user_status data-field=user_status>
             <option value=1>参加中
             <option value=2>招待中
           </select>
-        <td>
-          <enum-value data-field=owner_status text-1=参加中 text-2=未承認 />
+        <td class=owner_status>
+          <enum-value data-field=owner_status text-1=承認済 text-2=未承認 />
           <select name=owner_status data-field=owner_status>
-            <option value=1>参加中
+            <option value=1>承認済
             <option value=2>未承認
           </select>
-        <td>
+        <td class=desc>
           <span data-field=desc />
           <input name=desc data-field=desc>
         <td>

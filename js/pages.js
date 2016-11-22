@@ -3,7 +3,7 @@ function $$ (n, s) {
 } // $$
 
 function gFetch (pathquery, opts) {
-  return fetch (document.documentElement.getAttribute ('data-group-url') + '/' + pathquery, {
+  return fetch ((document.documentElement.getAttribute ('data-group-url') || '') + '/' + pathquery, {
     credentials: "same-origin",
     method: opts.post ? 'POST' : 'GET',
     body: opts.formData, // or undefined
@@ -35,12 +35,20 @@ function fillFields (el, object) {
       } else {
         field.textContent = value;
       }
+      if (field.parentNode.localName === 'td') {
+        field.parentNode.setAttribute ('data-value', value);
+      }
     } else if (field.localName === 'account-name') {
       field.setAttribute ('account', value);
       field.textContent = value; // XXX
     } else {
-      field.textContent = value;
+      field.textContent = value || field.getAttribute ('data-empty');
     }
+  });
+  $$ (el, '[data-href-template]').forEach (function (field) {
+    field.href = field.getAttribute ('data-href-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+      return object[k];
+    });
   });
   $$ (el, '[data-data-field]').forEach (function (field) {
             var value = object.data[field.getAttribute ('data-data-field')];

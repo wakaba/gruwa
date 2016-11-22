@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use JSON::PS;
 use Web::URL;
+use Dongry::Type;
 
 use Results;
 
@@ -129,6 +130,45 @@ sub mymain ($$$$$) {
   #}
     return json $app, $json;
   } # info
+
+  if (@$path == 2 and $path->[1] eq 'groups.json') {
+    # /my/groups.json
+    return Promise->resolve->then (sub {
+      return {} unless $account_data->{has_account};
+      return $db->select ('group_member', {
+        account_id => Dongry::Type->serialize ('text', $account_data->{account_id}),
+      }, fields => ['group_id', 'member_type', 'user_status', 'owner_status'])->then (sub {
+        return {map {
+          $_->{group_id} => {
+            group_id => ''.$_->{group_id},
+            member_type => ($_->{owner_status} == 1 ? $_->{member_type} : 0),
+            user_status => $_->{user_status},
+            owner_status => ($_->{owner_status} == 1 ? $_->{owner_status} : 0),
+          };
+        } @{$_[0]->all}};
+      });
+    })->then (sub {
+      my $groups = $_[0];
+      my $allowed_groups = [map { $_->{group_id} }
+                            grep { $_->{owner_status} == 1 } values %$groups];
+      return $groups unless @$allowed_groups;
+      return $db->select ('group', {
+        group_id => {-in => $allowed_groups},
+        # XXX admin_status
+      }, fields => ['title', 'group_id'])->then (sub {
+        my %title;
+        for (@{$_[0]->all}) {
+          $title{$_->{group_id}} = Dongry::Type->parse ('text', $_->{title});
+        }
+        for (values %$groups) {
+          $_->{title} = $title{$_->{group_id}};
+        }
+        return $groups;
+      });
+    })->then (sub {
+      return json $app, {groups => $_[0]};
+    });
+  } # groups.json
 
   return $app->throw_error (404);
 } # mymain
