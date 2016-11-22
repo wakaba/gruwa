@@ -286,6 +286,32 @@ Test {
       is $member->{owner_status}, 1;
       is $member->{desc}, 'abcde';
     } $current->c, name => 'cannot be downgraded';
+    return $current->are_errors (
+      ['POST', ['g', $current->o ('g1')->{group_id}, 'members.json'], {
+         account_id => $current->o ('a1')->{account_id},
+         member_type => 2,
+         user_status => 3,
+         owner_status => 4,
+         desc => "abc",
+       }, account => 'owner'],
+      [
+        {origin => undef, status => 400},
+        {origin => 'null', status => 400},
+      ],
+    );
+  })->then (sub {
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{members}}, 3;
+      my $member = $result->{json}->{members}->{$current->o ('a1')->{account_id}};
+      is $member->{account_id}, $current->o ('a1')->{account_id};
+      is $member->{member_type}, 2;
+      is $member->{user_status}, 1;
+      is $member->{owner_status}, 1;
+      is $member->{desc}, 'abcde';
+    } $current->c, name => 'not changed';
     return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
       account_id => $current->o ('a1')->{account_id},
       member_type => 2,
@@ -319,7 +345,7 @@ Test {
       is $member->{desc}, 'abc';
     } $current->c, name => 'changed by owner';
   });
-} n => 31, name => 'owner';
+} n => 38, name => 'owner';
 
 RUN;
 

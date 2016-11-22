@@ -320,6 +320,7 @@ sub group_members_json ($) {
   my ($class, $app, $path, $db, $group, $account_data) = @_;
   # /g/{group_id}/members.json
   if ($app->http->request_method eq 'POST') {
+    $app->requires_same_origin;
     my $account_id = $app->bare_param ('account_id') // '';
     return $app->throw_error (400, reason_phrase => 'Bad |account_id|')
         unless $account_id =~ /\A[0-9]+\z/;

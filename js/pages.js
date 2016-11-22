@@ -7,6 +7,7 @@ function gFetch (pathquery, opts) {
     credentials: "same-origin",
     method: opts.post ? 'POST' : 'GET',
     body: opts.formData, // or undefined
+    referrerPolicy: 'origin',
   }).then (function (res) {
     if (res.status !== 200) throw res;
     return res.json ();
