@@ -2,6 +2,7 @@ package CurrentTest;
 use strict;
 use warnings;
 use Promise;
+use Promised::Flow;
 use JSON::PS;
 use Web::URL;
 use Web::Transport::ConnectionClient;
@@ -93,10 +94,53 @@ sub post_json ($$$;%) {
 
 sub create_group ($$$) {
   my ($self, $name, $opts) = @_;
-  return $self->post_json (['g', 'create.json'], {
-    title => $opts->{title} // rand,
-  }, account => $opts->{owner} // '')->then (sub {
-    $self->{objects}->{$name // 'X'} = $_[0]->{json};
+  my @owner = @{$opts->{owners} or []};
+  push @owner, $opts->{owner} if defined $opts->{owner};
+  push @owner, '' unless @owner;
+  my $owner = shift @owner;
+  return Promise->resolve->then (sub {
+    if ($owner eq '') {
+      $owner = rand;
+      return $self->create_account ($owner => {});
+    }
+  })->then (sub {
+    return $self->post_json (['g', 'create.json'], {
+      title => $opts->{title} // rand,
+    }, account => $owner);
+  })->then (sub {
+    my $o = $self->{objects}->{$name // 'X'} = $_[0]->{json};
+    return promised_for {
+      return $self->_account (shift)->then (sub {
+        my $account = $_[0];
+        return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+          account_id => $account->{account_id},
+          member_type => 1, # member
+          owner_status => 1, # open
+        }, account => $owner)->then (sub {
+          return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+            account_id => $account->{account_id},
+            user_status => 1, # open
+          }, account => $account);
+        });
+      });
+    } $opts->{members} || [];
+  })->then (sub {
+    my $o = $self->{objects}->{$name // 'X'};
+    return promised_for {
+      return $self->_account (shift)->then (sub {
+        my $account = $_[0];
+        return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+          account_id => $account->{account_id},
+          member_type => 2, # owner
+          owner_status => 1, # open
+        }, account => $owner)->then (sub {
+          return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+            account_id => $account->{account_id},
+            user_status => 1, # open
+          }, account => $account);
+        });
+      });
+    } \@owner;
   });
 } # create_group
 
@@ -138,7 +182,10 @@ sub _account ($$) {
     if (ref $account) {
       return Promise->resolve ($account);
     } elsif ($account eq '') {
-      return $self->create_account (undef, {});
+      my $name = rand;
+      return $self->create_account ($name, {})->then (sub {
+        return $self->o ($name);
+      });
     } else {
       return Promise->resolve ($self->o ($account));
     }

@@ -8,28 +8,52 @@ function gFetch (pathquery, opts) {
     method: opts.post ? 'POST' : 'GET',
     body: opts.formData, // or undefined
   }).then (function (res) {
-    if (!res.status === 200) throw res;
+    if (res.status !== 200) throw res;
     return res.json ();
   });
 } // gFetch
+
+function fillFields (el, object) {
+  $$ (el, '[data-field]').forEach (function (field) {
+    var value = object[field.getAttribute ('data-field')];
+    if (field.localName === 'input' ||
+        field.localName === 'select') {
+      field.value = value;
+    } else if (field.localName === 'time') {
+      var date = new Date (parseFloat (value) * 1000);
+      field.setAttribute ('datetime', date.toISOString ());
+      field.textContent = date.toLocaleString ();
+    } else if (field.localName === 'enum-value') {
+      var v = field.getAttribute ('text-' + value);
+      field.setAttribute ('value', value);
+      if (v) {
+        field.textContent = v;
+      } else {
+        field.textContent = value;
+      }
+    } else if (field.localName === 'account-name') {
+      field.setAttribute ('account', value);
+      field.textContent = value; // XXX
+    } else {
+      field.textContent = value;
+    }
+  });
+  $$ (el, '[data-data-field]').forEach (function (field) {
+            var value = object.data[field.getAttribute ('data-data-field')];
+            var type = field.getAttribute ('data-field-type');
+            if (type === 'html') {
+              field.innerHTML = value; // XXX sandbox
+            } else {
+              field.textContent = value || field.getAttribute ('data-empty') || '';
+            }
+          });
+} // fillFields
 
 function upgradeList (el) {
   if (el.upgraded) return;
   el.upgraded = true;
 
-  el.clearObjects = function () {
-    var main = $$ (this, 'list-main')[0];
-    if (main) main.textContent = '';
-  }; // clearObjects
-  el.showObjects = function (objects) {
-    var template = $$ (this, 'template')[0];
-    var main = $$ (this, 'list-main')[0];
-    if (!template || !main) return;
-
-    objects.forEach (function (object) {
-      var item = document.createElement ('list-item');
-object.data = object.data || {index_ids: {}}; // XXX
-      item.appendChild (template.content.cloneNode (true));
+  var fillObject = function (item, object) {
       $$ (item, '.edit-button').forEach (function (button) {
         button.onclick = function () {
           editObject (this, object);
@@ -49,38 +73,54 @@ object.data = object.data || {index_ids: {}}; // XXX
         }
         article.setAttribute ('data-index-list', ids.join (' '));
         article.updateView = function () {
-          $$ (article, '[data-field]').forEach (function (field) {
-            var value = object[field.getAttribute ('data-field')];
-            if (field.localName === 'time') {
-              var date = new Date (parseFloat (value) * 1000);
-              field.setAttribute ('datetime', date.toISOString ());
-              field.textContent = date.toLocaleString ();
-            } else {
-              field.textContent = value;
-            }
-          });
-          $$ (article, '[data-data-field]').forEach (function (field) {
-            var value = object.data[field.getAttribute ('data-data-field')];
-            var type = field.getAttribute ('data-field-type');
-            if (type === 'html') {
-              field.innerHTML = value; // XXX sandbox
-            } else {
-              field.textContent = value || field.getAttribute ('data-empty') || '';
-            }
-          });
+          fillFields (article, field);
         }; // updateView
         article.updateView ();
       });
+  }; // fillObject
+
+  el.clearObjects = function () {
+    var main = $$ (this, 'list-main')[0];
+    if (main) main.textContent = '';
+  }; // clearObjects
+  el.showObjects = function (objects) {
+    var template = $$ (this, 'template')[0];
+    var type = el.getAttribute ('type');
+    var main;
+    if (type === 'table') {
+      main = $$ (this, 'table tbody')[0];
+    } else {
+      main = $$ (this, 'list-main')[0];
+    }
+    if (!template || !main) return;
+
+    Object.values (objects).forEach (function (object) {
+      var item = document.createElement (type === 'table' ? 'tr' : 'list-item');
+      item.appendChild (template.content.cloneNode (true));
+      if (type === 'table') {
+        fillFields (item, object);
+      } else {
+        fillObject (item, object);
+      }
       main.appendChild (item);
     });
   }; // showObjects
 
   return Promise.resolve ().then (function () {
+    var url;
     var index = el.getAttribute ('index');
+    var key;
     if (index) {
-      return gFetch ('o/get.json?index_id=' + index, {}).then (function (json) {
+      url = 'o/get.json?index_id=' + index;
+      key = 'objects';
+    } else {
+      url = el.getAttribute ('src');
+      key = el.getAttribute ('key');
+    }
+    if (url) {
+      return gFetch (url, {}).then (function (json) {
         el.clearObjects ();
-        el.showObjects (json.objects);
+        el.showObjects (json[key]);
       });
     } else {
       el.clearObjects ();
