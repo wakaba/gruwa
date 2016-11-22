@@ -6,7 +6,7 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->client->request (path => ['account', 'info.json'])->then (sub {
+  return $current->client->request (path => ['my', 'info.json'])->then (sub {
     my $res = $_[0];
     test {
       is $res->status, 200;
@@ -16,7 +16,7 @@ Test {
       is $json->{name}, undef;
     } $current->c;
   });
-} n => 4, name => '/account/info.json';
+} n => 4, name => '/my/info.json';
 
 Test {
   my $current = shift;
@@ -24,19 +24,17 @@ Test {
   return $current->create_account (u1 => {
     name => $name,
   })->then (sub {
-    return $current->client->request (path => ['account', 'info.json'], cookies => {sk => $current->o ('u1')->{sk}});
+    return $current->get_json (['my', 'info.json'], {}, account => 'u1');
   })->then (sub {
-    my $res = $_[0];
+    my $result = $_[0];
     test {
-      is $res->status, 200;
-      my $json = json_bytes2perl $res->body_bytes;
-      ok $json->{has_account};
-      ok $json->{account_id};
-      is $json->{name}, $name;
-      like $res->body_bytes, qr{"account_id"\s*:\s*"};
+      ok $result->{json}->{has_account};
+      ok $result->{json}->{account_id};
+      is $result->{json}->{name}, $name;
+      like $result->{res}->body_bytes, qr{"account_id"\s*:\s*"};
     } $current->c;
   });
-} n => 5, name => '/account/info.json';
+} n => 4, name => '/my/info.json';
 
 RUN;
 

@@ -31,6 +31,20 @@ Test {
   });
 } n => 1, name => '/dashboard';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->are_errors (
+      ['GET', ['dashboard', 'abc'], {}],
+      [
+        {account => undef, status => 302},
+        {account => 'a1', status => 404},
+        {account => 'a1', path => ['dashboard', ''], status => 404},
+      ],
+    );
+  });
+} n => 1, name => '/dashboard/...';
+
 RUN;
 
 =head1 LICENSE

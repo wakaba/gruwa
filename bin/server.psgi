@@ -59,10 +59,10 @@ return sub {
         }
 
         if ($path->[0] eq 'g' or
-            (@$path == 2 and $path->[0] eq 'account' and $path->[1] eq 'info.json')or
-            (@$path == 1 and $path->[0] eq 'dashboard')) {
+            $path->[0] eq 'my' or
+            $path->[0] eq 'dashboard') {
           # /g
-          # /account/info.json
+          # /my
           # /dashboard
           my $accounts = Web::Transport::ConnectionClient->new_from_url
               ($AccountsURL);
@@ -85,8 +85,8 @@ return sub {
             die $_[0] unless $_[0]->status == 200;
             my $account_data = json_bytes2perl $_[0]->body_bytes;
             $account_data->{has_account} = defined $account_data->{account_id};
-            if ($path->[0] eq 'account') {
-              return AccountPages->info ($app, $account_data);
+            if ($path->[0] eq 'my') {
+              return AccountPages->mymain ($app, $path, $db, $account_data);
             } else {
               unless ($account_data->{has_account}) {
                 if ($app->http->request_method eq 'GET' and
@@ -103,6 +103,7 @@ return sub {
               if ($path->[0] eq 'g') {
                 return GroupPages->main ($app, $path, $db, $account_data);
               } elsif ($path->[0] eq 'dashboard') {
+                return $app->throw_error (404) unless @$path == 1;
                 return AccountPages->dashboard ($app, $account_data);
               } else {
                 die;

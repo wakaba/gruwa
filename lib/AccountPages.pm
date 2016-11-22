@@ -106,27 +106,32 @@ sub main ($$$$$) {
   return $app->send_error (404);
 } # main
 
-sub info ($$$) {
-  my ($class, $app, $data) = @_;
-  # /account/info.json
-  my $json = {
-    has_account => $data->{has_account},
-    account_id => defined $data->{account_id} ? ''.$data->{account_id} : undef,
-    name => $data->{name},
-  };
+sub mymain ($$$$$) {
+  my ($class, $app, $path, $db, $account_data) = @_;
+
+  if (@$path == 2 and $path->[1] eq 'info.json') {
+    # /my/info.json
+    my $json = {
+      has_account => $account_data->{has_account},
+      account_id => defined $account_data->{account_id} ? ''.$account_data->{account_id} : undef,
+      name => $account_data->{name},
+    };
   #if ($with_profile) {
   #  #
   #}
   #if ($with_linked) {
-  #  for (values %{$data->{links} or {}}) {
+  #  for (values %{$account_data->{links} or {}}) {
   #    push @{$json->{links}->{$_->{service_name}} ||= []},
   #        {service_name => $_->{service_name},
   #         account_link_id => $_->{account_link_id},
   #         id => $_->{id}, name => $_->{name}};
   #  }
   #}
-  return json $app, $json;
-} # info
+    return json $app, $json;
+  } # info
+
+  return $app->throw_error (404);
+} # mymain
 
 sub dashboard ($$$) {
   my ($class, $app, $account_data) = @_;
