@@ -1,3 +1,28 @@
+body {
+  margin: 0;
+}
+
+section {
+  display: block;
+  margin: 0 1em 1em 1em;
+  padding: 0;
+}
+
+section > h1 {
+  display: block;
+  margin: 0 0 1rem 0;
+  border-bottom: 1px solid green;
+  padding: 0.3em;
+  font-size: 130%;
+  color: black;
+  background: transparent;
+}
+
+section > * {
+  margin-left: 1em;
+  margin-right: 1em;
+}
+
 article {
   display: block;
 }
@@ -80,6 +105,16 @@ button:enabled {
   color: #eee;
 }
 
+a:hover,
+a:active {
+  color: black;
+  background: #ffa;
+}
+
+list-container {
+  display: block;
+}
+
 list-container > .operations {
   margin: 0 0.5em 0.5em 0.5em;
 }
@@ -101,6 +136,112 @@ header.cover h1::first-letter {
 
 nav.cover {
   text-align: center;
+}
+
+header.common,
+header.group {
+  display: table;
+  width: 100%;
+  background: green;
+  color: white;
+}
+
+header.common ~ *,
+header.group ~ * {
+  margin-top: 1rem;
+}
+
+header.common > header-area,
+header.group > header-area {
+  display: table-cell;
+  padding: .2em .5em;
+  font-size: 90%;
+}
+
+header.common > header-area + header-area,
+header.group > header-area + header-area {
+  text-align: right;
+}
+
+
+header.common > header-area > a,
+header.group > header-area > a {
+  color: white;
+  background: transparent;
+  text-decoration: none;
+}
+
+header.common > header-area > a:hover,
+header.group > header-area > a:hover,
+header.common > header-area > a:active,
+header.group > header-area > a:active {
+  text-decoration: underline;
+}
+
+header.common > header-area > hgroup,
+header.group > header-area > hgroup {
+  display: block;
+}
+
+header.common > header-area > hgroup > h1,
+header.group > header-area > hgroup > h1,
+header.group > header-area > hgroup > h2 {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  font-size: 120%;
+  font-weight: normal;
+}
+
+header.group > header-area > hgroup > h1::after {
+  content: " :: ";
+}
+
+header.common > header-area > hgroup > * a,
+header.group > header-area > hgroup > * a {
+  color: inherit;
+  background: transparent;
+  text-decoration: none;  
+}
+
+header.common > header-area > hgroup > h1 > a,
+header.group > header-area > hgroup > h1 > a {
+  display: inline-block;
+/*
+  color: rgb(0, 190, 0);
+  background: transparent;
+*/
+  font-family: cursive;
+  font-style: italic;
+}
+
+header.common > header-area > hgroup > h1 > a::first-letter,
+header.group > header-area > hgroup > h1 > a::first-letter {
+/*
+  color: green;
+  background: transparent;
+*/
+}
+
+nav.group {
+  display: block;
+  margin: 0 0 1em 0;
+  padding: .2em .5em;
+  text-align: right;
+  font-size: 90%;
+}
+
+nav.group a {
+  display: inline-block;
+  padding: .2em;
+  min-width: 5em;
+  text-align: center;
+  text-decoration: none;
+}
+
+nav.group a:hover,
+nav.group a:active {
+  text-decoration: underline;
 }
 
 article.object:not([hidden]) {
@@ -186,10 +327,14 @@ list-container[key=groups] thead th {
 }
 
 list-container[key=members] th,
-list-container[key=groups] th,
 list-container[key=members] td,
+list-container[key=groups] thead th,
 list-container[key=groups] td {
   padding: .5em;
+}
+
+list-container[key=groups] tbody th {
+  padding: 0;
 }
 
 list-container[key=members] tbody tr:nth-child(2n+1),
@@ -208,6 +353,7 @@ list-container[key=groups] tbody th {
 list-container[key=members] tbody th a,
 list-container[key=groups] tbody th a {
   display: block;
+  padding: .5em;
 }
 
 list-container[key=members] td.user_status,

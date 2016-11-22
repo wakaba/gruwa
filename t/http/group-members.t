@@ -12,11 +12,11 @@ Test {
     return $current->create_group (g1 => {title => "a\x{500}", owner => 'a1', members => ['a2']});
   })->then (sub {
     return $current->are_errors (
-      ['GET', ['g', $current->o ('g1')->{group_id}, 'info.json'], {}, account => 'a1'],
+      ['GET', ['g', $current->o ('g1')->{group_id}, 'members'], {}, account => 'a1'],
       [
         {path => ['g', int rand 10000, 'members'], status => 404},
         {account => '', status => 403},
-        {account => undef, status => 403},
+        {account => undef, status => 302},
       ],
     );
   })->then (sub {

@@ -1,25 +1,20 @@
-<html t:params="$group $account $group_nav">
+<html t:params="$group $account $app" pl:data-group-url="'/g/'.$group->{group_id}">
+<head>
+  <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
+    設定
+  </t:include>
 
-<header class=group>
-  <header-area>
-    <hgroup>
-      <h1><a href=/>Gruwa</a></h1>
-      <h2><a pl:href="'/g/'.$group->{group_id}.'/'" rel=top><t:text value="$group->{title}"></a></h2>
-    </hgroup>
-  </header-area>
-  <header-area>
-    <account-name><t:text value="$account->{name}"></account-name>
-    <a href=/dashboard>ダッシュボード</>
-  </header-area>
-</header>
+<body>
+  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app m:group_nav=1 />
 
-<t:if x="$group_nav">
-  <nav class=group>
-    <a pl:href="'/g/'.$group->{group_id}.'/'">トップ</a>
-    / <a pl:href="'/g/'.$group->{group_id}.'/members'">メンバー</a>
-    / <a pl:href="'/g/'.$group->{group_id}.'/config'">設定</a>
-  </nav>
-</t:if>
+  <section>
+    <h1>日記を作成</h1>
+
+<!-- XXX -->
+<form method=post action=i/create.json>
+  <input name=title required>
+</form>
+  </section>
 
 <!--
 

@@ -304,6 +304,15 @@ sub group ($$$$) {
     };
   }
 
+  if (@$path == 3 and $path->[2] eq 'config') {
+    # /g/{}/config
+    return temma $app, 'group.config.html.tm', {
+      account => $opts->{account},
+      group => $opts->{group},
+      group_member => $opts->{group_member},
+    };
+  }
+
   return $app->throw_error (404);
 } # group
 

@@ -1,19 +1,11 @@
 <html t:params="$group $account $app" pl:data-group-url="'/g/'.$group->{group_id}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
-    トップページ
+    トップ
   </t:include>
 
 <body>
-  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app />
-
-  <ul>
-    <li><a href=members>メンバー一覧</a>
-  </ul>
-
-<form method=post action=i/create.json>
-  <input name=title required>
-</form>
+  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app m:group_nav=1 />
 
 <!--
 

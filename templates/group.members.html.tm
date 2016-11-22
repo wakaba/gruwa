@@ -8,7 +8,7 @@
   </t:include>
 
 <body>
-  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app />
+  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app m:group_nav=1 />
 
   <section>
     <h1>メンバー一覧</>

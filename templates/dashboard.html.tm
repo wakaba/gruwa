@@ -8,9 +8,16 @@
 <link rel=stylesheet href=/css/common.css>
 <script src=/js/pages.js async />
 
-<header>
-  <h1><a href=/ rel=top>Gruwa</h1>
-  <account-name><t:text value="$account->{name}"></account-name>
+<header class=common>
+  <header-area>
+    <hgroup>
+      <h1><a href=/ rel=top>Gruwa</h1>
+    </>
+  </header-area>
+  <header-area>
+    <account-name><t:text value="$account->{name}"></account-name>
+    <a href=/dashboard>ダッシュボード</>
+  </header-area>
 </header>
 
   <section>
