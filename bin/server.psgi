@@ -6,11 +6,11 @@ use Promise;
 use Promised::Flow;
 use JSON::PS;
 use Wanage::HTTP;
-use Warabe::App;
 use Dongry::Database;
 use Web::URL;
 use Web::Transport::ConnectionClient;
 
+use AppServer;
 use StaticFiles;
 use CommonPages;
 use AccountPages;
@@ -29,7 +29,7 @@ my $AccountsURL = Web::URL->parse_string ($Config->{accounts}->{url});
 
 return sub {
   my $http = Wanage::HTTP->new_from_psgi_env ($_[0]);
-  my $app = Warabe::App->new_from_http ($http);
+  my $app = AppServer->new_from_http_and_config ($http, $Config);
   $app->execute_by_promise (sub {
     warn sprintf "ACCESS: [%s] %s %s FROM %s %s\n",
         scalar gmtime,
@@ -37,7 +37,7 @@ return sub {
         $app->http->client_ip_addr->as_text,
         $app->http->get_request_header ('User-Agent') // '';
 
-    if ($Config->{origin} eq $app->http->url->ascii_origin) {
+    if ($app->config->{origin} eq $app->http->url->ascii_origin) {
       $app->http->set_response_header
           ('Strict-Transport-Security',
            'max-age=10886400; includeSubDomains; preload');
@@ -55,7 +55,7 @@ return sub {
             $path->[0] eq 'css' or
             $path->[0] eq 'js' or
             $path->[0] eq 'images') {
-          return StaticFiles->main ($app, $path, $Config, $db);
+          return StaticFiles->main ($app, $path, $db);
         }
 
         if ($path->[0] eq 'g' or
@@ -74,9 +74,9 @@ return sub {
           } $accounts->request (
             method => 'POST',
             path => ['info'],
-            bearer => $Config->{accounts}->{key},
+            bearer => $app->config->{accounts}->{key},
             params => {
-              sk_context => $Config->{accounts}->{context},
+              sk_context => $app->config->{accounts}->{context},
               sk => $app->http->request_cookies->{sk},
               #with_data => $with_profile ? [] : [],
               #with_linked => $with_linked ? 'name' : undef,
@@ -100,7 +100,7 @@ return sub {
               }
 
               if ($path->[0] eq 'g') {
-                return GroupPages->main ($app, $path, $Config, $db, $account_data);
+                return GroupPages->main ($app, $path, $db, $account_data);
               } elsif ($path->[0] eq 'dashboard') {
                 return AccountPages->dashboard ($app, $account_data);
               } else {
@@ -116,12 +116,12 @@ return sub {
               ($AccountsURL);
           return promised_cleanup {
             return $accounts->close;
-          } AccountPages->main ($app, $path, $Config, $db, $accounts);
+          } AccountPages->main ($app, $path, $db, $accounts);
         }
 
         # XXX tests
         if (@$path == 1) {
-          return CommonPages->main ($app, $path, $Config, $db);
+          return CommonPages->main ($app, $path, $db);
         }
 
         return $app->send_error (404, reason_phrase => 'Page not found');
@@ -132,7 +132,7 @@ return sub {
       });
     } else {
       # XXX tests
-      return $app->send_redirect ($Config->{origin});
+      return $app->send_redirect ($app->config->{origin});
     }
   });
 };

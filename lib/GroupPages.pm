@@ -7,8 +7,8 @@ use Dongry::Type::JSONPS;
 
 use Results;
 
-sub main ($$$$$$) {
-  my ($class, $app, $path, $config, $db, $account_data) = @_;
+sub main ($$$$$) {
+  my ($class, $app, $path, $db, $account_data) = @_;
 
   if (@$path >= 2 and $path->[1] =~ /\A[0-9]+\z/) {
     # /g/{group_id}
@@ -22,7 +22,7 @@ sub main ($$$$$$) {
       $group->{title} = Dongry::Type->parse ('text', $group->{title});
       return $class->group ($app, $path, {
         account => $account_data,
-        config => $config, db => $db, group => $group,
+        db => $db, group => $group,
       });
     });
   }

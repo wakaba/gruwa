@@ -23,8 +23,8 @@ sub static ($$$) {
   });
 } # static
 
-sub main ($$$$$) {
-  my ($class, $app, $path, $config, $db) = @_;
+sub main ($$$$) {
+  my ($class, $app, $path, $db) = @_;
 
   if (@$path == 2 and
       $path->[0] eq 'css' and $path->[1] =~ /\A[A-Za-z0-9-]+\.css\z/) {

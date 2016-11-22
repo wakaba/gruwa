@@ -20,7 +20,7 @@ input:not([type]) {
   width: 100%;
 }
 
-button {
+button:enabled {
   cursor: pointer;
 }
 
@@ -36,8 +36,12 @@ button {
   background: rgba(236, 236, 255, 0.7);
 }
 
-.edit-button:hover {
+.edit-button:hover:enabled {
   background: rgb(236, 236, 255);
+}
+
+.edit-button:disabled {
+  color: gray;
 }
 
 .save-button, .cancel-button {
@@ -55,8 +59,12 @@ button {
   background: rgb(19, 195, 19);
 }
 
-.save-button:hover {
+.save-button:hover:enabled {
   background: rgba(19, 195, 19, 0.8);
+}
+
+.save-button:disabled {
+  color: #eee;
 }
 
 .cancel-button {
@@ -64,12 +72,35 @@ button {
   background: rgb(195, 19, 19);
 }
 
-.cancel-button:hover {
+.cancel-button:hover:enabled {
   background: rgba(195, 19, 19, 0.8);
+}
+
+.cancel-button:disabled {
+  color: #eee;
 }
 
 list-container > .operations {
   margin: 0 0.5em 0.5em 0.5em;
+}
+
+header.cover h1 {
+  font-size: 500%;
+  text-align: center;
+  color: rgb(0, 190, 0);
+  background: transparent;
+  text-shadow: 3px 3px rgb(200, 250, 200);
+  font-family: cursive;
+  font-style: italic;
+}
+
+header.cover h1::first-letter {
+  color: green;
+  background: transparent;
+}
+
+nav.cover {
+  text-align: center;
 }
 
 article.object:not([hidden]) {

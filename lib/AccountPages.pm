@@ -6,8 +6,8 @@ use Web::URL;
 
 use Results;
 
-sub main ($$$$$$) {
-  my ($class, $app, $path, $config, $db, $accounts) = @_;
+sub main ($$$$$) {
+  my ($class, $app, $path, $db, $accounts) = @_;
 
   if (@$path == 2 and $path->[1] eq 'login') {
     # /account/login
@@ -15,15 +15,15 @@ sub main ($$$$$$) {
       $app->requires_same_origin;
       my $server = $app->bare_param ('server') // '';
       return $app->throw_error (400, reason_phrase => 'Bad |server|')
-          unless grep { $_ eq $server } @{$config->{accounts}->{servers}};
+          unless grep { $_ eq $server } @{$app->config->{accounts}->{servers}};
       return $accounts->request (
         method => 'POST',
         path => ['session'],
         params => {
           ## don't reuse any existing |sk| cookie for security reason
-          sk_context => $config->{accounts}->{context},
+          sk_context => $app->config->{accounts}->{context},
         },
-        bearer => $config->{accounts}->{key},
+        bearer => $app->config->{accounts}->{key},
       )->then (sub {
         my $res = $_[0];
         die $res unless $res->status == 200;
@@ -32,19 +32,19 @@ sub main ($$$$$$) {
           method => 'POST',
           path => ['login'],
           params => {
-            sk_context => $config->{accounts}->{context},
+            sk_context => $app->config->{accounts}->{context},
             sk => $json1->{sk},
             server => $server,
             callback_url => $app->http->url->resolve_string (q</account/cb>)->stringify,
             app_data => $app->text_param ('next'),
           },
-          bearer => $config->{accounts}->{key},
+          bearer => $app->config->{accounts}->{key},
         )->then (sub {
           my $res = $_[0];
           die $res unless $res->status == 200;
           my $json2 = json_bytes2perl $res->body_bytes;
           if ($json1->{set_sk}) {
-            my $url = Web::URL->parse_string ($config->{origin});
+            my $url = Web::URL->parse_string ($app->config->{origin});
             $app->http->set_response_cookie
                 (sk => $json1->{sk},
                  expires => $json1->{sk_expires},
@@ -59,7 +59,7 @@ sub main ($$$$$$) {
     } else { # GET
       $app->http->set_response_header ('X-Frame-Options' => 'sameorigin');
       return temma $app, 'account.login.html.tm', {
-        servers => $config->{accounts}->{servers},
+        servers => $app->config->{accounts}->{servers},
       };
     }
   } # /account/login
@@ -70,14 +70,14 @@ sub main ($$$$$$) {
       method => 'POST',
       path => ['cb'],
       params => {
-        sk_context => $config->{accounts}->{context},
+        sk_context => $app->config->{accounts}->{context},
         sk => $app->http->request_cookies->{sk},
         code => $app->text_param ('code'),
         state => $app->text_param ('state'),
         oauth_token => $app->text_param ('oauth_token'),
         oauth_verifier => $app->text_param ('oauth_verifier'),
       },
-      bearer => $config->{accounts}->{key},
+      bearer => $app->config->{accounts}->{key},
     )->then (sub {
       my $res = $_[0];
       if ($res->status == 200) {

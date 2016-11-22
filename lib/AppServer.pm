@@ -1,19 +1,18 @@
-package CommonPages;
+package AppServer;
 use strict;
 use warnings;
+use Warabe::App;
+push our @ISA, qw(Warabe::App);
 
-use Results;
+sub new_from_http_and_config ($$$) {
+  my $self = $_[0]->new_from_http ($_[1]);
+  $self->{app_config} = $_[2];
+  return $self;
+} # new_from_http_and_config
 
-sub main ($$$$) {
-  my ($class, $app, $path, $db) = @_;
-
-  if ($path->[0] eq '') {
-    # /
-    return temma $app, 'index.html.tm', {};
-  }
-
-  return $app->send_error (404);
-} # main
+sub config ($) {
+  return $_[0]->{app_config};
+} # config
 
 1;
 
