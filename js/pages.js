@@ -69,6 +69,9 @@ function fillFields (el, object) {
       field.textContent = value || field.getAttribute ('data-empty');
     }
   });
+  $$ (el, '[data-if-field]').forEach (function (field) {
+    field.hidden = !object[field.getAttribute ('data-if-field')];
+  });
   $$ (el, '[data-href-template]').forEach (function (field) {
     field.href = field.getAttribute ('data-href-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return object[k];

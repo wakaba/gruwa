@@ -1,11 +1,11 @@
-<html t:params="$group $account $app" pl:data-group-url="'/g/'.$group->{group_id}">
+<html t:params="$group $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     トップ
   </t:include>
 
 <body>
-  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app />
+  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:group_member=$group_member m:app=$app />
 
   <section class=page>
     <header>

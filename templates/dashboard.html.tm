@@ -35,6 +35,8 @@
           <enum-value data-field=user_status text-1=参加中 text-2=招待中 />
         <td class=owner_status>
           <enum-value data-field=owner_status text-1=承認済 text-2=未承認 />
+        <td>
+          <a href data-href-template="g/{group_id}/i/{default_index_id}/" data-if-field=default_index_id>日記</a>
       </template>
 
       <table>
@@ -44,6 +46,7 @@
             <th>種別
             <th>参加状態
             <th>参加承認
+            <th>
         <tbody>
       </table>
     </list-container>

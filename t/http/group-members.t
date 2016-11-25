@@ -52,6 +52,7 @@ Test {
       is $member->{member_type}, 0;
       is $member->{user_status}, 0;
       is $member->{owner_status}, 0;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, '';
     } $current->c;
     return $current->are_errors (
@@ -90,10 +91,11 @@ Test {
       is $member->{member_type}, 0;
       is $member->{user_status}, 3;
       is $member->{owner_status}, 0;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, '';
     } $current->c, name => 'user_status changed';
   });
-} n => 13, name => 'non-member';
+} n => 15, name => 'non-member';
 
 Test {
   my $current = shift;
@@ -116,6 +118,7 @@ Test {
       is $member->{member_type}, 1;
       is $member->{user_status}, 1;
       is $member->{owner_status}, 1;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, '';
     } $current->c;
     return $current->are_errors (
@@ -158,6 +161,7 @@ Test {
       is $member->{member_type}, 1, "not changed";
       is $member->{user_status}, 1, "same value";
       is $member->{owner_status}, 1, "not changed";
+      is $member->{group_index_id}, undef;
       is $member->{desc}, '', "not changed";
     } $current->c, name => 'not in fact changed';
   })->then (sub {
@@ -176,6 +180,7 @@ Test {
       is $member->{member_type}, 0;
       is $member->{user_status}, 2;
       is $member->{owner_status}, 1;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, '';
     } $current->c, name => 'changed (closed)';
     return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
@@ -196,6 +201,7 @@ Test {
       is $member->{member_type}, 0;
       is $member->{user_status}, 2;
       is $member->{owner_status}, 4;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, '';
     } $current->c, name => 'changed by owner';
     return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'owner');
@@ -208,10 +214,11 @@ Test {
       is $member->{member_type}, 2;
       is $member->{user_status}, 2;
       is $member->{owner_status}, 4;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, 'abc';
     } $current->c, name => 'changed by owner';
   });
-} n => 31, name => 'member';
+} n => 36, name => 'member';
 
 Test {
   my $current = shift;
@@ -235,6 +242,7 @@ Test {
       is $member->{member_type}, 2;
       is $member->{user_status}, 1;
       is $member->{owner_status}, 1;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, '';
     } $current->c;
     return $current->are_errors (
@@ -266,6 +274,7 @@ Test {
       is $member->{member_type}, 2, "not changed";
       is $member->{user_status}, 1, "same value";
       is $member->{owner_status}, 1, "not changed";
+      is $member->{group_index_id}, undef;
       is $member->{desc}, 'abcde', "a1 is owner";
     } $current->c, name => 'not in fact changed';
   })->then (sub {
@@ -284,6 +293,7 @@ Test {
       is $member->{member_type}, 2;
       is $member->{user_status}, 1;
       is $member->{owner_status}, 1;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, 'abcde';
     } $current->c, name => 'cannot be downgraded';
     return $current->are_errors (
@@ -310,6 +320,7 @@ Test {
       is $member->{member_type}, 2;
       is $member->{user_status}, 1;
       is $member->{owner_status}, 1;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, 'abcde';
     } $current->c, name => 'not changed';
     return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
@@ -330,6 +341,7 @@ Test {
       is $member->{member_type}, 0;
       is $member->{user_status}, 1;
       is $member->{owner_status}, 4;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, '';
     } $current->c, name => 'changed by owner';
     return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'owner');
@@ -342,10 +354,11 @@ Test {
       is $member->{member_type}, 2;
       is $member->{user_status}, 1;
       is $member->{owner_status}, 4;
+      is $member->{group_index_id}, undef;
       is $member->{desc}, 'abc';
     } $current->c, name => 'changed by owner';
   });
-} n => 38, name => 'owner';
+} n => 44, name => 'owner';
 
 RUN;
 

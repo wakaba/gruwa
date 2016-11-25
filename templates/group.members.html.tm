@@ -8,7 +8,7 @@
   </t:include>
 
 <body>
-  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app />
+  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:group_member=$group_member m:app=$app />
 
   <section class=page>
     <header>
@@ -69,6 +69,8 @@
               console.log (error); // XXX
             });
           ">保存</>
+        <td>
+          <a href data-href-template="i/{default_index_id}/" data-if-field=default_index_id>日記</a>
       </template>
 
       <table>
@@ -80,6 +82,7 @@
             <th>参加承認
             <th>メモ
             <th>操作
+            <th>
         <tbody>
       </table>
       </list-container>

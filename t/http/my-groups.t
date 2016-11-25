@@ -44,16 +44,33 @@ Test {
       is $g1->{user_status}, 1;
       is $g1->{owner_status}, 1;
       is $g1->{title}, "\x{500}";
+      is $g1->{default_index_id}, undef;
       my $g2 = $result->{json}->{groups}->{$current->o ('g2')->{group_id}};
       is $g2->{group_id}, $current->o ('g2')->{group_id};
       is $g2->{member_type}, 1;
       is $g2->{user_status}, 1;
       is $g2->{owner_status}, 1;
       is $g2->{title}, "\x{600}";
+      is $g2->{default_index_id}, undef;
+      like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
+    } $current->c;
+    return $current->create_index (i1 => {group => 'g1', account => 'u1'});
+  })->then (sub {
+    return $current->post_json (['i', $current->o ('i1')->{index_id}, 'my.json'], {is_default => 1}, group => 'g1', account => 'u1');
+  })->then (sub {
+    return $current->get_json (['my', 'groups.json'], {}, account => 'u1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $g1 = $result->{json}->{groups}->{$current->o ('g1')->{group_id}};
+      is $g1->{default_index_id}, $current->o ('i1')->{index_id};
+      my $g2 = $result->{json}->{groups}->{$current->o ('g2')->{group_id}};
+      is $g2->{default_index_id}, undef;
+      like $result->{res}->body_bytes, qr{"default_index_id"\s*:\s*"};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
     } $current->c;
   });
-} n => 12, name => 'has groups';
+} n => 18, name => 'has groups';
 
 Test {
   my $current = shift;
@@ -75,10 +92,11 @@ Test {
       is $g1->{member_type}, 0;
       is $g1->{user_status}, 1;
       is $g1->{owner_status}, 0;
+      is $g1->{default_index_id}, undef;
       is $g1->{title}, undef;
     } $current->c;
   });
-} n => 6, name => 'not member';
+} n => 7, name => 'not member';
 
 Test {
   my $current = shift;
@@ -102,10 +120,11 @@ Test {
       is $g1->{member_type}, 0;
       is $g1->{user_status}, 1;
       is $g1->{owner_status}, 0;
+      is $g1->{default_index_id}, undef;
       is $g1->{title}, undef;
     } $current->c;
   });
-} n => 6, name => 'no longer member';
+} n => 7, name => 'no longer member';
 
 RUN;
 

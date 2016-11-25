@@ -26,6 +26,7 @@ my $stop = TestServers->servers (
   port => $Port,
   db_name => $DBName,
   db_dir => $RootPath->child ('local/local/mysqld'),
+  migration_status_file => $RootPath->child ('local/local/migration.json'),
   config => $Config,
 )->to_cv->recv->[1];
 

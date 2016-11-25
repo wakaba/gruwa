@@ -1,4 +1,4 @@
-<html t:params="$group $account">
+<html t:params="$group $account $group_member">
 
 <header class=group>
   <header-area>
@@ -10,6 +10,9 @@
   <header-area>
     <account-name><t:text value="$account->{name}"></account-name>
     <a href=/dashboard>ダッシュボード</>
+    <t:if x="$group_member->{default_index_id}">
+      <a pl:href="'/g/'.$group->{group_id}.'/i/'.$group_member->{default_index_id}.'/'">日記</a>
+    </t:if>
   </header-area>
 </header>
 

@@ -15,17 +15,36 @@ use Web::Transport::ConnectionClient;
 
 my $RootPath = path (__FILE__)->parent->parent->parent->absolute;
 
-sub mysqld ($$$) {
-  my ($db_dir, $db_name, $set_dsn) = @_;
+sub mysqld ($$$$) {
+  my ($db_dir, $db_name, $migration_status_file, $set_dsn) = @_;
   $db_name = 'test_' . int rand 100000 unless defined $db_name;
   my $mysqld = Promised::Mysqld->new;
   $mysqld->set_db_dir ($db_dir) if defined $db_dir;
   return $mysqld->start->then (sub {
-    return promised_for {
-      return Promised::File->new_from_path ($_[0])->read_byte_string->then (sub {
-        return $mysqld->create_db_and_execute_sqls ($db_name, [grep { length } split /;/, $_[0]]);
+    if (defined $migration_status_file) {
+      my $file = Promised::File->new_from_path ($migration_status_file);
+      return $file->is_file->then (sub {
+        return unless $_[0];
+        return $file->read_byte_string->then (sub {
+          return json_bytes2perl $_[0];
+        });
       });
-    } [sort { $a cmp $b } $RootPath->child ('db')->children (qr/^gruwa-[0-9]+\.sql$/)];
+    } else {
+      return {};
+    }
+  })->then (sub {
+    my $status = $_[0];
+    return Promise->resolve->then (sub {
+      return promised_for {
+        return Promised::File->new_from_path ($_[0])->read_byte_string->then (sub {
+          return $mysqld->create_db_and_execute_sqls ($db_name, [grep { length } split /;/, $_[0]]);
+        });
+      } [sort { $a cmp $b } grep { not $status->{$_}++ } $RootPath->child ('db')->children (qr/^gruwa-[0-9]+\.sql$/)];
+    })->then (sub {
+      if (defined $migration_status_file) {
+        return Promised::File->new_from_path ($migration_status_file)->write_byte_string (perl2json_bytes $status);
+      }
+    });
   })->then (sub {
     $set_dsn->($mysqld->get_dsn_string (dbname => $db_name));
     my ($p_ok, $p_ng);
@@ -105,7 +124,7 @@ sub servers ($%) {
   my $dsn_got = Promise->new (sub { $set_dsn = $_[0] });
 
   return Promise->all ([
-    mysqld ($args{db_dir}, $args{db_name}, $set_dsn),
+    mysqld ($args{db_dir}, $args{db_name}, $args{migration_status_file}, $set_dsn),
     web ($args{port}, $args{config} // $args{config_file}, $dsn_got),
     defined $args{accounts_for_test_port} ? accounts_for_test ($args{accounts_for_test_port}) : undef,
   ])->then (sub {

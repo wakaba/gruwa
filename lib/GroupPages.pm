@@ -14,6 +14,10 @@ sub main ($$$$$) {
     # /g/{group_id}
     return $db->select ('group', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
+
+      # XXX
+      admin_status => 1,
+      owner_status => 1,
     }, fields => ['group_id', 'title', 'created', 'updated'])->then (sub {
       my $group = $_[0]->first;
       return $app->throw_error (404, reason_phrase => 'Group not found')
@@ -32,7 +36,7 @@ sub main ($$$$$) {
           ]},
           user_status => 1, # open
           owner_status => 1, # open
-        }, fields => ['member_type'])->then (sub {
+        }, fields => ['member_type', 'default_index_id'])->then (sub {
           my $membership = $_[0]->first;
           return $app->throw_error (403, reason_phrase => 'Not a group member')
               unless defined $membership;
@@ -61,6 +65,8 @@ sub main ($$$$$) {
           title => Dongry::Type->serialize ('text', $title),
           created => $time,
           updated => $time,
+          admin_status => 1, # open
+          owner_status => 1, # open
         }]),
         $db->insert ('group_member', [{
           group_id => $gid,
@@ -94,6 +100,7 @@ sub group ($$$$) {
     return temma $app, 'group.index.html.tm', {
       account => $opts->{account},
       group => $opts->{group},
+      group_member => $opts->{group_member},
     };
   } elsif (@$path == 3 and $path->[2] eq 'info.json') {
     # /g/{group_id}/info.json
@@ -127,7 +134,8 @@ sub group ($$$$) {
     # /g/{}/i/list.json
     return $db->select ('index', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
-      # XXX status
+      owner_status => 1,
+      user_status => 1,
     }, fields => ['index_id', 'title', 'updated'])->then (sub {
       return json $app, {index_list => {map {
         $_->{index_id} => {
@@ -145,6 +153,10 @@ sub group ($$$$) {
     return $db->select ('index', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
       index_id => Dongry::Type->serialize ('text', $path->[3]),
+
+      # XXX
+      owner_status => 1,
+      user_status => 1,
     }, fields => ['index_id', 'title', 'created', 'updated'])->then (sub {
       my $index = $_[0]->first;
       return $app->throw_error (404, reason_phrase => 'Index not found')
@@ -156,6 +168,7 @@ sub group ($$$$) {
         return temma $app, 'group.index.index.html.tm', {
           account => $opts->{account},
           group => $opts->{group},
+          group_member => $opts->{group_member},
           index => $index,
         };
       } elsif (@$path == 5 and $path->[4] eq 'info.json') {
@@ -185,11 +198,30 @@ sub group ($$$$) {
         })->then (sub {
           return json $app, {};
         });
+      } elsif (@$path == 5 and $path->[4] eq 'my.json') {
+        # /g/{group_id}/i/{index_id}/my.json
+        $app->requires_request_method ({POST => 1});
+        $app->requires_same_origin;
+        my @p;
+        my $is_default = $app->bare_param ('is_default');
+        if (defined $is_default) {
+          push @p, $db->update ('group_member', {
+            default_index_id => ($is_default ? Dongry::Type->serialize ('text', $path->[3]) : 0),
+            updated => time,
+          }, where => {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            account_id => Dongry::Type->serialize ('text', $opts->{account}->{account_id}),
+          });
+        }
+        return Promise->all (\@p)->then (sub {
+          return json $app, {};
+        });
       } elsif (@$path == 5 and $path->[4] eq 'config') {
         # /g/{group_id}/i/{index_id}/config
         return temma $app, 'group.index.config.html.tm', {
           account => $opts->{account},
           group => $opts->{group},
+          group_member => $opts->{group_member},
           index => $index,
         };
       } else {
@@ -214,12 +246,15 @@ sub group ($$$$) {
         title => Dongry::Type->serialize ('text', $title),
         created => $time,
         updated => $time,
+        owner_status => 1, # open
+        user_status => 1, # open
       }])->then (sub {
         return json $app, {
           group_id => $path->[1],
           index_id => ''.$index_id,
         };
         # XXX logging
+        # touch group
       });
     });
   }
@@ -230,6 +265,10 @@ sub group ($$$$) {
     return $db->select ('object', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
       object_id => Dongry::Type->serialize ('text', $path->[3]),
+
+      # XXX
+      owner_status => 1,
+      user_status => 1,
     }, fields => ['object_id', 'title', 'data'])->then (sub {
       my $object = $_[0]->first;
       return $app->throw_error (404, reason_phrase => 'Object not found')
@@ -241,6 +280,7 @@ sub group ($$$$) {
         return temma $app, 'group.object.html.tm', {
           account => $opts->{account},
           group => $opts->{group},
+          group_member => $opts->{group_member},
           object => $object,
         };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
@@ -252,6 +292,8 @@ sub group ($$$$) {
           return $db->select ('index', {
             group_id => Dongry::Type->serialize ('text', $path->[1]),
             index_id => {-in => $index_ids},
+            owner_status => 1, # open
+            user_status => 1, # open
           }, fields => ['index_id'])->then (sub {
             my $has_index = {map { $_->{index_id} => 1 } @{$_[0]->all}};
             for (@$index_ids) {
@@ -324,6 +366,10 @@ sub group ($$$$) {
       return $db->select ('object', {
         group_id => Dongry::Type->serialize ('text', $path->[1]),
         object_id => {-in => $object_ids},
+
+        # XXX
+        owner_status => 1,
+        user_status => 1,
       }, fields => ['object_id', 'title', 'data', 'created', 'updated'])->then (sub {
         return $_[0]->all;
       });
@@ -357,6 +403,8 @@ sub group ($$$$) {
         data => '{"index_ids":{},"title":"","body":""}',
         created => $time,
         updated => $time,
+        owner_status => 1, # open
+        user_status => 1, # open
       }])->then (sub {
         return json $app, {
           object_id => ''.$object_id,
@@ -439,6 +487,7 @@ sub group_members_json ($) {
         account_id => Dongry::Type->serialize ('text', $account_id),
         created => time, updated => time,
         member_type => 0, user_status => 0, owner_status => 0, desc => '',
+        default_index_id => 0,
         %update,
       }], duplicate => {
         map {
@@ -451,13 +500,14 @@ sub group_members_json ($) {
   } else { # GET
     return $db->select ('group_member', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
-    }, fields => ['account_id', 'member_type', 'owner_status', 'user_status', 'desc'])->then (sub {
+    }, fields => ['account_id', 'member_type', 'owner_status', 'user_status', 'desc', 'default_index_id'])->then (sub {
       my $members = {map {
         $_->{account_id} => {
           account_id => ''.$_->{account_id},
           member_type => $_->{member_type},
           owner_status => $_->{owner_status},
           user_status => $_->{user_status},
+          default_index_id => ($_->{default_index_id} ? ''.$_->{default_index_id} : undef),
           desc => Dongry::Type->parse ('text', $_->{desc}),
         };
       } @{$_[0]->all}};
@@ -475,6 +525,7 @@ sub group_members_json ($) {
             member_type => 0,
             owner_status => $current->{owner_status} || 0,
             user_status => $current->{user_status} || 0,
+            default_index_id => undef,
             desc => '',
           },
         }};
@@ -482,8 +533,6 @@ sub group_members_json ($) {
     });
   } # GET
 } # group_members_json
-
-# XXX *_status columns
 
 1;
 

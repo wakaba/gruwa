@@ -137,13 +137,14 @@ sub mymain ($$$$$) {
       return {} unless $account_data->{has_account};
       return $db->select ('group_member', {
         account_id => Dongry::Type->serialize ('text', $account_data->{account_id}),
-      }, fields => ['group_id', 'member_type', 'user_status', 'owner_status'])->then (sub {
+      }, fields => ['group_id', 'member_type', 'user_status', 'owner_status', 'default_index_id'])->then (sub {
         return {map {
           $_->{group_id} => {
             group_id => ''.$_->{group_id},
             member_type => ($_->{owner_status} == 1 ? $_->{member_type} : 0),
             user_status => $_->{user_status},
             owner_status => ($_->{owner_status} == 1 ? $_->{owner_status} : 0),
+            default_index_id => ($_->{owner_status} == 1 ? $_->{default_index_id} ? ''.$_->{default_index_id} : undef : undef),
           };
         } @{$_[0]->all}};
       });
@@ -154,7 +155,10 @@ sub mymain ($$$$$) {
       return $groups unless @$allowed_groups;
       return $db->select ('group', {
         group_id => {-in => $allowed_groups},
-        # XXX admin_status
+
+        # XXX
+        admin_status => 1, # open
+        owner_status => 1, # open
       }, fields => ['title', 'group_id'])->then (sub {
         my %title;
         for (@{$_[0]->all}) {

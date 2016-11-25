@@ -74,11 +74,12 @@ summary {
 }
 
 p {
-  margin: 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 form {
-  margin: 0 1em;
+  margin: 0 1em 1em;
   border: 1px solid;
   border-color: var(--main-border-color);
   color: var(--main-color);
@@ -282,6 +283,10 @@ header.group > header-area > hgroup > h1 > a {
   display: inline-block;
   font-family: cursive;
   font-style: italic;
+}
+
+header.group > header-area account-name::after {
+  content: " ▶ ";
 }
 
 section.page {
