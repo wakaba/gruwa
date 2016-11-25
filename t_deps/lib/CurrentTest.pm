@@ -252,7 +252,7 @@ sub resolve ($$) {
 } # resolve
 
 sub o ($$) {
-  return $_[0]->{objects}->{$_[1]} // die "No object |$_[1]|";
+  return $_[0]->{objects}->{$_[1]} // die "No object |$_[1]|", Carp::longmess;
 } # o
 
 sub are_errors ($$$) {
@@ -274,7 +274,7 @@ sub are_errors ($$$) {
     );
     $opt{path} = [
       (
-        exists $opt{group}
+        defined $opt{group}
           ? ('g', $self->_group ($opt{group})->{group_id})
           : ()
       ),

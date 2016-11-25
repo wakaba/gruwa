@@ -14,7 +14,7 @@ sub main ($$$$$) {
     # /g/{group_id}
     return $db->select ('group', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
-    }, fields => ['group_id', 'title'])->then (sub {
+    }, fields => ['group_id', 'title', 'created', 'updated'])->then (sub {
       my $group = $_[0]->first;
       return $app->throw_error (404, reason_phrase => 'Group not found')
           unless defined $group;
@@ -101,7 +101,26 @@ sub group ($$$$) {
     return json $app, {
       group_id => ''.$g->{group_id},
       title => $g->{title},
+      created => $g->{created},
+      updated => $g->{updated},
     };
+  } elsif (@$path == 3 and $path->[2] eq 'edit.json') {
+    # /g/{group_id}/edit.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+    my %update = (updated => time);
+    my $title = $app->text_param ('title') // '';
+    $update{title} = Dongry::Type->serialize ('text', $title)
+        if length $title;
+    return Promise->resolve->then (sub {
+      return unless 1 < keys %update;
+      return $db->update ('group', \%update, where => {
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
+      });
+      # XXX logging
+    })->then (sub {
+      return json $app, {};
+    });
   }
 
   if (@$path == 4 and $path->[2] eq 'i' and $path->[3] eq 'list.json') {
@@ -148,6 +167,31 @@ sub group ($$$$) {
           created => $index->{created},
           updated => $index->{updated},
         };
+      } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
+        # /g/{group_id}/i/{index_id}/edit.json
+        $app->requires_request_method ({POST => 1});
+        $app->requires_same_origin;
+        my %update = (updated => time);
+        my $title = $app->text_param ('title') // '';
+        $update{title} = Dongry::Type->serialize ('text', $title)
+            if length $title;
+        return Promise->resolve->then (sub {
+          return unless 1 < keys %update;
+          return $db->update ('index', \%update, where => {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            index_id => Dongry::Type->serialize ('text', $path->[3]),
+          });
+          # XXX logging
+        })->then (sub {
+          return json $app, {};
+        });
+      } elsif (@$path == 5 and $path->[4] eq 'config') {
+        # /g/{group_id}/i/{index_id}/config
+        return temma $app, 'group.index.config.html.tm', {
+          account => $opts->{account},
+          group => $opts->{group},
+          index => $index,
+        };
       } else {
         return $app->throw_error (404);
       }
@@ -175,6 +219,7 @@ sub group ($$$$) {
           group_id => $path->[1],
           index_id => ''.$index_id,
         };
+        # XXX logging
       });
     });
   }

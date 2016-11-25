@@ -1,7 +1,8 @@
-<html t:params="$group $account $app" pl:data-group-url="'/g/'.$group->{group_id}">
+<html t:params="$group $index $account $app" pl:data-group-url="'/g/'.$group->{group_id}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
-    設定
+    設定 -
+    <t:text value="$index->{title}">
   </t:include>
 
 <body>
@@ -9,47 +10,25 @@
 
   <section class=page>
     <header>
-      <h1><a href=./><t:text value="$group->{title}"></a></h1>
+      <h1><a href=./><t:text value="$index->{title}"></a></h1>
       <nav>
         <a href=./>トップ</a>
-        / <a href=members>メンバー</a>
         / <a href=config class=active>設定</a>
       </nav>
     </header>
 
     <section>
-      <h1>グループ設定</>
-      <form action=javascript: data-action=edit.json id=edit-form>
+      <h1>日記の設定</>
+      <form action=javascript: pl:data-action="'i/'.$index->{index_id}.'/edit.json'" id=edit-form>
         <table class=config>
           <tbody>
             <tr>
-              <th><label for=edit-title>グループ名</>
-              <td><input name=title pl:value="$group->{title}">
+              <th><label for=edit-title>日記の題名</>
+              <td><input name=title pl:value="$index->{title}">
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>
       </form>
-    </section>
-
-    <section>
-      <h1>作成</h1>
-
-      <details>
-        <summary>日記の作成</summary>
-
-        <form method=post action=javascript: data-action=i/create.json
-            data-href-template=/g/{group_id}/i/{index_id}/>
-          <table class=config>
-            <tbody>
-              <tr>
-                <th><label for=create-title>日記の題名</>
-                <td><input name=title id=create-title required>
-          </table>
-
-          <p class=operations>
-            <button type=submit class=save-button>作成する</>
-        </form>
-      </details>
     </section>
   </section>
 

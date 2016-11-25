@@ -80,9 +80,9 @@ p {
 form {
   margin: 0 1em;
   border: 1px solid;
-  border-color: var(--accented-border-color);
-  color: var(--accented-color);
-  background-color: var(--accented-background-color);
+  border-color: var(--main-border-color);
+  color: var(--main-color);
+  background-color: var(--main-background-color);
   padding: 1em;
 }
 

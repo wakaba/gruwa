@@ -40,8 +40,8 @@
       <main data-data-field=body data-field-type=html></main>
       <footer>
         <p>
-          <time data-field=created />
-          (<time data-field=updated /> 編集)
+          <time data-field=created class=ambtime />
+          (<time data-field=updated class=ambtime /> 編集)
           <button type=button class=edit-button>編集</button>
       </footer>
     </article>
