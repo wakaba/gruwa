@@ -114,7 +114,7 @@ function upgradeList (el) {
         }
         article.setAttribute ('data-index-list', ids.join (' '));
         article.updateView = function () {
-          fillFields (article, field);
+          fillFields (article, object);
         }; // updateView
         article.updateView ();
       });

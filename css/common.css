@@ -1,3 +1,33 @@
+html {
+  color: black;
+  background-color: white;
+
+  --dark-background-color: green;
+  --dark-color: white;
+
+  --light-1-background-color: rgb(225, 255, 225);
+  --light-1-color: black;
+  --light-1-shadow-color: #ccc;
+
+  --light-2-background-color: rgb(245, 255, 245);
+  --light-2-color: black;
+  --light-2-shadow-color: #ccc;
+
+  --main-border-color: rgb(205, 255, 205); /* XXX rgb(200, 200, 255); */
+  --main-color: black;
+  --main-background-color: white;
+
+  --accented-color: black;
+  --accented-border-color: green;
+  --accented-background-color: transparent;
+
+  --link-color: rgb(0, 0, 238);
+  --link-background-color: transparent;
+
+  --visited-color: purple;
+  --visited-background-color: transparent;
+}
+
 body {
   margin: 0;
 }
@@ -11,11 +41,12 @@ section {
 section > h1 {
   display: block;
   margin: 0 0 1rem 0;
-  border-bottom: 1px solid green;
+  border-bottom: 1px solid;
+  border-color: var(--accented-border-color);
   padding: 0.3em;
   font-size: 130%;
-  color: black;
-  background: transparent;
+  color: var(--accented-color);
+  background-color: var(--accented-background-color);
 }
 
 h1 a {
@@ -43,12 +74,15 @@ summary {
 }
 
 p {
-
+  margin: 0;
 }
 
 form {
   margin: 0 1em;
-  border: green 1px solid;
+  border: 1px solid;
+  border-color: var(--accented-border-color);
+  color: var(--accented-color);
+  background-color: var(--accented-background-color);
   padding: 1em;
 }
 
@@ -60,13 +94,13 @@ form {
 .config th {
   width: 20%;
   text-align: right;
-  background: rgb(225, 255, 225);
-  color: black;
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
 }
 
 .config th:nth-child(2n) {
-  background: rgb(245, 255, 245);
-  color: black;
+  background-color: var(--light-2-background-color);
+  color: var(--light-2-color);
 }
 
 .config th, .config td {
@@ -181,8 +215,8 @@ header.common,
 header.group {
   display: table;
   width: 100%;
-  background: green;
-  color: white;
+  background: var(--dark-background-color);
+  color: var(--dark-color);
 }
 
 header.common ~ *,
@@ -246,20 +280,8 @@ header.group > header-area > hgroup > * a {
 header.common > header-area > hgroup > h1 > a,
 header.group > header-area > hgroup > h1 > a {
   display: inline-block;
-/*
-  color: rgb(0, 190, 0);
-  background: transparent;
-*/
   font-family: cursive;
   font-style: italic;
-}
-
-header.common > header-area > hgroup > h1 > a::first-letter,
-header.group > header-area > hgroup > h1 > a::first-letter {
-/*
-  color: green;
-  background: transparent;
-*/
 }
 
 section.page {
@@ -276,14 +298,14 @@ section.page > header {
   display: block;
   margin: 0 0 1em 0;
   padding: 4em 2em 4em 2em;
-  background: rgb(230, 255, 230);
-  color: black;
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
 }
 
 section.page > header h1 {
   margin: 0;
   font-size: 160%;
-  text-shadow: 2px 2px #ccc;
+  text-shadow: 2px 2px var(--light-1-shadow-color);
 }
 
 section.page nav {
@@ -335,13 +357,13 @@ list-container[key=index_list] a:not(:hover) {
 
 list-container[key=index_list] a strong {
   text-decoration: underline;
-  color: rgb(0, 0, 238);
-  background: transparent;
+  color: var(--link-color);
+  background-color: var(--link-background-color);
 }
 
 list-container[key=index_list] a:visited strong {
-  color: purple;
-  background: transparent;
+  color: var(--visited-color);
+  background-color: var(--visited-background-color);
 }
 
 list-container[key=index_list] list-container[key=objects] {
@@ -356,7 +378,10 @@ list-container[key=index_list] list-container[key=objects] a {
 
 article.object:not([hidden]) {
   margin: 0 0.5em 1em 0.5em;
-  border: 1px solid rgb(200, 200, 255);
+  border: 1px solid;
+  border-color: var(--main-border-color);
+  color: var(--main-color);
+  background-color: var(--main-background-color);
   padding: .5em;
 }
 
@@ -375,7 +400,10 @@ article.object.editing > edit-container {
 article.object > header h1 {
   display: block;
   margin: 0;
-  border-left: .3em solid blue;
+  border-left: .3em solid;
+  border-color: var(--accented-border-color);
+  background-color: var(--accented-background-color);
+  color: var(--accented-color);
   padding-left: .5em;
   font-size: 120%;
   line-height: 1.4;
@@ -398,6 +426,10 @@ edit-container [contenteditable]:empty[data-placeholder]::after {
 
 edit-container p {
   margin: 0;
+}
+
+edit-container > form {
+  border-style: none;
 }
 
 article.object > main,
@@ -444,14 +476,20 @@ list-container[key=groups] td {
   padding: .5em;
 }
 
-list-container[key=groups] tbody th {
-  padding: 0;
+list-container[key=members] tbody tr,
+list-container[key=groups] tbody tr {
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
 }
 
 list-container[key=members] tbody tr:nth-child(2n+1),
 list-container[key=groups] tbody tr:nth-child(2n+1) {
-  background: rgb(245, 255, 245);
-  color: black;
+  background-color: var(--light-2-background-color);
+  color: var(--light-2-color);
+}
+
+list-container[key=groups] tbody th {
+  padding: 0;
 }
 
 list-container[key=members] tbody th,

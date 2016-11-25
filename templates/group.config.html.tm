@@ -11,9 +11,9 @@
     <header>
       <h1><a href=./><t:text value="$group->{title}"></a></h1>
       <nav>
-        <a pl:href="'/g/'.$group->{group_id}.'/'">トップ</a>
-        / <a pl:href="'/g/'.$group->{group_id}.'/members'">メンバー</a>
-        / <a pl:href="'/g/'.$group->{group_id}.'/config'" class=active>設定</a>
+        <a href=./>トップ</a>
+        / <a href=members>メンバー</a>
+        / <a href=config class=active>設定</a>
       </nav>
     </header>
 
