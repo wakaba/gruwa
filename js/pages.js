@@ -51,6 +51,11 @@ function fillFields (el, object) {
       return object[k];
     });
   });
+  $$ (el, '[data-src-template]').forEach (function (field) {
+    field.setAttribute ('src', field.getAttribute ('data-src-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+      return object[k];
+    }));
+  });
   $$ (el, '[data-data-field]').forEach (function (field) {
             var value = object.data[field.getAttribute ('data-data-field')];
             var type = field.getAttribute ('data-field-type');
@@ -107,13 +112,28 @@ function upgradeList (el) {
     }
     if (!template || !main) return;
 
-    Object.values (objects).forEach (function (object) {
+    var listObjects = Object.values (objects);
+
+    var sorter;
+    var sortKey = el.getAttribute ('sortkey');
+    if (sortKey === 'updated') {
+      sorter = function (a, b) { return b.updated - a.updated };
+    }
+    if (sorter) listObjects = listObjects.sort (sorter);
+
+    var max = el.getAttribute ('max');
+    if (max) {
+      listObjects = listObjects.slice (0, parseInt (max));
+    }
+
+    var itemType = el.getAttribute ('listitemtype');
+    listObjects.forEach (function (object) {
       var item = document.createElement (type === 'table' ? 'tr' : 'list-item');
       item.appendChild (template.content.cloneNode (true));
-      if (type === 'table') {
-        fillFields (item, object);
-      } else {
+      if (itemType === 'object') {
         fillObject (item, object);
+      } else {
+        fillFields (item, object);
       }
       main.appendChild (item);
     });
@@ -280,6 +300,8 @@ function saveObject (article, form, object) {
     Array.prototype.forEach.call (m.addedNodes, function (x) {
       if (x.localName === 'list-container') {
         upgradeList (x);
+      } else {
+        $$ (x, 'list-container').forEach (upgradeList);
       }
     });
   });

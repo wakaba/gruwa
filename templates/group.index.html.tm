@@ -7,6 +7,32 @@
 <body>
   <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app m:group_nav=1 />
 
+  <section class=page>
+    <header>
+      <h1><t:text value="$group->{title}"></h1>
+    </header>
+
+    <list-container src=i/list.json key=index_list sortkey=updated>
+      <template>
+        <p>
+          <a href data-href-template="i/{index_id}/">
+            <time data-field=updated />
+            <strong data-field=title></strong>
+          </a>
+          <list-container data-src-template="o/get.json?index_id={index_id}" key=objects max=5>
+            <template>
+              <a href data-href-template="o/{object_id}">
+                <strong data-field=title data-empty=■ />
+                (<time data-field=updated class=ambtime />)
+              </a>
+            </template>
+            <list-main/>
+          </list-container>
+      </template>
+      <list-main/>
+    </list-container>
+  </section>
+
 <!--
 
 Copyright 2016 Wakaba <wakaba@suikawiki.org>.

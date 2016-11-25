@@ -29,7 +29,7 @@
   </form>
 </template>
 
-<list-container pl:index="$index->{index_id}">
+<list-container pl:index="$index->{index_id}" listitemtype=object>
   <template>
     <article class=object>
       <header class=edit-by-dblclick>

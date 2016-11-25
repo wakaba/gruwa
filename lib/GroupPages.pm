@@ -105,6 +105,23 @@ sub group ($$$$) {
     };
   }
 
+  # XXX test
+  if (@$path == 4 and $path->[2] eq 'i' and $path->[3] eq 'list.json') {
+    # /g/{}/i/list.json
+    return $db->select ('index', {
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+      # XXX status
+    }, fields => ['index_id', 'title', 'updated'])->then (sub {
+      return json $app, {index_list => [map {
+        +{
+          index_id => ''.$_->{index_id},
+          title => Dongry::Type->parse ('text', $_->{title}),
+          updated => $_->{updated},
+        };
+      } @{$_[0]->all}]};
+    });
+  }
+
   # XXX tests
   if (@$path >= 4 and $path->[2] eq 'i' and $path->[3] =~ /\A[0-9]+\z/) {
     # /g/{group_id}/i/{index_id}
@@ -251,6 +268,7 @@ sub group ($$$$) {
     })->then (sub {
       my $object_ids = $_[0];
       return [] unless @$object_ids;
+# XXX with_*
       return $db->select ('object', {
         group_id => Dongry::Type->serialize ('text', $path->[1]),
         object_id => {-in => $object_ids},

@@ -225,6 +225,7 @@ header.group > header-area > hgroup > h1 > a::first-letter {
 
 nav.group {
   display: block;
+  float: right;
   margin: 0 0 1em 0;
   padding: .2em .5em;
   text-align: right;
@@ -242,6 +243,64 @@ nav.group a {
 nav.group a:hover,
 nav.group a:active {
   text-decoration: underline;
+}
+
+section.page {
+  margin: 0;
+}
+
+section.page > header {
+  display: block;
+  margin: 0 0 1em 0;
+  padding: 4em 2em;
+  background: rgb(230, 255, 230);
+  color: black;
+}
+
+section.page > header h1 {
+  margin: 0;
+  font-size: 160%;
+  text-shadow: 2px 2px #ccc;
+}
+
+list-container[key=index_list] {
+  display: block;
+}
+
+list-container[key=index_list] p {
+  margin: 0;
+}
+
+list-container[key=index_list] a {
+  display: block;
+  padding: .5em;
+  text-decoration: none;
+}
+
+list-container[key=index_list] a:not(:hover) {
+  color: inherit;
+  background: transparent;
+}
+
+list-container[key=index_list] a strong {
+  text-decoration: underline;
+  color: rgb(0, 0, 238);
+  background: transparent;
+}
+
+list-container[key=index_list] a:visited strong {
+  color: purple;
+  background: transparent;
+}
+
+list-container[key=index_list] list-container[key=objects] {
+  display: block;
+  margin: 0.5rem 1rem;
+  font-size: 80%;
+}
+
+list-container[key=index_list] list-container[key=objects] a {
+  display: inline;
 }
 
 article.object:not([hidden]) {
