@@ -9,45 +9,46 @@ Test {
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_group (g1 => {members => ['a1']});
   })->then (sub {
+    return $current->create_group (g2 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1', title => "\x{900}"});
+  })->then (sub {
     return $current->are_errors (
-      ['POST', ['i', 'create.json'], {
-         title => "\x{500}",
-       }, account => 'a1', group => $current->o ('g1')],
+      ['GET', ['i', $current->o ('i1')->{index_id}, ''], {}, group => 'g1', account => 'a1'],
       [
-        {method => 'GET', status => 405},
-        {path => ['g', '5445444', 'i', 'create.json'], group => undef, status => 404},
-        {origin => undef, status => 400, name => 'no origin'},
-        {origin => 'null', status => 400, name => 'null origin'},
-        {account => undef, status => 403, name => 'no account'},
-        {account => '', status => 403, name => 'not member'},
-        {params => {title => ''}, status => 400, name => 'Empty title'},
-        {params => {title => undef}, status => 400, name => 'No title'},
+        {path => ['i', '435444', ''], status => 404},
+        {group => 'g2', status => 404},
+        {account => undef, status => 302},
+        {account => '', status => 403},
       ],
     );
   })->then (sub {
-    return $current->post_json (['i', 'create.json'], {
-      title => "\x{500}",
-    }, account => 'a1', group => $current->o ('g1'));
+    return $current->get_html (['i', $current->o ('i1')->{index_id}, ''], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['i', $current->o ('i1')->{index_id}, 'info.json'], {}, group => 'g1', account => 'a1'],
+      [
+        {path => ['i', '435444', 'info.json'], status => 404},
+        {group => 'g2', status => 404},
+        {account => undef, status => 403},
+        {account => '', status => 403},
+      ],
+    );
+  })->then (sub {
+    return $current->get_json (['i', $current->o ('i1')->{index_id}, 'info.json'], {}, group => 'g1', account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
       is $result->{json}->{group_id}, $current->o ('g1')->{group_id};
-      ok $result->{json}->{index_id};
+      is $result->{json}->{index_id}, $current->o ('i1')->{index_id};
+      is $result->{json}->{title}, "\x{900}";
+      ok $result->{json}->{created};
+      is $result->{json}->{updated}, $result->{json}->{created};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
       like $result->{res}->body_bytes, qr{"index_id"\s*:\s*"};
     } $current->c;
-    return $current->index ({group_id => $current->o ('g1')->{group_id},
-                             index_id => $result->{json}->{index_id}},
-                            account => 'a1');
-  })->then (sub {
-    my $index = $_[0];
-    test {
-      is $index->{title}, "\x{500}";
-      ok $index->{created};
-      is $index->{updated}, $index->{created};
-    } $current->c;
   });
-} n => 8, name => 'create';
+} n => 9, name => 'info';
 
 RUN;
 

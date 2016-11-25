@@ -112,6 +112,7 @@ sub group ($$$$) {
     }, fields => ['index_id', 'title', 'updated'])->then (sub {
       return json $app, {index_list => {map {
         $_->{index_id} => {
+          group_id => $path->[1],
           index_id => ''.$_->{index_id},
           title => Dongry::Type->parse ('text', $_->{title}),
           updated => $_->{updated},
@@ -120,7 +121,6 @@ sub group ($$$$) {
     });
   }
 
-  # XXX tests
   if (@$path >= 4 and $path->[2] eq 'i' and $path->[3] =~ /\A[0-9]+\z/) {
     # /g/{group_id}/i/{index_id}
     return $db->select ('index', {

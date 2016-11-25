@@ -36,6 +36,45 @@ Test {
   });
 } n => 3, name => '/g/{}/i/list.json empty';
 
+Test {
+  my $current = shift;
+  return $current->create_account (ao => {})->then (sub {
+    return $current->create_account (am => {});
+  })->then (sub {
+    return $current->create_group (g1 => {title => "a\x{500}", owner => 'ao', members => ['am']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1',
+                                          account => 'am',
+                                          title => "ab\x{4000}"});
+  })->then (sub {
+    return $current->get_json (['i', 'list.json'], {}, account => 'am', group => $current->o ('g1'));
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{index_list}}, 1;
+      my $index = $result->{json}->{index_list}->{$current->o ('i1')->{index_id}};
+      is $index->{group_id}, $current->o ('g1')->{group_id};
+      is $index->{index_id}, $current->o ('i1')->{index_id};
+      is $index->{title}, "ab\x{4000}";
+      ok $index->{updated};
+      like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
+      like $result->{res}->body_bytes, qr{"index_id"\s*:\s*"};
+    } $current->c;
+  })->then (sub {
+    return $current->get_json (['i', 'list.json'], {}, account => 'ao', group => $current->o ('g1'));
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{index_list}}, 1;
+      my $index = $result->{json}->{index_list}->{$current->o ('i1')->{index_id}};
+      is $index->{group_id}, $current->o ('g1')->{group_id};
+      is $index->{index_id}, $current->o ('i1')->{index_id};
+      is $index->{title}, "ab\x{4000}";
+      ok $index->{updated};
+    } $current->c;
+  });
+} n => 12, name => '/g/{}/i/list.json has an item';
+
 RUN;
 
 =head1 LICENSE

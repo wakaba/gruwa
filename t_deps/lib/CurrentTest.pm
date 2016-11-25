@@ -28,7 +28,7 @@ sub get_html ($$;$%) {
   $path = [
     (
       defined $args{group}
-        ? ('g', $args{group}->{group_id})
+        ? ('g', $self->_group ($args{group})->{group_id})
         : ()
     ),
     @$path,
@@ -57,7 +57,7 @@ sub get_json ($$;$%) {
   $path = [
     (
       defined $args{group}
-        ? ('g', $args{group}->{group_id})
+        ? ('g', $self->_group ($args{group})->{group_id})
         : ()
     ),
     @$path,
@@ -87,7 +87,7 @@ sub post_json ($$$;%) {
   $path = [
     (
       defined $args{group}
-        ? ('g', $args{group}->{group_id})
+        ? ('g', $self->_group ($args{group})->{group_id})
         : ()
     ),
     @$path,
@@ -175,6 +175,27 @@ sub group ($$;%) {
   });
 } # group
 
+sub _group ($$) {
+  my $self = $_[0];
+  if (ref $_[1]) {
+    return $_[1];
+  } else {
+    return $self->o ($_[1]);
+  }
+} # _group
+
+sub create_index ($$$) {
+  my ($self, $name, $opts) = @_;
+  return $self->post_json (['i', 'create.json'], {
+    title => $opts->{title} // rand,
+  },
+    account => ($opts->{account} // die "No |account|"),
+    group => ($opts->{group} // die "No |group|"),
+  )->then (sub {
+    $self->{objects}->{$name // 'X'} = $_[0]->{json};
+  });
+} # create_index
+
 sub index ($$;%) {
   my ($self, $index, %args) = @_;
   return $self->get_json (['i', $index->{index_id}, 'info.json'], {}, account => $args{account}, group => $index)->then (sub {
@@ -254,7 +275,7 @@ sub are_errors ($$$) {
     $opt{path} = [
       (
         exists $opt{group}
-          ? ('g', $opt{group}->{group_id})
+          ? ('g', $self->_group ($opt{group})->{group_id})
           : ()
       ),
       @{$opt{path}},
