@@ -47,13 +47,21 @@
         <tbody>
       </table>
     </list-container>
+
+    <details>
+      <summary>グループの作成</summary>
+
+      <form method=post action=javascript: data-action=g/create.json
+          data-href-template=/g/{group_id}/config>
+        <table class=config>
+          <tbody>
+            <tr>
+              <th><label for=create-title>グループ名</>
+              <td><input name=title id=create-title required>
+        </table>
+
+        <p class=operations>
+          <button type=submit class=save-button>作成する</>
+      </form>
+    </details>
   </section>
-
-<section>
-  <h1>グループの作成</>
-
-  <!-- XXX -->
-<form method=post action=/g/create.json>
-  <input name=title required>
-</form>
-</section>

@@ -5,17 +5,22 @@
   </t:include>
 
 <body>
-  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app m:group_nav=1 />
+  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app />
 
   <section class=page>
     <header>
-      <h1><t:text value="$group->{title}"></h1>
+      <h1><a href=./><t:text value="$group->{title}"></a></h1>
+      <nav>
+        <a pl:href="'/g/'.$group->{group_id}.'/'" class=active>トップ</a>
+        / <a pl:href="'/g/'.$group->{group_id}.'/members'">メンバー</a>
+        / <a pl:href="'/g/'.$group->{group_id}.'/config'">設定</a>
+      </nav>
     </header>
 
     <list-container src=i/list.json key=index_list sortkey=updated>
       <template>
         <p>
-          <a href data-href-template="i/{index_id}/">
+          <a href data-href-template="i/{index_id}/#{updated}">
             <time data-field=updated />
             <strong data-field=title></strong>
           </a>

@@ -1,4 +1,4 @@
-<html t:params="$group $account $group_nav">
+<html t:params="$group $account">
 
 <header class=group>
   <header-area>
@@ -12,14 +12,6 @@
     <a href=/dashboard>ダッシュボード</>
   </header-area>
 </header>
-
-<t:if x="$group_nav">
-  <nav class=group>
-    <a pl:href="'/g/'.$group->{group_id}.'/'">トップ</a>
-    / <a pl:href="'/g/'.$group->{group_id}.'/members'">メンバー</a>
-    / <a pl:href="'/g/'.$group->{group_id}.'/config'">設定</a>
-  </nav>
-</t:if>
 
 <!--
 

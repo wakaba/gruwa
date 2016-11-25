@@ -8,10 +8,20 @@
   </t:include>
 
 <body>
-  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app m:group_nav=1 />
+  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app />
 
-  <section>
-    <h1>メンバー一覧</>
+  <section class=page>
+    <header>
+      <h1><a href=./><t:text value="$group->{title}"></a></h1>
+      <nav>
+        <a pl:href="'/g/'.$group->{group_id}.'/'">トップ</a>
+        / <a pl:href="'/g/'.$group->{group_id}.'/members'" class=active>メンバー</a>
+        / <a pl:href="'/g/'.$group->{group_id}.'/config'">設定</a>
+      </nav>
+    </header>
+
+    <section>
+      <h1>メンバー一覧</>
 
     <list-container type=table src=members.json key=members>
       <template>
@@ -72,7 +82,8 @@
             <th>操作
         <tbody>
       </table>
-    </list-container>
+      </list-container>
+    </section>
   </section>
 
 <!--

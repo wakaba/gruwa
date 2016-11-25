@@ -7,13 +7,36 @@
 <body>
   <t:include path=_group_header.html.tm m:group=$group m:account=$account m:app=$app m:group_nav=1 />
 
-  <section>
-    <h1>日記を作成</h1>
+  <section class=page>
+    <header>
+      <h1><a href=./><t:text value="$group->{title}"></a></h1>
+      <nav>
+        <a pl:href="'/g/'.$group->{group_id}.'/'">トップ</a>
+        / <a pl:href="'/g/'.$group->{group_id}.'/members'">メンバー</a>
+        / <a pl:href="'/g/'.$group->{group_id}.'/config'" class=active>設定</a>
+      </nav>
+    </header>
 
-<!-- XXX -->
-<form method=post action=i/create.json>
-  <input name=title required>
-</form>
+    <section>
+      <h1>作成</h1>
+
+      <details>
+        <summary>日記の作成</summary>
+
+        <form method=post action=javascript: data-action=i/create.json
+            data-href-template=/g/{group_id}/i/{index_id}/>
+          <table class=config>
+            <tbody>
+              <tr>
+                <th><label for=create-title>日記の題名</>
+                <td><input name=title id=create-title required>
+          </table>
+
+          <p class=operations>
+            <button type=submit class=save-button>作成する</>
+        </form>
+      </details>
+    </section>
   </section>
 
 <!--

@@ -172,6 +172,7 @@ sub group ($$$$) {
         updated => $time,
       }])->then (sub {
         return json $app, {
+          group_id => $path->[1],
           index_id => ''.$index_id,
         };
       });

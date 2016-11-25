@@ -3,14 +3,37 @@ function $$ (n, s) {
 } // $$
 
 function gFetch (pathquery, opts) {
+  var body;
+  if (opts.formData) {
+    body = opts.formData;
+  } else if (opts.form) {
+    body = new FormData (opts.form);
+  }
+  var disabledControls = [];
+  if (opts.form) {
+    disabledControls = $$ (opts.form, 'input:enabled, select:enabled, textarea:enabled, button:enabled');
+    disabledControls.forEach (function (control) {
+      control.disabled = true;
+    });
+  }
   return fetch ((document.documentElement.getAttribute ('data-group-url') || '') + '/' + pathquery, {
     credentials: "same-origin",
     method: opts.post ? 'POST' : 'GET',
-    body: opts.formData, // or undefined
+    body: body,
     referrerPolicy: 'origin',
   }).then (function (res) {
     if (res.status !== 200) throw res;
     return res.json ();
+  }).then (function (json) {
+    if (!opts.keepDisabled) disabledControls.forEach (function (control) {
+      control.disabled = false;
+    });
+    return json;
+  }, function (error) {
+    disabledControls.forEach (function (control) {
+      control.disabled = false;
+    });
+    throw error;
   });
 } // gFetch
 
@@ -295,6 +318,21 @@ function saveObject (article, form, object) {
   });
 } // saveObject
 
+function upgradeForm (form) {
+  form.onsubmit = function () {
+    var nextURL = form.getAttribute ('data-href-template');
+    gFetch (form.getAttribute ('data-action'), {post: true, form: this, keepDisabled: nextURL}).then (function (json) {
+      if (nextURL) {
+        location.href = nextURL.replace (/\{(\w+)\}/g, function (_, key) {
+          return json[key];
+        });
+      }
+    }, function (error) {
+      console.log (error); // XXX
+    });
+  };
+} // upgradeForm
+
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {
     Array.prototype.forEach.call (m.addedNodes, function (x) {
@@ -303,7 +341,16 @@ function saveObject (article, form, object) {
       } else {
         $$ (x, 'list-container').forEach (upgradeList);
       }
+      if (x.localName === 'form') {
+        if (x.getAttribute ('action') === 'javascript' &&
+            x.hasAttribute ('data-action')) {
+          upgradeForm (x);
+        }
+      } else {
+        $$ (x, 'form[action="javascript:"][data-action]').forEach (upgradeForm);
+      }
     });
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
 $$ (document, 'list-container').forEach (upgradeList);
+$$ (document, 'form[action="javascript:"][data-action]').forEach (upgradeForm);
