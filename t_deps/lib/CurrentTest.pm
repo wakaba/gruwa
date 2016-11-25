@@ -25,6 +25,14 @@ sub client ($) {
 
 sub get_html ($$;$%) {
   my ($self, $path, $params, %args) = @_;
+  $path = [
+    (
+      defined $args{group}
+        ? ('g', $args{group}->{group_id})
+        : ()
+    ),
+    @$path,
+  ];
   my $cookies = {%{$args{cookies} or {}}};
   return $self->_account ($args{account})->then (sub {
     $cookies->{sk} = $_[0]->{cookies}->{sk}; # or undef
@@ -46,6 +54,14 @@ sub get_html ($$;$%) {
 
 sub get_json ($$;$%) {
   my ($self, $path, $params, %args) = @_;
+  $path = [
+    (
+      defined $args{group}
+        ? ('g', $args{group}->{group_id})
+        : ()
+    ),
+    @$path,
+  ];
   my $cookies = {%{$args{cookies} or {}}};
   return $self->_account ($args{account})->then (sub {
     $cookies->{sk} = $_[0]->{cookies}->{sk}; # or undef
@@ -68,6 +84,14 @@ sub get_json ($$;$%) {
 
 sub post_json ($$$;%) {
   my ($self, $path, $params, %args) = @_;
+  $path = [
+    (
+      defined $args{group}
+        ? ('g', $args{group}->{group_id})
+        : ()
+    ),
+    @$path,
+  ];
   my $cookies = {%{$args{cookies} or {}}};
   return $self->_account ($args{account})->then (sub {
     $cookies->{sk} = $_[0]->{cookies}->{sk}; # or undef
@@ -151,6 +175,13 @@ sub group ($$;%) {
   });
 } # group
 
+sub index ($$;%) {
+  my ($self, $index, %args) = @_;
+  return $self->get_json (['i', $index->{index_id}, 'info.json'], {}, account => $args{account}, group => $index)->then (sub {
+    return $_[0]->{json};
+  });
+} # index
+
 sub accounts_client ($) {
   my $self = $_[0];
   return $self->{accounts_client}
@@ -220,6 +251,14 @@ sub are_errors ($$$) {
       %$test,
       headers => {Origin => $self->client->origin->to_ascii},
     );
+    $opt{path} = [
+      (
+        exists $opt{group}
+          ? ('g', $opt{group}->{group_id})
+          : ()
+      ),
+      @{$opt{path}},
+    ];
     $opt{cookies} = {%{$opt{cookies} or {}}};
     $opt{headers}->{Origin} = $opt{origin} if exists $opt{origin};
     push @p, $self->_account ($opt{account})->then (sub {

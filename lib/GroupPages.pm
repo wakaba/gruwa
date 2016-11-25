@@ -89,7 +89,6 @@ sub group ($$$$) {
   my ($class, $app, $path, $opts) = @_;
   my $db = $opts->{db};
 
-  # XXX tests
   if (@$path == 3 and $path->[2] eq '') {
     # /g/{group_id}/
     return temma $app, 'group.index.html.tm', {
@@ -105,20 +104,19 @@ sub group ($$$$) {
     };
   }
 
-  # XXX test
   if (@$path == 4 and $path->[2] eq 'i' and $path->[3] eq 'list.json') {
     # /g/{}/i/list.json
     return $db->select ('index', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
       # XXX status
     }, fields => ['index_id', 'title', 'updated'])->then (sub {
-      return json $app, {index_list => [map {
-        +{
+      return json $app, {index_list => {map {
+        $_->{index_id} => {
           index_id => ''.$_->{index_id},
           title => Dongry::Type->parse ('text', $_->{title}),
           updated => $_->{updated},
         };
-      } @{$_[0]->all}]};
+      } @{$_[0]->all}}};
     });
   }
 
@@ -128,7 +126,7 @@ sub group ($$$$) {
     return $db->select ('index', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
       index_id => Dongry::Type->serialize ('text', $path->[3]),
-    }, fields => ['index_id', 'title'])->then (sub {
+    }, fields => ['index_id', 'title', 'created', 'updated'])->then (sub {
       my $index = $_[0]->first;
       return $app->throw_error (404, reason_phrase => 'Index not found')
           unless defined $index;
@@ -141,13 +139,21 @@ sub group ($$$$) {
           group => $opts->{group},
           index => $index,
         };
+      } elsif (@$path == 5 and $path->[4] eq 'info.json') {
+        # /g/{group_id}/i/{index_id}/info.json
+        return json $app, {
+          group_id => $path->[1],
+          index_id => ''.$index->{index_id},
+          title => $index->{title},
+          created => $index->{created},
+          updated => $index->{updated},
+        };
       } else {
         return $app->throw_error (404);
       }
     });
   }
 
-  # XXX tests
   if (@$path == 4 and $path->[2] eq 'i' and $path->[3] eq 'create.json') {
     # /g/{group_id}/i/create.json
     $app->requires_request_method ({POST => 1});

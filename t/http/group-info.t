@@ -9,7 +9,9 @@ Test {
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_account (a2 => {});
   })->then (sub {
-    return $current->create_group (g1 => {title => "a\x{500}", owner => 'a1'});
+    return $current->create_account (a3 => {});
+  })->then (sub {
+    return $current->create_group (g1 => {title => "a\x{500}", owner => 'a1', members => ['a3']});
   })->then (sub {
     return $current->are_errors (
       ['GET', ['g', $current->o ('g1')->{group_id}, 'info.json'], {}, account => 'a1'],
@@ -29,9 +31,17 @@ Test {
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
       is $result->{json}->{title}, "a\x{500}";
     } $current->c;
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'info.json'], {}, account => 'a3');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{status}, 200;
+      is $result->{json}->{group_id}, $current->o ('g1')->{group_id};
+      like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
+      is $result->{json}->{title}, "a\x{500}";
+    } $current->c;
   });
-  # XXX other member can also get
-} n => 5, name => '/g/{}/info.json';
+} n => 9, name => '/g/{}/info.json';
 
 RUN;
 
