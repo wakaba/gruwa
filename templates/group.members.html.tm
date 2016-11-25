@@ -1,7 +1,8 @@
 <html t:params="$group $account $app $group_member"
-  pl:data-group-url="'/g/'.$group->{group_id}"
-  pl:data-account="$account->{account_id}"
-  pl:data-group-member-type="$group_member->{member_type}">
+    pl:data-group-url="'/g/'.$group->{group_id}"
+    pl:data-account="$account->{account_id}"
+    pl:data-group-member-type="$group_member->{member_type}"
+    pl:data-theme="$group->{options}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     メンバー一覧

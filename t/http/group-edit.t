@@ -67,6 +67,32 @@ Test {
   });
 } n => 2, name => 'title undef';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1'], title => "6"});
+  })->then (sub {
+    return $current->post_json (['edit.json'], {theme => ''}, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->group ($current->o ('g1'), account => 'a1');
+  })->then (sub {
+    my $group = $_[0];
+    test {
+      is $group->{theme}, 'green';
+      is $group->{updated}, $group->{created};
+    } $current->c;
+    return $current->post_json (['edit.json'], {theme => 'red'}, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->group ($current->o ('g1'), account => 'a1');
+  })->then (sub {
+    my $group = $_[0];
+    test {
+      is $group->{theme}, 'red';
+      ok $group->{updated} > $group->{created};
+    } $current->c;
+  });
+} n => 4, name => 'theme';
+
 RUN;
 
 =head1 LICENSE

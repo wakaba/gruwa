@@ -76,6 +76,36 @@ Test {
   });
 } n => 2, name => 'title undef';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_group (g2 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1', title => "\x{900}"});
+  })->then (sub {
+    return $current->post_json (['i', $current->o ('i1')->{index_id}, 'edit.json'], {theme => ''}, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->index ($current->o ('i1'), account => 'a1');
+  })->then (sub {
+    my $index = $_[0];
+    test {
+      is $index->{theme}, "green";
+      is $index->{updated}, $index->{created};
+    } $current->c;
+    return $current->post_json (['i', $current->o ('i1')->{index_id}, 'edit.json'], {theme => 'black'}, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->index ($current->o ('i1'), account => 'a1');
+  })->then (sub {
+    my $index = $_[0];
+    test {
+      is $index->{theme}, "black";
+      ok $index->{updated} > $index->{created};
+    } $current->c;
+  });
+} n => 4, name => 'theme';
+
 RUN;
 
 =head1 LICENSE

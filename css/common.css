@@ -1,4 +1,4 @@
-html {
+html { /* [data-thema=green] */
   color: black;
   background-color: white;
 
@@ -13,7 +13,7 @@ html {
   --light-2-color: black;
   --light-2-shadow-color: #ccc;
 
-  --main-border-color: rgb(205, 255, 205); /* XXX rgb(200, 200, 255); */
+  --main-border-color: rgb(205, 255, 205);
   --main-color: black;
   --main-background-color: white;
 
@@ -25,6 +25,52 @@ html {
   --link-background-color: transparent;
 
   --visited-color: purple;
+  --visited-background-color: transparent;
+}
+
+html[data-theme=blue] {
+  --dark-background-color: #0c0ca9;
+  --light-1-background-color: rgb(225, 225, 255);
+  --light-2-background-color: rgb(245, 245, 255);
+  --main-border-color: rgb(200, 200, 255);
+  --accented-border-color: #0c0ca9;
+}
+
+html[data-theme=red] {
+  --dark-background-color: #e40000;
+  --light-1-background-color: rgb(255, 225, 225);
+  --light-2-background-color: rgb(255, 245, 245);
+  --main-border-color: rgb(255, 200, 200);
+  --accented-border-color: #e40000;
+}
+
+html[data-theme=black] {
+  background-color: black;
+  color: #eee;
+
+  --dark-background-color: #ddd;
+  --dark-color: black;
+
+  --light-1-background-color: #333;
+  --light-1-color: #eee;
+  --light-1-shadow-color: #666;
+
+  --light-2-background-color: #444;
+  --light-2-color: #eee;
+  --light-2-shadow-color: #666;
+
+  --main-border-color: gray;
+  --main-color: #eee;
+  --main-background-color: black;
+
+  --accented-color: #eee;
+  --accented-border-color: #eee;
+  --accented-background-color: transparent;
+
+  --link-color: #9595ff;
+  --link-background-color: transparent;
+
+  --visited-color: #e6b4e6;
   --visited-background-color: transparent;
 }
 
@@ -47,12 +93,6 @@ section > h1 {
   font-size: 130%;
   color: var(--accented-color);
   background-color: var(--accented-background-color);
-}
-
-h1 a {
-  color: inherit;
-  background: transparent;
-  text-decoration: none;
 }
 
 section > * {
@@ -117,6 +157,17 @@ form {
 input:not([type]) {
   box-sizing: border-box;
   width: 100%;
+  border: dotted 1px;
+  border-color: var(--main-border-color);
+  padding: .5em;
+  color: var(--main-color);
+  background-color: var(--main-background-color);
+}
+
+select {
+  color: var(--main-color);
+  background-color: var(--main-background-color);
+  min-width: 10em;
 }
 
 button:enabled {
@@ -179,10 +230,28 @@ button:enabled {
   color: #eee;
 }
 
+a:link {
+  color: var(--link-color);
+  background-color: var(--link-background-color);
+}
+
+a:visited {
+  color: var(--visited-color);
+  background-color: var(--visited-background-color);
+}
+
 a:hover,
 a:active {
   color: black;
   background: #ffa;
+  text-shadow: none;
+}
+
+h1 a:link,
+h1 a:visited {
+  color: inherit;
+  background: transparent;
+  text-decoration: none;
 }
 
 list-container {
@@ -240,7 +309,7 @@ header.group > header-area + header-area {
 
 header.common > header-area > a,
 header.group > header-area > a {
-  color: white;
+  color: inherit;
   background: transparent;
   text-decoration: none;
 }
@@ -337,7 +406,7 @@ section.page nav a:active {
 
 section.page nav a.active {
   font-weight: bolder;
-  color: black;
+  color: inherit;
   background: transparent;
 }
 
@@ -369,6 +438,12 @@ list-container[key=index_list] a strong {
 list-container[key=index_list] a:visited strong {
   color: var(--visited-color);
   background-color: var(--visited-background-color);
+}
+
+list-container[key=index_list] a:hover strong,
+list-container[key=index_list] a:active strong {
+  color: inherit;
+  background-color: transparent;
 }
 
 list-container[key=index_list] list-container[key=objects] {
@@ -465,12 +540,14 @@ list-container[key=groups] table {
 
 list-container[key=members] thead,
 list-container[key=groups] thead {
-  border-bottom: 3px green solid;
+  border-bottom: 3px solid;
+  border-color: var(--accented-border-color);
 }
 
 list-container[key=members] thead th,
 list-container[key=groups] thead th {
-  color: green;
+  color: var(--accented-color);
+  background-color: var(--accented-background-color);
   font-weight: bolder;
 }
 

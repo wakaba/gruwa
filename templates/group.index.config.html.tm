@@ -1,4 +1,5 @@
-<html t:params="$group $index $group_member $account $app" pl:data-group-url="'/g/'.$group->{group_id}">
+<html t:params="$group $index $group_member $account $app" pl:data-group-url="'/g/'.$group->{group_id}"
+    pl:data-theme="$index->{options}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     設定 -
@@ -25,6 +26,15 @@
             <tr>
               <th><label for=edit-title>日記の題名</>
               <td><input name=title pl:value="$index->{title}" id=edit-title>
+            <tr>
+              <th><label for=edit-theme>配色</>
+              <td>
+                <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) ">
+                  <option value=green pl:selected="$index->{options}->{theme} eq 'green'?'':undef">緑
+                  <option value=blue pl:selected="$index->{options}->{theme} eq 'blue'?'':undef">青
+                  <option value=red pl:selected="$index->{options}->{theme} eq 'red'?'':undef">赤
+                  <option value=black pl:selected="$index->{options}->{theme} eq 'black'?'':undef">黒
+                </select>
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>

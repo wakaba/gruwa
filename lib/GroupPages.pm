@@ -18,11 +18,12 @@ sub main ($$$$$) {
       # XXX
       admin_status => 1,
       owner_status => 1,
-    }, fields => ['group_id', 'title', 'created', 'updated'])->then (sub {
+    }, fields => ['group_id', 'title', 'created', 'updated', 'options'])->then (sub {
       my $group = $_[0]->first;
       return $app->throw_error (404, reason_phrase => 'Group not found')
           unless defined $group;
       $group->{title} = Dongry::Type->parse ('text', $group->{title});
+      $group->{options} = Dongry::Type->parse ('json', $group->{options});
 
       if (@$path == 3 and $path->[2] eq 'members.json') {
         return $class->group_members_json ($app, $path, $db, $group, $account_data);
@@ -67,6 +68,7 @@ sub main ($$$$$) {
           updated => $time,
           admin_status => 1, # open
           owner_status => 1, # open
+          options => '{"theme":"green"}',
         }]),
         $db->insert ('group_member', [{
           group_id => $gid,
@@ -110,6 +112,7 @@ sub group ($$$$) {
       title => $g->{title},
       created => $g->{created},
       updated => $g->{updated},
+      theme => $g->{options}->{theme},
     };
   } elsif (@$path == 3 and $path->[2] eq 'edit.json') {
     # /g/{group_id}/edit.json
@@ -119,6 +122,13 @@ sub group ($$$$) {
     my $title = $app->text_param ('title') // '';
     $update{title} = Dongry::Type->serialize ('text', $title)
         if length $title;
+    my $theme = $app->text_param ('theme') // '';
+    if (length $theme) {
+      my $options = $opts->{group}->{options};
+      $options->{theme} = $theme;
+      $update{options} = Dongry::Type->serialize ('json', $options);
+      # XXX need transaction for editing options :-<
+    }
     return Promise->resolve->then (sub {
       return unless 1 < keys %update;
       return $db->update ('group', \%update, where => {
@@ -157,11 +167,12 @@ sub group ($$$$) {
       # XXX
       owner_status => 1,
       user_status => 1,
-    }, fields => ['index_id', 'title', 'created', 'updated'])->then (sub {
+    }, fields => ['index_id', 'title', 'created', 'updated', 'options'])->then (sub {
       my $index = $_[0]->first;
       return $app->throw_error (404, reason_phrase => 'Index not found')
           unless defined $index;
       $index->{title} = Dongry::Type->parse ('text', $index->{title});
+      $index->{options} = Dongry::Type->parse ('json', $index->{options});
 
       if (@$path == 5 and $path->[4] eq '') {
         # /g/{group_id}/i/{index_id}/
@@ -179,6 +190,7 @@ sub group ($$$$) {
           title => $index->{title},
           created => $index->{created},
           updated => $index->{updated},
+          theme => $index->{options}->{theme},
         };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/i/{index_id}/edit.json
@@ -188,6 +200,13 @@ sub group ($$$$) {
         my $title = $app->text_param ('title') // '';
         $update{title} = Dongry::Type->serialize ('text', $title)
             if length $title;
+        my $theme = $app->text_param ('theme') // '';
+        if (length $theme) {
+          my $options = $opts->{group}->{options};
+          $options->{theme} = $theme;
+          $update{options} = Dongry::Type->serialize ('json', $options);
+          # XXX need transaction for editing options :-<
+        }
         return Promise->resolve->then (sub {
           return unless 1 < keys %update;
           return $db->update ('index', \%update, where => {
@@ -248,6 +267,7 @@ sub group ($$$$) {
         updated => $time,
         owner_status => 1, # open
         user_status => 1, # open
+        options => '{"theme":"green"}',
       }])->then (sub {
         return json $app, {
           group_id => $path->[1],

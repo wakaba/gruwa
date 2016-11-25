@@ -1,4 +1,5 @@
-<html t:params="$group $index $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}">
+<html t:params="$group $index $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
+    pl:data-theme="$index->{options}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     <t:text value="$index->{title}">
