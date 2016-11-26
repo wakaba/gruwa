@@ -21,6 +21,7 @@
 <template id=edit-form-template>
   <form method=post action=javascript:>
     <header>
+      <input type=date name=timestamp required>
       <p><input name=title placeholder=題名>
     </header>
     <main class=control data-name=body data-placeholder=本文 contenteditable></main>
@@ -32,7 +33,7 @@
   </form>
 </template>
 
-<list-container pl:index="$index->{index_id}" listitemtype=object>
+<list-container pl:index="$index->{index_id}" listitemtype=object grouped key=objects>
   <template>
     <article class=object>
       <header class=edit-by-dblclick>
@@ -48,13 +49,15 @@
     </article>
   </template>
 
-  <p class=operations><button type=button class=edit-button onclick="editObject (this, null)" data-article=#new-object data-list=list-container>新しい記事</button></p>
+      <p class=operations><button type=button class=edit-button onclick="editObject (this, null)" data-article=#new-object data-list=list-container>新しい記事</button></p>
 
-  <article class=object id=new-object hidden pl:data-index-list="$index->{index_id}" />
+      <article class=object id=new-object hidden pl:data-index-list="$index->{index_id}" />
 
-  <list-main></list-main>
-</list-container>
+      <list-main></list-main>
 
+      <p class=operations>
+        <button type=button class=next-page-button hidden>もっと昔</button>
+    </list-container>
 
   </section>
 

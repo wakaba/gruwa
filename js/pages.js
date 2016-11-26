@@ -49,8 +49,12 @@ function fillFields (el, object) {
       field.value = value;
     } else if (field.localName === 'time') {
       var date = new Date (parseFloat (value) * 1000);
-      field.setAttribute ('datetime', date.toISOString ());
-      field.textContent = date.toLocaleString ();
+      try {
+        field.setAttribute ('datetime', date.toISOString ());
+        field.textContent = date.toLocaleString ();
+      } catch (e) {
+        console.log (e); // XXX
+      }
     } else if (field.localName === 'enum-value') {
       var v = field.getAttribute ('text-' + value);
       field.setAttribute ('value', value);
@@ -83,21 +87,27 @@ function fillFields (el, object) {
     }));
   });
   $$ (el, '[data-data-field]').forEach (function (field) {
-            var value = object.data[field.getAttribute ('data-data-field')];
-            var type = field.getAttribute ('data-field-type');
+    var value = object.data[field.getAttribute ('data-data-field')];
+    if (field.localName === 'time') {
+      var date = new Date (parseFloat (value) * 1000);
+      try {
+        field.setAttribute ('datetime', date.toISOString ());
+        field.textContent = date.toLocaleString ();
+      } catch (e) {
+        console.log (e); // XXX
+      }
+    } else {
+      var type = field.getAttribute ('data-field-type');
             if (type === 'html') {
               field.innerHTML = value; // XXX sandbox
             } else {
               field.textContent = value || field.getAttribute ('data-empty') || '';
             }
-          });
+    }
+  });
 } // fillFields
 
-function upgradeList (el) {
-  if (el.upgraded) return;
-  el.upgraded = true;
-
-  var fillObject = function (item, object) {
+function fillObject (item, object) {
       $$ (item, '.edit-button').forEach (function (button) {
         button.onclick = function () {
           editObject (this, object);
@@ -121,13 +131,17 @@ function upgradeList (el) {
         }; // updateView
         article.updateView ();
       });
-  }; // fillObject
+  } // fillObject
+
+function upgradeList (el) {
+  if (el.upgraded) return;
+  el.upgraded = true;
 
   el.clearObjects = function () {
     var main = $$ (this, 'list-main')[0];
     if (main) main.textContent = '';
   }; // clearObjects
-  el.showObjects = function (objects) {
+  el.showObjects = function (objects, opts) {
     var template = $$ (this, 'template')[0];
     var type = el.getAttribute ('type');
     var main;
@@ -140,52 +154,127 @@ function upgradeList (el) {
 
     var listObjects = Object.values (objects);
 
-    var sorter;
-    var sortKey = el.getAttribute ('sortkey');
-    if (sortKey === 'updated') {
-      sorter = function (a, b) { return b.updated - a.updated };
-    }
-    if (sorter) listObjects = listObjects.sort (sorter);
-
-    var max = el.getAttribute ('max');
-    if (max) {
-      listObjects = listObjects.slice (0, parseInt (max));
-    }
-
     var itemType = el.getAttribute ('listitemtype');
-    listObjects.forEach (function (object) {
-      var item = document.createElement (type === 'table' ? 'tr' : 'list-item');
-      item.appendChild (template.content.cloneNode (true));
-      if (itemType === 'object') {
-        fillObject (item, object);
-      } else {
-        fillFields (item, object);
+    if (el.hasAttribute ('grouped')) {
+      var grouped = {};
+      listObjects.forEach (function (object) {
+        var date = new Date ((object.data.timestamp || 0) * 1000);
+        var key = date.getUTCFullYear () + '-' + date.getUTCMonth () + '-' + date.getUTCDate ();
+        grouped[key] = grouped[key] || [];
+        grouped[key].push (object);
+      });
+
+      Object.keys (grouped).sort (function (a, b) {
+        return (grouped[b][0].data.timestamp || 0) -
+               (grouped[a][0].data.timestamp || 0);
+      }).forEach (function (key) {
+        grouped[key] = grouped[key].sort (function (a, b) {
+          return b.created - a.created;
+        });
+
+        var section = document.createElement ('section');
+        var h = document.createElement ('h1');
+        var t = document.createElement ('time');
+        var date = new Date ((grouped[key][0].data.timestamp || 0) * 1000);
+        try {
+          t.setAttribute ('datetime', date.toISOString ());
+        } catch (e) {
+          console.log (e); // XXX
+        }
+        t.textContent = date.getUTCFullYear () + '/' + (date.getUTCMonth () + 1) + '/' + date.getUTCDate (); // XXX
+        h.appendChild (t);
+        section.appendChild (h);
+
+        grouped[key].forEach (function (object) {
+          var item = document.createElement (type === 'table' ? 'tr' : 'list-item');
+          item.appendChild (template.content.cloneNode (true));
+          if (itemType === 'object') {
+            fillObject (item, object);
+          } else {
+            fillFields (item, object);
+          }
+          section.appendChild (item);
+        });
+        if (opts.prepend) {
+          main.insertBefore (section, main.firstChild);
+        } else {
+          main.appendChild (section);
+        }
+      });
+    } else { // not grouped
+      var sorter;
+      var sortKey = el.getAttribute ('sortkey');
+      if (sortKey === 'updated') {
+        sorter = function (a, b) { return b.updated - a.updated };
       }
-      main.appendChild (item);
-    });
+      if (sorter) listObjects = listObjects.sort (sorter);
+
+      var max = el.getAttribute ('max');
+      if (max) {
+        listObjects = listObjects.slice (0, parseInt (max));
+      }
+
+      listObjects.forEach (function (object) {
+        var item = document.createElement (type === 'table' ? 'tr' : 'list-item');
+        item.appendChild (template.content.cloneNode (true));
+        if (itemType === 'object') {
+          fillObject (item, object);
+        } else {
+          fillFields (item, object);
+        }
+        main.appendChild (item);
+      });
+    } // not grouped
   }; // showObjects
 
-  return Promise.resolve ().then (function () {
+  var nextRef = null;
+  var load = function () {
     var url;
     var index = el.getAttribute ('index');
-    var key;
     if (index) {
-      url = 'o/get.json?index_id=' + index;
-      key = 'objects';
+      url = 'o/get.json?with_data=1&index_id=' + index;
+      if (nextRef) url += '&ref=' + nextRef;
     } else {
       url = el.getAttribute ('src');
-      key = el.getAttribute ('key');
     }
     if (url) {
       return gFetch (url, {}).then (function (json) {
-        el.clearObjects ();
-        el.showObjects (json[key]);
+        return json;
       });
     } else {
-      el.clearObjects ();
+      return Promise.resolve ({});
     }
+  }; // load
+
+  var show = function (json) {
+    var key = el.getAttribute ('key');
+    el.showObjects (json[key], {});
+    if (json.next_ref && nextRef !== json.next_ref) {
+      nextRef = json.next_ref;
+      $$ (el, '.next-page-button').forEach (function (button) {
+        button.hidden = false;
+      });
+    } else {
+      $$ (el, '.next-page-button').forEach (function (button) {
+        button.hidden = true;
+      });
+    }
+  }; // show
+
+  load ().then (function (json) {
+    el.clearObjects ();
+    show (json);
   }).catch (function (error) {
     console.log (error); // XXX
+  });
+
+  $$ (el, '.next-page-button').forEach (function (button) {
+    // XXX progress
+    button.onclick = function () {
+      load ().then (show).catch (function (error) {
+        console.log (error); // XXX
+      });
+    };
   });
 } // upgradeList
 
@@ -241,6 +330,13 @@ function editObject (optEl, object) {
       $$ (form, 'input[name]:not([type])').forEach (function (control) {
         control.value = object.data[control.name];
       });
+      $$ (form, 'input[name][type=date]').forEach (function (control) {
+        control.valueAsNumber = object.data[control.name] * 1000;
+      });
+    } else {
+      $$ (form, 'input[name=timestamp]').forEach (function (control) {
+        control.valueAsDate = new Date;
+      });
     }
 
     // XXX autosave
@@ -269,9 +365,9 @@ function editObject (optEl, object) {
           article.updateView ();
         } else {
           container.remove ();
-          return gFetch ('o/get.json?object_id=' + objectId, {}).then (function (json) {
+          return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
             var list = $$ (document, optEl.getAttribute ('data-list'))[0];
-            list.showObjects (json.objects);
+            list.showObjects (json.objects, {prepend: true});
           });
         }
       }, function (error) {
@@ -289,7 +385,7 @@ function editObject (optEl, object) {
 
 function saveObject (article, form, object) {
   // XXX if not modified
-  var fd = new FormData (form);
+  var fd = new FormData;
   var c = [];
   $$ (form, '.control[data-name]').forEach (function (control) {
     var name = control.getAttribute ('data-name');
@@ -297,10 +393,16 @@ function saveObject (article, form, object) {
     fd.append (name, value);
     if (object) c.push (function () { object.data[name] = value });
   });
-  $$ (form, 'input[name]:not([type])').forEach (function (control) {
+  $$ (form, 'input[name]:not([type]), input[name][type=hidden]').forEach (function (control) {
     var name = control.name;
     var value = control.value;
-    //fd.append (name, value);
+    fd.append (name, value);
+    if (object) c.push (function () { object.data[name] = value });
+  });
+  $$ (form, 'input[name][type=date]').forEach (function (control) {
+    var name = control.name;
+    var value = control.valueAsNumber / 1000;
+    fd.append (name, value);
     if (object) c.push (function () { object.data[name] = value });
   });
   return Promise.resolve ().then (function () {

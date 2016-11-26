@@ -15,8 +15,8 @@ use Web::Transport::ConnectionClient;
 
 my $RootPath = path (__FILE__)->parent->parent->parent->absolute;
 
-sub mysqld ($$$$) {
-  my ($db_dir, $db_name, $migration_status_file, $set_dsn) = @_;
+sub mysqld ($$$$$) {
+  my ($db_dir, $db_name, $migration_status_file, $dumped_file, $set_dsn) = @_;
   $db_name = 'test_' . int rand 100000 unless defined $db_name;
   my $mysqld = Promised::Mysqld->new;
   $mysqld->set_db_dir ($db_dir) if defined $db_dir;
@@ -34,9 +34,11 @@ sub mysqld ($$$$) {
     }
   })->then (sub {
     my $status = $_[0];
+    my $changed = 0;
     return Promise->resolve->then (sub {
       return promised_for {
         return Promised::File->new_from_path ($_[0])->read_byte_string->then (sub {
+          $changed = 1;
           return $mysqld->create_db_and_execute_sqls ($db_name, [grep { length } split /;/, $_[0]]);
         });
       } [sort { $a cmp $b } grep { not $status->{$_}++ } $RootPath->child ('db')->children (qr/^gruwa-[0-9]+\.sql$/)];
@@ -44,6 +46,28 @@ sub mysqld ($$$$) {
       if (defined $migration_status_file) {
         return Promised::File->new_from_path ($migration_status_file)->write_byte_string (perl2json_bytes $status);
       }
+    })->then (sub {
+      return unless defined $dumped_file;
+      return unless $changed;
+      my $opts = $mysqld->get_dsn_options;
+      my @opt = ('--no-data');
+      push @opt, '-u' . $opts->{user} if defined $opts->{user};
+      push @opt, '-p' . $opts->{password} if defined $opts->{password};
+      push @opt, '-h' . $opts->{host} if defined $opts->{host};
+      push @opt, '-P' . $opts->{port} if defined $opts->{port};
+      push @opt, '-S' . $opts->{mysql_socket} if defined $opts->{mysql_socket};
+      my $cmd = Promised::Command->new ([
+        'mysqldump',
+        @opt,
+        $db_name,
+      ]);
+      $cmd->stdout (\my $dumped);
+      return $cmd->run->then (sub {
+        return $cmd->wait;
+      })->then (sub {
+        die $_[0] unless $_[0]->exit_code == 0;
+        return Promised::File->new_from_path ($dumped_file)->write_byte_string ($dumped);
+      });
     });
   })->then (sub {
     $set_dsn->($mysqld->get_dsn_string (dbname => $db_name));
@@ -124,7 +148,7 @@ sub servers ($%) {
   my $dsn_got = Promise->new (sub { $set_dsn = $_[0] });
 
   return Promise->all ([
-    mysqld ($args{db_dir}, $args{db_name}, $args{migration_status_file}, $set_dsn),
+    mysqld ($args{db_dir}, $args{db_name}, $args{migration_status_file}, $args{dumped_file}, $set_dsn),
     web ($args{port}, $args{config} // $args{config_file}, $dsn_got),
     defined $args{accounts_for_test_port} ? accounts_for_test ($args{accounts_for_test_port}) : undef,
   ])->then (sub {

@@ -305,6 +305,7 @@ sub group ($$$$) {
         };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/o/{object_id}/edit.json
+        # XXX |edit_index_id|
         my $index_ids = $app->bare_param_list ('index_id');
         my $time = time;
         return Promise->resolve->then (sub {
@@ -323,8 +324,10 @@ sub group ($$$$) {
           });
         })->then (sub {
           # XXX revision
+          # XXX ignore unspecified fields
           $object->{data}->{title} = $app->text_param ('title') // '';
           $object->{data}->{body} = $app->text_param ('body') // '';
+          $object->{data}->{timestamp} = 0+($app->bare_param ('timestamp') || 0);
           $object->{data}->{index_ids} = {map { $_ => 1 } @$index_ids};
 
           return unless @$index_ids;
@@ -335,8 +338,11 @@ sub group ($$$$) {
                 index_id => $_,
                 object_id => Dongry::Type->serialize ('text', $path->[3]),
                 created => $time,
-               };
-            } @$index_ids], duplicate => 'ignore'),
+                timestamp => $object->{data}->{timestamp},
+              };
+            } @$index_ids], duplicate => {
+              timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
+            }),
             $db->delete ('index_object', {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
               index_id => {-not_in => $index_ids},
@@ -348,6 +354,7 @@ sub group ($$$$) {
           return $db->update ('object', {
             title => Dongry::Type->serialize ('text', $object->{data}->{title}),
             data => Dongry::Type->serialize ('json', $object->{data}),
+            timestamp => $object->{data}->{timestamp},
             updated => $time,
           }, where => {
             group_id => Dongry::Type->serialize ('text', $path->[1]),
@@ -362,19 +369,36 @@ sub group ($$$$) {
     });
   }
 
-  # XXX tests
   if (@$path >= 4 and $path->[2] eq 'o' and $path->[3] eq 'get.json') {
     # /g/{group_id}/o/get.json
+    my $next_ref = {};
     return Promise->resolve->then (sub {
-      # XXX paging
-      # XXX status
       my $index_id = $app->bare_param ('index_id');
       if (defined $index_id) {
+        my $ref = $app->bare_param ('ref');
+        my $timestamp;
+        my $offset;
+        my $limit = $app->bare_param ('limit') || 20;
+        if (defined $ref) {
+          ($timestamp, $offset) = split /,/, $ref, 2;
+          $next_ref->{$timestamp} = $offset || 0;
+          return $app->throw_error (400, reason_phrase => 'Bad offset')
+              if $offset > 1000;
+        }
         return $db->select ('index_object', {
           group_id => Dongry::Type->serialize ('text', $path->[1]),
           index_id => $index_id,
-        }, fields => ['object_id'])->then (sub {
-          return [map { $_->{object_id} } @{$_[0]->all}];
+          (defined $timestamp ? (timestamp => {'<=', $timestamp}) : ()),
+        },
+          fields => ['object_id', 'timestamp'],
+          order => ['timestamp', 'desc'],
+          offset => $offset, limit => $limit,
+        )->then (sub {
+          return [map {
+            $next_ref->{$_->{timestamp}}++;
+            $next_ref->{_} = $_->{timestamp};
+            $_->{object_id};
+          } @{$_[0]->all}];
         });
       } else {
         return $app->bare_param_list ('object_id');
@@ -382,7 +406,6 @@ sub group ($$$$) {
     })->then (sub {
       my $object_ids = $_[0];
       return [] unless @$object_ids;
-# XXX with_*
       return $db->select ('object', {
         group_id => Dongry::Type->serialize ('text', $path->[1]),
         object_id => {-in => $object_ids},
@@ -390,25 +413,31 @@ sub group ($$$$) {
         # XXX
         owner_status => 1,
         user_status => 1,
-      }, fields => ['object_id', 'title', 'data', 'created', 'updated'])->then (sub {
+      }, fields => ['object_id', 'title', 'timestamp', 'created', 'updated',
+                    ($app->bare_param ('with_data') ? 'data' : ())],
+      )->then (sub {
         return $_[0]->all;
       });
     })->then (sub {
       my $objects = $_[0];
-      # XXX sort
-      return json $app, {objects => [map {
-        +{
-          object_id => ''.$_->{object_id},
-          title => Dongry::Type->parse ('text', $_->{title}),
-          data => Dongry::Type->parse ('json', $_->{data}),
-          created => $_->{created},
-          updated => $_->{updated},
-        };
-      } @$objects]};
+      return json $app, {
+        objects => {map {
+          ($_->{object_id} => {
+            group_id => $path->[1],
+            object_id => ''.$_->{object_id},
+            title => Dongry::Type->parse ('text', $_->{title}),
+            created => $_->{created},
+            updated => $_->{updated},
+            timestamp => $_->{timestamp},
+            (defined $_->{data} ?
+               (data => Dongry::Type->parse ('json', $_->{data})) : ()),
+          });
+        } @$objects},
+        next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
+      };
     });
-  }
+  } # /g/{}/o/get.json
 
-  # XXX tests
   if (@$path == 4 and $path->[2] eq 'o' and $path->[3] eq 'create.json') {
     # /g/{group_id}/o/create.json
     $app->requires_request_method ({POST => 1});
@@ -416,17 +445,25 @@ sub group ($$$$) {
     my $time = time;
     return $db->execute ('select uuid_short() as uuid')->then (sub {
       my $object_id = $_[0]->first->{uuid};
+      my $data = {index_ids => {}, title => '', body => '',
+                  timestamp => $time};
+      ## This does not touch `group`.  It will be touched by
+      ## o/{}/edit.json soon.
+
+      ##  XXX object_revision
       return $db->insert ('object', [{
         group_id => Dongry::Type->serialize ('text', $path->[1]),
         object_id => $object_id,
         title => '',
-        data => '{"index_ids":{},"title":"","body":""}',
+        data => Dongry::Type->serialize ('json', $data),
         created => $time,
         updated => $time,
+        timestamp => $time,
         owner_status => 1, # open
         user_status => 1, # open
       }])->then (sub {
         return json $app, {
+          group_id => $path->[1],
           object_id => ''.$object_id,
         };
       });

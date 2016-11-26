@@ -28,7 +28,7 @@ sub get_html ($$;$%) {
   $path = [
     (
       defined $args{group}
-        ? ('g', $self->_group ($args{group})->{group_id})
+        ? ('g', $self->_get_o ($args{group})->{group_id})
         : ()
     ),
     @$path,
@@ -57,7 +57,7 @@ sub get_json ($$;$%) {
   $path = [
     (
       defined $args{group}
-        ? ('g', $self->_group ($args{group})->{group_id})
+        ? ('g', $self->_get_o ($args{group})->{group_id})
         : ()
     ),
     @$path,
@@ -87,7 +87,7 @@ sub post_json ($$$;%) {
   $path = [
     (
       defined $args{group}
-        ? ('g', $self->_group ($args{group})->{group_id})
+        ? ('g', $self->_get_o ($args{group})->{group_id})
         : ()
     ),
     @$path,
@@ -175,14 +175,16 @@ sub group ($$;%) {
   });
 } # group
 
-sub _group ($$) {
+sub _get_o ($$) {
   my $self = $_[0];
-  if (ref $_[1]) {
+  if (not defined $_[1]) {
+    return undef;
+  } elsif (ref $_[1]) {
     return $_[1];
   } else {
     return $self->o ($_[1]);
   }
-} # _group
+} # _get_o
 
 sub create_index ($$$) {
   my ($self, $name, $opts) = @_;
@@ -202,6 +204,40 @@ sub index ($$;%) {
     return $_[0]->{json};
   });
 } # index
+
+sub create_object ($$$) {
+  my ($self, $name, $opts) = @_;
+  return $self->post_json (['o', 'create.json'], {
+  },
+    account => ($opts->{account} // die "No |account|"),
+    group => ($opts->{group} // die "No |group|"),
+  )->then (sub {
+    $self->{objects}->{$name // 'X'} = $_[0]->{json};
+    my %param;
+    if (exists $opts->{index}) {
+      my $index = $self->_get_o ($opts->{index});
+      push @{$param{index_id} ||= []}, $index->{index_id} if defined $index;
+      $param{edit_index_id} = 1;
+    }
+    $param{timestamp} = $opts->{timestamp} if defined $opts->{timestamp};
+    if (keys %param) {
+      return $self->post_json (['o', $_[0]->{json}->{object_id}, 'edit.json'],
+                               \%param,
+                               group => $opts->{group},
+                               account => $opts->{account});
+    }
+  });
+} # create_object
+
+sub object ($$%) {
+  my ($self, $obj, %args) = @_;
+  return $self->get_json (['o', 'get.json'], {
+    object_id => $obj->{object_id},
+    with_data => 1,
+  }, group => $obj, account => $args{account})->then (sub {
+    return $_[0]->{json}->{objects}->{$obj->{object_id}};
+  });
+} # object
 
 sub accounts_client ($) {
   my $self = $_[0];
@@ -274,8 +310,8 @@ sub are_errors ($$$) {
     );
     $opt{path} = [
       (
-        defined $opt{group}
-          ? ('g', $self->_group ($opt{group})->{group_id})
+        exists $opt{group} # not |defined|
+          ? ('g', $self->_get_o ($opt{group})->{group_id})
           : ()
       ),
       @{$opt{path}},

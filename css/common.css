@@ -75,7 +75,7 @@ html[data-theme=black] {
 }
 
 body {
-  margin: 0;
+  margin: 0 0 10em 0;
 }
 
 section {
@@ -244,7 +244,6 @@ a:hover,
 a:active {
   color: black;
   background: #ffa;
-  text-shadow: none;
 }
 
 h1 a:link,
