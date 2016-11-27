@@ -21,7 +21,6 @@
 <template id=edit-form-template>
   <form method=post action=javascript:>
     <header>
-      <input type=date name=timestamp required>
       <p><input name=title placeholder=題名>
     </header>
     <main class=control data-name=body data-placeholder=本文 contenteditable></main>
@@ -30,28 +29,49 @@
         <button type=submit class=save-button>保存する</button>
         <button type=button class=cancel-button>取り消し</button>
     </footer>
+    <details>
+      <summary>詳細設定</>
+      <table class=config>
+        <tbody>
+          <tr>
+            <th>日付
+            <td><input type=date name=timestamp required>
+          <tr>
+            <th>日記
+            <td>
+              <list-control name=index_id list=index-list>
+                <input type=hidden name=edit_index_id value=1>
+                <template>
+                  <list-item-label data-field=label />
+                </template>
+                <list-control-main />
+                <button type=button class=edit-button>編集</button>
+              </list-control>
+      </table>
+    </details>
   </form>
 </template>
 
-<list-container pl:index="$index->{index_id}" listitemtype=object grouped key=objects>
-  <template>
-    <article class=object>
-      <header class=edit-by-dblclick>
-        <h1 data-data-field=title data-empty=■></h1>
-      </header>
-      <main data-data-field=body data-field-type=html></main>
-      <footer>
-        <p>
-          <time data-field=created class=ambtime />
-          (<time data-field=updated class=ambtime /> 編集)
-          <button type=button class=edit-button>編集</button>
-      </footer>
-    </article>
+    <list-container pl:index="$index->{index_id}" listitemtype=object grouped key=objects>
+      <template class=object>
+        <header>
+          <div class=edit-by-dblclick>
+            <h1 data-data-field=title data-empty=■></h1>
+          </div>
+        </header>
+        <main><div data-data-field=body data-field-type=html /></main>
+    <footer>
+      <p>
+        <time data-field=created class=ambtime />
+        (<time data-field=updated class=ambtime /> 編集)
+        <button type=button class=edit-button>編集</button>
+    </footer>
   </template>
 
-      <p class=operations><button type=button class=edit-button onclick="editObject (this, null)" data-article=#new-object data-list=list-container>新しい記事</button></p>
-
-      <article class=object id=new-object hidden pl:data-index-list="$index->{index_id}" />
+      <article class="object new">
+        <p class=operations>
+          <button type=button class=edit-button>新しい記事</button>
+      </article>
 
       <list-main></list-main>
 
@@ -60,6 +80,22 @@
     </list-container>
 
   </section>
+
+  <list-container type=datalist src=i/list.json key=index_list>
+    <template data-label=title data-value=index_id>
+    </template>
+    <datalist id=index-list />
+  </list-container>
+
+  <template id=list-control-editor>
+    <template>
+      <label>
+        <input type=checkbox data-checked-field=selected>
+        <span data-field=label></span>
+      </label>
+    </template>
+    <list-editor-main />
+  </template>
 
 <!--
 

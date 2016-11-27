@@ -464,8 +464,8 @@ article.object:not([hidden]) {
   padding: .5em;
 }
 
-article.object:not(.editing)#new-object {
-  display: none;
+article.object:not(.editing).new {
+  border-style: none;
 }
 
 article.object.editing > *:not(edit-container) {

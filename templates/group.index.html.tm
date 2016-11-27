@@ -25,7 +25,7 @@
             <time data-field=updated />
             <strong data-field=title></strong>
           </a>
-          <list-container data-src-template="o/get.json?index_id={index_id}" key=objects max=5>
+          <list-container data-src-template="o/get.json?index_id={index_id}&limit=5" key=objects sortkey=timestamp,created>
             <template>
               <a href data-href-template="o/{object_id}">
                 <strong data-field=title data-empty=■ />

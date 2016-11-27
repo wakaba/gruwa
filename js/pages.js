@@ -2,6 +2,28 @@ function $$ (n, s) {
   return Array.prototype.slice.call (n.querySelectorAll (s));
 } // $$
 
+(function () {
+  var handlers = {};
+  var promises = {};
+  var ok = {};
+
+  window.$with = function (key, opts) {
+    if (handlers[key]) {
+      return Promise.resolve ().then (function () { return handlers[key] (opts || {}) });
+    } else {
+      promises[key] = promises[key] || new Promise (function (o) { ok[key] = o });
+      return promises[key].then (function () { return handlers[key] (opts || {}) });
+    }
+  }; // $with
+
+  window.$with.register = function (key, code) {
+    handlers[key] = code;
+    if (ok[key]) ok[key] ();
+    delete ok[key];
+    delete promises[key];
+  }; // register
+}) ();
+
 function gFetch (pathquery, opts) {
   var body;
   if (opts.formData) {
@@ -37,10 +59,10 @@ function gFetch (pathquery, opts) {
   });
 } // gFetch
 
-function fillFields (el, object) {
+function fillFields (rootEl, el, object) {
   if (object.account_id &&
       object.account_id === document.documentElement.getAttribute ('data-account')) {
-    el.classList.add ('account-is-self');
+    rootEl.classList.add ('account-is-self');
   }
   $$ (el, '[data-field]').forEach (function (field) {
     var value = object[field.getAttribute ('data-field')];
@@ -76,6 +98,9 @@ function fillFields (el, object) {
   $$ (el, '[data-if-field]').forEach (function (field) {
     field.hidden = !object[field.getAttribute ('data-if-field')];
   });
+  $$ (el, '[data-checked-field]').forEach (function (field) {
+    field.checked = object[field.getAttribute ('data-checked-field')];
+  });
   $$ (el, '[data-href-template]').forEach (function (field) {
     field.href = field.getAttribute ('data-href-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return object[k];
@@ -105,33 +130,15 @@ function fillFields (el, object) {
             }
     }
   });
+  if (rootEl.startEdit) {
+    $$ (el, '.edit-button').forEach (function (button) {
+      button.onclick = function () { rootEl.startEdit () };
+    });
+    $$ (el, '.edit-by-dblclick').forEach (function (button) {
+      button.ondblclick = function () { rootEl.startEdit () };
+    });
+  }
 } // fillFields
-
-function fillObject (item, object) {
-      $$ (item, '.edit-button').forEach (function (button) {
-        button.onclick = function () {
-          editObject (this, object);
-        };
-      });
-      $$ (item, '.edit-by-dblclick').forEach (function (button) {
-        button.ondblclick = function () {
-          editObject (this, object);
-        };
-      });
-      $$ (item, 'article').forEach (function (article) {
-        article.id = 'object-' + object.object_id;
-        article.setAttribute ('data-object', object.object_id);
-        var ids = [];
-        for (var n in object.data.index_ids) {
-          ids.push (n);
-        }
-        article.setAttribute ('data-index-list', ids.join (' '));
-        article.updateView = function () {
-          fillFields (article, object);
-        }; // updateView
-        article.updateView ();
-      });
-  } // fillObject
 
 function upgradeList (el) {
   if (el.upgraded) return;
@@ -147,14 +154,23 @@ function upgradeList (el) {
     var main;
     if (type === 'table') {
       main = $$ (this, 'table tbody')[0];
+    } else if (type === 'datalist') {
+      main = $$ (this, 'datalist')[0];
     } else {
       main = $$ (this, 'list-main')[0];
     }
-    if (!template || !main) return;
+    if (!template || !main) return null;
 
     var listObjects = Object.values (objects);
 
     var itemType = el.getAttribute ('listitemtype');
+    var elementType = {
+      object: 'article',
+    }[itemType] || {
+      table: 'tr',
+      datalist: 'option',
+    }[type] || 'list-item';
+
     if (el.hasAttribute ('grouped')) {
       var grouped = {};
       listObjects.forEach (function (object) {
@@ -186,12 +202,24 @@ function upgradeList (el) {
         section.appendChild (h);
 
         grouped[key].forEach (function (object) {
-          var item = document.createElement (type === 'table' ? 'tr' : 'list-item');
+          var item = document.createElement (elementType);
+          item.className = template.className;
           item.appendChild (template.content.cloneNode (true));
           if (itemType === 'object') {
-            fillObject (item, object);
+            item.setAttribute ('data-object', object.object_id);
+            item.startEdit = function () {
+              editObject (item, object);
+            }; // startEdit
+            item.updateView = function () {
+              Array.prototype.forEach.call (item.children, function (el) {
+                if (el.localName !== 'edit-container') {
+                  fillFields (item, el, object);
+                }
+              });
+            }; // updateView
+            item.updateView ();
           } else {
-            fillFields (item, object);
+            fillFields (item, item, object);
           }
           section.appendChild (item);
         });
@@ -206,25 +234,33 @@ function upgradeList (el) {
       var sortKey = el.getAttribute ('sortkey');
       if (sortKey === 'updated') {
         sorter = function (a, b) { return b.updated - a.updated };
+      } else if (sortKey === 'timestamp,created') {
+        sorter = function (a, b) { return b.timestamp - a.timestamp || b.created - a.created };
       }
       if (sorter) listObjects = listObjects.sort (sorter);
 
-      var max = el.getAttribute ('max');
-      if (max) {
-        listObjects = listObjects.slice (0, parseInt (max));
+      if (elementType === 'option') {
+        listObjects.forEach (function (object) {
+          var item = document.createElement (elementType);
+          item.className = template.className;
+          var key = template.getAttribute ('data-label');
+          if (key) item.setAttribute ('label', object[key]);
+          var key = template.getAttribute ('data-value');
+          if (key) item.setAttribute ('value', object[key]);
+          main.appendChild (item);
+        });
+      } else {
+        listObjects.forEach (function (object) {
+          var item = document.createElement (elementType);
+          item.className = template.className;
+          item.appendChild (template.content.cloneNode (true));
+          fillFields (item, item, object);
+          main.appendChild (item);
+        });
       }
-
-      listObjects.forEach (function (object) {
-        var item = document.createElement (type === 'table' ? 'tr' : 'list-item');
-        item.appendChild (template.content.cloneNode (true));
-        if (itemType === 'object') {
-          fillObject (item, object);
-        } else {
-          fillFields (item, object);
-        }
-        main.appendChild (item);
-      });
     } // not grouped
+
+    return main;
   }; // showObjects
 
   var nextRef = null;
@@ -248,7 +284,7 @@ function upgradeList (el) {
 
   var show = function (json) {
     var key = el.getAttribute ('key');
-    el.showObjects (json[key], {});
+    var main = el.showObjects (json[key], {});
     if (json.next_ref && nextRef !== json.next_ref) {
       nextRef = json.next_ref;
       $$ (el, '.next-page-button').forEach (function (button) {
@@ -259,11 +295,18 @@ function upgradeList (el) {
         button.hidden = true;
       });
     }
+    return main; // or null
   }; // show
 
   load ().then (function (json) {
     el.clearObjects ();
-    show (json);
+    return show (json);
+  }).then (function (main) {
+    if (main && main.id) {
+      $with.register (main.id, function () {
+        return main;
+      });
+    }
   }).catch (function (error) {
     console.log (error); // XXX
   });
@@ -276,26 +319,20 @@ function upgradeList (el) {
       });
     };
   });
+
+  $$ (el, 'article.object.new').forEach (function (article) {
+    $$ (article, '.edit-button').forEach (function (button) {
+      button.onclick = function () {
+        var data = {index_ids: {}, timestamp: (new Date).valueOf () / 1000};
+        data.index_ids[el.getAttribute ('index')] = 1;
+        editObject (article, {data: data});
+      };
+    });
+  });
 } // upgradeList
 
-function editObject (optEl, object) {
+function editObject (article, object) {
   var template = document.querySelector ('#edit-form-template');
-
-  var article;
-  if (optEl.hasAttribute ('data-article')) {
-    article = $$ (document, optEl.getAttribute ('data-article'))[0];
-    article.hidden = false;
-  } else {
-    while (optEl) {
-      if (optEl.localName === 'article' || optEl.localName === 'body') {
-        article = optEl;
-        break;
-      } else {
-        optEl = optEl.parentNode;
-      }
-    }
-    if (!optEl) throw "Bad /optEl/";
-  }
 
   var container = article.querySelector ('edit-container');
   if (container) {
@@ -312,32 +349,101 @@ function editObject (optEl, object) {
   container.appendChild (template.content.cloneNode (true));
   article.appendChild (container);
 
-  $$ (container, 'form').forEach (function (form) {
-    article.getAttribute ('data-index-list').split (/ /).forEach (function (indexId) {
-      if (!indexId) return;
-      var input = document.createElement ('input');
-      input.type = 'hidden';
-      input.name = 'index_id';
-      input.value = indexId;
-      form.appendChild (input);
-    });
+  var form = container.querySelector ('form');
 
-    if (object) {
-      $$ (form, '.control[data-name]').forEach (function (control) {
+  $$ (form, '.control[data-name]').forEach (function (control) {
+    var value = object.data[control.getAttribute ('data-name')];
+    if (value) {
         // XXX sandbox
-        control.innerHTML = object.data[control.getAttribute ('data-name')];
-      });
-      $$ (form, 'input[name]:not([type])').forEach (function (control) {
-        control.value = object.data[control.name];
-      });
-      $$ (form, 'input[name][type=date]').forEach (function (control) {
-        control.valueAsNumber = object.data[control.name] * 1000;
-      });
-    } else {
-      $$ (form, 'input[name=timestamp]').forEach (function (control) {
-        control.valueAsDate = new Date;
-      });
+        control.innerHTML = value;
     }
+  });
+  $$ (form, 'input[name]:not([type])').forEach (function (control) {
+    var value = object.data[control.name]
+    if (value) {
+      control.value = value;
+    }
+  });
+  $$ (form, 'input[name][type=date]').forEach (function (control) {
+    var value = object.data[control.name];
+    if (value != null) {
+      control.valueAsNumber = value * 1000;
+    }
+  });
+
+  $$ (form, 'list-control[name]').forEach (function (control) {
+    control.clearItems = function () {
+      control.items = [];
+      var main = control.querySelector ('list-control-main');
+      main.textContent = '';
+    };
+    control.addItems = function (newItems) {
+      control.items = control.items.concat (newItems);
+      var template = control.querySelector ('template');
+      var main = control.querySelector ('list-control-main');
+      $with (control.getAttribute ('list')).then (function (datalist) {
+        var valueToLabel = {};
+        $$ (datalist, 'option').forEach (function (option) {
+          valueToLabel[option.value] = option.label;
+        });
+        newItems.forEach (function (item) {
+          var itemEl = document.createElement ('list-item');
+          itemEl.appendChild (template.content.cloneNode (true));
+          item.label = valueToLabel[item.value];
+          fillFields (itemEl, itemEl, item);
+          main.appendChild (itemEl);
+        });
+      });
+    };
+
+    $with (control.getAttribute ('list')).then (function (datalist) {
+      $$ (control, '.edit-button').forEach (function (el) {
+        el.onclick = function () {
+          if (!control.editor) {
+            var template = document.querySelector ('#list-control-editor');
+            if (!template) return;
+            control.editor = document.createElement ('list-dropdown');
+            control.editor.appendChild (template.content.cloneNode (true));
+            var template = control.editor.querySelector ('template');
+            var valueToSelected = {};
+            control.items.forEach (function (item) {
+              valueToSelected[item.value] = true;
+            });
+            var listEl = control.editor.querySelector ('list-editor-main');
+            $$ (datalist, 'option').forEach (function (option) {
+              var itemEl = document.createElement ('list-item');
+              itemEl.appendChild (template.content.cloneNode (true));
+              itemEl.setAttribute ('value', option.value);
+              fillFields (itemEl, itemEl, {
+                label: option.label,
+                value: option.value,
+                selected: valueToSelected[option.value],
+              });
+              listEl.appendChild (itemEl);
+            });
+            listEl.onchange = function () {
+              var items = $$ (listEl, 'list-item').filter (function (itemEl) {
+                return itemEl.querySelector ('input[type=checkbox]:checked');
+              }).map (function (el) {
+                return {value: el.getAttribute ('value')};
+              });
+              control.clearItems ();
+              control.addItems (items);
+            };
+            control.editor.hidden = true;
+            control.appendChild (control.editor);
+          }
+          control.editor.hidden = !control.editor.hidden;
+          el.classList.toggle ('active', !control.editor.hidden);
+        };
+      });
+
+      control.clearItems ();
+      control.addItems (Object.keys (object.data.index_ids).map (function (id) {
+        return {value: id};
+      }));
+    }); // $with
+  });
 
     // XXX autosave
 
@@ -356,28 +462,31 @@ function editObject (optEl, object) {
 
 // XXX progress
       saveObject (article, form, object).then (function (objectId) {
-        $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
-          button.disabled = false;
-        });
-        container.hidden = true;
-        article.classList.remove ('editing');
-        if (object) {
+        if (object.object_id) {
           article.updateView ();
-        } else {
-          container.remove ();
+          $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
+            button.disabled = false;
+          });
+          container.hidden = true;
+          article.classList.remove ('editing');
+        } else { // new object
           return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
-            var list = $$ (document, optEl.getAttribute ('data-list'))[0];
-            list.showObjects (json.objects, {prepend: true});
+            document.querySelector ('list-container[index]')
+                .showObjects (json.objects, {prepend: true});
+          }, function (error) {
+            console.log (error); // XXX
+          }).then (function () {
+            container.remove ();
+            article.classList.remove ('editing');
           });
         }
       }, function (error) {
-        $$ (container, '[type=submit]').forEach (function (button) {
+        $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
           button.disabled = false;
         });
         console.log (error); // XXX
       });
     };
-  });
 
   var body = container.querySelector ('.control[data-name=body]');
   if (body) body.focus ();
@@ -391,19 +500,28 @@ function saveObject (article, form, object) {
     var name = control.getAttribute ('data-name');
     var value = control.innerHTML; // XXX
     fd.append (name, value);
-    if (object) c.push (function () { object.data[name] = value });
+    c.push (function () { object.data[name] = value });
   });
   $$ (form, 'input[name]:not([type]), input[name][type=hidden]').forEach (function (control) {
     var name = control.name;
     var value = control.value;
     fd.append (name, value);
-    if (object) c.push (function () { object.data[name] = value });
+    c.push (function () { object.data[name] = value });
   });
   $$ (form, 'input[name][type=date]').forEach (function (control) {
     var name = control.name;
     var value = control.valueAsNumber / 1000;
     fd.append (name, value);
-    if (object) c.push (function () { object.data[name] = value });
+    c.push (function () { object.data[name] = value });
+  });
+  $$ (form, 'list-control[name]').forEach (function (control) {
+    var name = control.getAttribute ('name');
+    var cc = {};
+    control.items.forEach (function (item) {
+      fd.append (name, item.value);
+      cc[item.value] = 1;
+    });
+    c.push (function () { object.data[name] = cc });
   });
   return Promise.resolve ().then (function () {
     var objectId = article.getAttribute ('data-object');
@@ -417,7 +535,7 @@ function saveObject (article, form, object) {
   }).then (function (objectId) {
     return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd}).then (function () {
       c.forEach (function (_) { _ () });
-      if (object) object.updated = (new Date).valueOf () / 1000;
+      object.updated = (new Date).valueOf () / 1000;
       return objectId;
     });
   });
@@ -443,7 +561,7 @@ function upgradeForm (form) {
     Array.prototype.forEach.call (m.addedNodes, function (x) {
       if (x.localName === 'list-container') {
         upgradeList (x);
-      } else {
+      } else if (x.localName) {
         $$ (x, 'list-container').forEach (upgradeList);
       }
       if (x.localName === 'form') {
@@ -451,7 +569,7 @@ function upgradeForm (form) {
             x.hasAttribute ('data-action')) {
           upgradeForm (x);
         }
-      } else {
+      } else if (x.localName) {
         $$ (x, 'form[action="javascript:"][data-action]').forEach (upgradeForm);
       }
     });
