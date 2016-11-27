@@ -45,7 +45,10 @@
                   <list-item-label data-field=label />
                 </template>
                 <list-control-main />
-                <button type=button class=edit-button>編集</button>
+                <list-control-footer>
+                  <button type=button class=edit-button title=編集>...</button>
+                  <list-dropdown hidden />
+                </list-control-footer>
               </list-control>
       </table>
     </details>

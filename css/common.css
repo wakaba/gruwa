@@ -16,6 +16,7 @@ html { /* [data-thema=green] */
   --main-border-color: rgb(205, 255, 205);
   --main-color: black;
   --main-background-color: white;
+  --main-shadow-color: gray;
 
   --accented-color: black;
   --accented-border-color: green;
@@ -62,6 +63,7 @@ html[data-theme=black] {
   --main-border-color: gray;
   --main-color: #eee;
   --main-background-color: black;
+  --main-shadow-color: #ddd;
 
   --accented-color: #eee;
   --accented-border-color: #eee;
@@ -145,7 +147,7 @@ form {
 }
 
 .config th, .config td {
-  padding: .8em;
+  padding: .4em .8em;
 }
 
 .operations {
@@ -164,10 +166,91 @@ input:not([type]) {
   background-color: var(--main-background-color);
 }
 
+input[type=date] {
+  border: dotted 1px;
+  border-color: var(--main-border-color);
+  padding: .5em;
+  color: var(--main-color);
+  background-color: var(--main-background-color);
+}
+
 select {
   color: var(--main-color);
   background-color: var(--main-background-color);
   min-width: 10em;
+}
+
+list-control {
+  display: inline-block;
+  width: 100%;
+  border: dotted 1px;
+  border-color: var(--main-border-color);
+  padding: .5em;
+  color: var(--main-color);
+  background-color: var(--main-background-color);
+}
+
+list-control list-item {
+  min-width: 10em;
+  border-radius: .5em;
+  background-color: var(--light-2-background-color);
+  color: var(--light-2-color);
+  font-size: 90%;
+}
+
+list-control list-item:nth-child(2n) {
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+}
+
+list-control-main list-item {
+  display: inline-block;
+  margin-right: .5em;
+  padding: .3em;
+  text-align: center;
+}
+
+list-dropdown:not([hidden]) {
+  position: absolute;
+  right: 0;
+  display: block;
+  border: solid 1px;
+  border-color: var(--main-border-color);
+  box-shadow: 3px 3px var(--main-shadow-color);
+  color: var(--main-color);
+  background-color: var(--main-background-color);
+  min-width: 10em;
+  max-height: 90vh;
+  min-height: 10em;
+  overflow: auto;
+}
+
+list-dropdown list-item {
+  display: inline-block;
+  margin: .25em;
+}
+
+list-dropdown list-item label {
+  display: block;
+  padding: .3em;
+  cursor: pointer;
+}
+
+list-control-footer {
+  position: relative;
+  display: block;
+}
+
+list-control-footer::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+
+list-control-footer .edit-button {
+  float: right;
+  margin-top: -1.5em;
+  padding: .2em;
 }
 
 button:enabled {
@@ -464,6 +547,11 @@ article.object:not([hidden]) {
   padding: .5em;
 }
 
+article.object.new {
+  margin-left: 1.5em;
+  margin-right: 1.5em;
+}
+
 article.object:not(.editing).new {
   border-style: none;
 }
@@ -508,7 +596,9 @@ edit-container p {
 }
 
 edit-container > form {
+  margin: 0;
   border-style: none;
+  padding: 0.5em;
 }
 
 article.object > main,

@@ -402,7 +402,7 @@ function editObject (article, object) {
           if (!control.editor) {
             var template = document.querySelector ('#list-control-editor');
             if (!template) return;
-            control.editor = document.createElement ('list-dropdown');
+            control.editor = control.querySelector ('list-dropdown');
             control.editor.appendChild (template.content.cloneNode (true));
             var template = control.editor.querySelector ('template');
             var valueToSelected = {};
@@ -431,7 +431,6 @@ function editObject (article, object) {
               control.addItems (items);
             };
             control.editor.hidden = true;
-            control.appendChild (control.editor);
           }
           control.editor.hidden = !control.editor.hidden;
           el.classList.toggle ('active', !control.editor.hidden);
