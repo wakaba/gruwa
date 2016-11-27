@@ -22,6 +22,17 @@
   <form method=post action=javascript:>
     <header>
       <p><input name=title placeholder=題名>
+      <p><list-control name=tag key=tags list=tag-list allowadd>
+        <input type=hidden name=edit_tag value=1>
+        <template>
+          <list-item-label data-field=value />
+        </template>
+        <list-control-main placeholder=タグ />
+        <list-control-footer>
+          <button type=button class=edit-button title=編集>...</button>
+          <list-dropdown hidden />
+        </list-control-footer>
+      </list-control>
     </header>
     <main class=control data-name=body data-placeholder=本文 contenteditable></main>
     <footer>
@@ -39,7 +50,7 @@
           <tr>
             <th>日記
             <td>
-              <list-control name=index_id list=index-list>
+              <list-control name=index_id key=index_ids list=index-list>
                 <input type=hidden name=edit_index_id value=1>
                 <template>
                   <list-item-label data-field=label />
@@ -60,6 +71,7 @@
         <header>
           <div class=edit-by-dblclick>
             <h1 data-data-field=title data-empty=■></h1>
+            <tag-list data-data-field=tags />
           </div>
         </header>
         <main><div data-data-field=body data-field-type=html /></main>
@@ -90,6 +102,12 @@
     <datalist id=index-list />
   </list-container>
 
+  <list-container type=datalist src=i/list.json key=index_list><!-- XXX -->
+    <template data-label=title data-value=title>
+    </template>
+    <datalist id=tag-list />
+  </list-container>
+
   <template id=list-control-editor>
     <template>
       <label>
@@ -97,6 +115,14 @@
         <span data-field=label></span>
       </label>
     </template>
+    <form hidden class=add-form>
+      <span>
+        <input required>
+      </span>
+      <span>
+        <button type=submit class=add-button title=追加>+</>
+      </span>
+    </form>
     <list-editor-main />
   </template>
 

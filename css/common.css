@@ -161,7 +161,7 @@ input:not([type]) {
   width: 100%;
   border: dotted 1px;
   border-color: var(--main-border-color);
-  padding: .5em;
+  padding: .3em;
   color: var(--main-color);
   background-color: var(--main-background-color);
 }
@@ -169,7 +169,7 @@ input:not([type]) {
 input[type=date] {
   border: dotted 1px;
   border-color: var(--main-border-color);
-  padding: .5em;
+  padding: .3em;
   color: var(--main-color);
   background-color: var(--main-background-color);
 }
@@ -183,11 +183,13 @@ select {
 list-control {
   display: inline-block;
   width: 100%;
+  box-sizing: border-box;
   border: dotted 1px;
   border-color: var(--main-border-color);
-  padding: .5em;
+  padding: .1em .3em;
   color: var(--main-color);
   background-color: var(--main-background-color);
+  font-size: 80%;
 }
 
 list-control list-item {
@@ -203,10 +205,22 @@ list-control list-item:nth-child(2n) {
   color: var(--light-1-color);
 }
 
+list-control-main {
+  display: block;
+  min-height: 1.5em;
+}
+
+list-control-main:empty {
+  content: attr(placeholder);
+}
+
 list-control-main list-item {
   display: inline-block;
   margin-right: .5em;
-  padding: .3em;
+  margin-top: 0.1em;
+  margin-bottom: 0.1em;
+  padding: .3em 1em;
+  min-width: 4em;
   text-align: center;
 }
 
@@ -234,6 +248,18 @@ list-dropdown list-item label {
   display: block;
   padding: .3em;
   cursor: pointer;
+}
+
+list-dropdown .add-form {
+  display: table;
+  width: 100%;
+  margin: 0;
+  border-style: none;
+  padding: 0;
+}
+
+list-dropdown .add-form > span {
+  display: table-cell;
 }
 
 list-control-footer {
@@ -334,6 +360,25 @@ h1 a:visited {
   color: inherit;
   background: transparent;
   text-decoration: none;
+}
+
+tag-list {
+  display: block;
+}
+
+tag-list a {
+  margin-right: .5em;
+  text-decoration: none;
+}
+
+tag-list a::before {
+  content: "#";
+  padding-right: .2em;
+}
+
+tag-list a:hover,
+tag-list a:active {
+  text-decoration: underline;
 }
 
 list-container {
@@ -564,21 +609,59 @@ article.object.editing > edit-container {
   display: block;
 }
 
+article.object.editing > edit-container header {
+  display: table;
+  width: 100%;
+}
+
+article.object.editing > edit-container header > p {
+  display: table-cell;
+  padding: .2em;
+  vertical-align: top;
+}
+
+article.object.editing > edit-container header > p + p {
+  width: 40%;
+}
+
+article.object.editing > edit-container list-control[name=tag] list-control-main list-item::before,
+article.object.editing > edit-container list-control[name=tag] list-editor-main list-item span::before {
+  content: "#";
+  padding-right: .2em;
+}
+
+article.object.editing > edit-container list-control[name=tag] .add-form::before {
+  display: table-cell;
+  content: "#";
+  padding-left: .4em;
+  padding-right: 0em;
+}
+
+article.object > header {
+  border-left: .3em solid;
+  border-color: var(--accented-border-color);
+  padding: .3em .5em;
+}
+
 article.object > header h1 {
   display: block;
   margin: 0;
-  border-left: .3em solid;
-  border-color: var(--accented-border-color);
+  padding: 0;
   background-color: var(--accented-background-color);
   color: var(--accented-color);
-  padding-left: .5em;
   font-size: 120%;
   line-height: 1.4;
 }
 
+article.object > header tag-list {
+  display: block;
+  font-size: 90%;
+  line-height: 1.0;
+}
+
 edit-container [contenteditable] {
   border: 1px gray dotted;
-  padding: .5em;
+  padding: .3em;
   line-height: 1.4;
   white-space: pre-wrap;
   max-height: 90vh;

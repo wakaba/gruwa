@@ -121,6 +121,14 @@ function fillFields (rootEl, el, object) {
       } catch (e) {
         console.log (e); // XXX
       }
+    } else if (field.localName === 'tag-list') {
+      field.textContent = '';
+      Object.keys (value || {}).forEach (function (tag) {
+        var a = document.createElement ('a');
+        a.href = document.documentElement.getAttribute ('data-group-url') + '/t/' + encodeURIComponent (tag);
+        a.textContent = tag;
+        field.appendChild (a);
+      });
     } else {
       var type = field.getAttribute ('data-field-type');
             if (type === 'html') {
@@ -307,8 +315,8 @@ function upgradeList (el) {
         return main;
       });
     }
-  }).catch (function (error) {
-    console.log (error); // XXX
+//  }).catch (function (error) {
+//    console.log (error); // XXX
   });
 
   $$ (el, '.next-page-button').forEach (function (button) {
@@ -404,22 +412,38 @@ function editObject (article, object) {
             if (!template) return;
             control.editor = control.querySelector ('list-dropdown');
             control.editor.appendChild (template.content.cloneNode (true));
-            var template = control.editor.querySelector ('template');
+            control.editor.hidden = true;
+
+            var eTemplate = control.editor.querySelector ('template');
             var valueToSelected = {};
+            var valueListed = {};
             control.items.forEach (function (item) {
               valueToSelected[item.value] = true;
             });
             var listEl = control.editor.querySelector ('list-editor-main');
-            $$ (datalist, 'option').forEach (function (option) {
+            var addItem = function (option) {
               var itemEl = document.createElement ('list-item');
-              itemEl.appendChild (template.content.cloneNode (true));
+              itemEl.appendChild (eTemplate.content.cloneNode (true));
               itemEl.setAttribute ('value', option.value);
-              fillFields (itemEl, itemEl, {
+              fillFields (itemEl, itemEl, option);
+              listEl.appendChild (itemEl);
+            }; // addItem
+            $$ (datalist, 'option').forEach (function (option) {
+              addItem ({
                 label: option.label,
                 value: option.value,
                 selected: valueToSelected[option.value],
               });
-              listEl.appendChild (itemEl);
+              valueListed[option.value] = true;
+            });
+            control.items.forEach (function (item) {
+              if (!valueListed[item.value]) {
+                addItem ({
+                  label: item.value,
+                  value: item.value,
+                  selected: true,
+                });
+              }
             });
             listEl.onchange = function () {
               var items = $$ (listEl, 'list-item').filter (function (itemEl) {
@@ -430,19 +454,35 @@ function editObject (article, object) {
               control.clearItems ();
               control.addItems (items);
             };
-            control.editor.hidden = true;
+
+            var allowAdd = control.hasAttribute ('allowadd');
+            $$ (control.editor, '.add-form').forEach (function (e) {
+              e.hidden = !allowAdd;
+              if (!allowAdd) return;
+              $$ (e, '.add-button').forEach (function (b) {
+                b.onclick = function () {
+                  var input = e.querySelector ('input');
+                  var v = input.value;
+                  if (!v) return;
+                  addItem ({label: v, value: v, selected: true});
+                  listEl.dispatchEvent (new Event ('change'));
+                  input.value = '';
+                };
+              });
+            });
           }
           control.editor.hidden = !control.editor.hidden;
           el.classList.toggle ('active', !control.editor.hidden);
         };
       });
 
+      var dataKey = control.getAttribute ('key');
       control.clearItems ();
-      control.addItems (Object.keys (object.data.index_ids).map (function (id) {
-        return {value: id};
+      control.addItems (Object.keys (object.data[dataKey] || {}).map (function (v) {
+        return {value: v};
       }));
     }); // $with
-  });
+  }); // list-control
 
     // XXX autosave
 
@@ -520,7 +560,7 @@ function saveObject (article, form, object) {
       fd.append (name, item.value);
       cc[item.value] = 1;
     });
-    c.push (function () { object.data[name] = cc });
+    c.push (function () { object.data[control.getAttribute ('key')] = cc });
   });
   return Promise.resolve ().then (function () {
     var objectId = article.getAttribute ('data-object');

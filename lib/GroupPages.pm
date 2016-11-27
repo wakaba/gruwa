@@ -329,6 +329,9 @@ sub group ($$$$) {
           $object->{data}->{body} = $app->text_param ('body') // '';
           $object->{data}->{timestamp} = 0+($app->bare_param ('timestamp') || 0);
           $object->{data}->{index_ids} = {map { $_ => 1 } @$index_ids};
+          if ($app->bare_param ('edit_tag')) {
+            $object->{data}->{tags} = {map { $_ => 1 } @{$app->text_param_list ('tag')}};
+          }
 
           return unless @$index_ids;
           return Promise->all ([
