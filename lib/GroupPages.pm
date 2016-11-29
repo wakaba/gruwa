@@ -97,6 +97,16 @@ sub group ($$$$) {
   my ($class, $app, $path, $opts) = @_;
   my $db = $opts->{db};
 
+  if (@$path >= 4 and $path->[2] eq 'i') {
+    # /g/{group_id}/i/...
+    return $class->group_index ($app, $path, $opts);
+  }
+
+  if (@$path >= 4 and $path->[2] eq 'o') {
+    # /g/{group_id}/o/...
+    return $class->group_object ($app, $path, $opts);
+  }
+
   if (@$path == 3 and $path->[2] eq '') {
     # /g/{group_id}/
     return temma $app, 'group.index.html.tm', {
@@ -114,7 +124,27 @@ sub group ($$$$) {
       updated => $g->{updated},
       theme => $g->{options}->{theme},
     };
-  } elsif (@$path == 3 and $path->[2] eq 'edit.json') {
+  }
+
+  if (@$path == 3 and $path->[2] eq 'members') {
+    # /g/{}/members
+    return temma $app, 'group.members.html.tm', {
+      account => $opts->{account},
+      group => $opts->{group},
+      group_member => $opts->{group_member},
+    };
+  }
+
+  if (@$path == 3 and $path->[2] eq 'config') {
+    # /g/{}/config
+    return temma $app, 'group.config.html.tm', {
+      account => $opts->{account},
+      group => $opts->{group},
+      group_member => $opts->{group_member},
+    };
+  }
+
+  if (@$path == 3 and $path->[2] eq 'edit.json') {
     # /g/{group_id}/edit.json
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
@@ -138,357 +168,6 @@ sub group ($$$$) {
     })->then (sub {
       return json $app, {};
     });
-  }
-
-  if (@$path == 4 and $path->[2] eq 'i' and $path->[3] eq 'list.json') {
-    # /g/{}/i/list.json
-    return $db->select ('index', {
-      group_id => Dongry::Type->serialize ('text', $path->[1]),
-      owner_status => 1,
-      user_status => 1,
-    }, fields => ['index_id', 'title', 'updated'])->then (sub {
-      return json $app, {index_list => {map {
-        $_->{index_id} => {
-          group_id => $path->[1],
-          index_id => ''.$_->{index_id},
-          title => Dongry::Type->parse ('text', $_->{title}),
-          updated => $_->{updated},
-        };
-      } @{$_[0]->all}}};
-    });
-  }
-
-  if (@$path >= 4 and $path->[2] eq 'i' and $path->[3] =~ /\A[0-9]+\z/) {
-    # /g/{group_id}/i/{index_id}
-    return $db->select ('index', {
-      group_id => Dongry::Type->serialize ('text', $path->[1]),
-      index_id => Dongry::Type->serialize ('text', $path->[3]),
-
-      # XXX
-      owner_status => 1,
-      user_status => 1,
-    }, fields => ['index_id', 'title', 'created', 'updated', 'options'])->then (sub {
-      my $index = $_[0]->first;
-      return $app->throw_error (404, reason_phrase => 'Index not found')
-          unless defined $index;
-      $index->{title} = Dongry::Type->parse ('text', $index->{title});
-      $index->{options} = Dongry::Type->parse ('json', $index->{options});
-
-      if (@$path == 5 and $path->[4] eq '') {
-        # /g/{group_id}/i/{index_id}/
-        return temma $app, 'group.index.index.html.tm', {
-          account => $opts->{account},
-          group => $opts->{group},
-          group_member => $opts->{group_member},
-          index => $index,
-        };
-      } elsif (@$path == 5 and $path->[4] eq 'info.json') {
-        # /g/{group_id}/i/{index_id}/info.json
-        return json $app, {
-          group_id => $path->[1],
-          index_id => ''.$index->{index_id},
-          title => $index->{title},
-          created => $index->{created},
-          updated => $index->{updated},
-          theme => $index->{options}->{theme},
-        };
-      } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
-        # /g/{group_id}/i/{index_id}/edit.json
-        $app->requires_request_method ({POST => 1});
-        $app->requires_same_origin;
-        my %update = (updated => time);
-        my $title = $app->text_param ('title') // '';
-        $update{title} = Dongry::Type->serialize ('text', $title)
-            if length $title;
-        my $theme = $app->text_param ('theme') // '';
-        if (length $theme) {
-          my $options = $opts->{group}->{options};
-          $options->{theme} = $theme;
-          $update{options} = Dongry::Type->serialize ('json', $options);
-          # XXX need transaction for editing options :-<
-        }
-        return Promise->resolve->then (sub {
-          return unless 1 < keys %update;
-          return $db->update ('index', \%update, where => {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            index_id => Dongry::Type->serialize ('text', $path->[3]),
-          });
-          # XXX logging
-        })->then (sub {
-          return json $app, {};
-        });
-      } elsif (@$path == 5 and $path->[4] eq 'my.json') {
-        # /g/{group_id}/i/{index_id}/my.json
-        $app->requires_request_method ({POST => 1});
-        $app->requires_same_origin;
-        my @p;
-        my $is_default = $app->bare_param ('is_default');
-        if (defined $is_default) {
-          push @p, $db->update ('group_member', {
-            default_index_id => ($is_default ? Dongry::Type->serialize ('text', $path->[3]) : 0),
-            updated => time,
-          }, where => {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            account_id => Dongry::Type->serialize ('text', $opts->{account}->{account_id}),
-          });
-        }
-        return Promise->all (\@p)->then (sub {
-          return json $app, {};
-        });
-      } elsif (@$path == 5 and $path->[4] eq 'config') {
-        # /g/{group_id}/i/{index_id}/config
-        return temma $app, 'group.index.config.html.tm', {
-          account => $opts->{account},
-          group => $opts->{group},
-          group_member => $opts->{group_member},
-          index => $index,
-        };
-      } else {
-        return $app->throw_error (404);
-      }
-    });
-  }
-
-  if (@$path == 4 and $path->[2] eq 'i' and $path->[3] eq 'create.json') {
-    # /g/{group_id}/i/create.json
-    $app->requires_request_method ({POST => 1});
-    $app->requires_same_origin;
-    my $title = $app->text_param ('title') // '';
-    return $app->throw_error (400, reason_phrase => 'Bad |title|')
-        unless length $title;
-    my $time = time;
-    return $db->execute ('select uuid_short() as uuid')->then (sub {
-      my $index_id = $_[0]->first->{uuid};
-      return $db->insert ('index', [{
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-        index_id => $index_id,
-        title => Dongry::Type->serialize ('text', $title),
-        created => $time,
-        updated => $time,
-        owner_status => 1, # open
-        user_status => 1, # open
-        options => '{"theme":"green"}',
-      }])->then (sub {
-        return json $app, {
-          group_id => $path->[1],
-          index_id => ''.$index_id,
-        };
-        # XXX logging
-        # touch group
-      });
-    });
-  }
-
-  # XXX tests
-  if (@$path >= 4 and $path->[2] eq 'o' and $path->[3] =~ /\A[0-9]+\z/) {
-    # /g/{group_id}/o/{object_id}
-    return $db->select ('object', {
-      group_id => Dongry::Type->serialize ('text', $path->[1]),
-      object_id => Dongry::Type->serialize ('text', $path->[3]),
-
-      # XXX
-      owner_status => 1,
-      user_status => 1,
-    }, fields => ['object_id', 'title', 'data'])->then (sub {
-      my $object = $_[0]->first;
-      return $app->throw_error (404, reason_phrase => 'Object not found')
-          unless defined $object;
-      $object->{title} = Dongry::Type->parse ('text', $object->{title});
-      $object->{data} = Dongry::Type->parse ('json', $object->{data});
-      if (@$path == 4) {
-        # /g/{group_id}/o/{object_id}
-        return temma $app, 'group.object.html.tm', {
-          account => $opts->{account},
-          group => $opts->{group},
-          group_member => $opts->{group_member},
-          object => $object,
-        };
-      } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
-        # /g/{group_id}/o/{object_id}/edit.json
-        # XXX |edit_index_id|
-        my $index_ids = $app->bare_param_list ('index_id');
-        my $time = time;
-        return Promise->resolve->then (sub {
-          return unless @$index_ids;
-          return $db->select ('index', {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            index_id => {-in => $index_ids},
-            owner_status => 1, # open
-            user_status => 1, # open
-          }, fields => ['index_id'])->then (sub {
-            my $has_index = {map { $_->{index_id} => 1 } @{$_[0]->all}};
-            for (@$index_ids) {
-              return $app->throw_error (400, reason_phrase => 'Bad |index_id| ('.$_.')')
-                  unless $has_index->{$_};
-            }
-          });
-        })->then (sub {
-          # XXX revision
-          # XXX ignore unspecified fields
-          $object->{data}->{title} = $app->text_param ('title') // '';
-          $object->{data}->{body} = $app->text_param ('body') // '';
-          $object->{data}->{timestamp} = 0+($app->bare_param ('timestamp') || 0);
-          $object->{data}->{index_ids} = {map { $_ => 1 } @$index_ids};
-          if ($app->bare_param ('edit_tag')) {
-            $object->{data}->{tags} = {map { $_ => 1 } @{$app->text_param_list ('tag')}};
-          }
-
-          return unless @$index_ids;
-          return Promise->all ([
-            $db->insert ('index_object', [map {
-              +{
-                group_id => Dongry::Type->serialize ('text', $path->[1]),
-                index_id => $_,
-                object_id => Dongry::Type->serialize ('text', $path->[3]),
-                created => $time,
-                timestamp => $object->{data}->{timestamp},
-              };
-            } @$index_ids], duplicate => {
-              timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
-            }),
-            $db->delete ('index_object', {
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
-              index_id => {-not_in => $index_ids},
-              object_id => Dongry::Type->serialize ('text', $path->[3]),
-            }),
-                                #XXX touch indexes
-          ]);
-        })->then (sub {
-          return $db->update ('object', {
-            title => Dongry::Type->serialize ('text', $object->{data}->{title}),
-            data => Dongry::Type->serialize ('json', $object->{data}),
-            timestamp => $object->{data}->{timestamp},
-            updated => $time,
-          }, where => {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            object_id => Dongry::Type->serialize ('text', $path->[3]),
-          });
-        })->then (sub {
-          return json $app, {};
-        });
-      } else {
-        return $app->throw_error (404);
-      }
-    });
-  }
-
-  if (@$path >= 4 and $path->[2] eq 'o' and $path->[3] eq 'get.json') {
-    # /g/{group_id}/o/get.json
-    my $next_ref = {};
-    return Promise->resolve->then (sub {
-      my $index_id = $app->bare_param ('index_id');
-      if (defined $index_id) {
-        my $ref = $app->bare_param ('ref');
-        my $timestamp;
-        my $offset;
-        my $limit = $app->bare_param ('limit') || 20;
-        if (defined $ref) {
-          ($timestamp, $offset) = split /,/, $ref, 2;
-          $next_ref->{$timestamp} = $offset || 0;
-          return $app->throw_error (400, reason_phrase => 'Bad offset')
-              if $offset > 1000;
-        }
-        return $db->select ('index_object', {
-          group_id => Dongry::Type->serialize ('text', $path->[1]),
-          index_id => $index_id,
-          (defined $timestamp ? (timestamp => {'<=', $timestamp}) : ()),
-        },
-          fields => ['object_id', 'timestamp'],
-          order => ['timestamp', 'desc'],
-          offset => $offset, limit => $limit,
-        )->then (sub {
-          return [map {
-            $next_ref->{$_->{timestamp}}++;
-            $next_ref->{_} = $_->{timestamp};
-            $_->{object_id};
-          } @{$_[0]->all}];
-        });
-      } else {
-        return $app->bare_param_list ('object_id');
-      }
-    })->then (sub {
-      my $object_ids = $_[0];
-      return [] unless @$object_ids;
-      return $db->select ('object', {
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-        object_id => {-in => $object_ids},
-
-        # XXX
-        owner_status => 1,
-        user_status => 1,
-      }, fields => ['object_id', 'title', 'timestamp', 'created', 'updated',
-                    ($app->bare_param ('with_data') ? 'data' : ())],
-      )->then (sub {
-        return $_[0]->all;
-      });
-    })->then (sub {
-      my $objects = $_[0];
-      return json $app, {
-        objects => {map {
-          ($_->{object_id} => {
-            group_id => $path->[1],
-            object_id => ''.$_->{object_id},
-            title => Dongry::Type->parse ('text', $_->{title}),
-            created => $_->{created},
-            updated => $_->{updated},
-            timestamp => $_->{timestamp},
-            (defined $_->{data} ?
-               (data => Dongry::Type->parse ('json', $_->{data})) : ()),
-          });
-        } @$objects},
-        next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
-      };
-    });
-  } # /g/{}/o/get.json
-
-  if (@$path == 4 and $path->[2] eq 'o' and $path->[3] eq 'create.json') {
-    # /g/{group_id}/o/create.json
-    $app->requires_request_method ({POST => 1});
-    $app->requires_same_origin;
-    my $time = time;
-    return $db->execute ('select uuid_short() as uuid')->then (sub {
-      my $object_id = $_[0]->first->{uuid};
-      my $data = {index_ids => {}, title => '', body => '',
-                  timestamp => $time};
-      ## This does not touch `group`.  It will be touched by
-      ## o/{}/edit.json soon.
-
-      ##  XXX object_revision
-      return $db->insert ('object', [{
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-        object_id => $object_id,
-        title => '',
-        data => Dongry::Type->serialize ('json', $data),
-        created => $time,
-        updated => $time,
-        timestamp => $time,
-        owner_status => 1, # open
-        user_status => 1, # open
-      }])->then (sub {
-        return json $app, {
-          group_id => $path->[1],
-          object_id => ''.$object_id,
-        };
-      });
-    });
-  }
-
-  if (@$path == 3 and $path->[2] eq 'members') {
-    # /g/{}/members
-    return temma $app, 'group.members.html.tm', {
-      account => $opts->{account},
-      group => $opts->{group},
-      group_member => $opts->{group_member},
-    };
-  }
-
-  if (@$path == 3 and $path->[2] eq 'config') {
-    # /g/{}/config
-    return temma $app, 'group.config.html.tm', {
-      account => $opts->{account},
-      group => $opts->{group},
-      group_member => $opts->{group_member},
-    };
   }
 
   return $app->throw_error (404);
@@ -593,6 +272,353 @@ sub group_members_json ($) {
     });
   } # GET
 } # group_members_json
+
+sub group_index ($$$$) {
+  my ($class, $app, $path, $opts) = @_;
+  my $db = $opts->{db};
+
+  if (@$path == 4 and $path->[3] eq 'list.json') {
+    # /g/{}/i/list.json
+    return $db->select ('index', {
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+      owner_status => 1,
+      user_status => 1,
+    }, fields => ['index_id', 'title', 'updated'])->then (sub {
+      return json $app, {index_list => {map {
+        $_->{index_id} => {
+          group_id => $path->[1],
+          index_id => ''.$_->{index_id},
+          title => Dongry::Type->parse ('text', $_->{title}),
+          updated => $_->{updated},
+        };
+      } @{$_[0]->all}}};
+    });
+  }
+
+  if (@$path >= 4 and $path->[3] =~ /\A[0-9]+\z/) {
+    # /g/{group_id}/i/{index_id}
+    return $db->select ('index', {
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+      index_id => Dongry::Type->serialize ('text', $path->[3]),
+
+      # XXX
+      owner_status => 1,
+      user_status => 1,
+    }, fields => ['index_id', 'title', 'created', 'updated', 'options'])->then (sub {
+      my $index = $_[0]->first;
+      return $app->throw_error (404, reason_phrase => 'Index not found')
+          unless defined $index;
+      $index->{title} = Dongry::Type->parse ('text', $index->{title});
+      $index->{options} = Dongry::Type->parse ('json', $index->{options});
+
+      if (@$path == 5 and $path->[4] eq '') {
+        # /g/{group_id}/i/{index_id}/
+        return temma $app, 'group.index.index.html.tm', {
+          account => $opts->{account},
+          group => $opts->{group},
+          group_member => $opts->{group_member},
+          index => $index,
+        };
+      } elsif (@$path == 5 and $path->[4] eq 'info.json') {
+        # /g/{group_id}/i/{index_id}/info.json
+        return json $app, {
+          group_id => $path->[1],
+          index_id => ''.$index->{index_id},
+          title => $index->{title},
+          created => $index->{created},
+          updated => $index->{updated},
+          theme => $index->{options}->{theme},
+        };
+      } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
+        # /g/{group_id}/i/{index_id}/edit.json
+        $app->requires_request_method ({POST => 1});
+        $app->requires_same_origin;
+        my %update = (updated => time);
+        my $title = $app->text_param ('title') // '';
+        $update{title} = Dongry::Type->serialize ('text', $title)
+            if length $title;
+        my $theme = $app->text_param ('theme') // '';
+        if (length $theme) {
+          my $options = $opts->{group}->{options};
+          $options->{theme} = $theme;
+          $update{options} = Dongry::Type->serialize ('json', $options);
+          # XXX need transaction for editing options :-<
+        }
+        return Promise->resolve->then (sub {
+          return unless 1 < keys %update;
+          return $db->update ('index', \%update, where => {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            index_id => Dongry::Type->serialize ('text', $path->[3]),
+          });
+          # XXX logging
+        })->then (sub {
+          return json $app, {};
+        });
+      } elsif (@$path == 5 and $path->[4] eq 'my.json') {
+        # /g/{group_id}/i/{index_id}/my.json
+        $app->requires_request_method ({POST => 1});
+        $app->requires_same_origin;
+        my @p;
+        my $is_default = $app->bare_param ('is_default');
+        if (defined $is_default) {
+          push @p, $db->update ('group_member', {
+            default_index_id => ($is_default ? Dongry::Type->serialize ('text', $path->[3]) : 0),
+            updated => time,
+          }, where => {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            account_id => Dongry::Type->serialize ('text', $opts->{account}->{account_id}),
+          });
+        }
+        return Promise->all (\@p)->then (sub {
+          return json $app, {};
+        });
+      } elsif (@$path == 5 and $path->[4] eq 'config') {
+        # /g/{group_id}/i/{index_id}/config
+        return temma $app, 'group.index.config.html.tm', {
+          account => $opts->{account},
+          group => $opts->{group},
+          group_member => $opts->{group_member},
+          index => $index,
+        };
+      } else {
+        return $app->throw_error (404);
+      }
+    });
+  }
+
+  if (@$path == 4 and $path->[3] eq 'create.json') {
+    # /g/{group_id}/i/create.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+    my $title = $app->text_param ('title') // '';
+    return $app->throw_error (400, reason_phrase => 'Bad |title|')
+        unless length $title;
+    my $time = time;
+    return $db->execute ('select uuid_short() as uuid')->then (sub {
+      my $index_id = $_[0]->first->{uuid};
+      return $db->insert ('index', [{
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
+        index_id => $index_id,
+        title => Dongry::Type->serialize ('text', $title),
+        created => $time,
+        updated => $time,
+        owner_status => 1, # open
+        user_status => 1, # open
+        options => '{"theme":"green"}',
+      }])->then (sub {
+        return json $app, {
+          group_id => $path->[1],
+          index_id => ''.$index_id,
+        };
+        # XXX logging
+        # touch group
+      });
+    });
+  }
+
+  return $app->throw_error (404);
+} # group_index
+
+sub group_object ($$$$) {
+  my ($class, $app, $path, $opts) = @_;
+  my $db = $opts->{db};
+
+  # XXX tests
+  if (@$path >= 4 and $path->[3] =~ /\A[0-9]+\z/) {
+    # /g/{group_id}/o/{object_id}
+    return $db->select ('object', {
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+      object_id => Dongry::Type->serialize ('text', $path->[3]),
+
+      # XXX
+      owner_status => 1,
+      user_status => 1,
+    }, fields => ['object_id', 'title', 'data'])->then (sub {
+      my $object = $_[0]->first;
+      return $app->throw_error (404, reason_phrase => 'Object not found')
+          unless defined $object;
+      $object->{title} = Dongry::Type->parse ('text', $object->{title});
+      $object->{data} = Dongry::Type->parse ('json', $object->{data});
+      if (@$path == 4) {
+        # /g/{group_id}/o/{object_id}
+        return temma $app, 'group.object.html.tm', {
+          account => $opts->{account},
+          group => $opts->{group},
+          group_member => $opts->{group_member},
+          object => $object,
+        };
+      } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
+        # /g/{group_id}/o/{object_id}/edit.json
+        # XXX |edit_index_id|
+        my $index_ids = $app->bare_param_list ('index_id');
+        my $time = time;
+        return Promise->resolve->then (sub {
+          return unless @$index_ids;
+          return $db->select ('index', {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            index_id => {-in => $index_ids},
+            owner_status => 1, # open
+            user_status => 1, # open
+          }, fields => ['index_id'])->then (sub {
+            my $has_index = {map { $_->{index_id} => 1 } @{$_[0]->all}};
+            for (@$index_ids) {
+              return $app->throw_error (400, reason_phrase => 'Bad |index_id| ('.$_.')')
+                  unless $has_index->{$_};
+            }
+          });
+        })->then (sub {
+          # XXX revision
+          # XXX ignore unspecified fields
+          $object->{data}->{title} = $app->text_param ('title') // '';
+          $object->{data}->{body} = $app->text_param ('body') // '';
+          $object->{data}->{timestamp} = 0+($app->bare_param ('timestamp') || 0);
+          $object->{data}->{index_ids} = {map { $_ => 1 } @$index_ids};
+          if ($app->bare_param ('edit_tag')) {
+            $object->{data}->{tags} = {map { $_ => 1 } @{$app->text_param_list ('tag')}};
+          }
+
+          return unless @$index_ids;
+          return Promise->all ([
+            $db->insert ('index_object', [map {
+              +{
+                group_id => Dongry::Type->serialize ('text', $path->[1]),
+                index_id => $_,
+                object_id => Dongry::Type->serialize ('text', $path->[3]),
+                created => $time,
+                timestamp => $object->{data}->{timestamp},
+              };
+            } @$index_ids], duplicate => {
+              timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
+            }),
+            $db->delete ('index_object', {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              index_id => {-not_in => $index_ids},
+              object_id => Dongry::Type->serialize ('text', $path->[3]),
+            }),
+                                #XXX touch indexes
+          ]);
+        })->then (sub {
+          return $db->update ('object', {
+            title => Dongry::Type->serialize ('text', $object->{data}->{title}),
+            data => Dongry::Type->serialize ('json', $object->{data}),
+            timestamp => $object->{data}->{timestamp},
+            updated => $time,
+          }, where => {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            object_id => Dongry::Type->serialize ('text', $path->[3]),
+          });
+        })->then (sub {
+          return json $app, {};
+        });
+      } else {
+        return $app->throw_error (404);
+      }
+    });
+  }
+
+  if (@$path >= 4 and $path->[3] eq 'get.json') {
+    # /g/{group_id}/o/get.json
+    my $next_ref = {};
+    return Promise->resolve->then (sub {
+      my $index_id = $app->bare_param ('index_id');
+      if (defined $index_id) {
+        my $ref = $app->bare_param ('ref');
+        my $timestamp;
+        my $offset;
+        my $limit = $app->bare_param ('limit') || 20;
+        if (defined $ref) {
+          ($timestamp, $offset) = split /,/, $ref, 2;
+          $next_ref->{$timestamp} = $offset || 0;
+          return $app->throw_error (400, reason_phrase => 'Bad offset')
+              if $offset > 1000;
+        }
+        return $db->select ('index_object', {
+          group_id => Dongry::Type->serialize ('text', $path->[1]),
+          index_id => $index_id,
+          (defined $timestamp ? (timestamp => {'<=', $timestamp}) : ()),
+        },
+          fields => ['object_id', 'timestamp'],
+          order => ['timestamp', 'desc'],
+          offset => $offset, limit => $limit,
+        )->then (sub {
+          return [map {
+            $next_ref->{$_->{timestamp}}++;
+            $next_ref->{_} = $_->{timestamp};
+            $_->{object_id};
+          } @{$_[0]->all}];
+        });
+      } else {
+        return $app->bare_param_list ('object_id');
+      }
+    })->then (sub {
+      my $object_ids = $_[0];
+      return [] unless @$object_ids;
+      return $db->select ('object', {
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
+        object_id => {-in => $object_ids},
+
+        # XXX
+        owner_status => 1,
+        user_status => 1,
+      }, fields => ['object_id', 'title', 'timestamp', 'created', 'updated',
+                    ($app->bare_param ('with_data') ? 'data' : ())],
+      )->then (sub {
+        return $_[0]->all;
+      });
+    })->then (sub {
+      my $objects = $_[0];
+      return json $app, {
+        objects => {map {
+          ($_->{object_id} => {
+            group_id => $path->[1],
+            object_id => ''.$_->{object_id},
+            title => Dongry::Type->parse ('text', $_->{title}),
+            created => $_->{created},
+            updated => $_->{updated},
+            timestamp => $_->{timestamp},
+            (defined $_->{data} ?
+               (data => Dongry::Type->parse ('json', $_->{data})) : ()),
+          });
+        } @$objects},
+        next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
+      };
+    });
+  } # /g/{}/o/get.json
+
+  if (@$path == 4 and $path->[3] eq 'create.json') {
+    # /g/{group_id}/o/create.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+    my $time = time;
+    return $db->execute ('select uuid_short() as uuid')->then (sub {
+      my $object_id = $_[0]->first->{uuid};
+      my $data = {index_ids => {}, title => '', body => '',
+                  timestamp => $time};
+      ## This does not touch `group`.  It will be touched by
+      ## o/{}/edit.json soon.
+
+      ##  XXX object_revision
+      return $db->insert ('object', [{
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
+        object_id => $object_id,
+        title => '',
+        data => Dongry::Type->serialize ('json', $data),
+        created => $time,
+        updated => $time,
+        timestamp => $time,
+        owner_status => 1, # open
+        user_status => 1, # open
+      }])->then (sub {
+        return json $app, {
+          group_id => $path->[1],
+          object_id => ''.$object_id,
+        };
+      });
+    });
+  }
+
+  return $app->throw_error (404);
+} # group_object
 
 1;
 
