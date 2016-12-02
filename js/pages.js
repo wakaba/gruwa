@@ -408,6 +408,14 @@ function editObject (article, object) {
             f (ev.data.value);
           });
           valueWaitings = [];
+        } else if (ev.data.type === 'currentState') {
+          $$ (form, 'button[data-action=execCommand]').forEach (function (b) {
+            var value = ev.data.value[b.getAttribute ('data-command')];
+            if (value === undefined) return;
+            b.classList.toggle ('active', value);
+          });
+        } else {
+          console.log (ev.data.type);
         }
       };
       control.onload = null;

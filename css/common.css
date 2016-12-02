@@ -325,10 +325,24 @@ edit-container main > menu {
 }
 
 edit-container main > menu button {
+  border-style: none;
+  background: transparent;
+  color: inherit;
   font-size: 70%;
   min-width: 2em;
   min-height: 2em;
   vertical-align: middle;
+}
+
+edit-container main > menu button.active {
+  background: var(--dark-background-color);
+  color: var(--dark-color);
+}
+
+edit-container main > menu button:not(.active):hover,
+edit-container main > menu button:not(.active):active {
+  background: var(--light-1-background-color);
+  color: var(--light-1-color);
 }
 
 edit-container footer {
