@@ -223,6 +223,7 @@ sub object ($$%) {
   return $self->get_json (['o', 'get.json'], {
     object_id => $obj->{object_id},
     ($args{revision} ? (object_revision_id => $obj->{object_revision_id}) : ()),
+    (defined $args{revision_id} ? (object_revision_id => $args{revision_id}) : ()),
     with_data => 1,
   }, group => $obj, account => $args{account})->then (sub {
     return $_[0]->{json}->{objects}->{$obj->{object_id}};

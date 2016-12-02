@@ -423,89 +423,157 @@ sub group_object ($$$$) {
   my ($class, $app, $path, $opts) = @_;
   my $db = $opts->{db};
 
-  # XXX tests
   if (@$path >= 4 and $path->[3] =~ /\A[0-9]+\z/) {
     # /g/{group_id}/o/{object_id}
     return $db->select ('object', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
       object_id => Dongry::Type->serialize ('text', $path->[3]),
-
-      # XXX
-      owner_status => 1,
-      user_status => 1,
-    }, fields => ['object_id', 'title', 'data'])->then (sub {
+    }, fields => ['object_id', 'data'])->then (sub {
       my $object = $_[0]->first;
       return $app->throw_error (404, reason_phrase => 'Object not found')
           unless defined $object;
-      $object->{title} = Dongry::Type->parse ('text', $object->{title});
       $object->{data} = Dongry::Type->parse ('json', $object->{data});
-      if (@$path == 4) {
-        # /g/{group_id}/o/{object_id}
-        return temma $app, 'group.object.html.tm', {
-          account => $opts->{account},
-          group => $opts->{group},
-          group_member => $opts->{group_member},
-          object => $object,
-        };
-      } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
+      if (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/o/{object_id}/edit.json
-        # XXX |edit_index_id|
-        my $index_ids = $app->bare_param_list ('index_id');
+        $app->requires_request_method ({POST => 1});
+        $app->requires_same_origin;
+
+        my $changes = {};
+        for my $key (qw(title body)) {
+          my $value = $app->text_param ($key);
+          if (defined $value) {
+            $object->{data}->{$key} = $value;
+            $changes->{fields}->{$key} = 1;
+          }
+        }
+        for my $key (qw(timestamp)) {
+          my $value = $app->bare_param ($key);
+          if (defined $value) {
+            $object->{data}->{$key} = 0+$value;
+            $changes->{fields}->{$key} = 1;
+          }
+        }
+
+        # XXX tests
+        if ($app->bare_param ('edit_tag')) {
+          my @old_tags = sort { $a cmp $b } keys %{$object->{data}->{tags} or {}};
+          $object->{data}->{tags} = {map { $_ => 1 } @{$app->text_param_list ('tag')}};
+          my @new_tags = sort { $a cmp $b } keys %{$object->{data}->{tags} or {}};
+          unless (@old_tags == @new_tags and
+                  (join $;, @old_tags) eq (join $;, @new_tags)) { ## This check is not strict but good enough.
+            $changes->{fields}->{tags} = 1;
+          }
+        }
+
         my $time = time;
         return Promise->resolve->then (sub {
-          return unless @$index_ids;
-          return $db->select ('index', {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            index_id => {-in => $index_ids},
-            owner_status => 1, # open
-            user_status => 1, # open
-          }, fields => ['index_id'])->then (sub {
-            my $has_index = {map { $_->{index_id} => 1 } @{$_[0]->all}};
-            for (@$index_ids) {
-              return $app->throw_error (400, reason_phrase => 'Bad |index_id| ('.$_.')')
-                  unless $has_index->{$_};
+          return unless $app->bare_param ('edit_index_id');
+
+          my $index_ids = $app->bare_param_list ('index_id');
+
+          my @new_id;
+          for (@$index_ids) {
+            unless ($object->{data}->{index_ids}->{$_}) {
+              push @new_id, $_;
+            }
+          }
+
+          if (@$index_ids == keys %{$object->{data}->{index_ids}} and
+              not @new_id) {
+            # not changed
+            return;
+          }
+
+          $object->{data}->{index_ids} = {map { $_ => 1 } @$index_ids};
+          $changes->{fields}->{index_ids} = 1;
+
+          return Promise->resolve->then (sub {
+            return unless @new_id;
+            return $db->select ('index', {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              index_id => {-in => \@new_id},
+              owner_status => 1, # open
+              user_status => 1, # open
+            }, fields => ['index_id'])->then (sub {
+              my $has_index = {map { $_->{index_id} => 1 } @{$_[0]->all}};
+              for (@new_id) {
+                return $app->throw_error (400, reason_phrase => 'Bad |index_id| ('.$_.')')
+                    unless $has_index->{$_};
+              }
+            });
+          })->then (sub {
+            if (@$index_ids) {
+              return Promise->all ([
+                $db->insert ('index_object', [map {
+                  +{
+                    group_id => Dongry::Type->serialize ('text', $path->[1]),
+                    index_id => $_,
+                    object_id => Dongry::Type->serialize ('text', $path->[3]),
+                    created => $time,
+                    timestamp => $object->{data}->{timestamp},
+                  };
+                } @$index_ids], duplicate => {
+                  timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
+                }),
+                $db->delete ('index_object', {
+                  group_id => Dongry::Type->serialize ('text', $path->[1]),
+                  index_id => {-not_in => $index_ids},
+                  object_id => Dongry::Type->serialize ('text', $path->[3]),
+                }),
+              ]);
+            } else { # no $index_ids
+              return $db->delete ('index_object', {
+                group_id => Dongry::Type->serialize ('text', $path->[1]),
+                object_id => Dongry::Type->serialize ('text', $path->[3]),
+              });
             }
           });
         })->then (sub {
-          # XXX revision
-          # XXX ignore unspecified fields
-          $object->{data}->{title} = $app->text_param ('title') // '';
-          $object->{data}->{body} = $app->text_param ('body') // '';
-          $object->{data}->{timestamp} = 0+($app->bare_param ('timestamp') || 0);
-          $object->{data}->{index_ids} = {map { $_ => 1 } @$index_ids};
-          if ($app->bare_param ('edit_tag')) {
-            $object->{data}->{tags} = {map { $_ => 1 } @{$app->text_param_list ('tag')}};
-          }
-
-          return unless @$index_ids;
-          return Promise->all ([
-            $db->insert ('index_object', [map {
-              +{
-                group_id => Dongry::Type->serialize ('text', $path->[1]),
-                index_id => $_,
-                object_id => Dongry::Type->serialize ('text', $path->[3]),
-                created => $time,
-                timestamp => $object->{data}->{timestamp},
-              };
-            } @$index_ids], duplicate => {
-              timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
-            }),
-            $db->delete ('index_object', {
+          return unless keys %$changes;
+          my $sdata;
+          my $rev_data = {changes => $changes};
+          return $db->execute ('select uuid_short() as uuid')->then (sub {
+            $object->{data}->{object_revision_id} = ''.$_[0]->first->{uuid};
+            $sdata = Dongry::Type->serialize ('json', $object->{data});
+            return $db->insert ('object_revision', [{
               group_id => Dongry::Type->serialize ('text', $path->[1]),
-              index_id => {-not_in => $index_ids},
               object_id => Dongry::Type->serialize ('text', $path->[3]),
-            }),
-                                #XXX touch indexes
-          ]);
-        })->then (sub {
-          return $db->update ('object', {
-            title => Dongry::Type->serialize ('text', $object->{data}->{title}),
-            data => Dongry::Type->serialize ('json', $object->{data}),
-            timestamp => $object->{data}->{timestamp},
-            updated => $time,
-          }, where => {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            object_id => Dongry::Type->serialize ('text', $path->[3]),
+              data => $sdata,
+
+              object_revision_id => $object->{data}->{object_revision_id},
+              revision_data => Dongry::Type->serialize ('json', $rev_data),
+              author_account_id => Dongry::Type->serialize ('text', $opts->{account}->{account_id}),
+              created => $time,
+
+              owner_status => $object->{data}->{owner_status},
+              user_status => $object->{data}->{user_status},
+            }]);
+          })->then (sub {
+            return $db->update ('object', {
+              title => Dongry::Type->serialize ('text', $object->{data}->{title}),
+              data => $sdata,
+              timestamp => $object->{data}->{timestamp},
+              updated => $time,
+            }, where => {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              object_id => Dongry::Type->serialize ('text', $path->[3]),
+            });
+          })->then (sub {
+            return $db->update ('group', {
+              updated => $time,
+            }, where => {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+            });
+          })->then (sub {
+            return unless keys %{$object->{data}->{index_ids} or {}};
+            return $db->update ('index', {
+              updated => $time,
+            }, where => {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              index_id => {-in => [map {
+                Dongry::Type->serialize ('text', $_);
+              } keys %{$object->{data}->{index_ids} or {}}]},
+            });
           });
         })->then (sub {
           return json $app, {};
@@ -517,7 +585,6 @@ sub group_object ($$$$) {
   }
 
   # XXX revisions
-
   ## XXX if revision's *_status is changed, save log
 
   if (@$path >= 4 and $path->[3] eq 'get.json') {
@@ -581,8 +648,8 @@ sub group_object ($$$$) {
             my $r = $_[0]->first;
             return $app->throw_error (404, reason_phrase => 'Revision not found')
                 unless defined $r;
-            $objects->[0]->{created} = $objects->[0]->{updated} = $r->{created};
-            $objects->[0]->{revision_author_account_id} = $r->{author_account_id};
+            $objects->[0]->{updated} = $r->{created};
+            $objects->[0]->{revision_author_account_id} = ''.$r->{author_account_id};
             if ($r->{user_status} == 1 and $r->{owner_status} == 1) { # open
               $objects->[0]->{data} = $r->{data};
               $objects->[0]->{revision_data}
