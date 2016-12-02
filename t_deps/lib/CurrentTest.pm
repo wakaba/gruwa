@@ -175,17 +175,6 @@ sub group ($$;%) {
   });
 } # group
 
-sub _get_o ($$) {
-  my $self = $_[0];
-  if (not defined $_[1]) {
-    return undef;
-  } elsif (ref $_[1]) {
-    return $_[1];
-  } else {
-    return $self->o ($_[1]);
-  }
-} # _get_o
-
 sub create_index ($$$) {
   my ($self, $name, $opts) = @_;
   return $self->post_json (['i', 'create.json'], {
@@ -233,6 +222,7 @@ sub object ($$%) {
   my ($self, $obj, %args) = @_;
   return $self->get_json (['o', 'get.json'], {
     object_id => $obj->{object_id},
+    ($args{revision} ? (object_revision_id => $obj->{object_revision_id}) : ()),
     with_data => 1,
   }, group => $obj, account => $args{account})->then (sub {
     return $_[0]->{json}->{objects}->{$obj->{object_id}};
@@ -290,6 +280,21 @@ sub resolve ($$) {
 sub o ($$) {
   return $_[0]->{objects}->{$_[1]} // die "No object |$_[1]|", Carp::longmess;
 } # o
+
+sub _get_o ($$) {
+  my $self = $_[0];
+  if (not defined $_[1]) {
+    return undef;
+  } elsif (ref $_[1]) {
+    return $_[1];
+  } else {
+    return $self->o ($_[1]);
+  }
+} # _get_o
+
+sub set_o ($$$) {
+  $_[0]->{objects}->{$_[1]} = $_[2];
+} # set_o
 
 sub are_errors ($$$) {
   my ($self, $base, $tests) = @_;

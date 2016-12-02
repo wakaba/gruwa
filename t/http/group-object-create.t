@@ -29,22 +29,40 @@ Test {
     test {
       is $result->{json}->{group_id}, $current->o ('g1')->{group_id};
       ok $result->{json}->{object_id};
+      ok $result->{json}->{object_revision_id};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
       like $result->{res}->body_bytes, qr{"object_id"\s*:\s*"};
+      like $result->{res}->body_bytes, qr{"object_revision_id"\s*:\s*"};
     } $current->c;
-    return $current->object ($result->{json}, account => 'a1');
+    $current->set_o (o1 => $result->{json});
+    return $current->object ($current->o ('o1'), account => 'a1');
   })->then (sub {
     my $obj = $_[0];
     test {
       is $obj->{group_id}, $current->o ('g1')->{group_id};
       is $obj->{title}, '';
       is $obj->{data}->{title}, '';
+      is $obj->{data}->{object_revision_id}, $current->o ('o1')->{object_revision_id};
       ok $obj->{created};
       is $obj->{updated}, $obj->{created};
       is $obj->{timestamp}, $obj->{created};
     } $current->c;
+    return $current->object ($current->o ('o1'), account => 'a1', revision => 1);
+  })->then (sub {
+    my $obj = $_[0];
+    test {
+      is $obj->{group_id}, $current->o ('g1')->{group_id};
+      is $obj->{title}, '';
+      is $obj->{data}->{title}, '';
+      is $obj->{data}->{object_revision_id}, $current->o ('o1')->{object_revision_id};
+      ok $obj->{created};
+      is $obj->{updated}, $obj->{created};
+      is $obj->{timestamp}, $obj->{created};
+      is $obj->{revision_data}->{changes}->{action}, 'new';
+      is $obj->{revision_author_account_id}, $current->o ('a1')->{account_id};
+    } $current->c;
   });
-} n => 11, name => 'create object';
+} n => 23, name => 'create object';
 
 RUN;
 

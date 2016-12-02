@@ -298,6 +298,98 @@ Test {
   });
 } n => 14, name => 'index timestamp';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o2 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['o', 'get.json'], {
+        object_id => $current->o ('o1')->{object_id},
+        object_revision_id => $current->o ('o1')->{object_revision_id},
+      }, account => 'a1', group => 'g1'],
+      [
+        {params => {
+          object_id => $current->o ('o1')->{object_id},
+          object_revision_id => 523153333,
+        }, status => 404, name => 'Bad |object_revision_id|'},
+        {params => {
+          object_id => $current->o ('o1')->{object_id},
+          object_revision_id => $current->o ('o2')->{object_revision_id},
+        }, status => 404, name => 'Bad |object_revision_id|'},
+      ],
+    );
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      object_revision_id => $current->o ('o1')->{object_revision_id},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $obj->{object_id}, $current->o ('o1')->{object_id};
+      is $obj->{title}, '';
+      is $obj->{data}->{title}, '';
+      is $obj->{data}->{body}, '';
+      is $obj->{data}->{object_revision_id}, $current->o ('o1')->{object_revision_id}, 'data is exposed even without with_data=1';
+      like $result->{res}->body_bytes, qr{"object_id"\s*:\s*"};
+      like $result->{res}->body_bytes, qr{"object_revision_id"\s*:\s*"};
+      ok $obj->{created};
+      is $obj->{updated}, $obj->{created};
+      is $obj->{data}->{timestamp}, $obj->{created};
+      is $obj->{revision_data}->{changes}->{action}, 'new';
+      is $obj->{revision_author_account_id}, $current->o ('a1')->{account_id};
+    } $current->c;
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $obj->{object_id}, $current->o ('o1')->{object_id};
+      is $obj->{title}, '';
+      is $obj->{data}, undef;
+      ok $obj->{created};
+      is $obj->{updated}, $obj->{created};
+      is $obj->{revision_data}, undef;
+    } $current->c, name => 'without object_revision_id';
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      object_id => [$current->o ('o1')->{object_id},
+                    $current->o ('o2')->{object_id}],
+      object_revision_id => $current->o ('o1')->{object_revision_id},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $result->{json}->{objects}->{$current->o ('o1')->{object_id}}->{revision_data}, undef;
+      ok $result->{json}->{objects}->{$current->o ('o2')->{object_id}};
+      is $result->{json}->{objects}->{$current->o ('o2')->{object_id}}->{revision_data}, undef;
+    } $current->c, name => 'object_revision_id ignored';
+    return $current->get_json (['o', 'get.json'], {
+      object_id => [$current->o ('o1')->{object_id},
+                    $current->o ('o2')->{object_id}],
+      object_revision_id => 545131111,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $result->{json}->{objects}->{$current->o ('o1')->{object_id}}->{revision_data}, undef;
+      ok $result->{json}->{objects}->{$current->o ('o2')->{object_id}};
+      is $result->{json}->{objects}->{$current->o ('o2')->{object_id}}->{revision_data}, undef;
+    } $current->c, name => 'object_revision_id ignored';
+  });
+} n => 27, name => 'with object_revision_id';
+
 RUN;
 
 =head1 LICENSE

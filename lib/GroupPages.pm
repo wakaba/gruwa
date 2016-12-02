@@ -516,9 +516,14 @@ sub group_object ($$$$) {
     });
   }
 
+  # XXX revisions
+
+  ## XXX if revision's *_status is changed, save log
+
   if (@$path >= 4 and $path->[3] eq 'get.json') {
     # /g/{group_id}/o/get.json
     my $next_ref = {};
+    my $rev_id;
     return Promise->resolve->then (sub {
       my $index_id = $app->bare_param ('index_id');
       if (defined $index_id) {
@@ -548,7 +553,9 @@ sub group_object ($$$$) {
           } @{$_[0]->all}];
         });
       } else {
-        return $app->bare_param_list ('object_id');
+        my $list = $app->bare_param_list ('object_id');
+        $rev_id = $app->bare_param ('object_revision_id') if @$list == 1;
+        return $list;
       }
     })->then (sub {
       my $object_ids = $_[0];
@@ -563,21 +570,56 @@ sub group_object ($$$$) {
       }, fields => ['object_id', 'title', 'timestamp', 'created', 'updated',
                     ($app->bare_param ('with_data') ? 'data' : ())],
       )->then (sub {
-        return $_[0]->all;
+        my $objects = $_[0]->all;
+        if (defined $rev_id and @$objects == 1) {
+          return $db->select ('object_revision', {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            object_id => {-in => $object_ids},
+            object_revision_id => $rev_id,
+          }, fields => ['data', 'revision_data', 'author_account_id',
+                        'created', 'user_status', 'owner_status'])->then (sub {
+            my $r = $_[0]->first;
+            return $app->throw_error (404, reason_phrase => 'Revision not found')
+                unless defined $r;
+            $objects->[0]->{created} = $objects->[0]->{updated} = $r->{created};
+            $objects->[0]->{revision_author_account_id} = $r->{author_account_id};
+            if ($r->{user_status} == 1 and $r->{owner_status} == 1) { # open
+              $objects->[0]->{data} = $r->{data};
+              $objects->[0]->{revision_data}
+                  = Dongry::Type->parse ('json', $r->{revision_data});
+            } else {
+              delete $objects->[0]->{data};
+              delete $objects->[0]->{title};
+            }
+            return $objects;
+          });
+        } else {
+          return $objects;
+        }
       });
     })->then (sub {
       my $objects = $_[0];
       return json $app, {
         objects => {map {
+          my $data;
+          my $title;
+          if (defined $_->{data}) {
+            $data = Dongry::Type->parse ('json', $_->{data});
+            $title = $data->{title};
+          } else {
+            $title = Dongry::Type->parse ('text', $_->{title});
+          }
           ($_->{object_id} => {
             group_id => $path->[1],
             object_id => ''.$_->{object_id},
-            title => Dongry::Type->parse ('text', $_->{title}),
+            title => $title,
             created => $_->{created},
             updated => $_->{updated},
             timestamp => $_->{timestamp},
-            (defined $_->{data} ?
-               (data => Dongry::Type->parse ('json', $_->{data})) : ()),
+            (defined $_->{data} ? (data => $data) : ()),
+            (defined $_->{revision_data} ?
+                 (revision_data => $_->{revision_data},
+                  revision_author_account_id => $_->{revision_author_account_id}) : ()),
           });
         } @$objects},
         next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
@@ -590,28 +632,49 @@ sub group_object ($$$$) {
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
     my $time = time;
-    return $db->execute ('select uuid_short() as uuid')->then (sub {
-      my $object_id = $_[0]->first->{uuid};
+    return $db->execute ('select uuid_short() as uuid1,
+                                 uuid_short() as uuid2')->then (sub {
+      my $ids = $_[0]->first;
+      my $object_id = $ids->{uuid1};
       my $data = {index_ids => {}, title => '', body => '',
-                  timestamp => $time};
+                  timestamp => $time,
+                  object_revision_id => ''.$ids->{uuid2},
+                  user_status => 1, # open
+                  owner_status => 1}; # open
+      my $rev_data = {changes => {action => 'new'}};
       ## This does not touch `group`.  It will be touched by
       ## o/{}/edit.json soon.
 
-      ##  XXX object_revision
+      my $sdata = Dongry::Type->serialize ('json', $data);
       return $db->insert ('object', [{
         group_id => Dongry::Type->serialize ('text', $path->[1]),
         object_id => $object_id,
         title => '',
-        data => Dongry::Type->serialize ('json', $data),
+        data => $sdata,
         created => $time,
         updated => $time,
         timestamp => $time,
-        owner_status => 1, # open
-        user_status => 1, # open
+        owner_status => $data->{owner_status},
+        user_status => $data->{user_status},
       }])->then (sub {
+        return $db->insert ('object_revision', [{
+          group_id => Dongry::Type->serialize ('text', $path->[1]),
+          object_id => $object_id,
+          data => $sdata,
+
+          object_revision_id => $data->{object_revision_id},
+          revision_data => Dongry::Type->serialize ('json', $rev_data),
+          author_account_id => Dongry::Type->serialize ('text', $opts->{account}->{account_id}),
+          created => $time,
+
+          owner_status => $data->{owner_status},
+          user_status => $data->{user_status},
+        }]);
+      })->then (sub {
         return json $app, {
           group_id => $path->[1],
           object_id => ''.$object_id,
+          object_revision_id => $data->{object_revision_id},
         };
       });
     });
