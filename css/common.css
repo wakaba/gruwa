@@ -319,6 +319,18 @@ edit-container main {
   padding: 0 .2em;
 }
 
+edit-container main > menu {
+  margin: 0;
+  padding: 0.2em 0 0 0;
+}
+
+edit-container main > menu button {
+  font-size: 70%;
+  min-width: 2em;
+  min-height: 2em;
+  vertical-align: middle;
+}
+
 edit-container footer {
   float: right;
 }

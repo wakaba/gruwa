@@ -36,6 +36,14 @@
       </list-control>
     </header>
     <main>
+      <menu>
+        <button type=button data-action=execCommand data-command=bold title=太字><b>B</b></button
+        ><button type=button data-action=execCommand data-command=italic title=斜体><i>I</i></button
+        ><button type=button data-action=execCommand data-command=underline title=下線><u>U</u></button
+        ><button type=button data-action=execCommand data-command=strikethrough title=取り消し線><s>S</s></button>
+        <button type=button data-action=execCommand data-command=superscript title=上付き><sup><var>x</var></sup></button
+        ><button type=button data-action=execCommand data-command=subscript title=下付き><sub><var>x</var></sub></button>
+      </menu>
       <iframe class=control data-name=body />
     </main>
     <footer>

@@ -72,7 +72,7 @@ function createBodyHTML (value, opts) {
     doc.body.setAttribute ('contenteditable', '');
     doc.body.setAttribute ('onload', 'document.body.focus ()');
   }
-  doc.body.innerHTML = value;
+  doc.body.innerHTML = value || '';
 
   return doc.documentElement.outerHTML;
 } // createBodyHTML
@@ -412,9 +412,19 @@ function editObject (article, object) {
       };
       control.onload = null;
     };
+    control.sendExecCommand = function (name, value) {
+      mc.port2.postMessage ({type: "execCommand", command: name, value: value});
+    };
     control.getCurrentValue = function () {
       mc.port2.postMessage ({type: "getCurrentValue"});
       return new Promise (function (ok) { valueWaitings.push (ok) });
+    };
+  });
+  $$ (form, 'button[data-action=execCommand]').forEach (function (b) {
+    b.onclick = function () {
+      var ed = form.querySelector ('iframe.control[data-name=body]');
+      ed.sendExecCommand (this.getAttribute ('data-command'), this.getAttribute ('data-value'));
+      ed.focus ();
     };
   });
   $$ (form, 'input[name]:not([type])').forEach (function (control) {
@@ -580,7 +590,7 @@ function editObject (article, object) {
 
   var resize = function () {
     var h1 = 0;
-    $$ (container, 'form > header, form > footer').forEach (function (e) {
+    $$ (container, 'form > header, form > main > menu, form > footer').forEach (function (e) {
       h1 += e.offsetHeight;
     });
     var h = document.documentElement.clientHeight - h1;

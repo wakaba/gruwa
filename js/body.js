@@ -13,6 +13,8 @@ function handleMessage (ev) {
     sendToParent ({type: "currentValue", value: document.body.innerHTML});
   } else if (ev.data.type === 'getHeight') {
     sendHeight ();
+  } else if (ev.data.type === 'execCommand') {
+    document.execCommand (ev.data.command, ev.data.value);
   }
 } // handleMessage
 
