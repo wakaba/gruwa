@@ -281,47 +281,46 @@ article.object > header tag-list {
   line-height: 1.0;
 }
 
-edit-container [contenteditable] {
-  border: 1px gray dotted;
-  padding: .3em;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  max-height: 90vh;
-  overflow: auto;
+edit-container {
+
 }
 
-edit-container [contenteditable]:empty[data-placeholder]::after {
-  content: attr(data-placeholder);
-  color: gray;
-  background: transparent;
-}
-
-edit-container p {
-  margin: 0;
+edit-container::after {
+  display: block;
+  content: "";
+  clear: both;
 }
 
 edit-container > form {
   margin: 0;
   border-style: none;
-  padding: 0.5em;
+  padding: 0;
 }
 
-edit-container [data-name=body] {
-  min-height: 10em;
-  white-space: pre-wrap;
-  line-height: 1.5;
+edit-container iframe.control {
+  border: 1px dotted;
+  border-color: var(--main-border-color);
+  width: 100%;
 }
 
 article.object > main {
   min-height: 10em;
-  padding-left: 1em;
-  padding-right: 1em;
+  padding-left: .5em;
+  padding-right: .5em;
 }
 
 article.object > main iframe {
   display: block;
   width: 100%;
   border-style: none;
+}
+
+edit-container main {
+  padding: 0 .2em;
+}
+
+edit-container footer {
+  float: right;
 }
 
 article.object > footer p,

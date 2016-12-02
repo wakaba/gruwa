@@ -59,6 +59,24 @@ function gFetch (pathquery, opts) {
   });
 } // gFetch
 
+function createBodyHTML (value, opts) {
+  var doc = (new DOMParser).parseFromString ("", "text/html");
+
+  var head = '<base target=_top><link rel=stylesheet href><script src=/js/body.js />';
+  doc.head.innerHTML = head;
+
+  doc.querySelector ('link[rel=stylesheet]').href = document.documentElement.getAttribute ('data-body-css-href');
+  doc.documentElement.setAttribute ('data-theme', document.documentElement.getAttribute ('data-theme'));
+
+  if (opts.edit) {
+    doc.body.setAttribute ('contenteditable', '');
+    doc.body.setAttribute ('onload', 'document.body.focus ()');
+  }
+  doc.body.innerHTML = value;
+
+  return doc.documentElement.outerHTML;
+} // createBodyHTML
+
 function fillFields (rootEl, el, object) {
   if (object.account_id &&
       object.account_id === document.documentElement.getAttribute ('data-account')) {
@@ -131,14 +149,17 @@ function fillFields (rootEl, el, object) {
       });
     } else if (field.localName === 'iframe') {
       field.setAttribute ('sandbox', 'allow-scripts');
-      field.setAttribute ('srcdoc', '<base target=_top><link rel=stylesheet href=/css/body.css><script>onmessage = function (ev) { ev.ports[0].postMessage (document.documentElement.offsetHeight) }</script><body>' + (value || ''));
+      field.setAttribute ('srcdoc', createBodyHTML (value, {}));
       field.onload = function () {
         var mc = new MessageChannel;
-        this.contentWindow.postMessage ({}, '*', [mc.port1]);
+        this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
         mc.port2.onmessage = function (ev) {
-          field.style.height = ev.data + 'px';
-          this.close ();
+          if (ev.data.type === 'height') {
+            field.style.height = ev.data.value + 'px';
+            this.close ();
+          }
         };
+        field.onload = null;
       };
     } else {
       field.textContent = value || field.getAttribute ('data-empty') || '';
@@ -365,12 +386,36 @@ function editObject (article, object) {
 
   var form = container.querySelector ('form');
 
-  $$ (form, '.control[data-name]').forEach (function (control) {
+  $$ (form, 'main .control, header input').forEach (function (control) {
+    control.onfocus = function () {
+      container.scrollIntoView ();
+    };
+  });
+
+  $$ (form, 'iframe.control[data-name]').forEach (function (control) {
     var value = object.data[control.getAttribute ('data-name')];
-    if (value) {
-        // XXX sandbox
-        control.innerHTML = value;
-    }
+    var valueWaitings = [];
+    control.setAttribute ('sandbox', 'allow-scripts');
+    control.setAttribute ('srcdoc', createBodyHTML (value, {edit: true}));
+    var mc = new MessageChannel;
+    control.onload = function () {
+      this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
+      mc.port2.onmessage = function (ev) {
+        if (ev.data.type === 'focus') {
+          control.dispatchEvent (new Event ("focus", {bubbles: true}));
+        } else if (ev.data.type === 'currentValue') {
+          valueWaitings.forEach (function (f) {
+            f (ev.data.value);
+          });
+          valueWaitings = [];
+        }
+      };
+      control.onload = null;
+    };
+    control.getCurrentValue = function () {
+      mc.port2.postMessage ({type: "getCurrentValue"});
+      return new Promise (function (ok) { valueWaitings.push (ok) });
+    };
   });
   $$ (form, 'input[name]:not([type])').forEach (function (control) {
     var value = object.data[control.name]
@@ -531,7 +576,18 @@ function editObject (article, object) {
         });
         console.log (error); // XXX
       });
-    };
+    }; // onsubmit
+
+  var resize = function () {
+    var h1 = 0;
+    $$ (container, 'form > header, form > footer').forEach (function (e) {
+      h1 += e.offsetHeight;
+    });
+    var h = document.documentElement.clientHeight - h1;
+    container.querySelector ('main > iframe.control').height = h + 'px';
+  }; // resize
+  addEventListener ('resize', resize);
+  Promise.resolve ().then (resize);
 
   var body = container.querySelector ('.control[data-name=body]');
   if (body) body.focus ();
@@ -541,11 +597,13 @@ function saveObject (article, form, object) {
   // XXX if not modified
   var fd = new FormData;
   var c = [];
+  var ps = [];
   $$ (form, '.control[data-name]').forEach (function (control) {
     var name = control.getAttribute ('data-name');
-    var value = control.innerHTML; // XXX
-    fd.append (name, value);
-    c.push (function () { object.data[name] = value });
+    ps.push (control.getCurrentValue ().then (function (value) {
+      fd.append (name, value);
+      c.push (function () { object.data[name] = value });
+    }));
   });
   $$ (form, 'input[name]:not([type]), input[name][type=hidden]').forEach (function (control) {
     var name = control.name;
@@ -568,7 +626,7 @@ function saveObject (article, form, object) {
     });
     c.push (function () { object.data[control.getAttribute ('key')] = cc });
   });
-  return Promise.resolve ().then (function () {
+  return Promise.all (ps).then (function () {
     var objectId = article.getAttribute ('data-object');
     if (objectId) {
       return objectId;

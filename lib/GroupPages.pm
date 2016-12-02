@@ -428,7 +428,7 @@ sub group_object ($$$$) {
     return $db->select ('object', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
       object_id => Dongry::Type->serialize ('text', $path->[3]),
-    }, fields => ['object_id', 'data'])->then (sub {
+    }, fields => ['object_id', 'data', 'owner_status', 'user_status'])->then (sub {
       my $object = $_[0]->first;
       return $app->throw_error (404, reason_phrase => 'Object not found')
           unless defined $object;
@@ -453,6 +453,10 @@ sub group_object ($$$$) {
             $changes->{fields}->{$key} = 1;
           }
         }
+
+        # XXX
+        $object->{data}->{user_status} = $object->{user_status};
+        $object->{data}->{owner_status} = $object->{owner_status};
 
         # XXX tests
         if ($app->bare_param ('edit_tag')) {

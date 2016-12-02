@@ -5,6 +5,7 @@ html {
 }
 
 body {
+  padding: .5em;
   white-space: pre-wrap;
 }
 

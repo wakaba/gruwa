@@ -1,4 +1,5 @@
 <html t:params="$group $index $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
+    data-body-css-href=/css/body.css
     pl:data-theme="$index->{options}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
@@ -34,7 +35,9 @@
         </list-control-footer>
       </list-control>
     </header>
-    <main class=control data-name=body data-placeholder=本文 contenteditable></main>
+    <main>
+      <iframe class=control data-name=body />
+    </main>
     <footer>
       <p class=operations>
         <button type=submit class=save-button>保存する</button>
