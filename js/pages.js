@@ -129,13 +129,19 @@ function fillFields (rootEl, el, object) {
         a.textContent = tag;
         field.appendChild (a);
       });
+    } else if (field.localName === 'iframe') {
+      field.setAttribute ('sandbox', 'allow-scripts');
+      field.setAttribute ('srcdoc', '<base target=_top><link rel=stylesheet href=/css/body.css><script>onmessage = function (ev) { ev.ports[0].postMessage (document.documentElement.offsetHeight) }</script><body>' + (value || ''));
+      field.onload = function () {
+        var mc = new MessageChannel;
+        this.contentWindow.postMessage ({}, '*', [mc.port1]);
+        mc.port2.onmessage = function (ev) {
+          field.style.height = ev.data + 'px';
+          this.close ();
+        };
+      };
     } else {
-      var type = field.getAttribute ('data-field-type');
-            if (type === 'html') {
-              field.innerHTML = value; // XXX sandbox
-            } else {
-              field.textContent = value || field.getAttribute ('data-empty') || '';
-            }
+      field.textContent = value || field.getAttribute ('data-empty') || '';
     }
   });
   if (rootEl.startEdit) {

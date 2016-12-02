@@ -74,7 +74,7 @@
             <tag-list data-data-field=tags />
           </div>
         </header>
-        <main><div data-data-field=body data-field-type=html /></main>
+        <main><iframe data-data-field=body /></main>
     <footer>
       <p>
         <time data-field=created class=ambtime />

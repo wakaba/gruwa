@@ -1,392 +1,7 @@
-html { /* [data-thema=green] */
-  color: black;
-  background-color: white;
-
-  --dark-background-color: green;
-  --dark-color: white;
-
-  --light-1-background-color: rgb(225, 255, 225);
-  --light-1-color: black;
-  --light-1-shadow-color: #ccc;
-
-  --light-2-background-color: rgb(245, 255, 245);
-  --light-2-color: black;
-  --light-2-shadow-color: #ccc;
-
-  --main-border-color: rgb(205, 255, 205);
-  --main-color: black;
-  --main-background-color: white;
-  --main-shadow-color: gray;
-
-  --accented-color: black;
-  --accented-border-color: green;
-  --accented-background-color: transparent;
-
-  --link-color: rgb(0, 0, 238);
-  --link-background-color: transparent;
-
-  --visited-color: purple;
-  --visited-background-color: transparent;
-}
-
-html[data-theme=blue] {
-  --dark-background-color: #0c0ca9;
-  --light-1-background-color: rgb(225, 225, 255);
-  --light-2-background-color: rgb(245, 245, 255);
-  --main-border-color: rgb(200, 200, 255);
-  --accented-border-color: #0c0ca9;
-}
-
-html[data-theme=red] {
-  --dark-background-color: #e40000;
-  --light-1-background-color: rgb(255, 225, 225);
-  --light-2-background-color: rgb(255, 245, 245);
-  --main-border-color: rgb(255, 200, 200);
-  --accented-border-color: #e40000;
-}
-
-html[data-theme=black] {
-  background-color: black;
-  color: #eee;
-
-  --dark-background-color: #ddd;
-  --dark-color: black;
-
-  --light-1-background-color: #333;
-  --light-1-color: #eee;
-  --light-1-shadow-color: #666;
-
-  --light-2-background-color: #444;
-  --light-2-color: #eee;
-  --light-2-shadow-color: #666;
-
-  --main-border-color: gray;
-  --main-color: #eee;
-  --main-background-color: black;
-  --main-shadow-color: #ddd;
-
-  --accented-color: #eee;
-  --accented-border-color: #eee;
-  --accented-background-color: transparent;
-
-  --link-color: #9595ff;
-  --link-background-color: transparent;
-
-  --visited-color: #e6b4e6;
-  --visited-background-color: transparent;
-}
+@import 'base.css';
 
 body {
   margin: 0 0 10em 0;
-}
-
-section {
-  display: block;
-  margin: 0 1em 1em 1em;
-  padding: 0;
-}
-
-section > h1 {
-  display: block;
-  margin: 0 0 1rem 0;
-  border-bottom: 1px solid;
-  border-color: var(--accented-border-color);
-  padding: 0.3em;
-  font-size: 130%;
-  color: var(--accented-color);
-  background-color: var(--accented-background-color);
-}
-
-section > * {
-  margin-left: 1em;
-  margin-right: 1em;
-}
-
-article {
-  display: block;
-}
-
-main {
-  display: block;
-}
-
-summary {
-  padding: .5em;
-  cursor: pointer;
-}
-
-p {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-
-form {
-  margin: 0 1em 1em;
-  border: 1px solid;
-  border-color: var(--main-border-color);
-  color: var(--main-color);
-  background-color: var(--main-background-color);
-  padding: 1em;
-}
-
-.config {
-  margin: 0;
-  width: 90%;
-}
-
-.config th {
-  width: 20%;
-  text-align: right;
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-}
-
-.config th:nth-child(2n) {
-  background-color: var(--light-2-background-color);
-  color: var(--light-2-color);
-}
-
-.config th, .config td {
-  padding: .4em .8em;
-}
-
-.operations {
-  margin: 0;
-  direction: rtl;
-  text-align: right;
-}
-
-input:not([type]) {
-  box-sizing: border-box;
-  width: 100%;
-  border: dotted 1px;
-  border-color: var(--main-border-color);
-  padding: .3em;
-  color: var(--main-color);
-  background-color: var(--main-background-color);
-}
-
-input[type=date] {
-  border: dotted 1px;
-  border-color: var(--main-border-color);
-  padding: .3em;
-  color: var(--main-color);
-  background-color: var(--main-background-color);
-}
-
-select {
-  color: var(--main-color);
-  background-color: var(--main-background-color);
-  min-width: 10em;
-}
-
-list-control {
-  display: inline-block;
-  width: 100%;
-  box-sizing: border-box;
-  border: dotted 1px;
-  border-color: var(--main-border-color);
-  padding: .1em .3em;
-  color: var(--main-color);
-  background-color: var(--main-background-color);
-  font-size: 80%;
-}
-
-list-control list-item {
-  min-width: 10em;
-  border-radius: .5em;
-  background-color: var(--light-2-background-color);
-  color: var(--light-2-color);
-  font-size: 90%;
-}
-
-list-control list-item:nth-child(2n) {
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-}
-
-list-control-main {
-  display: block;
-  min-height: 1.5em;
-}
-
-list-control-main:empty {
-  content: attr(placeholder);
-}
-
-list-control-main list-item {
-  display: inline-block;
-  margin-right: .5em;
-  margin-top: 0.1em;
-  margin-bottom: 0.1em;
-  padding: .3em 1em;
-  min-width: 4em;
-  text-align: center;
-}
-
-list-dropdown:not([hidden]) {
-  position: absolute;
-  right: 0;
-  display: block;
-  border: solid 1px;
-  border-color: var(--main-border-color);
-  box-shadow: 3px 3px var(--main-shadow-color);
-  color: var(--main-color);
-  background-color: var(--main-background-color);
-  min-width: 10em;
-  max-height: 90vh;
-  min-height: 10em;
-  overflow: auto;
-}
-
-list-dropdown list-item {
-  display: inline-block;
-  margin: .25em;
-}
-
-list-dropdown list-item label {
-  display: block;
-  padding: .3em;
-  cursor: pointer;
-}
-
-list-dropdown .add-form {
-  display: table;
-  width: 100%;
-  margin: 0;
-  border-style: none;
-  padding: 0;
-}
-
-list-dropdown .add-form > span {
-  display: table-cell;
-}
-
-list-control-footer {
-  position: relative;
-  display: block;
-}
-
-list-control-footer::after {
-  display: block;
-  clear: both;
-  content: "";
-}
-
-list-control-footer .edit-button {
-  float: right;
-  margin-top: -1.5em;
-  padding: .2em;
-}
-
-button:enabled {
-  cursor: pointer;
-}
-
-.edit-button {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  margin-left: 1em;
-  border-style: none;
-  padding: .5em;
-  min-width: 5em;
-  color: black;
-  background: rgba(236, 236, 255, 0.7);
-}
-
-.edit-button:hover:enabled {
-  background: rgb(236, 236, 255);
-}
-
-.edit-button:disabled {
-  color: gray;
-}
-
-.save-button, .cancel-button {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  margin: .2em .5em;
-  border-style: none;
-  padding: .5em;
-  min-width: 8em;
-}
-
-.save-button {
-  color: white;
-  background: rgb(19, 195, 19);
-}
-
-.save-button:hover:enabled {
-  background: rgba(19, 195, 19, 0.8);
-}
-
-.save-button:disabled {
-  color: #eee;
-}
-
-.cancel-button {
-  color: white;
-  background: rgb(195, 19, 19);
-}
-
-.cancel-button:hover:enabled {
-  background: rgba(195, 19, 19, 0.8);
-}
-
-.cancel-button:disabled {
-  color: #eee;
-}
-
-a:link {
-  color: var(--link-color);
-  background-color: var(--link-background-color);
-}
-
-a:visited {
-  color: var(--visited-color);
-  background-color: var(--visited-background-color);
-}
-
-a:hover,
-a:active {
-  color: black;
-  background: #ffa;
-}
-
-h1 a:link,
-h1 a:visited {
-  color: inherit;
-  background: transparent;
-  text-decoration: none;
-}
-
-tag-list {
-  display: block;
-}
-
-tag-list a {
-  margin-right: .5em;
-  text-decoration: none;
-}
-
-tag-list a::before {
-  content: "#";
-  padding-right: .2em;
-}
-
-tag-list a:hover,
-tag-list a:active {
-  text-decoration: underline;
-}
-
-list-container {
-  display: block;
-}
-
-list-container > .operations {
-  margin: 0 0.5em 0.5em 0.5em;
 }
 
 header.cover h1 {
@@ -541,8 +156,15 @@ list-container[key=index_list] {
   display: block;
 }
 
-list-container[key=index_list] p {
-  margin: 0;
+list-container[key=index_list] > list-main > list-item {
+  display: block;
+  background-color: var(--light-2-background-color);
+  color: var(--light-2-color);
+}
+
+list-container[key=index_list] > list-main > list-item:nth-child(2n) {
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
 }
 
 list-container[key=index_list] a {
@@ -575,12 +197,12 @@ list-container[key=index_list] a:active strong {
 
 list-container[key=index_list] list-container[key=objects] {
   display: block;
-  margin: 0.5rem 1rem;
+  margin: 0.2rem 1rem;
   font-size: 80%;
 }
 
 list-container[key=index_list] list-container[key=objects] a {
-  display: inline;
+  display: inline-block;
 }
 
 article.object:not([hidden]) {
@@ -684,13 +306,22 @@ edit-container > form {
   padding: 0.5em;
 }
 
-article.object > main,
 edit-container [data-name=body] {
-  margin-top: 1em;
-  margin-bottom: 1em;
   min-height: 10em;
   white-space: pre-wrap;
   line-height: 1.5;
+}
+
+article.object > main {
+  min-height: 10em;
+  padding-left: 1em;
+  padding-right: 1em;
+}
+
+article.object > main iframe {
+  display: block;
+  width: 100%;
+  border-style: none;
 }
 
 article.object > footer p,
