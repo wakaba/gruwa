@@ -43,6 +43,11 @@
         ><button type=button data-action=execCommand data-command=strikethrough title=取り消し線><s>S</s></button>
         <button type=button data-action=execCommand data-command=superscript title=上付き><sup><var>x</var></sup></button
         ><button type=button data-action=execCommand data-command=subscript title=下付き><sub><var>x</var></sub></button>
+
+        <button type=button data-action=setBlock data-value=div title=段落>段落</button
+        ><button type=button data-action=setBlock data-value=h1 title=見出し>見出し</button
+        ><button type=button data-action=setBlock data-value=ul title=箇条書き>・</button
+        ><button type=button data-action=setBlock data-value=ol title=順序>1.</button>
       </menu>
       <iframe class=control data-name=body />
     </main>

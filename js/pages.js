@@ -423,6 +423,9 @@ function editObject (article, object) {
     control.sendExecCommand = function (name, value) {
       mc.port2.postMessage ({type: "execCommand", command: name, value: value});
     };
+    control.setBlock = function (value) {
+      mc.port2.postMessage ({type: "setBlock", value: value});
+    };
     control.getCurrentValue = function () {
       mc.port2.postMessage ({type: "getCurrentValue"});
       return new Promise (function (ok) { valueWaitings.push (ok) });
@@ -432,6 +435,13 @@ function editObject (article, object) {
     b.onclick = function () {
       var ed = form.querySelector ('iframe.control[data-name=body]');
       ed.sendExecCommand (this.getAttribute ('data-command'), this.getAttribute ('data-value'));
+      ed.focus ();
+    };
+  });
+  $$ (form, 'button[data-action=setBlock]').forEach (function (b) {
+    b.onclick = function () {
+      var ed = form.querySelector ('iframe.control[data-name=body]');
+      ed.setBlock (this.getAttribute ('data-value'));
       ed.focus ();
     };
   });
@@ -602,7 +612,7 @@ function editObject (article, object) {
       h1 += e.offsetHeight;
     });
     var h = document.documentElement.clientHeight - h1;
-    container.querySelector ('main > iframe.control').height = h + 'px';
+    container.querySelector ('main > iframe.control').style.height = h + 'px';
   }; // resize
   addEventListener ('resize', resize);
   Promise.resolve ().then (resize);
