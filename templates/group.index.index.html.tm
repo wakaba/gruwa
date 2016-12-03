@@ -45,9 +45,10 @@
         ><button type=button data-action=execCommand data-command=subscript title=下付き><sub><var>x</var></sub></button>
 
         <button type=button data-action=setBlock data-value=div title=段落>段落</button
-        ><button type=button data-action=setBlock data-value=h1 title=見出し>見出し</button
         ><button type=button data-action=setBlock data-value=ul title=箇条書き>・</button
         ><button type=button data-action=setBlock data-value=ol title=順序>1.</button>
+
+        <button type=button data-action=insertSection title=章節>§</button>
       </menu>
       <iframe class=control data-name=body />
     </main>

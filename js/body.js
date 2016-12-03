@@ -18,6 +18,8 @@ function handleMessage (ev) {
     selectChanged ();
   } else if (ev.data.type === 'setBlock') {
     setBlock (ev.data.value);
+  } else if (ev.data.type === 'insertSection') {
+    insertSection ();
   }
 } // handleMessage
 
@@ -51,16 +53,20 @@ function selectChanged () {
 } // selectChanged
 
 var BlockElements = {
-  div: true, p: true, h1: true,
+  div: true, p: true,
   li: true,
   ul: true, ol: true,
 };
 var ContainerElements = {
   section: true, article: true, figure: true, blockquote: true,
+  h1: true, main: true,
   html: true, head: true, body: true,
 };
 var AdjacentMergeableElements = {
   ul: true, ol: true,
+};
+var InlineContentOnlyElements = {
+  h1: true, section: true,
 };
 
 var TypeToLocalName = {
@@ -68,6 +74,7 @@ var TypeToLocalName = {
 };
 var TypeToParentLocalName = {
   ul: "ul", ol: "ol",
+  h1: "section",
 };
 
 function copyAttrs (newNode, node) {
@@ -77,10 +84,9 @@ function copyAttrs (newNode, node) {
   }
 } // copyAttrs
 
-function setBlock (type) {
-  var sel = getSelection ();
+function getNearestBlock () {
   var isBlock = false;
-  var node = sel.anchorNode;
+  var node = getSelection ().anchorNode;
   while (true) {
     if (BlockElements[node.localName]) {
       isBlock = true;
@@ -93,9 +99,18 @@ function setBlock (type) {
       node = node.parentNode;
     }
   }
+  return {node: node, isBlock: isBlock};
+} // getNearestBlock
+
+function setBlock (type) {
+  var x = getNearestBlock ();
+  var node = x.node;
+  var isBlock = x.isBlock;
 
   // Unlikely, and nothing we can do.
   if (!node.parentNode) return;
+
+  if (InlineContentOnlyElements[node.localName]) return;
 
   // Wrapping
   if (!isBlock) {
@@ -146,7 +161,8 @@ function setBlock (type) {
   var needReparent = true;
   var parentLocalName = TypeToParentLocalName[type];
   if (parentLocalName) {
-    if (node.parentNode.localName !== parentLocalName) {
+    if (!AdjacentMergeableElements[parentLocalName] ||
+        node.parentNode.localName !== parentLocalName) {
       var parent = document.createElement (parentLocalName);
       node.parentNode.insertBefore (parent, node);
       parent.appendChild (node);
@@ -192,7 +208,32 @@ function setBlock (type) {
     }
   }
 
-  sel.selectAllChildren (toBeSelected);
+  getSelection ().selectAllChildren (toBeSelected);
 } // setBlock
+
+function insertSection () {
+  var node = getSelection ().anchorNode;
+  while (true) {
+    if (!node.parentNode) {
+      break;
+    } else if (ContainerElements[node.parentNode.localName]) {
+      break;
+    } else {
+      node = node.parentNode;
+    }
+  }
+  if (InlineContentOnlyElements[node.localName]) return;
+
+  var section = document.createElement ('section');
+  section.setAttribute ('contenteditable', 'false');
+  var h1 = document.createElement ('h1');
+  h1.setAttribute ('contenteditable', '');
+  section.appendChild (h1);
+  var main = document.createElement ('main');
+  main.setAttribute ('contenteditable', '');
+  section.appendChild (main);
+  node.parentNode.insertBefore (section, node.nextSibling);
+  h1.focus ();
+} // insertSection
 
 sendHeight ();

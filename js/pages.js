@@ -74,6 +74,13 @@ function createBodyHTML (value, opts) {
   }
   doc.body.innerHTML = value || '';
 
+  $$ (doc.body, 'section').forEach (function (e) {
+    e.setAttribute ('contenteditable', 'false');
+  });
+  $$ (doc.body, 'section > h1, section > main').forEach (function (e) {
+    e.setAttribute ('contenteditable', 'true');
+  });
+
   return doc.documentElement.outerHTML;
 } // createBodyHTML
 
@@ -426,6 +433,9 @@ function editObject (article, object) {
     control.setBlock = function (value) {
       mc.port2.postMessage ({type: "setBlock", value: value});
     };
+    control.insertSection = function () {
+      mc.port2.postMessage ({type: "insertSection"});
+    };
     control.getCurrentValue = function () {
       mc.port2.postMessage ({type: "getCurrentValue"});
       return new Promise (function (ok) { valueWaitings.push (ok) });
@@ -442,6 +452,13 @@ function editObject (article, object) {
     b.onclick = function () {
       var ed = form.querySelector ('iframe.control[data-name=body]');
       ed.setBlock (this.getAttribute ('data-value'));
+      ed.focus ();
+    };
+  });
+  $$ (form, 'button[data-action=insertSection]').forEach (function (b) {
+    b.onclick = function () {
+      var ed = form.querySelector ('iframe.control[data-name=body]');
+      ed.insertSection ();
       ed.focus ();
     };
   });
