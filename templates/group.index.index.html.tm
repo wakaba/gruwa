@@ -49,6 +49,9 @@
         ><button type=button data-action=setBlock data-value=ol title=順序>1.</button>
 
         <button type=button data-action=insertSection title=章節>§</button>
+
+        <button type=button data-action=outdent title=浅く>←</button
+        ><button type=button data-action=indent title=深く>→</button>
       </menu>
       <iframe class=control data-name=body />
     </main>
