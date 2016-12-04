@@ -39,6 +39,7 @@ function handleMessage (ev) {
     Array.prototype.forEach.call (document.querySelectorAll ('input[type=checkbox]'), function (e) {
       if (e.name === data.name) {
         e.checked = e.defaultChecked = data.value;
+        changeChecked (e);
       }
     });
   }
@@ -112,6 +113,7 @@ onchange = function (ev) {
       ev.target.defaultChecked = ev.target.checked;
       sendToParent ({type: "changed",
                      name: ev.target.name, value: ev.target.checked});
+      changeChecked (ev.target);
     }
   }
 }; // onchange
@@ -127,12 +129,14 @@ var mo = new MutationObserver (function (records) {
           n.name = Math.random ();
           UsedControlNames[n.name] = true;
         }
+        changeChecked (n);
       } else {
         Array.prototype.forEach.call (document.querySelectorAll ('input[type=checkbox]'), function (n) {
           if (UsedControlNames[n.name]) {
             n.name = Math.random ();
             UsedControlNames[n.name] = true;
           }
+          changeChecked (n);
         });
       }
     });
@@ -155,6 +159,23 @@ function selectChanged () {
   });
   sendToParent ({type: "currentState", value: data});
 } // selectChanged
+
+function changeChecked (e) {
+  var value = e.checked;
+  while (e) {
+    if (e.localName === 'li') {
+      break;
+    }
+    e = e.parentNode;
+  }
+  if (e) {
+    if (value) {
+      e.setAttribute ('data-checked', '');
+    } else {
+      e.removeAttribute ('data-checked');
+    }
+  }
+} // changeChecked
 
 var BlockElements = {
   div: true, p: true,
@@ -528,7 +549,6 @@ function showContextToolbar (args) {
   });
 
   document.body.appendChild (contextToolbar);
-
 } // showContextToolbar
 
 sendHeight ();

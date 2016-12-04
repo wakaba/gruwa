@@ -277,43 +277,6 @@ function upgradeList (el) {
                 item.save ();
               });
             });
-            item.save = function () {
-              var container = item.querySelector ('edit-container');
-              var form = container.querySelector ('form');
-
-      $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
-        button.disabled = true;
-// XXX disable controls
-      });
-
-// XXX progress
-      saveObject (item, form, object).then (function (objectId) {
-        if (object.object_id) {
-          item.updateView ();
-          $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
-            button.disabled = false;
-          });
-          container.hidden = true;
-          item.classList.remove ('editing');
-        } else { // new object
-          return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
-            document.querySelector ('list-container[index]')
-                .showObjects (json.objects, {prepend: true});
-          }, function (error) {
-            console.log (error); // XXX
-          }).then (function () {
-            container.remove ();
-            item.classList.remove ('editing');
-          });
-        }
-      }, function (error) {
-        $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
-          button.disabled = false;
-        });
-        console.log (error); // XXX
-      });
-
-            }; // save
 
             item.updateView ();
           } else {
@@ -448,8 +411,41 @@ function editObject (article, object, opts) {
   container.hidden = true;
   container.appendChild (template.content.cloneNode (true));
   article.appendChild (container);
-
   var form = container.querySelector ('form');
+
+  article.save = function () {
+    $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
+      button.disabled = true;
+// XXX disable controls
+    });
+
+// XXX progress
+    saveObject (article, form, object).then (function (objectId) {
+      if (object.object_id) {
+        article.updateView ();
+        $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
+          button.disabled = false;
+        });
+        container.hidden = true;
+        article.classList.remove ('editing');
+      } else { // new object
+        return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
+          document.querySelector ('list-container[index]')
+              .showObjects (json.objects, {prepend: true});
+        }, function (error) {
+          console.log (error); // XXX
+        }).then (function () {
+          container.remove ();
+          article.classList.remove ('editing');
+        });
+      }
+    }, function (error) {
+      $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
+        button.disabled = false;
+      });
+      console.log (error); // XXX
+    });
+  }; // save
 
   $$ (form, 'main .control, header input').forEach (function (control) {
     control.onfocus = function () {
