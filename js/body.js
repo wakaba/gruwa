@@ -36,12 +36,61 @@ function sendToParent (data) {
   parentPort.postMessage (data);
 } // sendToParent
 
+function sendPrompt (opts) {
+  var c = new MessageChannel;
+  parentPort.postMessage ({type: "prompt", value: opts}, [c.port1]);
+  var ok;
+  var p = new Promise (function (x) { ok = x });
+  c.port2.onmessage = function (ev) {
+    ok (ev.data);
+    c.port2.close ();
+  };
+  return p;
+} // sendPrompt
+
 function sendHeight () {
   sendToParent ({type: "height", value: document.documentElement.offsetHeight});
 } // sendHeight
 
 onfocus = function () {
   sendToParent ({type: "focus"});
+}; // onfocus
+
+function htescape (s) {
+  return s.replace (/&/g, '&amp;').replace (/"/g, '&quot;').replace (/</g, '&lt;').replace (/>/g, '&gt;');
+} // s
+
+document.onpaste = function (ev) {
+  var text = ev.clipboardData.getData ('text/plain');
+  if (text && /^\s*(?:[Hh][Tt][Tt][Pp][Ss]?|[Ff][Tt][Pp]):\/\/\S+\s*$/.test (text)) {
+    text = text.replace (/^\s+/, '').replace (/\s+$/, '');
+    ev.clipboardData.items.clear ();
+    text = '<a href="'+htescape(text)+'">'+htescape(text)+'</a>';
+    document.execCommand ('inserthtml', false, text);
+    return false;
+  }
+}; // onpaste
+
+onmouseover = function (ev) {
+  if (!ev.target.isContentEditable) return;
+  if (ev.target.localName === 'a') {
+    showContextToolbar ({context: ev.target, template: 'link-edit-template'});
+  }
+}; // mouseover
+
+onmouseout = function (ev) {
+  if (!ev.target.isContentEditable) { // within UI
+    if (ev.relatedTarget && ev.relatedTarget.isContentEditable) {
+      if (ev.relatedTarget.localName !== 'a') {
+        showContextToolbar ({void: true});
+      }
+    }
+  } else {
+    if (ev.target.localName === 'a' &&
+        !(ev.relatedTarget && !ev.relatedTarget.isContentEditable)) {
+      showContextToolbar ({void: true});
+    }
+  }
 };
 
 var selChangedTimer;
@@ -390,5 +439,49 @@ function outdent () {
 
   getSelection ().selectAllChildren (x.node);
 } // outdent
+
+var contextToolbar;
+function showContextToolbar (args) {
+  if (contextToolbar) contextToolbar.remove ();
+  contextToolbar = null;
+
+  if (args.void) return;
+
+  var template = document.querySelector ('#' + args.template);
+
+  contextToolbar = document.createElement ('menu');
+  contextToolbar.className = 'context';
+  contextToolbar.setAttribute ('contenteditable', 'false');
+  contextToolbar.style.top = args.context.offsetTop + args.context.offsetHeight + 'px';
+  contextToolbar.style.left = args.context.offsetLeft + 'px';
+  contextToolbar.appendChild (template.content.cloneNode (true));
+
+  var updated = function () {
+    Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-field=host]'), function (e) {
+      e.textContent = args.context.host;
+    });
+    Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-title-field=href]'), function (e) {
+      e.title = args.context.href;
+    });
+    Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-href-field=href]'), function (e) {
+      e.href = args.context.href;
+    });
+  }; // updated
+  updated ();
+  Array.prototype.forEach.call (contextToolbar.querySelectorAll ('.edit-button'), function (e) {
+    e.onclick = function () {
+      sendPrompt ({prompt: e.getAttribute ('data-prompt'),
+                   default: args.context.href}).then (function (_) {
+        if (_.result != null) {
+          args.context.href = _.result;
+          updated ();
+        }
+      });
+    };
+  });
+
+  document.body.appendChild (contextToolbar);
+
+} // showContextToolbar
 
 sendHeight ();

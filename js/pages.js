@@ -65,6 +65,10 @@ function createBodyHTML (value, opts) {
   var head = '<base target=_top><link rel=stylesheet href><script src=/js/body.js />';
   doc.head.innerHTML = head;
 
+  $$ (document, 'template.body-edit-template').forEach (function (e) {
+    doc.head.appendChild (e.cloneNode (true));
+  });
+
   doc.querySelector ('link[rel=stylesheet]').href = document.documentElement.getAttribute ('data-body-css-href');
   doc.documentElement.setAttribute ('data-theme', document.documentElement.getAttribute ('data-theme'));
 
@@ -157,7 +161,7 @@ function fillFields (rootEl, el, object) {
         field.appendChild (a);
       });
     } else if (field.localName === 'iframe') {
-      field.setAttribute ('sandbox', 'allow-scripts');
+      field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
       field.setAttribute ('srcdoc', createBodyHTML (value, {}));
       field.onload = function () {
         var mc = new MessageChannel;
@@ -404,7 +408,7 @@ function editObject (article, object) {
   $$ (form, 'iframe.control[data-name]').forEach (function (control) {
     var value = object.data[control.getAttribute ('data-name')];
     var valueWaitings = [];
-    control.setAttribute ('sandbox', 'allow-scripts');
+    control.setAttribute ('sandbox', 'allow-scripts allow-popups');
     control.setAttribute ('srcdoc', createBodyHTML (value, {edit: true}));
     var mc = new MessageChannel;
     control.onload = function () {
@@ -423,6 +427,10 @@ function editObject (article, object) {
             if (value === undefined) return;
             b.classList.toggle ('active', value);
           });
+        } else if (ev.data.type === 'prompt') {
+          var args = ev.data.value;
+          var result = prompt (args.prompt, args.default);
+          ev.ports[0].postMessage ({result: result});
         } else {
           console.log (ev.data.type);
         }

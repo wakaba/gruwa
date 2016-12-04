@@ -9,6 +9,22 @@ body {
   white-space: pre-wrap;
 }
 
+menu.context {
+  position: absolute;
+  margin: 0;
+  border: none;
+  border-color: var(--light-1-border-color);
+  padding: .5em;
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+  box-shadow: 2px 2px var(--light-1-shadow-color);
+  white-space: normal;
+}
+
+menu.context button {
+  
+}
+
 /*
 
 Copyright 2016 Wakaba <wakaba@suikawiki.org>.

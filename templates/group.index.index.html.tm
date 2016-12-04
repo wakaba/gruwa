@@ -45,10 +45,10 @@
         ><button type=button data-action=execCommand data-command=subscript title=下付き><var>x</var><sub>2</sub></button>
 
         <button type=button data-action=setBlock data-value=div title=段落>¶</button
-        ><button type=button data-action=setBlock data-value=ul title=箇条書き>◦</button
-        ><button type=button data-action=setBlock data-value=ol title=順序>1.</button>
+        ><button type=button data-action=setBlock data-value=ol title=順序>1.</button
+        ><button type=button data-action=setBlock data-value=ul title=箇条書き>◦</button>
 
-        <button type=button data-action=insertSection title=章節>§</button>
+        <!--<button type=button data-action=insertSection title=章節>§</button>-->
 
         <button type=button data-action=outdent title=浅く>←</button
         ><button type=button data-action=indent title=深く>→</button>
@@ -86,6 +86,11 @@
     </details>
   </form>
 </template>
+
+    <template id=link-edit-template class=body-edit-template>
+      <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener"><code data-field=host data-title-field=href></code></a>
+      <button type=button class=edit-button data-prompt=リンク先のURLを指定してください。 title=リンク先を編集>編集</button>
+    </template>
 
     <list-container pl:index="$index->{index_id}" listitemtype=object grouped key=objects>
       <template class=object>
