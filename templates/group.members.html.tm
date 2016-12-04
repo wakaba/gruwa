@@ -55,7 +55,8 @@
             parentNode.parentNode.classList.add ('editing');
           ">編集</>
           <button type=button class=save-button onclick="
-            // XXX progress
+            var as = getActionStatus (parentNode.parentNode);
+            as.start ({stages: ['formdata', 'save']});
             var saveButton = this;
             saveButton.disabled = true;
             var container = parentNode.parentNode;
@@ -63,29 +64,34 @@
             $$ (container, 'input, select').forEach (function (e) {
               fd.append (e.name, e.value);
             });
+            as.stageEnd ('formdata');
+            as.stageStart ('save');
             gFetch ('members.json', {post: true, formData: fd}).then (function () {
               saveButton.disabled = false;
+              as.end ({ok: true});
             }, function (error) {
               saveButton.disabled = false;
-              console.log (error); // XXX
+              as.end ({error: error});
             });
           ">保存</>
+          <action-status hidden stage-save=保存中... ok=保存しました。 />
         <td>
           <a href data-href-template="i/{default_index_id}/" data-if-field=default_index_id>日記</a>
       </template>
 
-      <table>
-        <thead>
-          <tr>
-            <th>メンバー
-            <th>種別
-            <th>参加状態
-            <th>参加承認
-            <th>メモ
-            <th>操作
-            <th>
-        <tbody>
-      </table>
+        <table>
+          <thead>
+            <tr>
+              <th>メンバー
+              <th>種別
+              <th>参加状態
+              <th>参加承認
+              <th>メモ
+              <th>操作
+              <th>
+          <tbody>
+        </table>
+        <action-status hidden stage-load=読み込み中... />
       </list-container>
     </section>
   </section>

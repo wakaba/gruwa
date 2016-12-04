@@ -38,6 +38,7 @@
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>
+          <action-status hidden stage-fetch=保存中... ok=保存しました。 />
       </form>
     </section>
 
@@ -48,7 +49,7 @@
         <summary>日記の作成</summary>
 
         <form method=post action=javascript: data-action=i/create.json
-            data-href-template=/g/{group_id}/i/{index_id}/>
+            data-href-template=/g/{group_id}/i/{index_id}/config>
           <table class=config>
             <tbody>
               <tr>
@@ -58,6 +59,7 @@
 
           <p class=operations>
             <button type=submit class=save-button>作成する</>
+            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
       </details>
     </section>

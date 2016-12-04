@@ -356,8 +356,13 @@ edit-container > form > footer p {
   font-size: 90%;
   line-height: 1.0;
   text-align: right;
-  color: gray;
-  background: transparent;
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+}
+
+list-container[key=objects] action-status {
+  margin-left: 1em;
+  margin-right: 1em;
 }
 
 list-container[key=members] table,

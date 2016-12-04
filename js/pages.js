@@ -204,6 +204,8 @@ function upgradeList (el) {
   if (el.upgraded) return;
   el.upgraded = true;
 
+  var as = getActionStatus (el);
+
   el.clearObjects = function () {
     var main = $$ (this, 'list-main')[0];
     if (main) main.textContent = '';
@@ -350,7 +352,9 @@ function upgradeList (el) {
       url = el.getAttribute ('src');
     }
     if (url) {
+      as.stageStart ("load");
       return gFetch (url, {}).then (function (json) {
+        as.stageEnd ("load");
         return json;
       });
     } else {
@@ -374,6 +378,8 @@ function upgradeList (el) {
     return main; // or null
   }; // show
 
+  as.start ({stages: ["prep", "load", "show"]});
+  as.stageEnd ("prep");
   load ().then (function (json) {
     el.clearObjects ();
     return show (json);
@@ -383,15 +389,22 @@ function upgradeList (el) {
         return main;
       });
     }
-//  }).catch (function (error) {
-//    console.log (error); // XXX
+    as.end ({ok: true});
+  }).catch (function (error) {
+    as.end ({error: error});
   });
 
   $$ (el, '.next-page-button').forEach (function (button) {
-    // XXX progress
     button.onclick = function () {
-      load ().then (show).catch (function (error) {
-        console.log (error); // XXX
+      button.disabled = true;
+      as.start ({stages: ["prep", "load", "show"]});
+      as.stageEnd ("prep");
+      load ().then (show).then (function () {
+        button.disabled = false;
+        as.end ({ok: true});
+      }, function (error) {
+        button.disabled = false;
+        as.end ({error: error});
       });
     };
   });
@@ -837,8 +850,13 @@ ActionStatus.prototype.end = function (opts) {
         msg = e.getAttribute ('ok');
       } else { // not ok
         if (opts.error) {
-          msg = opts.error;
-          console.log (opts.error.stack); // for debugging
+          if (opts.error instanceof Response) {
+            msg = opts.error.status + ' ' + opts.error.statusText;
+            console.log (opts.error); // for debugging
+          } else {
+            msg = opts.error;
+            console.log (opts.error.stack); // for debugging
+          }
         } else {
           msg = e.getAttribute ('ng') || 'Failed';
         }
@@ -863,17 +881,26 @@ ActionStatus.prototype.end = function (opts) {
 function upgradeForm (form) {
   form.onsubmit = function () {
     var nextURL = form.getAttribute ('data-href-template');
+    var as = getActionStatus (form);
+    as.start ({stages: ["prep", "fetch", "next"]});
+    var fd = new FormData (form); // this must be done before withFormDisabled
     withFormDisabled (nextURL ? form : null, function () {
-      return gFetch (form.getAttribute ('data-action'), {post: true, form: form}).then (function (json) {
+      as.stageEnd ("prep");
+      as.stageStart ("fetch");
+      return gFetch (form.getAttribute ('data-action'), {post: true, formData: fd}).then (function (json) {
+        as.stageEnd ("fetch");
         if (nextURL) {
+          as.stageStart ("next");
           location.href = nextURL.replace (/\{(\w+)\}/g, function (_, key) {
             return json[key];
           });
           return new Promise (function () { }); // keep form disabled
         }
-      }, function (error) {
-        console.log (error); // XXX
       });
+    }).then (function () {
+      as.end ({ok: true});
+    }, function (error) {
+      as.end ({error: error});
     });
   };
 } // upgradeForm

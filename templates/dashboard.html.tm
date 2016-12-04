@@ -49,6 +49,7 @@
             <th>
         <tbody>
       </table>
+      <action-status hidden stage-load=読み込み中... />
     </list-container>
 
     <details>
@@ -65,6 +66,7 @@
 
         <p class=operations>
           <button type=submit class=save-button>作成する</>
+          <action-status hidden stage-fetch=作成中... stage-next=移動します... />
       </form>
     </details>
   </section>

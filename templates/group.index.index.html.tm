@@ -125,6 +125,7 @@
 
       <list-main></list-main>
 
+      <action-status hidden stage-load=読み込み中... />
       <p class=operations>
         <button type=button class=next-page-button hidden>もっと昔</button>
     </list-container>

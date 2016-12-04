@@ -25,7 +25,7 @@
           <tbody>
             <tr>
               <th><label for=edit-title>日記の題名</>
-              <td><input name=title pl:value="$index->{title}" id=edit-title>
+              <td><input name=title pl:value="$index->{title}" id=edit-title required>
             <tr>
               <th><label for=edit-theme>配色</>
               <td>
@@ -38,6 +38,7 @@
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>
+          <action-status hidden stage-fetch=保存中... ok=保存しました。 />
       </form>
 
       <t:if x="$group_member->{default_index_id} and
