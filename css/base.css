@@ -359,6 +359,10 @@ h1 a:visited {
   text-decoration: none;
 }
 
+iframe.control[data-disabled] {
+  pointer-events: none;
+}
+
 tag-list {
   display: block;
 }

@@ -31,33 +31,42 @@ function gFetch (pathquery, opts) {
   } else if (opts.form) {
     body = new FormData (opts.form);
   }
+  return withFormDisabled (opts.form /* or null */, function () {
+    return fetch ((document.documentElement.getAttribute ('data-group-url') || '') + '/' + pathquery, {
+      credentials: "same-origin",
+      method: opts.post ? 'POST' : 'GET',
+      body: body,
+      referrerPolicy: 'origin',
+    }).then (function (res) {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    });
+  });
+} // gFetch
+
+function withFormDisabled (form, code) {
   var disabledControls = [];
-  if (opts.form) {
-    disabledControls = $$ (opts.form, 'input:enabled, select:enabled, textarea:enabled, button:enabled');
+  if (form) {
+    disabledControls = $$ (form, 'input:enabled, select:enabled, textarea:enabled, button:enabled, iframe.control:not([data-disabled])');
     disabledControls.forEach (function (control) {
       control.disabled = true;
+      control.setAttribute ('data-disabled', '');
     });
   }
-  return fetch ((document.documentElement.getAttribute ('data-group-url') || '') + '/' + pathquery, {
-    credentials: "same-origin",
-    method: opts.post ? 'POST' : 'GET',
-    body: body,
-    referrerPolicy: 'origin',
-  }).then (function (res) {
-    if (res.status !== 200) throw res;
-    return res.json ();
-  }).then (function (json) {
-    if (!opts.keepDisabled) disabledControls.forEach (function (control) {
+  return Promise.resolve ().then (code).then (function (result) {
+    disabledControls.forEach (function (control) {
       control.disabled = false;
+      control.removeAttribute ('data-disabled');
     });
-    return json;
+    return result;
   }, function (error) {
     disabledControls.forEach (function (control) {
       control.disabled = false;
+      control.removeAttribute ('data-disabled');
     });
     throw error;
   });
-} // gFetch
+} // withFormDisabled
 
 function createBodyHTML (value, opts) {
   var doc = (new DOMParser).parseFromString ("", "text/html");
@@ -414,18 +423,12 @@ function editObject (article, object, opts) {
   var form = container.querySelector ('form');
 
   article.save = function () {
-    $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
-      button.disabled = true;
-// XXX disable controls
-    });
+    withFormDisabled (form, function () {
 
 // XXX progress
-    saveObject (article, form, object).then (function (objectId) {
+      return saveObject (article, form, object).then (function (objectId) {
       if (object.object_id) {
         article.updateView ();
-        $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
-          button.disabled = false;
-        });
         container.hidden = true;
         article.classList.remove ('editing');
       } else { // new object
@@ -433,17 +436,16 @@ function editObject (article, object, opts) {
           document.querySelector ('list-container[index]')
               .showObjects (json.objects, {prepend: true});
         }, function (error) {
-          console.log (error); // XXX
+          console.log (error); // XXX open the permalink page?
         }).then (function () {
           container.remove ();
           article.classList.remove ('editing');
         });
       }
     }, function (error) {
-      $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
-        button.disabled = false;
-      });
       console.log (error); // XXX
+    });
+
     });
   }; // save
 
@@ -744,14 +746,17 @@ function saveObject (article, form, object) {
 function upgradeForm (form) {
   form.onsubmit = function () {
     var nextURL = form.getAttribute ('data-href-template');
-    gFetch (form.getAttribute ('data-action'), {post: true, form: this, keepDisabled: nextURL}).then (function (json) {
-      if (nextURL) {
-        location.href = nextURL.replace (/\{(\w+)\}/g, function (_, key) {
-          return json[key];
-        });
-      }
-    }, function (error) {
-      console.log (error); // XXX
+    withFormDisabled (nextURL ? form : null, function () {
+      return gFetch (form.getAttribute ('data-action'), {post: true, form: form}).then (function (json) {
+        if (nextURL) {
+          location.href = nextURL.replace (/\{(\w+)\}/g, function (_, key) {
+            return json[key];
+          });
+          return new Promise (function () { }); // keep form disabled
+        }
+      }, function (error) {
+        console.log (error); // XXX
+      });
     });
   };
 } // upgradeForm
