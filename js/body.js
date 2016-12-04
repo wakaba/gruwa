@@ -28,6 +28,19 @@ function handleMessage (ev) {
     outdent ();
   } else if (ev.data.type === 'insertSection') {
     insertSection ();
+  } else if (ev.data.type === 'insertControl') {
+    if (ev.data.value === 'checkbox') {
+      document.execCommand ('inserthtml', false, '<input type=checkbox>');
+    } else {
+      throw "Bad |value| " + ev.data.value;
+    }
+  } else if (ev.data.type === 'change') {
+    var data = ev.data.value;
+    Array.prototype.forEach.call (document.querySelectorAll ('input[type=checkbox]'), function (e) {
+      if (e.name === data.name) {
+        e.checked = e.defaultChecked = data.value;
+      }
+    });
   }
 } // handleMessage
 
@@ -92,6 +105,40 @@ onmouseout = function (ev) {
     }
   }
 };
+
+onchange = function (ev) {
+  if (ev.target.type === 'checkbox') {
+    if (ev.target.checked !== ev.target.defaultChecked) {
+      ev.target.defaultChecked = ev.target.checked;
+      sendToParent ({type: "changed",
+                     name: ev.target.name, value: ev.target.checked});
+    }
+  }
+}; // onchange
+
+var UsedControlNames = {
+  "": true, "0": true, "null": true, "undefined": true,
+};
+var mo = new MutationObserver (function (records) {
+  records.forEach (function (record) {
+    Array.prototype.forEach.call (record.addedNodes, function (n) {
+      if (n.localName === 'input' && n.type === 'checkbox') {
+        if (UsedControlNames[n.name]) {
+          n.name = Math.random ();
+          UsedControlNames[n.name] = true;
+        }
+      } else {
+        Array.prototype.forEach.call (document.querySelectorAll ('input[type=checkbox]'), function (n) {
+          if (UsedControlNames[n.name]) {
+            n.name = Math.random ();
+            UsedControlNames[n.name] = true;
+          }
+        });
+      }
+    });
+  });
+});
+mo.observe (document.documentElement, {childList: true, subtree: true});
 
 var selChangedTimer;
 document.onselectionchange = function () {

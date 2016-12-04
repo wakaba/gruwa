@@ -25,6 +25,17 @@ menu.context button {
   
 }
 
+ul, ol {
+  margin: 0;
+  padding: 0 0 0 1.5em;
+}
+
+li {
+  display: list-item;
+  margin: 0;
+  padding: 0;
+}
+
 /*
 
 Copyright 2016 Wakaba <wakaba@suikawiki.org>.

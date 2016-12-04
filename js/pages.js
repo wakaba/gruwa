@@ -169,7 +169,10 @@ function fillFields (rootEl, el, object) {
         mc.port2.onmessage = function (ev) {
           if (ev.data.type === 'height') {
             field.style.height = ev.data.value + 'px';
-            this.close ();
+          } else if (ev.data.type === 'changed') {
+            var v = new Event ('editablecontrolchange', {bubbles: true});
+            v.data = ev.data;
+            field.dispatchEvent (v);
           }
         };
         field.onload = null;
@@ -256,7 +259,7 @@ function upgradeList (el) {
           if (itemType === 'object') {
             item.setAttribute ('data-object', object.object_id);
             item.startEdit = function () {
-              editObject (item, object);
+              editObject (item, object, {open: true});
             }; // startEdit
             item.updateView = function () {
               Array.prototype.forEach.call (item.children, function (el) {
@@ -265,6 +268,53 @@ function upgradeList (el) {
                 }
               });
             }; // updateView
+            item.addEventListener ('editablecontrolchange', function (ev) {
+              var open = false; // XXX true if edit-container is modified but not saved
+              editObject (item, object, {open: open}).then (function () {
+                $$ (item, 'edit-container iframe.control[data-name=body]').forEach (function (e) {
+                  e.sendChange (ev.data);
+                });
+                item.save ();
+              });
+            });
+            item.save = function () {
+              var container = item.querySelector ('edit-container');
+              var form = container.querySelector ('form');
+
+      $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
+        button.disabled = true;
+// XXX disable controls
+      });
+
+// XXX progress
+      saveObject (item, form, object).then (function (objectId) {
+        if (object.object_id) {
+          item.updateView ();
+          $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
+            button.disabled = false;
+          });
+          container.hidden = true;
+          item.classList.remove ('editing');
+        } else { // new object
+          return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
+            document.querySelector ('list-container[index]')
+                .showObjects (json.objects, {prepend: true});
+          }, function (error) {
+            console.log (error); // XXX
+          }).then (function () {
+            container.remove ();
+            item.classList.remove ('editing');
+          });
+        }
+      }, function (error) {
+        $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
+          button.disabled = false;
+        });
+        console.log (error); // XXX
+      });
+
+            }; // save
+
             item.updateView ();
           } else {
             fillFields (item, item, object);
@@ -373,27 +423,29 @@ function upgradeList (el) {
       button.onclick = function () {
         var data = {index_ids: {}, timestamp: (new Date).valueOf () / 1000};
         data.index_ids[el.getAttribute ('index')] = 1;
-        editObject (article, {data: data});
+        editObject (article, {data: data}, {open: true});
       };
     });
   });
 } // upgradeList
 
-function editObject (article, object) {
+function editObject (article, object, opts) {
+  var wait = [];
   var template = document.querySelector ('#edit-form-template');
 
   var container = article.querySelector ('edit-container');
   if (container) {
-    container.hidden = false;
-    article.classList.add ('editing');
-    var body = container.querySelector ('.control[data-name=body]');
-    if (body) body.focus ();
-    return;
+    if (opts.open) {
+      container.hidden = false;
+      article.classList.add ('editing');
+      var body = container.querySelector ('.control[data-name=body]');
+      if (body) body.focus ();
+    }
+    return Promise.all (wait);
   }
 
   container = document.createElement ('edit-container');
-  container.hidden = false;
-  article.classList.add ('editing');
+  container.hidden = true;
   container.appendChild (template.content.cloneNode (true));
   article.appendChild (container);
 
@@ -431,8 +483,6 @@ function editObject (article, object) {
           var args = ev.data.value;
           var result = prompt (args.prompt, args.default);
           ev.ports[0].postMessage ({result: result});
-        } else {
-          console.log (ev.data.type);
         }
       };
       control.onload = null;
@@ -446,12 +496,15 @@ function editObject (article, object) {
     control.insertSection = function () {
       mc.port2.postMessage ({type: "insertSection"});
     };
-    control.sendAction = function (command) {
-      mc.port2.postMessage ({type: command});
+    control.sendAction = function (command, value) {
+      mc.port2.postMessage ({type: command, value: value});
     };
     control.getCurrentValue = function () {
       mc.port2.postMessage ({type: "getCurrentValue"});
       return new Promise (function (ok) { valueWaitings.push (ok) });
+    };
+    control.sendChange = function (data) {
+      mc.port2.postMessage ({type: "change", value: data});
     };
   });
   $$ (form, 'button[data-action=execCommand]').forEach (function (b) {
@@ -479,6 +532,13 @@ function editObject (article, object) {
     b.onclick = function () {
       var ed = form.querySelector ('iframe.control[data-name=body]');
       ed.sendAction (b.getAttribute ('data-action'));
+      ed.focus ();
+    };
+  });
+  $$ (form, 'button[data-action=insertControl]').forEach (function (b) {
+    b.onclick = function () {
+      var ed = form.querySelector ('iframe.control[data-name=body]');
+      ed.sendAction (b.getAttribute ('data-action'), b.getAttribute ('data-value'));
       ed.focus ();
     };
   });
@@ -520,7 +580,7 @@ function editObject (article, object) {
       });
     };
 
-    $with (control.getAttribute ('list')).then (function (datalist) {
+    wait.push ($with (control.getAttribute ('list')).then (function (datalist) {
       $$ (control, '.edit-button').forEach (function (el) {
         el.onclick = function () {
           if (!control.editor) {
@@ -597,7 +657,7 @@ function editObject (article, object) {
       control.addItems (Object.keys (object.data[dataKey] || {}).map (function (v) {
         return {value: v};
       }));
-    }); // $with
+    })); // $with
   }); // list-control
 
     // XXX autosave
@@ -609,39 +669,9 @@ function editObject (article, object) {
       };
     });
 
-    form.onsubmit = function () {
-      $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
-        button.disabled = true;
-// XXX disable controls
-      });
-
-// XXX progress
-      saveObject (article, form, object).then (function (objectId) {
-        if (object.object_id) {
-          article.updateView ();
-          $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
-            button.disabled = false;
-          });
-          container.hidden = true;
-          article.classList.remove ('editing');
-        } else { // new object
-          return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
-            document.querySelector ('list-container[index]')
-                .showObjects (json.objects, {prepend: true});
-          }, function (error) {
-            console.log (error); // XXX
-          }).then (function () {
-            container.remove ();
-            article.classList.remove ('editing');
-          });
-        }
-      }, function (error) {
-        $$ (container, '[type=submit], .cancel-button').forEach (function (button) {
-          button.disabled = false;
-        });
-        console.log (error); // XXX
-      });
-    }; // onsubmit
+  form.onsubmit = function () {
+    article.save ();
+  }; // onsubmit
 
   var resize = function () {
     var h1 = 0;
@@ -652,10 +682,16 @@ function editObject (article, object) {
     container.querySelector ('main > iframe.control').style.height = h + 'px';
   }; // resize
   addEventListener ('resize', resize);
-  Promise.resolve ().then (resize);
+  wait.push (Promise.resolve ().then (resize));
 
-  var body = container.querySelector ('.control[data-name=body]');
-  if (body) body.focus ();
+  if (opts.open) {
+    container.hidden = false;
+    article.classList.add ('editing');
+    var body = container.querySelector ('.control[data-name=body]');
+    if (body) body.focus ();
+  }
+
+  return Promise.all (wait);
 } // editObject
 
 function saveObject (article, form, object) {

@@ -52,6 +52,8 @@
 
         <button type=button data-action=outdent title=浅く>←</button
         ><button type=button data-action=indent title=深く>→</button>
+
+        <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button>
       </menu>
       <iframe class=control data-name=body />
       <input type=hidden name=body_type value=1>
