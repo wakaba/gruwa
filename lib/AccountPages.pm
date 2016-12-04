@@ -159,13 +159,17 @@ sub mymain ($$$$$) {
         # XXX
         admin_status => 1, # open
         owner_status => 1, # open
-      }, fields => ['title', 'group_id'])->then (sub {
-        my %title;
+      }, fields => ['title', 'group_id', 'updated'])->then (sub {
+        my $gs = {};
         for (@{$_[0]->all}) {
-          $title{$_->{group_id}} = Dongry::Type->parse ('text', $_->{title});
+          $gs->{$_->{group_id}} = {
+            title => Dongry::Type->parse ('text', $_->{title}),
+            updated => $_->{updated},
+          };
         }
         for (values %$groups) {
-          $_->{title} = $title{$_->{group_id}};
+          $_->{title} = $gs->{$_->{group_id}}->{title};
+          $_->{updated} = $gs->{$_->{group_id}}->{updated};
         }
         return $groups;
       });

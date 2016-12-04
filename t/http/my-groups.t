@@ -52,6 +52,7 @@ Test {
       is $g2->{owner_status}, 1;
       is $g2->{title}, "\x{600}";
       is $g2->{default_index_id}, undef;
+      ok $g2->{updated};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
     } $current->c;
     return $current->create_index (i1 => {group => 'g1', account => 'u1'});
@@ -70,7 +71,7 @@ Test {
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
     } $current->c;
   });
-} n => 18, name => 'has groups';
+} n => 19, name => 'has groups';
 
 Test {
   my $current = shift;

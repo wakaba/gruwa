@@ -23,7 +23,7 @@
   <section>
     <h1>参加グループ</>
 
-    <list-container type=table src=my/groups.json key=groups>
+    <list-container type=table src=my/groups.json key=groups sortkey=updated>
       <template>
         <th>
           <a href data-href-template="/g/{group_id}/">
