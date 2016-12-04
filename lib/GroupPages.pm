@@ -627,6 +627,12 @@ sub group_object ($$$$) {
             $_->{object_id};
           } @{$_[0]->all}];
         });
+      #} elsif ($app->bare_param ('recent')) {
+      #  return $db->select ('object', {
+      #    group_id => Dongry::Type->serialize ('text', $path->[1]),
+      #  }, fields => ['object_id'], order => ['updated', 'desc'], limit => 50)->then (sub {
+      #    return [map { $_->{object_id} } @{$_[0]->all}];
+      #  });
       } else {
         my $list = $app->bare_param_list ('object_id');
         $rev_id = $app->bare_param ('object_revision_id') if @$list == 1;

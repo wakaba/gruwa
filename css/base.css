@@ -22,6 +22,12 @@ html { /* [data-thema=green] */
   --accented-border-color: green;
   --accented-background-color: transparent;
 
+  --error-color: red;
+  --error-background-color: transparent;
+
+  --success-color: green;
+  --success-background-color: transparent;
+
   --link-color: rgb(0, 0, 238);
   --link-background-color: transparent;
 
@@ -65,6 +71,12 @@ html[data-theme=black] {
   --accented-color: #eee;
   --accented-border-color: #eee;
   --accented-background-color: transparent;
+
+  --error-background-color: red;
+  --error-color: white;
+
+  --success-background-color: green;
+  --success-color: white;
 
   --link-color: #9595ff;
   --link-background-color: transparent;
@@ -151,6 +163,10 @@ form {
   margin: 0;
   direction: rtl;
   text-align: right;
+}
+
+.operations > * {
+  direction: ltr;
 }
 
 input:not([type]) {
@@ -388,6 +404,20 @@ list-container {
 
 list-container > .operations {
   margin: 0 0.5em 0.5em 0.5em;
+}
+
+action-status-message {
+  unicode-bidi: embed;
+}
+
+action-status[status=ok] action-status-message {
+  background-color: var(--error-success-color);
+  color: var(--success-color);
+}
+
+action-status[status=ng] action-status-message {
+  background-color: var(--error-background-color);
+  color: var(--error-color);
 }
 
 /*

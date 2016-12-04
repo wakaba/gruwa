@@ -278,12 +278,18 @@ function upgradeList (el) {
               });
             }; // updateView
             item.addEventListener ('editablecontrolchange', function (ev) {
+              var as = getActionStatus (item);
+              as.start ({stages: ["formdata", "create", "edit", "update"]});
               var open = false; // XXX true if edit-container is modified but not saved
               editObject (item, object, {open: open}).then (function () {
                 $$ (item, 'edit-container iframe.control[data-name=body]').forEach (function (e) {
                   e.sendChange (ev.data);
                 });
-                item.save ();
+                return item.save ({actionStatus: as});
+              }).then (function () {
+                as.end ({ok: true});
+              }, function (error) {
+                as.end ({error: error});
               });
             });
 
@@ -422,30 +428,9 @@ function editObject (article, object, opts) {
   article.appendChild (container);
   var form = container.querySelector ('form');
 
-  article.save = function () {
-    withFormDisabled (form, function () {
-
-// XXX progress
-      return saveObject (article, form, object).then (function (objectId) {
-      if (object.object_id) {
-        article.updateView ();
-        container.hidden = true;
-        article.classList.remove ('editing');
-      } else { // new object
-        return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
-          document.querySelector ('list-container[index]')
-              .showObjects (json.objects, {prepend: true});
-        }, function (error) {
-          console.log (error); // XXX open the permalink page?
-        }).then (function () {
-          container.remove ();
-          article.classList.remove ('editing');
-        });
-      }
-    }, function (error) {
-      console.log (error); // XXX
-    });
-
+  article.save = function (opts) {
+    return withFormDisabled (form, function () {
+      return saveObject (article, form, object, opts);
     });
   }; // save
 
@@ -668,7 +653,33 @@ function editObject (article, object, opts) {
     });
 
   form.onsubmit = function () {
-    article.save ();
+    var as = getActionStatus (form);
+    as.start ({stages: ["dataset", "create", "edit", "update"]});
+    article.save ({actionStatus: as}).then (function (objectId) {
+      as.stageStart ("update");
+      if (object.object_id) {
+        article.updateView ();
+        //as.stageEnd ("update");
+        container.hidden = true;
+        article.classList.remove ('editing');
+        as.end ({ok: true});
+      } else { // new object
+        return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
+          document.querySelector ('list-container[index]')
+              .showObjects (json.objects, {prepend: true});
+          //as.stageEnd ("update");
+          as.end ({ok: true});
+        }, function (error) {
+          as.end ({ok: false, error: error});
+          // XXX open the permalink page?
+        }).then (function () {
+          container.remove ();
+          article.classList.remove ('editing');
+        });
+      }
+    }).catch (function (error) {
+      as.end ({ok: false, error: error});
+    });;
   }; // onsubmit
 
   var resize = function () {
@@ -692,7 +703,7 @@ function editObject (article, object, opts) {
   return Promise.all (wait);
 } // editObject
 
-function saveObject (article, form, object) {
+function saveObject (article, form, object, opts) {
   // XXX if not modified
   var fd = new FormData;
   var c = [];
@@ -726,6 +737,8 @@ function saveObject (article, form, object) {
     c.push (function () { object.data[control.getAttribute ('key')] = cc });
   });
   return Promise.all (ps).then (function () {
+    opts.actionStatus.stageEnd ("dataset");
+    opts.actionStatus.stageStart ("create");
     var objectId = article.getAttribute ('data-object');
     if (objectId) {
       return objectId;
@@ -735,13 +748,117 @@ function saveObject (article, form, object) {
       });
     }
   }).then (function (objectId) {
+    opts.actionStatus.stageEnd ("create");
+    opts.actionStatus.stageStart ("edit");
     return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd}).then (function () {
       c.forEach (function (_) { _ () });
       object.updated = (new Date).valueOf () / 1000;
+      opts.actionStatus.stageEnd ("edit");
       return objectId;
     });
   });
 } // saveObject
+
+function getActionStatus (container) {
+  var as = new ActionStatus;
+  as.elements = $$ (container, 'action-status');
+  as.elements.forEach (function (e) {
+    if (e.hasChildNodes ()) return;
+    e.hidden = true;
+    e.innerHTML = '<action-status-message></action-status-message> <progress></progress>';
+  });
+  return as;
+} // getActionStatus
+
+function ActionStatus () {
+  this.stages = {};
+}
+
+ActionStatus.prototype.start = function (opts) {
+  var self = this;
+  if (opts.stages) {
+    opts.stages.forEach (function (s) {
+      self.stages[s] = false;
+    });
+  }
+  this.elements.forEach (function (e) {
+    $$ (e, 'action-status-message').forEach (function (f) {
+      f.hidden = true;
+    });
+    $$ (e, 'progress').forEach (function (f) {
+      f.hidden = false;
+      var l = Object.keys (self.stages).length;
+      if (l) {
+        f.max = l;
+        f.value = 0;
+      } else {
+        f.removeAttribute ('max');
+        f.removeAttribute ('value');
+      }
+    });
+    e.hidden = false;
+    e.removeAttribute ('status');
+  });
+}; // start
+
+ActionStatus.prototype.stageStart = function (stage) {
+  this.elements.forEach (function (e) {
+    var label = e.getAttribute ('stage-' + stage);
+    $$ (e, 'action-status-message').forEach (function (f) {
+      if (label) {
+        f.textContent = label;
+        f.hidden = false;
+      } else {
+        f.hidden = true;
+      }
+    });
+  });
+};
+
+ActionStatus.prototype.stageEnd = function (stage) {
+  var self = this;
+  this.stages[stage] = true;
+  this.elements.forEach (function (e) {
+    $$ (e, 'progress').forEach (function (f) {
+      var stages = Object.keys (self.stages);
+      f.max = stages.length;
+      f.value = stages.filter (function (n) { return self.stages[n] }).length;
+    });
+  });
+}; // stageEnd
+
+ActionStatus.prototype.end = function (opts) {
+  this.elements.forEach (function (e) {
+    var shown = false;
+    $$ (e, 'action-status-message').forEach (function (f) {
+      var msg;
+      var status;
+      if (opts.ok) {
+        msg = e.getAttribute ('ok');
+      } else { // not ok
+        if (opts.error) {
+          msg = opts.error;
+          console.log (opts.error.stack); // for debugging
+        } else {
+          msg = e.getAttribute ('ng') || 'Failed';
+        }
+      }
+      if (msg) {
+        f.textContent = msg;
+        f.hidden = false;
+        shown = true;
+      } else {
+        f.hidden = true;
+      }
+      // XXX set timer to clear ok message
+    });
+    $$ (e, 'progress').forEach (function (f) {
+      f.hidden = true;
+    });
+    e.hidden = !shown;
+    e.setAttribute ('status', opts.ok ? 'ok' : 'ng');
+  });
+}; // end
 
 function upgradeForm (form) {
   form.onsubmit = function () {

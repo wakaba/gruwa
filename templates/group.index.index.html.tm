@@ -62,6 +62,10 @@
       <p class=operations>
         <button type=submit class=save-button>保存する</button>
         <button type=button class=cancel-button>取り消し</button>
+        <action-status hidden
+            stage-create=作成中...
+            stage-edit=保存中...
+            stage-update=更新中... />
     </footer>
     <details>
       <summary>詳細設定</>
@@ -105,6 +109,9 @@
         <main><iframe data-data-field=body /></main>
     <footer>
       <p>
+        <action-status hidden
+            stage-edit=保存中...
+            ok=保存しました />
         <time data-field=created class=ambtime />
         (<time data-field=updated class=ambtime /> 編集)
         <button type=button class=edit-button>編集</button>
