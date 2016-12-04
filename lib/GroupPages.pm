@@ -446,7 +446,7 @@ sub group_object ($$$$) {
             $changes->{fields}->{$key} = 1;
           }
         }
-        for my $key (qw(timestamp)) {
+        for my $key (qw(timestamp body_type)) {
           my $value = $app->bare_param ($key);
           if (defined $value) {
             $object->{data}->{$key} = 0+$value;

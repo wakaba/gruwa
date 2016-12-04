@@ -208,7 +208,9 @@ sub create_object ($$$) {
       push @{$param{index_id} ||= []}, $index->{index_id} if defined $index;
       $param{edit_index_id} = 1;
     }
-    $param{timestamp} = $opts->{timestamp} if defined $opts->{timestamp};
+    for my $key (qw(timestamp body_type)) {
+      $param{$key} = $opts->{$key} if defined $opts->{$key};
+    }
     if (keys %param) {
       return $self->post_json (['o', $_[0]->{json}->{object_id}, 'edit.json'],
                                \%param,

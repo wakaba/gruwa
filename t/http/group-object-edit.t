@@ -91,6 +91,7 @@ Test {
     return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
       body => "\x{400} ",
       timestamp => 33436444,
+      body_type => 3,
     }, account => 'a1', group => 'g1');
   })->then (sub {
     return $current->object ($current->o ('o1'), account => 'a1');
@@ -107,6 +108,7 @@ Test {
       ok $object->{created};
       ok $object->{updated} > $object->{created};
       is $object->{data}->{timestamp}, 33436444;
+      is $object->{data}->{body_type}, 3;
     } $current->c, name => 'object_revision_id ignored';
     return $current->object ($current->o ('o1'), account => 'a1',
                              revision_id => $object->{data}->{object_revision_id});
@@ -121,13 +123,15 @@ Test {
       ok $object->{created};
       ok $object->{updated} > $object->{created};
       is $object->{data}->{timestamp}, 33436444;
+      is $object->{data}->{body_type}, 3;
       is 0+keys %{$object->{revision_data}->{changes}}, 1;
-      is 0+keys %{$object->{revision_data}->{changes}->{fields}}, 2;
+      is 0+keys %{$object->{revision_data}->{changes}->{fields}}, 3;
       ok $object->{revision_data}->{changes}->{fields}->{body};
       ok $object->{revision_data}->{changes}->{fields}->{timestamp};
+      ok $object->{revision_data}->{changes}->{fields}->{body_type};
     } $current->c, name => 'object_revision_id ignored';
   });
-} n => 21, name => 'body and timestamp changed';
+} n => 24, name => 'body and timestamp changed';
 
 Test {
   my $current = shift;
