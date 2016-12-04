@@ -472,6 +472,8 @@ sub group_object ($$$$) {
         my $time = time;
         return Promise->resolve->then (sub {
           return unless $app->bare_param ('edit_index_id');
+          ## Note that, event when |$changes->{fields}->{timestamp}|
+          ## is true, `index_object`'s `updated` is not updated...
 
           my $index_ids = $app->bare_param_list ('index_id');
 
@@ -485,7 +487,9 @@ sub group_object ($$$$) {
           if (@$index_ids == keys %{$object->{data}->{index_ids}} and
               not @new_id) {
             # not changed
-            return;
+            unless ($changes->{fields}->{timestamp}) {
+              return;
+            }
           }
 
           $object->{data}->{index_ids} = {map { $_ => 1 } @$index_ids};
@@ -614,7 +618,7 @@ sub group_object ($$$$) {
           (defined $timestamp ? (timestamp => {'<=', $timestamp}) : ()),
         },
           fields => ['object_id', 'timestamp'],
-          order => ['timestamp', 'desc'],
+          order => ['timestamp', 'desc', 'created', 'desc'],
           offset => $offset, limit => $limit,
         )->then (sub {
           return [map {
