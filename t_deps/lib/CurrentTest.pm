@@ -208,7 +208,8 @@ sub create_object ($$$) {
       push @{$param{index_id} ||= []}, $index->{index_id} if defined $index;
       $param{edit_index_id} = 1;
     }
-    for my $key (qw(timestamp body_type user_status owner_status)) {
+    for my $key (qw(timestamp body_type user_status owner_status
+                    title body)) {
       $param{$key} = $opts->{$key} if defined $opts->{$key};
     }
     if (keys %param) {

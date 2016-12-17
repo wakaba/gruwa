@@ -501,6 +501,8 @@ sub group_object ($$$$) {
             $doc->manakai_is_html (1);
             $doc->inner_html ($object->{data}->{body});
             $body = $doc->document_element->text_content;
+          } elsif ($object->{data}->{body_type} == 2) { # plain text
+            $body = $object->{data}->{body};
           }
           $search_data = join "\n",
               keys %{$object->{data}->{tags}},
@@ -852,7 +854,7 @@ sub group_object ($$$$) {
                                  uuid_short() as uuid2')->then (sub {
       my $ids = $_[0]->first;
       my $object_id = $ids->{uuid1};
-      my $data = {index_ids => {}, title => '', body => '',
+      my $data = {index_ids => {}, title => '', body => '', body_type => 2,
                   timestamp => $time,
                   object_revision_id => ''.$ids->{uuid2},
                   user_status => 1, # open

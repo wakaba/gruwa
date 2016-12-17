@@ -29,7 +29,7 @@
             <tr>
               <th><label for=edit-theme>配色</>
               <td>
-                <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) ">
+                <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme>
                   <option value=green pl:selected="$index->{options}->{theme} eq 'green'?'':undef">緑
                   <option value=blue pl:selected="$index->{options}->{theme} eq 'blue'?'':undef">青
                   <option value=red pl:selected="$index->{options}->{theme} eq 'red'?'':undef">赤
