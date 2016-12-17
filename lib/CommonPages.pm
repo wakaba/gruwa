@@ -12,6 +12,11 @@ sub main ($$$$) {
     return temma $app, 'index.html.tm', {};
   }
 
+  if ($path->[0] eq 'help') {
+    # /help
+    return temma $app, 'help.html.tm', {};
+  }
+
   return $app->send_error (404);
 } # main
 

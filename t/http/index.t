@@ -14,6 +14,16 @@ Test {
   });
 } n => 1, name => '/ GET';
 
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['help'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+    } $current->c;
+  });
+} n => 1, name => '/help GET';
+
 RUN;
 
 =head1 LICENSE

@@ -17,6 +17,7 @@
   <header-area>
     <account-name><t:text value="$account->{name}"></account-name>
     <a href=/dashboard>ダッシュボード</>
+    <a href=/help rel=help>ヘルプ</a>
   </header-area>
 </header>
 

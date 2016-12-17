@@ -20,7 +20,10 @@
     </header>
 
     <section>
-      <h1>検索</>
+      <header class=section>
+        <h1>検索</>
+        <a href=/help#search rel=help>ヘルプ</a>
+      </header>
 
       <list-container src=o/search.json key=objects pl:param-q="$app->text_param ('q')" class=object-search>
         <form method=get action=search class=search-form data-pjax=search?q={q}>

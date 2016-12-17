@@ -121,7 +121,6 @@ return sub {
           } AccountPages->main ($app, $path, $db, $accounts);
         }
 
-        # XXX tests
         if (@$path == 1) {
           return CommonPages->main ($app, $path, $db);
         }

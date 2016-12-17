@@ -101,15 +101,42 @@ section {
   padding: 0;
 }
 
-section > h1 {
+section > h1,
+section > header.section {
   display: block;
   margin: 0 0 1rem 0;
   border-bottom: 1px solid;
   border-color: var(--accented-border-color);
   padding: 0.3em;
-  font-size: 130%;
   color: var(--accented-color);
   background-color: var(--accented-background-color);
+}
+
+section > h1,
+section > header.section > h1 {
+  font-size: 130%;
+}
+
+section > header.section {
+  position: relative;
+}
+
+section > header.section > h1 {
+  margin: 0;
+}
+
+section > header.section a[rel~=help] {
+  position: absolute;
+  top: 0;
+  right: 0;
+  padding: 0.3em;
+  font-size: 90%;
+  text-decoration: none;
+}
+
+section > header.section a[rel~=help]:hover,
+section > header.section a[rel~=help]:active {
+  text-decoration: underline;
 }
 
 section > * {
