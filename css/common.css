@@ -487,6 +487,7 @@ list-container[key=groups] td[data-value="2"].member_type {
 
 list-container .search-form {
   margin: 0;
+  margin-bottom: 1em;
   border-style: none;
   padding: 0;
 }
@@ -498,6 +499,57 @@ list-container .search-form input[type=search] {
 list-container .search-form button {
   padding: .1em .5em;
   min-width: 5em;
+}
+
+list-container.object-search list-main {
+  display: block;
+  margin-bottom: 1em;
+}
+
+list-container.object-search list-item {
+  display: block;
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+}
+
+list-container.object-search list-item:nth-child(2n) {
+  background-color: var(--light-2-background-color);
+  color: var(--light-2-color);
+}
+
+list-container.object-search list-item > a {
+  display: block;
+  padding: .5em;
+  background: transparent;
+  color: inherit;
+  text-decoration: none;
+}
+
+list-container.object-search list-item > a:link strong {
+  background-color: var(--link-background-color);
+  color: var(--link-color);
+}
+
+list-container.object-search list-item > a:visited strong {
+  background-color: var(--visited-background-color);
+  color: var(--visited-color);
+}
+
+list-container.object-search list-item > a:hover strong,
+list-container.object-search list-item > a:active strong {
+  background-color: var(--hover-background-color);
+  color: var(--hover-color);
+  text-decoration: underline;
+}
+
+list-container.object-search search-snippet {
+  display: block;
+  margin: .5rem .3rem 0 ;
+  border-radius: .5rem;
+  padding: .5rem;
+  font-size: 90%;
+  background-color: var(--main-background-color);
+  color: var(--main-color);
 }
 
 list-is-empty:not([hidden]) {

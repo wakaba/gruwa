@@ -36,6 +36,9 @@ html { /* [data-thema=green] */
 
   --visited-color: purple;
   --visited-background-color: transparent;
+
+  --hover-color: black;
+  --hover-background-color: #ffa;
 }
 
 html[data-theme=blue] {
@@ -367,8 +370,8 @@ a:visited {
 
 a:hover,
 a:active {
-  color: black;
-  background: #ffa;
+  color: var(--hover-color);
+  background-color: var(--hover-background-color);
 }
 
 h1 a:link,
@@ -443,7 +446,7 @@ action-status[status=ng] action-status-message {
   color: var(--error-color);
 }
 
-list-container > action-status progress {
+list-container > action-status progress:not([hidden]) {
   display: block;
   width: 100%;
   margin-top: .5em;

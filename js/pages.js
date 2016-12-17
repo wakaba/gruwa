@@ -308,7 +308,7 @@ function upgradeList (el) {
         } else {
           main.appendChild (section);
         }
-        appended = ture;
+        appended = true;
       });
     } else { // not grouped
       var sorter;
@@ -445,7 +445,7 @@ function upgradeList (el) {
   $$ (el, '.search-form').forEach (function (form) {
     form.onsubmit = function () {
       Array.prototype.forEach.call (form.elements, function (e) {
-        el.setAttribute ('param-' + e.name, e.value);
+        if (e.name) el.setAttribute ('param-' + e.name, e.value);
       });
       el.clearObjects ();
       el.load ();

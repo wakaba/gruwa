@@ -22,17 +22,18 @@
     <section>
       <h1>検索</>
 
-      <list-container src=o/search.json key=objects pl:param-q="$app->text_param ('q')">
+      <list-container src=o/search.json key=objects pl:param-q="$app->text_param ('q')" class=object-search>
         <form method=get action=search class=search-form data-pjax=search?q={q}>
           <input type=search name=q pl:value="$app->text_param ('q')" autofocus>
           <button type=submit>検索</button>
         </form>
 
         <template>
-          <a href XXX>
-            <time data-field=timestamp />
+          <a href data-href-template=o/{object_id}/>
+            <time data-field=timestamp class=date />
             <strong data-field=title data-empty=■></strong>
             <time data-field=updated />
+            <search-snippet data-field=snippet />
           </a>
         </template>
         <list-main/>

@@ -767,8 +767,15 @@ sub group_object ($$$$) {
     return $app->throw_error (400, reason_phrase => 'Bad limit')
         if $limit > 100;
 
+    my ($sqlx0, $sql0) = where [q{
+      select `object_id`, `updated`, `title`, `timestamp`,
+        substring(`search_data`, greatest(locate(:s1, `search_data`) - 50, 0) + 1, 100)
+        as `snippet`
+    }, 
+      s1 => Dongry::Type->serialize ('text', $have[0] // ''),
+    ];
     my ($sqlx, $sql) = where [q{
-      select `object_id`, `updated`, `title`, `timestamp` from `object`
+      from `object`
       where @@SEARCHDATA@@ and
             group_id = :group_id and
             user_status = 1 and owner_status = 1 and
@@ -801,7 +808,8 @@ sub group_object ($$$$) {
         '(1 = 1)';
       }
     }e;
-    unshift @$sql, @value;
+    $sqlx = $sqlx0 . $sqlx;
+    unshift @$sql, @$sql0, @value;
 
     return $db->execute ($sqlx, $sql)->then (sub {
       my $items = $_[0]->all;
@@ -811,6 +819,7 @@ sub group_object ($$$$) {
           {
             object_id => ''.$_->{object_id},
             title => Dongry::Type->parse ('text', $_->{title}),
+            snippet => Dongry::Type->parse ('text', $_->{snippet}),
             updated => $_->{updated},
             timestamp => $_->{timestamp},
           };
