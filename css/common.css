@@ -284,6 +284,11 @@ article.object > header h1 {
   line-height: 1.4;
 }
 
+article.object > header h1 a {
+  display: inline-block;
+  min-width: 5em;
+}
+
 article.object > header tag-list {
   display: block;
   font-size: 90%;
@@ -545,7 +550,7 @@ list-container.object-search list-item > a:active strong {
 list-container.object-search search-snippet {
   display: block;
   margin: .5rem .3rem 0 ;
-  border-radius: .5rem;
+  border-radius: .1rem;
   padding: .5rem;
   font-size: 90%;
   background-color: var(--main-background-color);

@@ -24,7 +24,7 @@
 
       <list-container src=o/search.json key=objects pl:param-q="$app->text_param ('q')" class=object-search>
         <form method=get action=search class=search-form data-pjax=search?q={q}>
-          <input type=search name=q pl:value="$app->text_param ('q')" autofocus>
+          <input type=search name=q pl:value="$app->text_param ('q')">
           <button type=submit>検索</button>
         </form>
 

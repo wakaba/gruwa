@@ -142,7 +142,9 @@ function fillFields (rootEl, el, object) {
     field.checked = object[field.getAttribute ('data-checked-field')];
   });
   $$ (el, '[data-href-template]').forEach (function (field) {
-    field.href = field.getAttribute ('data-href-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+    field.href = field.getAttribute ('data-href-template').replace (/\{GROUP\}/g, function () {
+      return document.documentElement.getAttribute ('data-group-url');
+    }).replace (/\{([^{}]+)\}/g, function (_, k) {
       return object[k];
     });
   });
@@ -365,7 +367,12 @@ function upgradeList (el) {
     if (index) {
       url = 'o/get.json?with_data=1&index_id=' + index;
     } else {
-      url = el.getAttribute ('src');
+      var object = el.getAttribute ('object');
+      if (object) {
+        url = 'o/get.json?with_data=1&object_id=' + object;
+      } else {
+        url = el.getAttribute ('src');
+      }
     }
     if (url) {
       var q = el.getAttribute ('param-q');

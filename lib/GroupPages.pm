@@ -444,7 +444,20 @@ sub group_object ($$$$) {
       return $app->throw_error (404, reason_phrase => 'Object not found')
           unless defined $object;
       $object->{data} = Dongry::Type->parse ('json', $object->{data});
-      if (@$path == 5 and $path->[4] eq 'edit.json') {
+
+      if (@$path == 5 and $path->[4] eq '') {
+        # /g/{group_id}/o/{object_id}/
+        if ($object->{user_status} != 1 or # open
+            $object->{owner_status} != 1) { # open
+          return $app->throw_error (410, reason_phrase => 'Object not found');
+        }
+        return temma $app, 'group.index.index.html.tm', {
+          account => $opts->{account},
+          group => $opts->{group},
+          group_member => $opts->{group_member},
+          object => $object,
+        };
+      } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/o/{object_id}/edit.json
         $app->requires_request_method ({POST => 1});
         $app->requires_same_origin;
@@ -457,17 +470,14 @@ sub group_object ($$$$) {
             $changes->{fields}->{$key} = 1;
           }
         }
-        for my $key (qw(timestamp body_type)) {
+        for my $key (qw(timestamp body_type user_status owner_status)) {
           my $value = $app->bare_param ($key);
           if (defined $value) {
             $object->{data}->{$key} = 0+$value;
             $changes->{fields}->{$key} = 1;
           }
         }
-
-        # XXX
-        $object->{data}->{user_status} = $object->{user_status};
-        $object->{data}->{owner_status} = $object->{owner_status};
+        # XXX owner_status only can be changed by group owners
 
         # XXX tests
         if ($app->bare_param ('edit_tag')) {
@@ -586,7 +596,7 @@ sub group_object ($$$$) {
               user_status => $object->{data}->{user_status},
             }]);
           })->then (sub {
-            return $db->update ('object', {
+            my $update = {
               title => Dongry::Type->serialize ('text', $object->{data}->{title}),
               data => $sdata,
               (defined $search_data
@@ -594,7 +604,12 @@ sub group_object ($$$$) {
                 : ()),
               timestamp => $object->{data}->{timestamp},
               updated => $time,
-            }, where => {
+            };
+            $update->{owner_status} = $object->{data}->{owner_status}
+                if $changes->{fields}->{owner_status};
+            $update->{user_status} = $object->{data}->{user_status}
+                if $changes->{fields}->{user_status};
+            return $db->update ('object', $update, where => {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
               object_id => Dongry::Type->serialize ('text', $path->[3]),
             });

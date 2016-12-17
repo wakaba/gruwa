@@ -1,9 +1,20 @@
-<html t:params="$group $index $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
+<html t:params="$group $index? $object? $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
     data-body-css-href=/css/body.css
-    pl:data-theme="$index->{options}->{theme}">
+    pl:data-theme="defined $index ? $index->{options}->{theme}
+                                  : $group->{options}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
-    <t:text value="$index->{title}">
+    <t:if x="defined $object">
+      <t:text value="
+        my $title = $object->{data}->{title};
+        length $title ? $title : '■';
+      ">
+      <t:if x="defined $index">
+        - <t:text value="$index->{title}">
+      </t:if>
+    <t:else>
+      <t:text value="$index->{title}">
+    </t:if>
   </t:include>
 
 <body>
@@ -12,11 +23,19 @@
 
   <section class=page>
     <header>
-      <h1><a href=./><t:text value="$index->{title}"></a></h1>
-      <nav>
-        <a href=./ class=active>トップ</a>
-        / <a href=config>設定</a>
-      </nav>
+      <t:if x="defined $index">
+        <h1><a href=./><t:text value="$index->{title}"></a></h1>
+        <t:if x="not defined $object">
+          <nav>
+            <a href=./ class=active>トップ</a>
+            / <a href=config>設定</a>
+          </nav>
+        </t:if>
+      <t:else>
+        <h1><a pl:href="'/g/'.$group->{group_id}.'/'">
+          <t:text value="$group->{title}">
+        </a></h1>
+      </t:if>
     </header>
 
 <template id=edit-form-template>
@@ -98,11 +117,13 @@
       <button type=button class=edit-button data-prompt=リンク先のURLを指定してください。 title=リンク先を編集>編集</button>
     </template>
 
-    <list-container pl:index="$index->{index_id}" listitemtype=object grouped key=objects>
+    <list-container listitemtype=object grouped key=objects
+        pl:index="defined $index ? $index->{index_id} : undef"
+        pl:object="defined $object ? $object->{object_id} : undef">
       <template class=object>
         <header>
           <div class=edit-by-dblclick>
-            <h1 data-data-field=title data-empty=■></h1>
+            <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             <tag-list data-data-field=tags />
           </div>
         </header>
@@ -118,10 +139,12 @@
     </footer>
   </template>
 
-      <article class="object new">
-        <p class=operations>
-          <button type=button class=edit-button>新しい記事</button>
-      </article>
+      <t:if x="defined $index">
+        <article class="object new">
+          <p class=operations>
+            <button type=button class=edit-button>新しい記事</button>
+        </article>
+      </t:if>
 
       <list-main></list-main>
 
