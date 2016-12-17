@@ -210,6 +210,7 @@ function upgradeList (el) {
     var main = $$ (this, 'list-main')[0];
     if (main) main.textContent = '';
   }; // clearObjects
+
   el.showObjects = function (objects, opts) {
     var template = $$ (this, 'template')[0];
     var type = el.getAttribute ('type');
@@ -224,6 +225,7 @@ function upgradeList (el) {
     if (!template || !main) return null;
 
     var listObjects = Object.values (objects);
+    var appended = false;
 
     var itemType = el.getAttribute ('listitemtype');
     var elementType = {
@@ -306,6 +308,7 @@ function upgradeList (el) {
         } else {
           main.appendChild (section);
         }
+        appended = ture;
       });
     } else { // not grouped
       var sorter;
@@ -326,6 +329,7 @@ function upgradeList (el) {
           var key = template.getAttribute ('data-value');
           if (key) item.setAttribute ('value', object[key]);
           main.appendChild (item);
+          appended = true;
         });
       } else {
         listObjects.forEach (function (object) {
@@ -334,9 +338,22 @@ function upgradeList (el) {
           item.appendChild (template.content.cloneNode (true));
           fillFields (item, item, object);
           main.appendChild (item);
+          appended = true;
         });
       }
     } // not grouped
+
+    $$ (this, 'list-is-empty').forEach (function (e) {
+      if (main.firstElementChild) {
+        e.hidden = true;
+      } else {
+        e.hidden = false;
+      }
+    });
+
+    $$ (this, '.next-page-button').forEach (function (button) {
+      button.hidden = ! (opts.hasNext && appended);
+    });
 
     return main;
   }; // showObjects
@@ -347,11 +364,17 @@ function upgradeList (el) {
     var index = el.getAttribute ('index');
     if (index) {
       url = 'o/get.json?with_data=1&index_id=' + index;
-      if (nextRef) url += '&ref=' + nextRef;
     } else {
       url = el.getAttribute ('src');
     }
     if (url) {
+      var q = el.getAttribute ('param-q');
+      if (q) {
+        url += (/\?/.test (url) ? '&' : '?') + 'q=' + encodeURIComponent (q);
+      }
+      if (nextRef) {
+        url += (/\?/.test (url) ? '&' : '?') + 'ref=' + encodeURIComponent (nextRef);
+      }
       as.stageStart ("load");
       return gFetch (url, {}).then (function (json) {
         as.stageEnd ("load");
@@ -364,35 +387,35 @@ function upgradeList (el) {
 
   var show = function (json) {
     var key = el.getAttribute ('key');
-    var main = el.showObjects (json[key], {});
-    if (json.next_ref && nextRef !== json.next_ref) {
+    var hasNext = json.next_ref && nextRef !== json.next_ref;
+    var main = el.showObjects (json[key], {hasNext: hasNext});
+    if (hasNext) {
       nextRef = json.next_ref;
-      $$ (el, '.next-page-button').forEach (function (button) {
-        button.hidden = false;
-      });
     } else {
-      $$ (el, '.next-page-button').forEach (function (button) {
-        button.hidden = true;
-      });
+      nextRef = null;
     }
     return main; // or null
   }; // show
 
-  as.start ({stages: ["prep", "load", "show"]});
-  as.stageEnd ("prep");
-  load ().then (function (json) {
-    el.clearObjects ();
-    return show (json);
-  }).then (function (main) {
-    if (main && main.id) {
-      $with.register (main.id, function () {
-        return main;
-      });
-    }
-    as.end ({ok: true});
-  }).catch (function (error) {
-    as.end ({error: error});
-  });
+  el.load = function () {
+    as.start ({stages: ["prep", "load", "show"]});
+    as.stageEnd ("prep");
+    nextRef = null;
+    load ().then (function (json) {
+      el.clearObjects ();
+      return show (json);
+    }).then (function (main) {
+      if (main && main.id) {
+        $with.register (main.id, function () {
+          return main;
+        });
+      }
+      as.end ({ok: true});
+    }).catch (function (error) {
+      as.end ({error: error});
+    });
+  }; // load
+  el.load ();
 
   $$ (el, '.next-page-button').forEach (function (button) {
     button.onclick = function () {
@@ -417,6 +440,23 @@ function upgradeList (el) {
         editObject (article, {data: data}, {open: true});
       };
     });
+  });
+
+  $$ (el, '.search-form').forEach (function (form) {
+    form.onsubmit = function () {
+      Array.prototype.forEach.call (form.elements, function (e) {
+        el.setAttribute ('param-' + e.name, e.value);
+      });
+      el.clearObjects ();
+      el.load ();
+      var url = form.getAttribute ('data-pjax');
+      if (url) {
+        history.replaceState (null, null, url.replace (/\{([A-Za-z0-9]+)\}/g, function (_, n) {
+          return form.elements[n].value;
+        }));
+      }
+      return false;
+    };
   });
 } // upgradeList
 

@@ -4,6 +4,8 @@ use warnings;
 use Time::HiRes qw(time);
 use Dongry::Type;
 use Dongry::Type::JSONPS;
+use Dongry::SQL qw(where);
+use Web::DOM::Document;
 
 use Results;
 
@@ -123,6 +125,15 @@ sub group ($$$$) {
       created => $g->{created},
       updated => $g->{updated},
       theme => $g->{options}->{theme},
+    };
+  }
+
+  if (@$path == 3 and $path->[2] eq 'search') {
+    # /g/{}/search
+    return temma $app, 'group.search.html.tm', {
+      account => $opts->{account},
+      group => $opts->{group},
+      group_member => $opts->{group_member},
     };
   }
 
@@ -469,6 +480,24 @@ sub group_object ($$$$) {
           }
         }
 
+        my $search_data;
+        if ($changes->{fields}->{title} or
+            $changes->{fields}->{body} or
+            $changes->{fields}->{body_type} or
+            $changes->{fields}->{tags}) {
+          my $body;
+          if ($object->{data}->{body_type} == 1) { # html
+            my $doc = new Web::DOM::Document;
+            $doc->manakai_is_html (1);
+            $doc->inner_html ($object->{data}->{body});
+            $body = $doc->document_element->text_content;
+          }
+          $search_data = join "\n",
+              keys %{$object->{data}->{tags}},
+              $object->{data}->{title},
+              $body;
+        }
+
         my $time = time;
         return Promise->resolve->then (sub {
           return unless $app->bare_param ('edit_index_id');
@@ -560,6 +589,9 @@ sub group_object ($$$$) {
             return $db->update ('object', {
               title => Dongry::Type->serialize ('text', $object->{data}->{title}),
               data => $sdata,
+              (defined $search_data
+                ? (search_data => Dongry::Type->serialize ('text', $search_data))
+                : ()),
               timestamp => $object->{data}->{timestamp},
               updated => $time,
             }, where => {
@@ -612,6 +644,8 @@ sub group_object ($$$$) {
           return $app->throw_error (400, reason_phrase => 'Bad offset')
               if $offset > 1000;
         }
+        return $app->throw_error (400, reason_phrase => 'Bad limit')
+            if $limit > 100;
         return $db->select ('index_object', {
           group_id => Dongry::Type->serialize ('text', $path->[1]),
           index_id => $index_id,
@@ -706,7 +740,84 @@ sub group_object ($$$$) {
         next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
       };
     });
-  } # /g/{}/o/get.json
+  } elsif (@$path >= 4 and $path->[3] eq 'search.json') {
+    # /g/{group_id}/o/search.json
+    my $q = $app->text_param ('q');
+    my @have;
+    my @not_have;
+    if (defined $q) {
+      for (grep { length } split /\s+/, $q) {
+        if (s/^-(?=.)//s) {
+          push @not_have, $_;
+        } else {
+          push @have, $_;
+        }
+      }
+    }
+
+    my $ref = $app->bare_param ('ref');
+    my $timestamp;
+    my $offset;
+    my $limit = $app->bare_param ('limit') || 50;
+    if (defined $ref) {
+      ($timestamp, $offset) = split /,/, $ref, 2;
+      return $app->throw_error (400, reason_phrase => 'Bad offset')
+          if $offset > 1000;
+    }
+    return $app->throw_error (400, reason_phrase => 'Bad limit')
+        if $limit > 100;
+
+    my ($sqlx, $sql) = where [q{
+      select `object_id`, `updated`, `title`, `timestamp` from `object`
+      where @@SEARCHDATA@@ and
+            group_id = :group_id and
+            user_status = 1 and owner_status = 1 and
+            :updated:optsub
+      order by `updated` desc limit :offset,:limit
+    }, 
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+      updated => (defined $timestamp ? {updated => {'<=', $timestamp}} : {}),
+      offset => $offset || 0,
+      limit => $limit,
+    ];
+
+    my @expr;
+    my @value;
+    for (@have) {
+      my ($x, $y) = where {search_data => {-infix => $_}};
+      push @expr, $x;
+      push @value, map { Dongry::Type->serialize ('text', $_) } @$y;
+    }
+    for (@not_have) {
+      my ($x, $y) = where {search_data => {-infix => $_}};
+      push @expr, 'not (' . $x . ')';
+      push @value, map { Dongry::Type->serialize ('text', $_) } @$y;
+    }
+
+    $sqlx =~ s{\@\@SEARCHDATA\@\@}{
+      if (@expr) {
+        '(' . (join ' and ', @expr) . ')';
+      } else {
+        '(1 = 1)';
+      }
+    }e;
+    unshift @$sql, @value;
+
+    return $db->execute ($sqlx, $sql)->then (sub {
+      my $items = $_[0]->all;
+      return json $app, {
+        next_ref => (@$items ? $items->[-1]->{updated} . ',1' : $ref // (time . ',' . 0)),
+        objects => [map {
+          {
+            object_id => ''.$_->{object_id},
+            title => Dongry::Type->parse ('text', $_->{title}),
+            updated => $_->{updated},
+            timestamp => $_->{timestamp},
+          };
+        } @$items],
+      };
+    });
+  } # /g/{}/o/search.json
 
   if (@$path == 4 and $path->[3] eq 'create.json') {
     # /g/{group_id}/o/create.json
@@ -732,6 +843,7 @@ sub group_object ($$$$) {
         object_id => $object_id,
         title => '',
         data => $sdata,
+        search_data => '',
         created => $time,
         updated => $time,
         timestamp => $time,

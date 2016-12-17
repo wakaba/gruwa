@@ -6,6 +6,10 @@
       <h1><a href=/>Gruwa</a></h1>
       <h2><a pl:href="'/g/'.$group->{group_id}.'/'" rel=top><t:text value="$group->{title}"></a></h2>
     </hgroup>
+    <form method=get pl:action="'/g/'.$group->{group_id}.'/search'" class=search-form>
+      <input type=search name=q>
+      <button type=submit>検索</button>
+    </form>
   </header-area>
   <header-area>
     <account-name><t:text value="$account->{name}"></account-name>
