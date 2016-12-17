@@ -65,7 +65,7 @@ header.group > header-area > a:active {
 
 header.common > header-area > hgroup,
 header.group > header-area > hgroup {
-  display: block;
+  display: inline-block;
 }
 
 header.common > header-area > hgroup > h1,
@@ -94,6 +94,15 @@ header.group > header-area > hgroup > h1 > a {
   display: inline-block;
   font-family: cursive;
   font-style: italic;
+}
+
+header.group .search-form {
+  display: inline-block;
+  margin: 0;
+  border-style: none;
+  padding: 0;
+  background: transparent;
+  color: inherit;
 }
 
 header.group > header-area account-name::after {
@@ -474,6 +483,28 @@ list-container[key=groups] td[data-value]:not([data-value="1"]):not([data-value=
 list-container[key=members] td[data-value="2"].member_type,
 list-container[key=groups] td[data-value="2"].member_type {
   font-weight: bolder;
+}
+
+list-container .search-form {
+  margin: 0;
+  border-style: none;
+  padding: 0;
+}
+
+list-container .search-form input[type=search] {
+  width: 90%;
+}
+
+list-container .search-form button {
+  padding: .1em .5em;
+  min-width: 5em;
+}
+
+list-is-empty:not([hidden]) {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 1em;
+  font-size: 90%;
 }
 
 /*
