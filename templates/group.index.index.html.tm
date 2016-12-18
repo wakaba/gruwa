@@ -26,13 +26,21 @@
   <section class=page>
     <header>
       <t:if x="defined $index">
-        <h1><a href=./><t:text value="$index->{title}"></a></h1>
-        <t:if x="not defined $object">
-          <nav>
-            <a href=./ class=active>トップ</a>
-            / <a href=config>設定</a>
-          </nav>
-        </t:if>
+        <h1><a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
+          <t:text value="$index->{title}">
+        </a></h1>
+        <nav>
+          <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
+            <t:if x="not defined $object">
+              <t:class name="'active'">
+            </t:if>
+            トップ
+          </a>
+          /
+          <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/config'">
+            設定
+          </a>
+        </nav>
       <t:else>
         <h1><a pl:href="'/g/'.$group->{group_id}.'/'">
           <t:text value="$group->{title}">
@@ -119,9 +127,12 @@
       <button type=button class=edit-button data-prompt=リンク先のURLを指定してください。 title=リンク先を編集>編集</button>
     </template>
 
-    <list-container listitemtype=object grouped key=objects
-        pl:index="defined $index ? $index->{index_id} : undef"
-        pl:object="defined $object ? $object->{object_id} : undef">
+    <list-container listitemtype=object grouped key=objects>
+      <t:if x="defined $object">
+        <t:attr name="'object'" value="$object->{object_id}">
+      <t:elsif x="defined $index">
+        <t:attr name="'index'" value="$index->{index_id}">
+      </t:if>
       <template class=object>
         <header>
           <div class=edit-by-dblclick>
@@ -142,7 +153,7 @@
     </footer>
   </template>
 
-      <t:if x="defined $index">
+      <t:if x="defined $index and not defined $object">
         <article class="object new">
           <p class=operations>
             <button type=button class=edit-button>新しい記事</button>

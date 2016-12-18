@@ -36,6 +36,42 @@ Test {
 
 Test {
   my $current = shift;
+  my $v2 = rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {title => "a\x{500}", members => ['a1']});
+  })->then (sub {
+    return $current->create_group (g2 => {title => "a\x{500}", members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1',
+                                          account => 'a1',
+                                          title => "ab\x{3100}$v2"});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1',
+                                           account => 'a1',
+                                           index => 'i1',
+                                           title => "ab\x{4000}"});
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, ''], {}, group => $current->o ('g1'), account => 'a1'],
+      [
+        {group => $current->o ('g2'), status => 404},
+        {path => ['o', '5325253333', ''], status => 404},
+        {account => '', status => 403},
+        {account => undef, status => 302},
+      ],
+    );
+  })->then (sub {
+    return $current->get_html (['o', $current->o ('o1')->{object_id}, ''], {}, account => 'a1', group => $current->o ('g1'));
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      like $result->{res}->body_bytes, qr{$v2};
+    } $current->c;
+  });
+} n => 2, name => 'with index association';
+
+Test {
+  my $current = shift;
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_group (g1 => {title => "a\x{500}", members => ['a1']});
   })->then (sub {

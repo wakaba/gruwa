@@ -451,12 +451,33 @@ sub group_object ($$$$) {
             $object->{owner_status} != 1) { # open
           return $app->throw_error (410, reason_phrase => 'Object not found');
         }
-        return temma $app, 'group.index.index.html.tm', {
-          account => $opts->{account},
-          group => $opts->{group},
-          group_member => $opts->{group_member},
-          object => $object,
-        };
+
+        return Promise->resolve->then (sub {
+          my $index_ids = [map { Dongry::Type->serialize ('text', $_) }
+                           keys %{$object->{data}->{index_ids} || {}}];
+          if (@$index_ids) {
+            return $db->select ('index', {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              index_id => {-in => $index_ids},
+              user_status => 1, # open
+              owner_status => 1, # open
+            }, fields => ['index_id', 'title', 'options'], limit => 1)->then (sub {
+              my $index = $_[0]->first // return undef;
+              $index->{title} = Dongry::Type->parse ('text', $index->{title});
+              $index->{options} = Dongry::Type->parse ('json', $index->{options});
+              return $index;
+            });
+          }
+          return undef;
+        })->then (sub {
+          return temma $app, 'group.index.index.html.tm', {
+            account => $opts->{account},
+            group => $opts->{group},
+            group_member => $opts->{group_member},
+            object => $object,
+            index => $_[0],
+          };
+        });
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/o/{object_id}/edit.json
         $app->requires_request_method ({POST => 1});
