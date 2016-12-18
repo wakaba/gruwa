@@ -715,11 +715,11 @@ function editObject (article, object, opts) {
       });
 
       var dataKey = control.getAttribute ('key');
-      control.clearItems ();
       control.addItems (Object.keys (object.data[dataKey] || {}).map (function (v) {
         return {value: v};
       }));
     })); // $with
+    control.clearItems ();
   }); // list-control
 
     // XXX autosave

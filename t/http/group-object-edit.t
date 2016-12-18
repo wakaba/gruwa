@@ -279,6 +279,59 @@ Test {
   });
 } n => 26, name => 'index_id changes';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {account => 'a1', group => 'g1'});
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $obj = $_[0];
+    test {
+      is 0+keys %{$obj->{data}->{tags} or {}}, 0;
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_tag => 1,
+      tag => ["a", "\x{645}", "abb"],
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $obj = $_[0];
+    test {
+      is 0+keys %{$obj->{data}->{tags} or {}}, 3;
+      ok $obj->{data}->{tags}->{a};
+      ok $obj->{data}->{tags}->{"\x{645}"};
+      ok $obj->{data}->{tags}->{abb};
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_tag => 1,
+      tag => ["b", "\x{645}"],
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $obj = $_[0];
+    test {
+      is 0+keys %{$obj->{data}->{tags} or {}}, 2;
+      ok $obj->{data}->{tags}->{b};
+      ok $obj->{data}->{tags}->{"\x{645}"};
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_tag => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $obj = $_[0];
+    test {
+      is 0+keys %{$obj->{data}->{tags} or {}}, 0;
+    } $current->c;
+  });
+} n => 9, name => 'tags';
+
 RUN;
 
 =head1 LICENSE

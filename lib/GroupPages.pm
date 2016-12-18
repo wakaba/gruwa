@@ -500,13 +500,13 @@ sub group_object ($$$$) {
         }
         # XXX owner_status only can be changed by group owners
 
-        # XXX tests
         if ($app->bare_param ('edit_tag')) {
           my @old_tags = sort { $a cmp $b } keys %{$object->{data}->{tags} or {}};
           $object->{data}->{tags} = {map { $_ => 1 } @{$app->text_param_list ('tag')}};
           my @new_tags = sort { $a cmp $b } keys %{$object->{data}->{tags} or {}};
           unless (@old_tags == @new_tags and
-                  (join $;, @old_tags) eq (join $;, @new_tags)) { ## This check is not strict but good enough.
+                  (join $;, sort { $a cmp $b } @old_tags) eq
+                  (join $;, sort { $a cmp $b } @new_tags)) { ## This check is not strict but good enough.
             $changes->{fields}->{tags} = 1;
           }
         }
@@ -534,8 +534,8 @@ sub group_object ($$$$) {
         my $time = time;
         return Promise->resolve->then (sub {
           return unless $app->bare_param ('edit_index_id');
-          ## Note that, event when |$changes->{fields}->{timestamp}|
-          ## is true, `index_object`'s `updated` is not updated...
+          ## Note that, even when |$changes->{fields}->{timestamp}| is
+          ## true, `index_object`'s `updated` is not updated...
 
           my $index_ids = $app->bare_param_list ('index_id');
 
@@ -599,6 +599,33 @@ sub group_object ($$$$) {
             }
           });
         })->then (sub {
+          return unless $changes->{fields}->{tags};
+          my @tag = map {
+            Dongry::Type->serialize ('text', $_);
+          } keys %{$object->{data}->{tags} or {}};
+          if (@tag) {
+            return $db->insert ('tag_object', [map {
+              {
+                group_id => Dongry::Type->serialize ('text', $path->[1]),
+                tag_key => $_,
+                object_id => Dongry::Type->serialize ('text', $path->[3]),
+                timestamp => time,
+              };
+            } @tag], duplicate => 'ignore')->then (sub {
+              return $db->delete ('tag_object', {
+                group_id => Dongry::Type->serialize ('text', $path->[1]),
+                object_id => Dongry::Type->serialize ('text', $path->[3]),
+                tag_key => {-not_in => \@tag},
+              });
+            });
+          } else { # no @tag
+            return $db->delete ('tag_object', {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              object_id => Dongry::Type->serialize ('text', $path->[3]),
+            });
+          }
+        })->then (sub {
+          delete $changes->{fields} unless keys %{$changes->{fields} or {}};
           return unless keys %$changes;
           my $sdata;
           my $rev_data = {changes => $changes};
