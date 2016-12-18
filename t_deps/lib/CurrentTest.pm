@@ -212,6 +212,10 @@ sub create_object ($$$) {
                     title body)) {
       $param{$key} = $opts->{$key} if defined $opts->{$key};
     }
+    if (defined $opts->{tag}) {
+      $param{edit_tag} = 1;
+      $param{tag} = $opts->{tag};
+    }
     if (keys %param) {
       return $self->post_json (['o', $_[0]->{json}->{object_id}, 'edit.json'],
                                \%param,

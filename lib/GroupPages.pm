@@ -5,6 +5,7 @@ use Time::HiRes qw(time);
 use Dongry::Type;
 use Dongry::Type::JSONPS;
 use Dongry::SQL qw(where);
+use Digest::SHA qw(sha1_hex);
 use Web::DOM::Document;
 
 use Results;
@@ -599,26 +600,30 @@ sub group_object ($$$$) {
             }
           });
         })->then (sub {
-          return unless $changes->{fields}->{tags};
-          my @tag = map {
-            Dongry::Type->serialize ('text', $_);
+          return unless $changes->{fields}->{tags} or
+                        $changes->{fields}->{timestamp};
+          my @tag_key = map {
+            sha1_hex +Dongry::Type->serialize ('text', $_);
           } keys %{$object->{data}->{tags} or {}};
-          if (@tag) {
+          if (@tag_key) {
             return $db->insert ('tag_object', [map {
               {
                 group_id => Dongry::Type->serialize ('text', $path->[1]),
                 tag_key => $_,
                 object_id => Dongry::Type->serialize ('text', $path->[3]),
-                timestamp => time,
+                created => $time,
+                timestamp => $object->{data}->{timestamp},
               };
-            } @tag], duplicate => 'ignore')->then (sub {
+            } @tag_key], duplicate => {
+              timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
+            })->then (sub {
               return $db->delete ('tag_object', {
                 group_id => Dongry::Type->serialize ('text', $path->[1]),
                 object_id => Dongry::Type->serialize ('text', $path->[3]),
-                tag_key => {-not_in => \@tag},
+                tag_key => {-not_in => \@tag_key},
               });
             });
-          } else { # no @tag
+          } else { # no @tag_key
             return $db->delete ('tag_object', {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
               object_id => Dongry::Type->serialize ('text', $path->[3]),
@@ -698,7 +703,20 @@ sub group_object ($$$$) {
     my $rev_id;
     return Promise->resolve->then (sub {
       my $index_id = $app->bare_param ('index_id');
+      my $table;
+      my %cond;
       if (defined $index_id) {
+        $table = 'index_object';
+        $cond{index_id} = $index_id;
+      } else {
+        my $tag = $app->text_param ('tag');
+        if (defined $tag) {
+          my $tag_key = sha1_hex +Dongry::Type->serialize ('text', $tag);
+          $table = 'tag_object';
+          $cond{tag_key} = $tag_key;
+        }
+      }
+      if (defined $table) {
         my $ref = $app->bare_param ('ref');
         my $timestamp;
         my $offset;
@@ -711,10 +729,10 @@ sub group_object ($$$$) {
         }
         return $app->throw_error (400, reason_phrase => 'Bad limit')
             if $limit > 100;
-        return $db->select ('index_object', {
+        $cond{timestamp} = {'<=', $timestamp} if defined $timestamp;
+        return $db->select ($table, {
           group_id => Dongry::Type->serialize ('text', $path->[1]),
-          index_id => $index_id,
-          (defined $timestamp ? (timestamp => {'<=', $timestamp}) : ()),
+          %cond,
         },
           fields => ['object_id', 'timestamp'],
           order => ['timestamp', 'desc', 'created', 'desc'],
@@ -726,12 +744,6 @@ sub group_object ($$$$) {
             $_->{object_id};
           } @{$_[0]->all}];
         });
-      #} elsif ($app->bare_param ('recent')) {
-      #  return $db->select ('object', {
-      #    group_id => Dongry::Type->serialize ('text', $path->[1]),
-      #  }, fields => ['object_id'], order => ['updated', 'desc'], limit => 50)->then (sub {
-      #    return [map { $_->{object_id} } @{$_[0]->all}];
-      #  });
       } else {
         my $list = $app->bare_param_list ('object_id');
         $rev_id = $app->bare_param ('object_revision_id') if @$list == 1;
