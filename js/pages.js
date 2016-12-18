@@ -171,6 +171,25 @@ function fillFields (rootEl, el, object) {
         a.textContent = tag;
         field.appendChild (a);
       });
+    } else if (field.localName === 'index-list') {
+      field.textContent = '';
+      Object.keys (value || {}).forEach (function (indexId) {
+        var a = document.createElement ('a');
+        a.href = document.documentElement.getAttribute ('data-group-url') + '/i/' + encodeURIComponent (indexId) + '/';
+        a.textContent = indexId;
+        $with ('index-list').then (function (datalist) {
+          if (!datalist.indexIdToLabel) {
+            var list = {};
+            $$ (datalist, 'option').forEach (function (option) {
+              list[option.value] = option.label;
+            });
+            datalist.indexIdToLabel = list;
+          }
+          a.textContent = datalist.indexIdToLabel[indexId] || indexId;
+          a.classList.toggle ('this-index', indexId == document.documentElement.getAttribute ('data-index'));
+        });
+        field.appendChild (a);
+      });
     } else if (field.localName === 'iframe') {
       field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
       field.setAttribute ('srcdoc', createBodyHTML (value, {}));

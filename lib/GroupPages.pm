@@ -786,7 +786,7 @@ sub group_object ($$$$) {
 
     my ($sqlx0, $sql0) = where [q{
       select `object_id`, `updated`, `title`, `timestamp`,
-        substring(`search_data`, greatest(locate(:s1, `search_data`) - 50, 0) + 1, 100)
+        substring(`search_data`, greatest(locate(:s1, `search_data`) - 300, 0) + 1, 600)
         as `snippet`
     }, 
       s1 => Dongry::Type->serialize ('text', $have[0] // ''),

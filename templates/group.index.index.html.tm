@@ -1,4 +1,6 @@
-<html t:params="$group $index? $object? $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
+<html t:params="$group $index? $object? $account $group_member $app"
+    pl:data-group-url="'/g/'.$group->{group_id}"
+    pl:data-index="defined $index ? $index->{index_id} : undef"
     data-body-css-href=/css/body.css
     pl:data-theme="defined $index ? $index->{options}->{theme}
                                   : $group->{options}->{theme}">
@@ -133,6 +135,7 @@
         <action-status hidden
             stage-edit=保存中...
             ok=保存しました />
+        <index-list data-data-field=index_ids />
         <time data-field=created class=ambtime />
         (<time data-field=updated class=ambtime /> 編集)
         <button type=button class=edit-button>編集</button>

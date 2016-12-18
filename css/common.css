@@ -375,6 +375,14 @@ edit-container > form > footer p {
   background-color: var(--small-background-color);
 }
 
+article.object > footer index-list a {
+  margin-right: .5em;
+}
+
+article.object > footer index-list a.this-index {
+  display: none;
+}
+
 list-container[key=objects] action-status {
   margin-left: 1em;
   margin-right: 1em;
