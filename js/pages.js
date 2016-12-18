@@ -167,8 +167,10 @@ function fillFields (rootEl, el, object) {
       field.textContent = '';
       Object.keys (value || {}).forEach (function (tag) {
         var a = document.createElement ('a');
-        a.href = document.documentElement.getAttribute ('data-group-url') + '/t/' + encodeURIComponent (tag);
-        a.textContent = tag;
+        a.href = document.documentElement.getAttribute ('data-group-url') + '/t/' + encodeURIComponent (tag) + '/';
+        var tagName = document.createElement ('tag-name');
+        tagName.textContent = tag;
+        a.appendChild (tagName);
         field.appendChild (a);
       });
     } else if (field.localName === 'index-list') {
@@ -382,15 +384,20 @@ function upgradeList (el) {
   var nextRef = null;
   var load = function () {
     var url;
-    var index = el.getAttribute ('index');
-    if (index) {
-      url = 'o/get.json?with_data=1&index_id=' + index;
+    var object = el.getAttribute ('object');
+    if (object) {
+      url = 'o/get.json?with_data=1&object_id=' + object;
     } else {
-      var object = el.getAttribute ('object');
-      if (object) {
-        url = 'o/get.json?with_data=1&object_id=' + object;
+      var tag = el.getAttribute ('tag');
+      if (tag) {
+        url = 'o/get.json?with_data=1&tag=' + encodeURIComponent (tag);
       } else {
-        url = el.getAttribute ('src');
+        var index = el.getAttribute ('index');
+        if (index) {
+          url = 'o/get.json?with_data=1&index_id=' + index;
+        } else {
+          url = el.getAttribute ('src');
+        }
       }
     }
     if (url) {

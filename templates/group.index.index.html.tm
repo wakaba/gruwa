@@ -1,4 +1,4 @@
-<html t:params="$group $index? $object? $account $group_member $app"
+<html t:params="$group $index? $object? $tag? $account $group_member $app"
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-index="defined $index ? $index->{index_id} : undef"
     data-body-css-href=/css/body.css
@@ -14,8 +14,10 @@
       <t:if x="defined $index">
         - <t:text value="$index->{title}">
       </t:if>
-    <t:else>
+    <t:elsif x="defined $index">
       <t:text value="$index->{title}">
+    <t:elsif x="defined $tag">
+      #<t:text value=$tag>
     </t:if>
   </t:include>
 
@@ -41,9 +43,13 @@
             設定
           </a>
         </nav>
+      <t:elsif x="defined $tag">
+        <h1><a pl:href="'/g/'.$group->{group_id}.'/t/'.(Web::URL::Encoding::percent_encode_c $tag).'/'">
+          <t:text value="$tag">
+        </a></h1>
       <t:else>
         <h1><a pl:href="'/g/'.$group->{group_id}.'/'">
-          <t:text value="$group->{title}">
+          <tag-name><t:text value="$group->{title}"></>
         </a></h1>
       </t:if>
     </header>
@@ -130,6 +136,8 @@
     <list-container listitemtype=object grouped key=objects>
       <t:if x="defined $object">
         <t:attr name="'object'" value="$object->{object_id}">
+      <t:elsif x="defined $tag">
+        <t:attr name="'tag'" value=$tag>
       <t:elsif x="defined $index">
         <t:attr name="'index'" value="$index->{index_id}">
       </t:if>

@@ -421,14 +421,14 @@ tag-list a {
   text-decoration: none;
 }
 
-tag-list a::before {
-  content: "#";
-  padding-right: .2em;
-}
-
 tag-list a:hover,
 tag-list a:active {
   text-decoration: underline;
+}
+
+tag-name::before {
+  content: "#";
+  padding-right: .2em;
 }
 
 list-container {

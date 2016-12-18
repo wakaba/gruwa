@@ -129,6 +129,16 @@ sub group ($$$$) {
     };
   }
 
+  if (@$path == 5 and $path->[2] eq 't' and $path->[4] eq '') {
+    # /g/{group_id}/t/{tag}/
+    return temma $app, 'group.index.index.html.tm', {
+      account => $opts->{account},
+      group => $opts->{group},
+      group_member => $opts->{group_member},
+      tag => $path->[3],
+    };
+  }
+
   if (@$path == 3 and $path->[2] eq 'search') {
     # /g/{}/search
     return temma $app, 'group.search.html.tm', {
