@@ -156,6 +156,8 @@ function fillFields (rootEl, el, object) {
   $$ (el, '[data-href-template]').forEach (function (field) {
     field.href = field.getAttribute ('data-href-template').replace (/\{GROUP\}/g, function () {
       return document.documentElement.getAttribute ('data-group-url');
+    }).replace (/\{INDEX_ID\}/, function () {
+      return document.documentElement.getAttribute ('data-index');
     }).replace (/\{([^{}]+)\}/g, function (_, k) {
       return encodeURIComponent (object[k]);
     });
@@ -392,6 +394,7 @@ function upgradeList (el) {
     var url = el.getAttribute ('src') || 'o/get.json?with_data=1';
     [
       'src-object_id', 'src-index_id', 'src-wiki_name',
+      'src-limit',
     ].forEach (function (attr) {
       var value = el.getAttribute (attr);
       if (value) {
@@ -972,9 +975,10 @@ stageActions.createGroupWiki.stages = ["creategroupwiki_1", "creategroupwiki_2"]
 
 function upgradeForm (form) {
   form.onsubmit = function () {
-    if (!confirm (form.getAttribute ('data-prompt'))) return;
+    var pt = form.getAttribute ('data-prompt');
+    if (pt && !confirm (pt)) return;
 
-    var addStages = form.getAttribute ('data-additional-stages').split (/\s+/);
+    var addStages = (form.getAttribute ('data-additional-stages') || '').split (/\s+/).filter (function (x) { return x });
     var stages = ["prep", "fetch"];
     addStages.forEach (function (stage) {
       stages = stages.concat (stageActions[stage].stages);

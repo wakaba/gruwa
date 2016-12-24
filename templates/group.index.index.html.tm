@@ -52,7 +52,7 @@
       </t:if>
     </header>
 
-    <list-container listitemtype=object key=objects>
+    <list-container key=objects>
       <t:if x="defined $object">
         <t:attr name="'src-object_id'" value="$object->{object_id}">
       <t:elsif x="defined $index">
@@ -61,26 +61,41 @@
       <t:if x="defined $wiki_name">
         <t:attr name="'src-wiki_name'" value=$wiki_name>
       <t:else>
-        <t:attr name="'grouped'" value=1>
+        <t:if x="defined $index and $index->{index_type} == 1 # blog">
+          <t:attr name="'grouped'" value=1>
+        </t:if>
       </t:if>
-      <template class=object>
-        <header>
-          <div class=edit-by-dblclick>
-            <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
-          </div>
-        </header>
-        <main><iframe data-data-field=body /></main>
-        <footer>
-          <p>
-            <action-status hidden
-                stage-edit=保存中...
-                ok=保存しました />
-            <index-list data-data-field=index_ids />
+      <t:if x="not defined $wiki_name and
+               defined $index and $index->{index_type} == 2 # wiki">
+        <t:attr name="'src-limit'" value=100>
+        <template>
+          <a data-href-template={GROUP}/i/{INDEX_ID}/wiki/{title}#{object_id}>
+            <strong data-data-field=title data-empty=■ />
             <time data-field=created class=ambtime />
             (<time data-field=updated class=ambtime /> 編集)
-            <button type=button class=edit-button>編集</button>
-        </footer>
-      </template>
+          </a>
+        </template>
+      <t:else>
+        <t:attr name="'listitemtype'" value="'object'">
+        <template class=object>
+          <header>
+            <div class=edit-by-dblclick>
+              <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
+            </div>
+          </header>
+          <main><iframe data-data-field=body /></main>
+          <footer>
+            <p>
+              <action-status hidden
+                  stage-edit=保存中...
+                  ok=保存しました />
+              <index-list data-data-field=index_ids />
+              <time data-field=created class=ambtime />
+              (<time data-field=updated class=ambtime /> 編集)
+              <button type=button class=edit-button>編集</button>
+          </footer>
+        </template>
+      </t:if>
 
       <t:if x="defined $index and not defined $object and not defined $wiki_name">
         <article class="object new">

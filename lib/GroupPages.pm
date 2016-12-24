@@ -646,6 +646,11 @@ sub group_object ($$$$) {
         })->then (sub {
           delete $changes->{fields} unless keys %{$changes->{fields} or {}};
           return unless keys %$changes;
+
+          ## XXX for backcompat
+          $object->{data}->{owner_status} //= 1;
+          $object->{data}->{user_status} //= 1;
+
           my $sdata;
           my $rev_data = {changes => $changes};
           return $db->execute ('select uuid_short() as uuid')->then (sub {
