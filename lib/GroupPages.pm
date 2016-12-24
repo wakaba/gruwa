@@ -144,10 +144,11 @@ sub group ($$$$) {
       created => $g->{created},
       updated => $g->{updated},
       theme => $g->{options}->{theme},
-      default_keyword_index_id => $g->{options}->{default_keyword_index_id},
+      default_wiki_index_id => $g->{options}->{default_wiki_index_id},
     };
   }
 
+  # XXX
   if (@$path == 5 and $path->[2] eq 't' and $path->[4] eq '') {
     # /g/{group_id}/t/{tag}/
     return Promise->resolve->then (sub {
@@ -208,17 +209,17 @@ sub group ($$$$) {
       $options_modified = 1;
     }
     return Promise->resolve->then (sub {
-      my $keyword_id = $app->bare_param ('default_keyword_index_id');
-      return unless defined $keyword_id;
+      my $wiki_id = $app->bare_param ('default_wiki_index_id');
+      return unless defined $wiki_id;
       return $db->select ('index', {
         group_id => Dongry::Type->serialize ('text', $path->[1]),
-        index_id => $keyword_id,
+        index_id => $wiki_id,
         user_status => 1, # open
         owner_status => 1, # open
       }, fields => ['index_id'])->then (sub {
-        return $app->throw_error (400, reason_phrase => 'Bad |default_keyword_index_id|')
+        return $app->throw_error (400, reason_phrase => 'Bad |default_wiki_index_id|')
             unless $_[0]->first;
-        $options->{default_keyword_index_id} = $keyword_id;
+        $options->{default_wiki_index_id} = $wiki_id;
         $options_modified = 1;
       });
     })->then (sub {

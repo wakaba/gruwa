@@ -93,6 +93,40 @@ Test {
   });
 } n => 4, name => 'theme';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1'], title => "6"});
+  })->then (sub {
+    return $current->create_group (g2 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_index (i2 => {group => 'g2', account => 'a1'});
+  })->then (sub {
+    return $current->are_errors (
+      ['POST', ['edit.json'], {}, account => 'a1', group => 'g1'],
+      [
+        {params => {default_wiki_index_id => 0}, status => 400},
+        {params => {default_wiki_index_id => 64363444}, status => 400},
+        {params => {default_wiki_index_id => $current->o ('i2')->{index_id}}, status => 400},
+      ],
+    );
+  })->then (sub {
+    return $current->post_json (['edit.json'], {
+      default_wiki_index_id => $current->o ('i1')->{index_id},
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->group ($current->o ('g1'), account => 'a1');
+  })->then (sub {
+    my $group = $_[0];
+    test {
+      is $group->{default_wiki_index_id}, $current->o ('i1')->{index_id};
+      ok $group->{updated} > $group->{created};
+    } $current->c;
+  });
+} n => 3, name => 'default_wiki_index_id';
+
 RUN;
 
 =head1 LICENSE

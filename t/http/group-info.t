@@ -39,6 +39,7 @@ Test {
       is $result->{json}->{group_id}, $current->o ('g1')->{group_id};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
       is $result->{json}->{title}, "a\x{500}";
+#XXX default_wiki_index_id
     } $current->c;
   });
 } n => 9, name => '/g/{}/info.json';
