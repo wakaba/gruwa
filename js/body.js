@@ -34,6 +34,15 @@ function handleMessage (ev) {
     } else {
       throw "Bad |value| " + ev.data.value;
     }
+  } else if (ev.data.type === 'link') {
+    if (ev.data.command === 'wiki-name') {
+      insertLink ({wikiName: ev.data.value, textContent: ev.data.value,
+                   command: ev.data.command});
+    } else if (ev.data.command === 'url') {
+      insertLink ({url: ev.data.value, textContent: ev.data.value});
+    } else {
+      throw "Bad |command| " + ev.data.command;
+    }
   } else if (ev.data.type === 'change') {
     var data = ev.data.value;
     Array.prototype.forEach.call (document.querySelectorAll ('input[type=checkbox]'), function (e) {
@@ -70,17 +79,12 @@ onfocus = function () {
   sendToParent ({type: "focus"});
 }; // onfocus
 
-function htescape (s) {
-  return s.replace (/&/g, '&amp;').replace (/"/g, '&quot;').replace (/</g, '&lt;').replace (/>/g, '&gt;');
-} // s
-
 document.onpaste = function (ev) {
   var text = ev.clipboardData.getData ('text/plain');
   if (text && /^\s*(?:[Hh][Tt][Tt][Pp][Ss]?|[Ff][Tt][Pp]):\/\/\S+\s*$/.test (text)) {
     text = text.replace (/^\s+/, '').replace (/\s+$/, '');
     ev.clipboardData.items.clear ();
-    text = '<a href="'+htescape(text)+'">'+htescape(text)+'</a>';
-    document.execCommand ('inserthtml', false, text);
+    insertLink ({url: text, textContent: text});
     return false;
   }
 }; // onpaste
@@ -130,6 +134,8 @@ var mo = new MutationObserver (function (records) {
           UsedControlNames[n.name] = true;
         }
         changeChecked (n);
+      } else if (n.localName === 'a') {
+        initAElement (n);
       } else {
         Array.prototype.forEach.call (document.querySelectorAll ('input[type=checkbox]'), function (n) {
           if (UsedControlNames[n.name]) {
@@ -137,6 +143,9 @@ var mo = new MutationObserver (function (records) {
             UsedControlNames[n.name] = true;
           }
           changeChecked (n);
+        });
+        Array.prototype.forEach.call (document.querySelectorAll ('a'), function (n) {
+          initAElement (n);
         });
       }
     });
@@ -508,6 +517,56 @@ function outdent () {
   getSelection ().selectAllChildren (x.node);
 } // outdent
 
+function insertLink (args) {
+  var sel = getSelection ();
+  var isWikiName = false;
+
+  var p;
+  if (args.wikiName) {
+    p = Promise.resolve ({result: args.wikiName});
+    isWikiName = true;
+  } else if (args.url) {
+    p = Promise.resolve ({result: args.url});
+  } else if (args.command === 'wiki-name') {
+    isWikiName = true;
+    var name = sel.toString ();
+    if (name) {
+      p = Promise.resolve ({result: name});
+    } else {
+      p = sendPrompt ({prompt: document.querySelector ('#edit-texts').getAttribute ('data-link-wiki-name-prompt')});
+    }
+  } else {
+    p = sendPrompt ({prompt: document.querySelector ('#edit-texts').getAttribute ('data-link-url-prompt')});
+  }
+
+  p.then (function (_) {
+    if (_.result == null) return;
+
+    var link = document.createElement ('a');
+    var hasSelected = link.firstChild;
+    if (args.textContent) link.textContent = args.textContent;
+
+    if (isWikiName) {
+      link.setAttribute ('data-wiki-name', _.result);
+    } else {
+      link.href = _.result;
+    }
+    if (!link.firstChild) link.textContent = _.result;
+    
+    sel.getRangeAt (0).deleteContents ();
+    sel.getRangeAt (0).insertNode (link);
+    sel.selectAllChildren (link);
+    if (!hasSelected) sel.collapseToEnd ();
+  });
+} // insertLink
+
+function initAElement (a) {
+  var wikiName = a.getAttribute ('data-wiki-name');
+  if (wikiName) {
+    a.setAttribute ('href', document.documentElement.getAttribute ('data-group-url') + '/wiki/' + encodeURIComponent (wikiName));
+  }
+} // initAElement
+
 var contextToolbar;
 function showContextToolbar (args) {
   if (contextToolbar) contextToolbar.remove ();
@@ -525,7 +584,9 @@ function showContextToolbar (args) {
   contextToolbar.appendChild (template.content.cloneNode (true));
 
   var updated = function () {
+    var isWikiName = args.context.hasAttribute ('data-wiki-name');
     Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-field=host]'), function (e) {
+      e.hidden = isWikiName;
       e.textContent = args.context.host;
     });
     Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-title-field=href]'), function (e) {
@@ -534,14 +595,24 @@ function showContextToolbar (args) {
     Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-href-field=href]'), function (e) {
       e.href = args.context.href;
     });
+    Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-field=wikiName]'), function (e) {
+      e.textContent = args.context.getAttribute ('data-wiki-name');
+      e.hidden = !isWikiName;
+    });
   }; // updated
   updated ();
   Array.prototype.forEach.call (contextToolbar.querySelectorAll ('.edit-button'), function (e) {
     e.onclick = function () {
-      sendPrompt ({prompt: e.getAttribute ('data-prompt'),
-                   default: args.context.href}).then (function (_) {
+      var isWikiName = args.context.hasAttribute ('data-wiki-name');
+      sendPrompt ({prompt: e.getAttribute (isWikiName ? 'data-wiki-name-prompt' : 'data-url-prompt'),
+                   default: isWikiName ? args.context.getAttribute ('data-wiki-name') : args.context.href}).then (function (_) {
         if (_.result != null) {
-          args.context.href = _.result;
+          if (isWikiName) {
+            args.context.setAttribute ('data-wiki-name', _.result);
+            initAElement (args.context);
+          } else {
+            args.context.href = _.result;
+          }
           updated ();
         }
       });

@@ -71,14 +71,26 @@ function withFormDisabled (form, code) {
 function createBodyHTML (value, opts) {
   var doc = (new DOMParser).parseFromString ("", "text/html");
 
-  var head = '<base target=_top><link rel=stylesheet href><script src=/js/body.js />';
-  doc.head.innerHTML = head;
+  doc.documentElement.setAttribute ('data-group-url', document.documentElement.getAttribute ('data-group-url'));
+
+  doc.head.innerHTML = '<base target=_top>';
+  $$ (document.head, 'link.body-css').forEach (function (e) {
+    var link = document.createElement ('link');
+    link.rel = 'stylesheet';
+    link.href = e.href;
+    doc.head.appendChild (link);
+  });
+  $$ (document.head, 'link.body-js').forEach (function (e) {
+    var script = document.createElement ('script');
+    script.async = true;
+    script.src = e.href;
+    doc.head.appendChild (script);
+  });
 
   $$ (document, 'template.body-edit-template').forEach (function (e) {
     doc.head.appendChild (e.cloneNode (true));
   });
 
-  doc.querySelector ('link[rel=stylesheet]').href = document.documentElement.getAttribute ('data-body-css-href');
   doc.documentElement.setAttribute ('data-theme', document.documentElement.getAttribute ('data-theme'));
 
   if (opts.edit) {
@@ -420,6 +432,11 @@ function upgradeList (el) {
   el.load = function () {
     as.start ({stages: ["prep", "load", "show"]});
     nextRef = null;
+    $$ (el, '.search-wiki_name-link').forEach (function (e) {
+      var q = el.getAttribute ('param-q');
+      e.hidden = ! /^\s*\S+\s*$/.test (q);
+      fillFields (e, e, {name: q.replace (/^\s+/, '').replace (/\s+$/, '')});
+    });
     as.stageEnd ("prep");
     load ().then (function (json) {
       el.clearObjects ();
@@ -554,8 +571,8 @@ function editObject (article, object, opts) {
     control.insertSection = function () {
       mc.port2.postMessage ({type: "insertSection"});
     };
-    control.sendAction = function (command, value) {
-      mc.port2.postMessage ({type: command, value: value});
+    control.sendAction = function (type, command, value) {
+      mc.port2.postMessage ({type: type, command: command, value: value});
     };
     control.getCurrentValue = function () {
       mc.port2.postMessage ({type: "getCurrentValue"});
@@ -586,17 +603,10 @@ function editObject (article, object, opts) {
       ed.focus ();
     };
   });
-  $$ (form, 'button[data-action=indent], button[data-action=outdent]').forEach (function (b) {
+  $$ (form, 'button[data-action=indent], button[data-action=outdent], button[data-action=insertControl], button[data-action=link]').forEach (function (b) {
     b.onclick = function () {
       var ed = form.querySelector ('iframe.control[data-name=body]');
-      ed.sendAction (b.getAttribute ('data-action'));
-      ed.focus ();
-    };
-  });
-  $$ (form, 'button[data-action=insertControl]').forEach (function (b) {
-    b.onclick = function () {
-      var ed = form.querySelector ('iframe.control[data-name=body]');
-      ed.sendAction (b.getAttribute ('data-action'), b.getAttribute ('data-value'));
+      ed.sendAction (b.getAttribute ('data-action'), b.getAttribute ('data-command'), b.getAttribute ('data-value'));
       ed.focus ();
     };
   });

@@ -2,6 +2,7 @@ package GroupPages;
 use strict;
 use warnings;
 use Time::HiRes qw(time);
+use Promise;
 use Dongry::Type;
 use Dongry::Type::JSONPS;
 use Dongry::SQL qw(where);
@@ -12,6 +13,7 @@ use Results;
 
 sub get_index ($$$) {
   my $db = shift;
+  return Promise->resolve (undef) unless defined $_[1];
   return $db->select ('index', {
     group_id => Dongry::Type->serialize ('text', $_[0]),
     index_id => Dongry::Type->serialize ('text', $_[1]),
@@ -126,6 +128,13 @@ sub group ($$$$) {
   if (@$path >= 4 and $path->[2] eq 'o') {
     # /g/{group_id}/o/...
     return $class->group_object ($app, $path, $opts);
+  }
+
+  if (@$path == 4 and $path->[2] eq 'wiki') {
+    # /g/{group_id}/wiki/{wiki_name}
+    return get_index ($db, $path->[1], $opts->{group}->{options}->{default_wiki_index_id})->then (sub {
+      return $class->wiki ($app, $opts, $_[0], $path->[3]);
+    });
   }
 
   if (@$path == 3 and $path->[2] eq '') {
@@ -428,6 +437,9 @@ sub group_index ($$$$) {
           group_member => $opts->{group_member},
           index => $index,
         };
+      } elsif (@$path == 6 and $path->[4] eq 'wiki') {
+        # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
+        return $class->wiki ($app, $opts, $index, $path->[5]);
       } else {
         return $app->throw_error (404);
       }
@@ -548,6 +560,10 @@ sub group_object ($$$$) {
             $doc->manakai_is_html (1);
             $doc->inner_html ($object->{data}->{body});
             $body = $doc->document_element->text_content;
+            for ($doc->links->to_list) {
+              my $name = $_->get_attribute ('data-wiki-name');
+              $body .= "\n" . $name if defined $name;
+            }
           } elsif ($object->{data}->{body_type} == 2) { # plain text
             $body = $object->{data}->{body};
           }
@@ -957,6 +973,22 @@ sub group_object ($$$$) {
 
   return $app->throw_error (404);
 } # group_object
+
+sub wiki ($$$$$) {
+  my ($class, $app, $opts, $index, $wiki_name) = @_;
+  return $app->throw_error (404) unless defined $index;
+
+  # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
+  return temma $app, 'group.index.index.html.tm', {
+    account => $opts->{account},
+    group => $opts->{group},
+    group_member => $opts->{group_member},
+    index => $index,
+    wiki_name => $wiki_name,
+  };
+
+  #return $app->throw_error (404);
+} # wiki
 
 1;
 

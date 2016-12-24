@@ -1,7 +1,6 @@
-<html t:params="$group $index? $object? $account $group_member $app"
+<html t:params="$group $index? $object? $wiki_name? $account $group_member $app"
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-index="defined $index ? $index->{index_id} : undef"
-    data-body-css-href=/css/body.css
     pl:data-theme="defined $index ? $index->{options}->{theme}
                                   : $group->{options}->{theme}">
 <head>
@@ -15,6 +14,9 @@
         - <t:text value="$index->{title}">
       </t:if>
     <t:elsif x="defined $index">
+      <t:if x="defined $wiki_name">
+        <t:text value=$wiki_name> -
+      </t:if>
       <t:text value="$index->{title}">
     </t:if>
   </t:include>
@@ -25,7 +27,9 @@
 
   <section class=page>
     <header>
-      <t:if x="defined $index">
+      <t:if x="defined $wiki_name">
+        <h1><t:text value=$wiki_name></h1>
+      <t:elsif x="defined $index">
         <h1><a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
           <t:text value="$index->{title}">
         </a></h1>
@@ -48,11 +52,16 @@
       </t:if>
     </header>
 
-    <list-container listitemtype=object grouped key=objects>
+    <list-container listitemtype=object key=objects>
       <t:if x="defined $object">
         <t:attr name="'src-object_id'" value="$object->{object_id}">
       <t:elsif x="defined $index">
         <t:attr name="'src-index_id'" value="$index->{index_id}">
+      </t:if>
+      <t:if x="defined $wiki_name">
+        <t:attr name="'src-wiki_name'" value=$wiki_name>
+      <t:else>
+        <t:attr name="'grouped'" value=1>
       </t:if>
       <template class=object>
         <header>
@@ -73,7 +82,7 @@
         </footer>
       </template>
 
-      <t:if x="defined $index and not defined $object">
+      <t:if x="defined $index and not defined $object and not defined $wiki_name">
         <article class="object new">
           <p class=operations>
             <button type=button class=edit-button>新しい記事を書く</button>
@@ -82,11 +91,26 @@
 
       <list-main></list-main>
 
+      <t:if x="defined $wiki_name">
+        <list-is-empty hidden>
+          <article class="object new">
+            <p class=operations>
+              <button type=button class=edit-button>記事を書く</button>
+          </article>
+        </list-is-empty>
+      </t:if>
+
       <action-status hidden stage-load=読み込み中... />
-      <p class=operations>
-        <button type=button class=next-page-button hidden>もっと昔</button>
+      <t:if x="not defined $wiki_name">
+        <p class=operations>
+          <button type=button class=next-page-button hidden>もっと昔</button>
+      </t:if>
     </list-container>
 
+
+    <t:if x="defined $wiki_name">
+      <p><a pl:href="'/g/'.$group->{group_id}.'/search?q=' . Web::URL::Encoding::percent_encode_c $wiki_name">「<t:text value=$wiki_name>」を含む記事を検索する</a></p>
+    </t:if>
   </section>
 
   <t:include path=_object_editor.html.tm />

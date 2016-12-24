@@ -11,3 +11,5 @@
 </t:if>
 <link rel=stylesheet href=/css/common.css>
 <script src=/js/pages.js async />
+<link rel=preload as=style href=/css/body.css class=body-css>
+<link rel=preload as=script href=/js/body.js class=body-js>

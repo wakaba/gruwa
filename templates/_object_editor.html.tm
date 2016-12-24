@@ -22,6 +22,9 @@
         <button type=button data-action=outdent title=浅く>←</button
         ><button type=button data-action=indent title=深く>→</button>
 
+        <button type=button data-action=link data-command=url title="Web サイトにリンク">://</button
+        ><button type=button data-action=link data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
+
         <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button>
       </menu>
       <iframe class=control data-name=body />
@@ -62,10 +65,19 @@
   </form>
 </template>
 
-    <template id=link-edit-template class=body-edit-template>
-      <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener"><code data-field=host data-title-field=href></code></a>
-      <button type=button class=edit-button data-prompt=リンク先のURLを指定してください。 title=リンク先を編集>編集</button>
-    </template>
+  <template id=link-edit-template class=body-edit-template>
+    <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener">
+      <code data-field=host data-title-field=href hidden></code>
+      <span data-field=wikiName hidden />
+    </a>
+    <button type=button class=edit-button
+        data-url-prompt=リンク先のURLを指定してください。
+        data-wiki-name-prompt=リンク先のWiki名を指定してください。
+        title=リンク先を編集>編集</button>
+  </template>
+  <template id=edit-texts class=body-edit-template
+      data-link-url-prompt=リンク先のURLを指定してください。
+      data-link-wiki-name-prompt=リンク先のWiki名を指定してください。 />
 
   <list-container type=datalist src=i/list.json key=index_list>
     <template data-label=title data-value=index_id>

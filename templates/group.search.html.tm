@@ -31,6 +31,9 @@
           <button type=submit>検索</button>
         </form>
 
+        <p hidden class=search-wiki_name-link><strong>Wiki</strong>:
+        <a href data-href-template=wiki/{name} data-field=name></a></p>
+
         <p><strong>記事</strong>:</p>
 
         <template>
