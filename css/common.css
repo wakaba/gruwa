@@ -162,6 +162,10 @@ section.page nav a.active {
   background: transparent;
 }
 
+section.page > footer {
+  margin: 2em;
+}
+
 list-container[key=index_list] {
   display: block;
 }
@@ -367,6 +371,10 @@ article.object > footer index-list a.this-index {
 list-container[key=objects] action-status {
   margin-left: 1em;
   margin-right: 1em;
+}
+
+list-container[key=objects] > list-is-empty > p {
+  margin: 2em;
 }
 
 list-container[key=members] table,

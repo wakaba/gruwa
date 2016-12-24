@@ -17,6 +17,7 @@
     <t:if x="$group_member->{default_index_id}">
       <a pl:href="'/g/'.$group->{group_id}.'/i/'.$group_member->{default_index_id}.'/'">日記</a>
     </t:if>
+    <a href=/help rel=help>ヘルプ</a>
   </header-area>
 </header>
 

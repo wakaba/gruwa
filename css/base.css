@@ -144,6 +144,10 @@ section > * {
   margin-right: 1em;
 }
 
+section section:not(:first-child) {
+  margin-top: 2em;
+}
+
 article {
   display: block;
 }

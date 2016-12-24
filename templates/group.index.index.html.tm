@@ -108,6 +108,8 @@
 
       <t:if x="defined $wiki_name">
         <list-is-empty hidden>
+          <p>記事はまだありません。</p>
+
           <article class="object new">
             <p class=operations>
               <button type=button class=edit-button>記事を書く</button>
@@ -124,7 +126,9 @@
 
 
     <t:if x="defined $wiki_name">
-      <p><a pl:href="'/g/'.$group->{group_id}.'/search?q=' . Web::URL::Encoding::percent_encode_c $wiki_name">「<t:text value=$wiki_name>」を含む記事を検索する</a></p>
+      <footer>
+        <p><a pl:href="'/g/'.$group->{group_id}.'/search?q=' . Web::URL::Encoding::percent_encode_c $wiki_name">「<t:text value=$wiki_name>」を含む記事を検索する</a></p>
+      </footer>
     </t:if>
   </section>
 

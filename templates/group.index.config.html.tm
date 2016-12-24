@@ -19,12 +19,17 @@
     </header>
 
     <section>
-      <h1>日記の設定</>
+      <h1>設定</>
       <form action=javascript: pl:data-action="'i/'.$index->{index_id}.'/edit.json'" id=edit-form>
         <table class=config>
           <tbody>
             <tr>
-              <th><label for=edit-title>日記の題名</>
+              <th>種別
+              <td>
+                <t:if x="$index->{index_type} == 1">    日記
+                <t:elsif x="$index->{index_type} == 2"> Wiki </t:if>
+            <tr>
+              <th><label for=edit-title>題名</>
               <td><input name=title pl:value="$index->{title}" id=edit-title required>
             <tr>
               <th><label for=edit-theme>配色</>
@@ -41,11 +46,10 @@
           <action-status hidden stage-fetch=保存中... ok=保存しました。 />
       </form>
 
-<!-- XXX index_type -->
       <t:if x="$group_member->{default_index_id} and
                $group_member->{default_index_id} == $index->{index_id}">
         <p>この日記は<account-name><t:text value="$account->{name}"></account-name>の<a href=/help#default-blog-index rel=help>既定の日記</a>です。</p>
-      <t:else>
+      <t:elsif x="$index->{index_type} == 1">
         <form method=post action=javascript: pl:data-action="'i/'.$index->{index_id}.'/my.json'">
           <p>この日記を<account-name><t:text value="$account->{name}"></account-name>の<a href=/help#default-blog-index rel=help>既定の日記</a>に設定できます。</p>
           <p class=operations>
@@ -55,11 +59,10 @@
         </form>
       </t:if>
 
-<!-- XXX index_type -->
       <t:if x="$group->{options}->{default_wiki_index_id} and
                $group->{options}->{default_wiki_index_id} == $index->{index_id}">
         <p>この Wiki は<a href=/help#default-wiki-index rel=help>グループの Wiki</a> です。</p>
-      <t:else>
+      <t:elsif x="$index->{index_type} == 2">
         <form method=post action=javascript: data-action=edit.json>
           <p>この Wiki を<a href=/help#default-wiki-index rel=help>グループの Wiki</a>に設定できます。</p>
           <p class=operations>
