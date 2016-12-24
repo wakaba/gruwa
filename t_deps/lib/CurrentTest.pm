@@ -354,7 +354,7 @@ sub are_errors ($$$) {
           #
         } else {
           test {
-            is $expected_value, $actual_value, "Response header $name:";
+            is $actual_value, $expected_value, "Response header $name:";
           } $self->c;
           $has_error = 1;
         }

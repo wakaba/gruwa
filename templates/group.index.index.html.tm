@@ -69,11 +69,11 @@
                defined $index and $index->{index_type} == 2 # wiki">
         <t:attr name="'src-limit'" value=100>
         <template>
-          <a data-href-template={GROUP}/i/{INDEX_ID}/wiki/{title}#{object_id}>
+          <p><a data-href-template={GROUP}/i/{INDEX_ID}/wiki/{title}#{object_id}>
             <strong data-data-field=title data-empty=■ />
             <time data-field=created class=ambtime />
             (<time data-field=updated class=ambtime /> 編集)
-          </a>
+          </a></p>
         </template>
       <t:else>
         <t:attr name="'listitemtype'" value="'object'">

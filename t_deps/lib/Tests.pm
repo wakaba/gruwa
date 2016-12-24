@@ -11,6 +11,7 @@ use Promise;
 use Promised::Flow;
 use Exporter::Lite;
 use Web::URL;
+use Web::URL::Encoding;
 
 use TestServers;
 use CurrentTest;
@@ -19,7 +20,8 @@ our @EXPORT = grep { not /^\$/ }
     @Test::More::EXPORT,
     @Test::X1::EXPORT,
     @Promised::Flow::EXPORT,
-    @JSON::PS::EXPORT;
+    @JSON::PS::EXPORT,
+    @Web::URL::Encoding::EXPORT;
 
 {
   use Socket;

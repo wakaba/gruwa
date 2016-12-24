@@ -983,7 +983,15 @@ sub wiki ($$$$$) {
   my ($class, $app, $opts, $index, $wiki_name) = @_;
   return $app->throw_error (404) unless defined $index;
 
+  # /g/{group_id}/wiki/{wiki_name}
   # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
+
+  if (@{$app->path_segments} == 6 and
+      defined $opts->{group}->{options}->{default_wiki_index_id} and
+      $index->{index_id} == $opts->{group}->{options}->{default_wiki_index_id}) {
+    return $app->throw_redirect ('/g/'.(Web::URL::Encoding::percent_encode_c $opts->{group}->{group_id}).'/wiki/'.(Web::URL::Encoding::percent_encode_c $wiki_name));
+  }
+
   return temma $app, 'group.index.index.html.tm', {
     account => $opts->{account},
     group => $opts->{group},

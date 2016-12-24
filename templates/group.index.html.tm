@@ -28,9 +28,14 @@
               <time data-field=updated />
               <strong data-field=title></strong>
             </a>
-            <list-container data-src-template="o/get.json?index_id={index_id}&limit=5" key=objects sortkey=timestamp,created>
+            <list-container
+                data-src-template="o/get.json?index_id={index_id}&limit=5"
+                data-parent-template=i/{index_id}/
+                data-context-template={index_type}
+                key=objects sortkey=timestamp,created>
               <template>
-                <a href data-href-template="o/{object_id}/">
+                <a href data-href-template="o/{object_id}/"
+                    data-2-href-template={PARENT}wiki/{title}#{updated}>
                   <strong data-field=title data-empty=■ />
                   (<time data-field=updated class=ambtime />)
                 </a>

@@ -111,7 +111,7 @@ function createBodyHTML (value, opts) {
   return doc.documentElement.outerHTML;
 } // createBodyHTML
 
-function fillFields (rootEl, el, object) {
+function fillFields (contextEl, rootEl, el, object) {
   if (object.account_id &&
       object.account_id === document.documentElement.getAttribute ('data-account')) {
     rootEl.classList.add ('account-is-self');
@@ -154,10 +154,13 @@ function fillFields (rootEl, el, object) {
     field.checked = object[field.getAttribute ('data-checked-field')];
   });
   $$ (el, '[data-href-template]').forEach (function (field) {
-    field.href = field.getAttribute ('data-href-template').replace (/\{GROUP\}/g, function () {
+    var template = field.getAttribute ('data-' + contextEl.getAttribute ('data-context') + '-href-template') || field.getAttribute ('data-href-template');
+    field.href = template.replace (/\{GROUP\}/g, function () {
       return document.documentElement.getAttribute ('data-group-url');
     }).replace (/\{INDEX_ID\}/, function () {
       return document.documentElement.getAttribute ('data-index');
+    }).replace (/\{PARENT\}/, function () {
+      return contextEl.getAttribute ('data-parent');
     }).replace (/\{([^{}]+)\}/g, function (_, k) {
       return encodeURIComponent (object[k]);
     });
@@ -165,6 +168,16 @@ function fillFields (rootEl, el, object) {
   $$ (el, '[data-src-template]').forEach (function (field) {
     field.setAttribute ('src', field.getAttribute ('data-src-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return object[k];
+    }));
+  });
+  $$ (el, '[data-parent-template]').forEach (function (field) {
+    field.setAttribute ('data-parent', field.getAttribute ('data-parent-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+      return encodeURIComponent (object[k]);
+    }));
+  });
+  $$ (el, '[data-context-template]').forEach (function (field) {
+    field.setAttribute ('data-context', field.getAttribute ('data-context-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+      return encodeURIComponent (object[k]);
     }));
   });
   $$ (el, '[data-data-field]').forEach (function (field) {
@@ -269,9 +282,9 @@ function upgradeList (el) {
               editObject (item, object, {open: true});
             }; // startEdit
             item.updateView = function () {
-              Array.prototype.forEach.call (item.children, function (el) {
-                if (el.localName !== 'edit-container') {
-                  fillFields (item, el, object);
+              Array.prototype.forEach.call (item.children, function (f) {
+                if (f.localName !== 'edit-container') {
+                  fillFields (el, item, f, object);
                 }
               });
             }; // updateView
@@ -291,10 +304,10 @@ function upgradeList (el) {
               });
             });
 
-            item.updateView ();
-          } else {
-            fillFields (item, item, object);
-          }
+        item.updateView ();
+      } else {
+        fillFields (el, item, item, object);
+      }
     }; // fill
 
     if (el.hasAttribute ('grouped')) {
@@ -438,7 +451,7 @@ function upgradeList (el) {
     $$ (el, '.search-wiki_name-link').forEach (function (e) {
       var q = el.getAttribute ('param-q');
       e.hidden = ! /^\s*\S+\s*$/.test (q);
-      fillFields (e, e, {name: q.replace (/^\s+/, '').replace (/\s+$/, '')});
+      fillFields (el, e, e, {name: q.replace (/^\s+/, '').replace (/\s+$/, '')});
     });
     as.stageEnd ("prep");
     load ().then (function (json) {
@@ -645,7 +658,7 @@ function editObject (article, object, opts) {
           var itemEl = document.createElement ('list-item');
           itemEl.appendChild (template.content.cloneNode (true));
           item.label = valueToLabel[item.value];
-          fillFields (itemEl, itemEl, item);
+          fillFields (main, itemEl, itemEl, item);
           main.appendChild (itemEl);
         });
       });
@@ -672,7 +685,7 @@ function editObject (article, object, opts) {
               var itemEl = document.createElement ('list-item');
               itemEl.appendChild (eTemplate.content.cloneNode (true));
               itemEl.setAttribute ('value', option.value);
-              fillFields (itemEl, itemEl, option);
+              fillFields (listEl, itemEl, itemEl, option);
               listEl.appendChild (itemEl);
             }; // addItem
             $$ (datalist, 'option').forEach (function (option) {

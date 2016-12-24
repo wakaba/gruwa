@@ -23,6 +23,7 @@ Test {
         {account => '', status => 403},
         {account => undef, status => 302},
         {path => ['i', 32533333, 'wiki', $wiki_name], status => 404},
+        {path => ['i', $current->o ('i1')->{index_id}, 'wiki', $wiki_name], status => 302, response_headers => {Location => $current->client->origin->to_ascii.'/g/'.$current->o ('g1')->{group_id}.'/wiki/' . percent_encode_c $wiki_name}},
       ],
     );
   })->then (sub {
@@ -32,6 +33,17 @@ Test {
     test {
       ok 1;
     } $current->c;
+  });
+} n => 2, name => '/g/{group_id}/wiki/{wiki_name}';
+
+Test {
+  my $current = shift;
+  my $wiki_name = qq{\x{22155}} . rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
     return $current->get_html (['i', $current->o ('i1')->{index_id},
                                 'wiki', $wiki_name], {},
                                account => 'a1', group => 'g1');
@@ -41,7 +53,7 @@ Test {
       ok 1;
     } $current->c;
   });
-} n => 3, name => '/g/{group_id}/wiki/{wiki_name}';
+} n => 1, name => '/g/{group_id}/i/{index_id}/wiki/{wiki_name} non default';
 
 RUN;
 
