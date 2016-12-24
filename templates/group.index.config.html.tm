@@ -44,10 +44,10 @@
 <!-- XXX index_type -->
       <t:if x="$group_member->{default_index_id} and
                $group_member->{default_index_id} == $index->{index_id}">
-        <p>この日記は<account-name><t:text value="$account->{name}"></account-name>の<a href=/help#default-diary-index rel=help>既定の日記</a>です。</p>
+        <p>この日記は<account-name><t:text value="$account->{name}"></account-name>の<a href=/help#default-blog-index rel=help>既定の日記</a>です。</p>
       <t:else>
         <form method=post action=javascript: pl:data-action="'i/'.$index->{index_id}.'/my.json'">
-          <p>この日記を<account-name><t:text value="$account->{name}"></account-name>の<a href=/help#default-diary-index rel=help>既定の日記</a>に設定できます。</p>
+          <p>この日記を<account-name><t:text value="$account->{name}"></account-name>の<a href=/help#default-blog-index rel=help>既定の日記</a>に設定できます。</p>
           <p class=operations>
             <input type=hidden name=is_default value=1>
             <button type=submit class=save-button>設定する</>

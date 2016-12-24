@@ -49,6 +49,25 @@ Test {
   });
 } n => 8, name => 'create';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->post_json (['i', 'create.json'], {
+      index_type => 2,
+      title => rand,
+    }, account => 'a1', group => $current->o ('g1'));
+  })->then (sub {
+    return $current->index ($_[0]->{json}, account => 'a1');
+  })->then (sub {
+    my $index = $_[0];
+    test {
+      is $index->{index_type}, 2;
+    } $current->c;
+  });
+} n => 1, name => 'create with index_id';
+
 RUN;
 
 =head1 LICENSE

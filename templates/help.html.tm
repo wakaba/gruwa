@@ -36,20 +36,21 @@
       指定したキーワードを含ま<em>ない</em>記事が表示されます。
     </section>
 
-    <section id=diary-index>
+    <section id=blog-index>
       <h1>日記</h1>
 
-      <p>グループ内の日記のうちの1つを自分の<dfn id=default-diary-index>既定の日記</dfn>に選ぶことができます。
+      <p>グループ内の日記のうちの1つを自分の<dfn id=default-blog-index>既定の日記</dfn>に選ぶことができます。
       既定の日記は、<a href=/dashboard>ダッシュボード</a>やグループ内ページのヘッダーからリンクされるので、すぐに移動できます。
     </section>
 
-    <section id=keyword-index>
-      <h1>キーワード集</h1>
+    <section id=wiki-index>
+      <h1>Wiki</h1>
 
-      <p>グループ内のキーワード集のうちの1つを「<dfn id=default-keyword-index>既定のキーワード集</dfn>」に選ぶことができます。
-      既定のキーワード集は、グループ内のキーワードページやキーワードリンクで使われます。
-      既定のキーワード集は、グループのすべての参加者で共通です。
+      <p>グループ内に Wiki を作ることができます。
 
-      <p>既定のキーワード集の選択は、キーワード集の設定ページから行えます。
+      <p>グループ内の Wiki のうちの1つを「<dfn id=default-wiki-index>グループの Wiki</dfn>」に選ぶことができます。
+      グループの Wiki は、グループ内の Wiki 名リンクのリンク先となります。
+
+      <p>グループの Wiki の選択は、 Wiki の設定ページから行えます。
     </section>
   </section>

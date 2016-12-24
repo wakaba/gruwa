@@ -53,11 +53,31 @@
           <table class=config>
             <tbody>
               <tr>
-                <th><label for=create-title>日記の題名</>
-                <td><input name=title id=create-title required>
+                <th><label for=create-blog-title>日記の題名</>
+                <td><input name=title id=create-blog-title required>
           </table>
 
           <p class=operations>
+            <input type=index_type value=1>
+            <button type=submit class=save-button>作成する</>
+            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+        </form>
+      </details>
+
+      <details>
+        <summary>Wiki の作成</summary>
+
+        <form method=post action=javascript: data-action=i/create.json
+            data-href-template=/g/{group_id}/i/{index_id}/config>
+          <table class=config>
+            <tbody>
+              <tr>
+                <th><label for=create-wiki-title>Wiki の題名</>
+                <td><input name=title id=create-wiki-title required>
+          </table>
+
+          <p class=operations>
+            <input type=index_type value=2>
             <button type=submit class=save-button>作成する</>
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>

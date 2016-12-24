@@ -11,7 +11,7 @@ Test {
   })->then (sub {
     return $current->create_group (g2 => {members => ['a1']});
   })->then (sub {
-    return $current->create_index (i1 => {group => 'g1', account => 'a1', title => "\x{900}"});
+    return $current->create_index (i1 => {group => 'g1', account => 'a1', title => "\x{900}", index_type => 5});
   })->then (sub {
     return $current->are_errors (
       ['GET', ['i', $current->o ('i1')->{index_id}, ''], {}, group => 'g1', account => 'a1'],
@@ -42,13 +42,14 @@ Test {
       is $result->{json}->{group_id}, $current->o ('g1')->{group_id};
       is $result->{json}->{index_id}, $current->o ('i1')->{index_id};
       is $result->{json}->{title}, "\x{900}";
+      is $result->{json}->{index_type}, 5;
       ok $result->{json}->{created};
       is $result->{json}->{updated}, $result->{json}->{created};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
       like $result->{res}->body_bytes, qr{"index_id"\s*:\s*"};
     } $current->c;
   });
-} n => 9, name => 'info';
+} n => 10, name => 'info';
 
 RUN;
 

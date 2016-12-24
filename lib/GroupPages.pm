@@ -388,6 +388,8 @@ sub group_index ($$$$) {
           updated => $index->{updated},
           theme => $index->{options}->{theme},
           index_type => $index->{index_type},
+            ## 1 blog
+            ## 2 wiki
         };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/i/{index_id}/edit.json
