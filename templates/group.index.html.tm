@@ -30,7 +30,7 @@
             </a>
             <list-container data-src-template="o/get.json?index_id={index_id}&limit=5" key=objects sortkey=timestamp,created>
               <template>
-                <a href data-href-template="o/{object_id}">
+                <a href data-href-template="o/{object_id}/">
                   <strong data-field=title data-empty=■ />
                   (<time data-field=updated class=ambtime />)
                 </a>
@@ -42,6 +42,18 @@
         <action-status hidden stage-load=読み込み中... />
       </list-container>
     </section>
+
+    <list-container listitemtype=object key=objects
+        pl:src-index_id="$group->{options}->{default_keyword_index_id}"
+        src-ptag=GroupTop>
+      <template class=object>
+        <main><iframe data-data-field=body /></main>
+      </template>
+
+      <list-main></list-main>
+
+      <action-status hidden stage-load=読み込み中... />
+    </list-container>
   </section>
 
 <!--

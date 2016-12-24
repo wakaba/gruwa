@@ -27,7 +27,11 @@
 
   <section class=page>
     <header>
-      <t:if x="defined $index">
+      <t:if x="defined $tag">
+        <h1><a pl:href="'/g/'.$group->{group_id}.'/t/'.(Web::URL::Encoding::percent_encode_c $tag).'/'">
+          <tag-name><t:text value="$tag"></>
+        </a></h1>
+      <t:elsif x="defined $index">
         <h1><a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
           <t:text value="$index->{title}">
         </a></h1>
@@ -43,103 +47,59 @@
             設定
           </a>
         </nav>
-      <t:elsif x="defined $tag">
-        <h1><a pl:href="'/g/'.$group->{group_id}.'/t/'.(Web::URL::Encoding::percent_encode_c $tag).'/'">
-          <t:text value="$tag">
-        </a></h1>
       <t:else>
         <h1><a pl:href="'/g/'.$group->{group_id}.'/'">
-          <tag-name><t:text value="$group->{title}"></>
+          <t:text value="$group->{title}">
         </a></h1>
       </t:if>
     </header>
 
-<template id=edit-form-template>
-  <form method=post action=javascript:>
-    <header>
-      <p><input name=title placeholder=題名>
-      <p><list-control name=tag key=tags list=tag-list allowadd>
-        <input type=hidden name=edit_tag value=1>
-        <template>
-          <list-item-label data-field=value />
+    <t:if x="defined $tag and defined $group->{options}->{default_keyword_index_id}">
+      <list-container listitemtype=object key=objects
+          pl:src-index_id="$group->{options}->{default_keyword_index_id}"
+          pl:src-ptag=$tag>
+        <template class=object>
+          <main><iframe data-data-field=body /></main>
+          <footer>
+            <p>
+              <action-status hidden
+                  stage-edit=保存中...
+                  ok=保存しました />
+              <index-list data-data-field=index_ids />
+              <time data-field=created class=ambtime />
+              (<time data-field=updated class=ambtime /> 編集)
+              <button type=button class=edit-button>編集</button>
+          </footer>
         </template>
-        <list-control-main placeholder=タグ />
-        <list-control-footer>
-          <button type=button class=edit-button title=編集>...</button>
-          <list-dropdown hidden />
-        </list-control-footer>
-      </list-control>
-    </header>
-    <main>
-      <menu>
-        <button type=button data-action=execCommand data-command=bold title=太字><b>B</b></button
-        ><button type=button data-action=execCommand data-command=italic title=斜体><i>I</i></button
-        ><button type=button data-action=execCommand data-command=underline title=下線><u>U</u></button
-        ><button type=button data-action=execCommand data-command=strikethrough title=取り消し線><s>S</s></button>
-        <button type=button data-action=execCommand data-command=superscript title=上付き><var>x</var><sup>2</sup></button
-        ><button type=button data-action=execCommand data-command=subscript title=下付き><var>x</var><sub>2</sub></button>
 
-        <button type=button data-action=setBlock data-value=div title=段落>¶</button
-        ><button type=button data-action=setBlock data-value=ol title=順序>1.</button
-        ><button type=button data-action=setBlock data-value=ul title=箇条書き>◦</button>
+        <list-is-empty>
+          <article class="object new">
+            <p class=operations>
+              <button type=button class=edit-button><tag-name><t:text value=$tag></>の記事を書く</button>
+          </article>
+        </list-is-empty>
 
-        <!--<button type=button data-action=insertSection title=章節>§</button>-->
+        <list-main></list-main>
 
-        <button type=button data-action=outdent title=浅く>←</button
-        ><button type=button data-action=indent title=深く>→</button>
+        <action-status hidden stage-load=読み込み中... />
+      </list-container>
+    </t:if>
 
-        <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button>
-      </menu>
-      <iframe class=control data-name=body />
-      <input type=hidden name=body_type value=1>
-    </main>
-    <footer>
-      <p class=operations>
-        <button type=submit class=save-button>保存する</button>
-        <button type=button class=cancel-button>取り消し</button>
-        <action-status hidden
-            stage-create=作成中...
-            stage-edit=保存中...
-            stage-update=更新中... />
-    </footer>
-    <details>
-      <summary>詳細設定</>
-      <table class=config>
-        <tbody>
-          <tr>
-            <th>日付
-            <td><input type=date name=timestamp required>
-          <tr>
-            <th>日記
-            <td>
-              <list-control name=index_id key=index_ids list=index-list>
-                <input type=hidden name=edit_index_id value=1>
-                <template>
-                  <list-item-label data-field=label />
-                </template>
-                <list-control-main />
-                <list-control-footer>
-                  <button type=button class=edit-button title=編集>...</button>
-                  <list-dropdown hidden />
-                </list-control-footer>
-              </list-control>
-      </table>
-    </details>
-  </form>
-</template>
-
-    <template id=link-edit-template class=body-edit-template>
-      <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener"><code data-field=host data-title-field=href></code></a>
-      <button type=button class=edit-button data-prompt=リンク先のURLを指定してください。 title=リンク先を編集>編集</button>
-    </template>
+    <section>
+      <t:if x="defined $tag and defined $group->{options}->{default_keyword_index_id}">
+        <h1><tag-name><t:text value="$tag"></>の記事</h1>
+      </t:if>
 
     <list-container listitemtype=object grouped key=objects>
       <t:if x="defined $object">
-        <t:attr name="'object'" value="$object->{object_id}">
+        <t:attr name="'src-object_id'" value="$object->{object_id}">
       <t:elsif x="defined $tag">
-        <t:attr name="'tag'" value=$tag>
+        <t:attr name="'src-tag'" value=$tag>
       <t:elsif x="defined $index">
-        <t:attr name="'index'" value="$index->{index_id}">
+        <t:attr name="'src-index_id'" value="$index->{index_id}">
+      </t:if>
+      <t:if x="defined $tag and defined $group->{options}->{default_keyword_index_id}">
+        <t:attr name="'src-excluded_ptag'" value="$tag">
       </t:if>
       <template class=object>
         <header>
@@ -149,22 +109,22 @@
           </div>
         </header>
         <main><iframe data-data-field=body /></main>
-    <footer>
-      <p>
-        <action-status hidden
-            stage-edit=保存中...
-            ok=保存しました />
-        <index-list data-data-field=index_ids />
-        <time data-field=created class=ambtime />
-        (<time data-field=updated class=ambtime /> 編集)
-        <button type=button class=edit-button>編集</button>
-    </footer>
-  </template>
+        <footer>
+          <p>
+            <action-status hidden
+                stage-edit=保存中...
+                ok=保存しました />
+            <index-list data-data-field=index_ids />
+            <time data-field=created class=ambtime />
+            (<time data-field=updated class=ambtime /> 編集)
+            <button type=button class=edit-button>編集</button>
+        </footer>
+      </template>
 
-      <t:if x="defined $index and not defined $object">
+      <t:if x="defined $index and not defined $object and not defined $tag">
         <article class="object new">
           <p class=operations>
-            <button type=button class=edit-button>新しい記事</button>
+            <button type=button class=edit-button>新しい記事を書く</button>
         </article>
       </t:if>
 
@@ -175,37 +135,14 @@
         <button type=button class=next-page-button hidden>もっと昔</button>
     </list-container>
 
+      <t:if x="defined $tag and defined $group->{options}->{default_keyword_index_id}">
+        <p><a pl:href="'/g/'.$group->{group_id}.'/search?q=' . Web::URL::Encoding::percent_encode_c $tag">「<t:text value=$tag>」を含む記事を検索する</a>
+      </t:if>
+    </section>
+
   </section>
 
-  <list-container type=datalist src=i/list.json key=index_list>
-    <template data-label=title data-value=index_id>
-    </template>
-    <datalist id=index-list />
-  </list-container>
-
-  <list-container type=datalist src=i/list.json key=index_list><!-- XXX -->
-    <template data-label=title data-value=title>
-    </template>
-    <datalist id=tag-list />
-  </list-container>
-
-  <template id=list-control-editor>
-    <template>
-      <label>
-        <input type=checkbox data-checked-field=selected>
-        <span data-field=label></span>
-      </label>
-    </template>
-    <form hidden class=add-form>
-      <span>
-        <input required>
-      </span>
-      <span>
-        <button type=submit class=add-button title=追加>+</>
-      </span>
-    </form>
-    <list-editor-main />
-  </template>
+  <t:include path=_object_editor.html.tm />
 
 <!--
 

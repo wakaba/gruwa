@@ -323,11 +323,11 @@ sub are_errors ($$$) {
     );
     $opt{path} = [
       (
-        exists $opt{group} # not |defined|
+        defined $opt{group} # not |exists|
           ? ('g', $self->_get_o ($opt{group})->{group_id})
           : ()
       ),
-      @{$opt{path}},
+      @{$opt{path} or []},
     ];
     $opt{cookies} = {%{$opt{cookies} or {}}};
     $opt{headers}->{Origin} = $opt{origin} if exists $opt{origin};

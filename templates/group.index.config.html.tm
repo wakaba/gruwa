@@ -43,13 +43,27 @@
 
       <t:if x="$group_member->{default_index_id} and
                $group_member->{default_index_id} == $index->{index_id}">
-        <p>この日記は<account-name><t:text value="$account->{name}"></account-name>の既定の日記です。</p>
+        <p>この日記は<account-name><t:text value="$account->{name}"></account-name>の<a href=/help#default-diary-index rel=help>既定の日記</a>です。</p>
       <t:else>
         <form method=post action=javascript: pl:data-action="'i/'.$index->{index_id}.'/my.json'">
-          <p>この日記を<account-name><t:text value="$account->{name}"></account-name>の既定の日記に設定できます。</p>
+          <p>この日記を<account-name><t:text value="$account->{name}"></account-name>の<a href=/help#default-diary-index rel=help>既定の日記</a>に設定できます。</p>
           <p class=operations>
             <input type=hidden name=is_default value=1>
             <button type=submit class=save-button>設定する</>
+            <action-status hidden stage-fetch=保存中... ok=保存しました。 />
+        </form>
+      </t:if>
+
+      <t:if x="$group->{options}->{default_keyword_index_id} and
+               $group->{options}->{default_keyword_index_id} == $index->{index_id}">
+        <p>このキーワード集はグループの<a href=/help#default-keyword-index rel=help>既定のキーワード集</a>です。</p>
+      <t:else>
+        <form method=post action=javascript: data-action=edit.json>
+          <p>このキーワード集をグループの<a href=/help#default-keyword-index rel=help>既定のキーワード集</a>に設定できます。</p>
+          <p class=operations>
+            <input type=hidden name=default_keyword_index_id pl:value="$index->{index_id}">
+            <button type=submit class=save-button>設定する</>
+            <action-status hidden stage-fetch=保存中... ok=保存しました。 />
         </form>
       </t:if>
     </section>

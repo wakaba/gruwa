@@ -10,6 +10,24 @@ use Web::DOM::Document;
 
 use Results;
 
+sub get_index ($$$) {
+  my $db = shift;
+  return $db->select ('index', {
+    group_id => Dongry::Type->serialize ('text', $_[0]),
+    index_id => Dongry::Type->serialize ('text', $_[1]),
+
+    # XXX
+    owner_status => 1,
+    user_status => 1,
+  }, fields => ['index_id', 'index_type', 'title', 'created', 'updated', 'options'])->then (sub {
+    my $index = $_[0]->first;
+    return undef unless defined $index;
+    $index->{title} = Dongry::Type->parse ('text', $index->{title});
+    $index->{options} = Dongry::Type->parse ('json', $index->{options});
+    return $index;
+  });
+} # get_index
+
 sub main ($$$$$) {
   my ($class, $app, $path, $db, $account_data) = @_;
 
@@ -126,17 +144,25 @@ sub group ($$$$) {
       created => $g->{created},
       updated => $g->{updated},
       theme => $g->{options}->{theme},
+      default_keyword_index_id => $g->{options}->{default_keyword_index_id},
     };
   }
 
   if (@$path == 5 and $path->[2] eq 't' and $path->[4] eq '') {
     # /g/{group_id}/t/{tag}/
-    return temma $app, 'group.index.index.html.tm', {
-      account => $opts->{account},
-      group => $opts->{group},
-      group_member => $opts->{group_member},
-      tag => $path->[3],
-    };
+    return Promise->resolve->then (sub {
+      my $index_id = $opts->{group}->{options}->{default_keyword_index_id};
+      return get_index ($db, $path->[1], $index_id) if defined $index_id;
+      return undef;
+    })->then (sub {
+      return temma $app, 'group.index.index.html.tm', {
+        account => $opts->{account},
+        group => $opts->{group},
+        group_member => $opts->{group_member},
+        index => $_[0],
+        tag => $path->[3],
+      };
+    });
   }
 
   if (@$path == 3 and $path->[2] eq 'search') {
@@ -174,14 +200,33 @@ sub group ($$$$) {
     my $title = $app->text_param ('title') // '';
     $update{title} = Dongry::Type->serialize ('text', $title)
         if length $title;
+    my $options_modified;
+    my $options = $opts->{group}->{options};
     my $theme = $app->text_param ('theme') // '';
     if (length $theme) {
-      my $options = $opts->{group}->{options};
       $options->{theme} = $theme;
-      $update{options} = Dongry::Type->serialize ('json', $options);
-      # XXX need transaction for editing options :-<
+      $options_modified = 1;
     }
     return Promise->resolve->then (sub {
+      my $keyword_id = $app->bare_param ('default_keyword_index_id');
+      return unless defined $keyword_id;
+      return $db->select ('index', {
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
+        index_id => $keyword_id,
+        user_status => 1, # open
+        owner_status => 1, # open
+      }, fields => ['index_id'])->then (sub {
+        return $app->throw_error (400, reason_phrase => 'Bad |default_keyword_index_id|')
+            unless $_[0]->first;
+        $options->{default_keyword_index_id} = $keyword_id;
+        $options_modified = 1;
+      });
+    })->then (sub {
+      if ($options_modified) {
+        $update{options} = Dongry::Type->serialize ('json', $options);
+        # XXX need transaction for editing options :-<
+      }
+
       return unless 1 < keys %update;
       return $db->update ('group', \%update, where => {
         group_id => Dongry::Type->serialize ('text', $path->[1]),
@@ -305,11 +350,12 @@ sub group_index ($$$$) {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
       owner_status => 1,
       user_status => 1,
-    }, fields => ['index_id', 'title', 'updated'])->then (sub {
+    }, fields => ['index_id', 'index_type', 'title', 'updated'])->then (sub {
       return json $app, {index_list => {map {
         $_->{index_id} => {
           group_id => $path->[1],
           index_id => ''.$_->{index_id},
+          index_type => $_->{index_type},
           title => Dongry::Type->parse ('text', $_->{title}),
           updated => $_->{updated},
         };
@@ -319,20 +365,10 @@ sub group_index ($$$$) {
 
   if (@$path >= 4 and $path->[3] =~ /\A[0-9]+\z/) {
     # /g/{group_id}/i/{index_id}
-    return $db->select ('index', {
-      group_id => Dongry::Type->serialize ('text', $path->[1]),
-      index_id => Dongry::Type->serialize ('text', $path->[3]),
-
-      # XXX
-      owner_status => 1,
-      user_status => 1,
-    }, fields => ['index_id', 'title', 'created', 'updated', 'options'])->then (sub {
-      my $index = $_[0]->first;
+    return get_index ($db, $path->[1], $path->[3])->then (sub {
+      my $index = $_[0];
       return $app->throw_error (404, reason_phrase => 'Index not found')
           unless defined $index;
-      $index->{title} = Dongry::Type->parse ('text', $index->{title});
-      $index->{options} = Dongry::Type->parse ('json', $index->{options});
-
       if (@$path == 5 and $path->[4] eq '') {
         # /g/{group_id}/i/{index_id}/
         return temma $app, 'group.index.index.html.tm', {
@@ -350,6 +386,7 @@ sub group_index ($$$$) {
           created => $index->{created},
           updated => $index->{updated},
           theme => $index->{options}->{theme},
+          index_type => $index->{index_type},
         };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/i/{index_id}/edit.json
@@ -365,6 +402,10 @@ sub group_index ($$$$) {
           $options->{theme} = $theme;
           $update{options} = Dongry::Type->serialize ('json', $options);
           # XXX need transaction for editing options :-<
+        }
+        my $index_type = $app->bare_param ('index_type');
+        if (defined $index_type) {
+          $update{index_type} = 0+$index_type;
         }
         return Promise->resolve->then (sub {
           return unless 1 < keys %update;
@@ -426,6 +467,7 @@ sub group_index ($$$$) {
         updated => $time,
         owner_status => 1, # open
         user_status => 1, # open
+        index_type => 0+($app->bare_param ('index_type') || 0),
         options => '{"theme":"green"}',
       }])->then (sub {
         return json $app, {
@@ -545,8 +587,9 @@ sub group_object ($$$$) {
         my $time = time;
         return Promise->resolve->then (sub {
           return unless $app->bare_param ('edit_index_id');
-          ## Note that, even when |$changes->{fields}->{timestamp}| is
-          ## true, `index_object`'s `updated` is not updated...
+          ## Note that, even when |$changes->{fields}->{timestamp}| or
+          ## |$changes->{fields}->{title}| is true, `index_object`'s
+          ## `updated` is not updated...
 
           my $index_ids = $app->bare_param_list ('index_id');
 
@@ -584,6 +627,7 @@ sub group_object ($$$$) {
             });
           })->then (sub {
             if (@$index_ids) {
+              my $tag_key = sha1_hex +Dongry::Type->serialize ('text', $object->{data}->{title});
               return Promise->all ([
                 $db->insert ('index_object', [map {
                   +{
@@ -592,9 +636,11 @@ sub group_object ($$$$) {
                     object_id => Dongry::Type->serialize ('text', $path->[3]),
                     created => $time,
                     timestamp => $object->{data}->{timestamp},
+                    tag_key => $tag_key,
                   };
                 } @$index_ids], duplicate => {
                   timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
+                  tag_key => $db->bare_sql_fragment ('values(`tag_key`)'),
                 }),
                 $db->delete ('index_object', {
                   group_id => Dongry::Type->serialize ('text', $path->[1]),
@@ -718,6 +764,11 @@ sub group_object ($$$$) {
       if (defined $index_id) {
         $table = 'index_object';
         $cond{index_id} = $index_id;
+        my $ptag = $app->text_param ('ptag');
+        if (defined $ptag) {
+          my $ptag_key = sha1_hex +Dongry::Type->serialize ('text', $ptag);
+          $cond{tag_key} = $ptag_key;
+        }
       } else {
         my $tag = $app->text_param ('tag');
         if (defined $tag) {
@@ -725,6 +776,11 @@ sub group_object ($$$$) {
           $table = 'tag_object';
           $cond{tag_key} = $tag_key;
         }
+      }
+      my $xptag = $app->text_param ('excluded_ptag');
+      if (defined $xptag) {
+        my $xptag_key = sha1_hex +Dongry::Type->serialize ('text', $xptag);
+        $cond{tag_key} = {'!=', $xptag_key};
       }
       if (defined $table) {
         my $ref = $app->bare_param ('ref');

@@ -145,7 +145,7 @@ function fillFields (rootEl, el, object) {
     field.href = field.getAttribute ('data-href-template').replace (/\{GROUP\}/g, function () {
       return document.documentElement.getAttribute ('data-group-url');
     }).replace (/\{([^{}]+)\}/g, function (_, k) {
-      return object[k];
+      return encodeURIComponent (object[k]);
     });
   });
   $$ (el, '[data-src-template]').forEach (function (field) {
@@ -258,6 +258,41 @@ function upgradeList (el) {
       datalist: 'option',
     }[type] || 'list-item';
 
+    var fill = function (item, object) {
+          if (itemType === 'object') {
+            item.setAttribute ('data-object', object.object_id);
+            item.startEdit = function () {
+              editObject (item, object, {open: true});
+            }; // startEdit
+            item.updateView = function () {
+              Array.prototype.forEach.call (item.children, function (el) {
+                if (el.localName !== 'edit-container') {
+                  fillFields (item, el, object);
+                }
+              });
+            }; // updateView
+            item.addEventListener ('editablecontrolchange', function (ev) {
+              var as = getActionStatus (item);
+              as.start ({stages: ["formdata", "create", "edit", "update"]});
+              var open = false; // XXX true if edit-container is modified but not saved
+              editObject (item, object, {open: open}).then (function () {
+                $$ (item, 'edit-container iframe.control[data-name=body]').forEach (function (e) {
+                  e.sendChange (ev.data);
+                });
+                return item.save ({actionStatus: as});
+              }).then (function () {
+                as.end ({ok: true});
+              }, function (error) {
+                as.end ({error: error});
+              });
+            });
+
+            item.updateView ();
+          } else {
+            fillFields (item, item, object);
+          }
+    }; // fill
+
     if (el.hasAttribute ('grouped')) {
       var grouped = {};
       listObjects.forEach (function (object) {
@@ -292,38 +327,7 @@ function upgradeList (el) {
           var item = document.createElement (elementType);
           item.className = template.className;
           item.appendChild (template.content.cloneNode (true));
-          if (itemType === 'object') {
-            item.setAttribute ('data-object', object.object_id);
-            item.startEdit = function () {
-              editObject (item, object, {open: true});
-            }; // startEdit
-            item.updateView = function () {
-              Array.prototype.forEach.call (item.children, function (el) {
-                if (el.localName !== 'edit-container') {
-                  fillFields (item, el, object);
-                }
-              });
-            }; // updateView
-            item.addEventListener ('editablecontrolchange', function (ev) {
-              var as = getActionStatus (item);
-              as.start ({stages: ["formdata", "create", "edit", "update"]});
-              var open = false; // XXX true if edit-container is modified but not saved
-              editObject (item, object, {open: open}).then (function () {
-                $$ (item, 'edit-container iframe.control[data-name=body]').forEach (function (e) {
-                  e.sendChange (ev.data);
-                });
-                return item.save ({actionStatus: as});
-              }).then (function () {
-                as.end ({ok: true});
-              }, function (error) {
-                as.end ({error: error});
-              });
-            });
-
-            item.updateView ();
-          } else {
-            fillFields (item, item, object);
-          }
+          fill (item, object);
           section.appendChild (item);
         });
         if (opts.prepend) {
@@ -359,7 +363,7 @@ function upgradeList (el) {
           var item = document.createElement (elementType);
           item.className = template.className;
           item.appendChild (template.content.cloneNode (true));
-          fillFields (item, item, object);
+          fill (item, object);
           main.appendChild (item);
           appended = true;
         });
@@ -383,23 +387,17 @@ function upgradeList (el) {
 
   var nextRef = null;
   var load = function () {
-    var url;
-    var object = el.getAttribute ('object');
-    if (object) {
-      url = 'o/get.json?with_data=1&object_id=' + object;
-    } else {
-      var tag = el.getAttribute ('tag');
-      if (tag) {
-        url = 'o/get.json?with_data=1&tag=' + encodeURIComponent (tag);
-      } else {
-        var index = el.getAttribute ('index');
-        if (index) {
-          url = 'o/get.json?with_data=1&index_id=' + index;
-        } else {
-          url = el.getAttribute ('src');
-        }
+    var url = el.getAttribute ('src') || 'o/get.json?with_data=1';
+    [
+      'src-object_id', 'src-index_id', 'src-tag',
+      'src-ptag', 'src-excluded_ptag',
+    ].forEach (function (attr) {
+      var value = el.getAttribute (attr);
+      if (value) {
+        url += /\?/.test (url) ? '&' : '?';
+        url += attr.replace (/^src-/, '') + '=' + encodeURIComponent (value);
       }
-    }
+    });
     if (url) {
       var q = el.getAttribute ('param-q');
       if (q) {
@@ -432,8 +430,13 @@ function upgradeList (el) {
 
   el.load = function () {
     as.start ({stages: ["prep", "load", "show"]});
-    as.stageEnd ("prep");
     nextRef = null;
+    $$ (el, '.search-tag-link').forEach (function (e) {
+      var q = el.getAttribute ('param-q');
+      e.hidden = ! /^\s*\S+\s*$/.test (q);
+      fillFields (e, e, {name: q.replace (/^\s+/, '').replace (/\s+$/, '')});
+    });
+    as.stageEnd ("prep");
     load ().then (function (json) {
       el.clearObjects ();
       return show (json);
@@ -469,7 +472,9 @@ function upgradeList (el) {
     $$ (article, '.edit-button').forEach (function (button) {
       button.onclick = function () {
         var data = {index_ids: {}, timestamp: (new Date).valueOf () / 1000};
-        data.index_ids[el.getAttribute ('index')] = 1;
+        data.index_ids[el.getAttribute ('src-index_id')] = 1;
+        var ptag = el.getAttribute ('src-ptag');
+        if (ptag) data.title = ptag;
         editObject (article, {data: data}, {open: true});
       };
     });
@@ -751,7 +756,7 @@ function editObject (article, object, opts) {
         as.end ({ok: true});
       } else { // new object
         return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
-          document.querySelector ('list-container[index]')
+          document.querySelector ('list-container[src-index_id]')
               .showObjects (json.objects, {prepend: true});
           //as.stageEnd ("update");
           as.end ({ok: true});

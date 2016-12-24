@@ -12,7 +12,7 @@ Test {
     return $current->create_group (g1 => {title => "a\x{500}", owner => 'ao', members => ['am']});
   })->then (sub {
     return $current->are_errors (
-      ['GET', ['i', 'list.json'], {}, account => 'am', group => $current->o ('g1')],
+      ['GET', ['i', 'list.json'], {}, account => 'am', group => 'g1'],
       [
         {path => ['g', '532533', 'i', 'list.json'], group => undef, status => 404},
         {account => '', status => 403, name => 'not member'},
@@ -20,14 +20,14 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->get_json (['i', 'list.json'], {}, account => 'am', group => $current->o ('g1'));
+    return $current->get_json (['i', 'list.json'], {}, account => 'am', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
       is 0+keys %{$result->{json}->{index_list}}, 0;
     } $current->c;
   })->then (sub {
-    return $current->get_json (['i', 'list.json'], {}, account => 'ao', group => $current->o ('g1'));
+    return $current->get_json (['i', 'list.json'], {}, account => 'ao', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -55,6 +55,7 @@ Test {
       my $index = $result->{json}->{index_list}->{$current->o ('i1')->{index_id}};
       is $index->{group_id}, $current->o ('g1')->{group_id};
       is $index->{index_id}, $current->o ('i1')->{index_id};
+      is $index->{index_type}, 0;
       is $index->{title}, "ab\x{4000}";
       ok $index->{updated};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
@@ -73,7 +74,7 @@ Test {
       ok $index->{updated};
     } $current->c;
   });
-} n => 12, name => '/g/{}/i/list.json has an item';
+} n => 13, name => '/g/{}/i/list.json has an item';
 
 RUN;
 
