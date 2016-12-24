@@ -392,17 +392,21 @@ Test {
 
 Test {
   my $current = shift;
-  my $tag = "\x{6001} " . rand;
+  my $wiki_name = "\x{6001} " . rand;
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_group (g1 => {members => ['a1']});
   })->then (sub {
+    return $current->create_index (i1 => {account => 'a1', group => 'g1', index_type => 2});
+  })->then (sub {
     return promised_map {
       return $current->create_object ($_[0] => {group => 'g1', account => 'a1',
-                                                tag => $tag});
+                                                index => 'i1',
+                                                title => $wiki_name});
     } [1..8];
   })->then (sub {
     return $current->get_json (['o', 'get.json'], {
-      tag => $tag,
+      index_id => $current->o ('i1')->{index_id},
+      wiki_name => $wiki_name,
       limit => 3,
     }, account => 'a1', group => 'g1');
   })->then (sub {
@@ -415,7 +419,8 @@ Test {
       ok $result->{json}->{next_ref};
     } $current->c;
     return $current->get_json (['o', 'get.json'], {
-      tag => $tag,
+      index_id => $current->o ('i1')->{index_id},
+      wiki_name => $wiki_name,
       ref => $result->{json}->{next_ref},
       limit => 3,
     }, account => 'a1', group => 'g1');
@@ -429,7 +434,8 @@ Test {
       ok $result->{json}->{next_ref};
     } $current->c;
     return $current->get_json (['o', 'get.json'], {
-      tag => $tag,
+      index_id => $current->o ('i1')->{index_id},
+      wiki_name => $wiki_name,
       ref => $result->{json}->{next_ref},
       limit => 3,
     }, account => 'a1', group => 'g1');
@@ -442,7 +448,8 @@ Test {
       ok $result->{json}->{next_ref};
     } $current->c;
     return $current->get_json (['o', 'get.json'], {
-      tag => $tag,
+      index_id => $current->o ('i1')->{index_id},
+      wiki_name => $wiki_name,
       ref => $result->{json}->{next_ref},
       limit => 3,
     }, account => 'a1', group => 'g1');
@@ -452,17 +459,30 @@ Test {
       is 0+keys %{$result->{json}->{objects}}, 0;
       is $result->{json}->{next_ref}, undef;
     } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      index_id => undef,
+      wiki_name => $wiki_name,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{objects}}, 0;
+      is $result->{json}->{next_ref}, undef;
+    } $current->c;
   });
-} n => 16, name => 'tag not empty';
+} n => 18, name => 'wiki name not empty';
 
 Test {
   my $current = shift;
-  my $tag = "\x{6001} " . rand;
+  my $wiki_name = "\x{6001} " . rand;
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_group (g1 => {members => ['a1']});
   })->then (sub {
+    return $current->create_index (i1 => {account => 'a1', group => 'g1', index_type => 2});
+  })->then (sub {
     return $current->get_json (['o', 'get.json'], {
-      tag => $tag,
+      index_id => $current->o ('i1')->{index_id},
+      wiki_name => $wiki_name,
       limit => 3,
     }, account => 'a1', group => 'g1');
   })->then (sub {
@@ -472,7 +492,7 @@ Test {
       is $result->{json}->{next_ref}, undef;
     } $current->c;
   });
-} n => 2, name => 'tag empty';
+} n => 2, name => 'wiki name empty';
 
 RUN;
 

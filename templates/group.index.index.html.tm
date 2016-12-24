@@ -57,7 +57,7 @@
     <t:if x="defined $tag and defined $group->{options}->{default_keyword_index_id}">
       <list-container listitemtype=object key=objects
           pl:src-index_id="$group->{options}->{default_keyword_index_id}"
-          pl:src-ptag=$tag>
+          pl:src-wiki_name=$tag>
         <template class=object>
           <main><iframe data-data-field=body /></main>
           <footer>

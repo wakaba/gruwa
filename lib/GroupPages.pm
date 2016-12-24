@@ -630,7 +630,7 @@ sub group_object ($$$$) {
             });
           })->then (sub {
             if (@$index_ids) {
-              my $tag_key = sha1_hex +Dongry::Type->serialize ('text', $object->{data}->{title});
+              my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $object->{data}->{title});
               return Promise->all ([
                 $db->insert ('index_object', [map {
                   +{
@@ -639,11 +639,11 @@ sub group_object ($$$$) {
                     object_id => Dongry::Type->serialize ('text', $path->[3]),
                     created => $time,
                     timestamp => $object->{data}->{timestamp},
-                    tag_key => $tag_key,
+                    wiki_name_key => $wiki_name_key,
                   };
                 } @$index_ids], duplicate => {
                   timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
-                  tag_key => $db->bare_sql_fragment ('values(`tag_key`)'),
+                  wiki_name_key => $db->bare_sql_fragment ('values(`wiki_name_key`)'),
                 }),
                 $db->delete ('index_object', {
                   group_id => Dongry::Type->serialize ('text', $path->[1]),
@@ -659,6 +659,7 @@ sub group_object ($$$$) {
             }
           });
         })->then (sub {
+#XXX
           return unless $changes->{fields}->{tags} or
                         $changes->{fields}->{timestamp};
           my @tag_key = map {
@@ -767,12 +768,13 @@ sub group_object ($$$$) {
       if (defined $index_id) {
         $table = 'index_object';
         $cond{index_id} = $index_id;
-        my $ptag = $app->text_param ('ptag');
-        if (defined $ptag) {
-          my $ptag_key = sha1_hex +Dongry::Type->serialize ('text', $ptag);
-          $cond{tag_key} = $ptag_key;
+        my $wiki_name = $app->text_param ('wiki_name');
+        if (defined $wiki_name) {
+          my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $wiki_name);
+          $cond{wiki_name_key} = $wiki_name_key;
         }
       } else {
+#XXX
         my $tag = $app->text_param ('tag');
         if (defined $tag) {
           my $tag_key = sha1_hex +Dongry::Type->serialize ('text', $tag);

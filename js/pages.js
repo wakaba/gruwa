@@ -390,7 +390,7 @@ function upgradeList (el) {
     var url = el.getAttribute ('src') || 'o/get.json?with_data=1';
     [
       'src-object_id', 'src-index_id', 'src-tag',
-      'src-ptag', 'src-excluded_ptag',
+      'src-wiki_name', 'src-excluded_ptag',
     ].forEach (function (attr) {
       var value = el.getAttribute (attr);
       if (value) {
@@ -473,8 +473,8 @@ function upgradeList (el) {
       button.onclick = function () {
         var data = {index_ids: {}, timestamp: (new Date).valueOf () / 1000};
         data.index_ids[el.getAttribute ('src-index_id')] = 1;
-        var ptag = el.getAttribute ('src-ptag');
-        if (ptag) data.title = ptag;
+        var wikiName = el.getAttribute ('src-wiki_name');
+        if (wikiName) data.title = wikiName;
         editObject (article, {data: data}, {open: true});
       };
     });
