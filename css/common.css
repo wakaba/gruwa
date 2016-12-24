@@ -256,19 +256,6 @@ article.object.editing > edit-container header > p + p {
   width: 40%;
 }
 
-article.object.editing > edit-container list-control[name=tag] list-control-main list-item::before,
-article.object.editing > edit-container list-control[name=tag] list-editor-main list-item span::before {
-  content: "#";
-  padding-right: .2em;
-}
-
-article.object.editing > edit-container list-control[name=tag] .add-form::before {
-  display: table-cell;
-  content: "#";
-  padding-left: .4em;
-  padding-right: 0em;
-}
-
 article.object > header {
   border-left: .3em solid;
   border-color: var(--accented-border-color);
@@ -288,12 +275,6 @@ article.object > header h1 {
 article.object > header h1 a {
   display: inline-block;
   min-width: 5em;
-}
-
-article.object > header tag-list {
-  display: block;
-  font-size: 90%;
-  line-height: 1.0;
 }
 
 edit-container {

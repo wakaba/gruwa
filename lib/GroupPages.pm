@@ -148,24 +148,6 @@ sub group ($$$$) {
     };
   }
 
-  # XXX
-  if (@$path == 5 and $path->[2] eq 't' and $path->[4] eq '') {
-    # /g/{group_id}/t/{tag}/
-    return Promise->resolve->then (sub {
-      my $index_id = $opts->{group}->{options}->{default_keyword_index_id};
-      return get_index ($db, $path->[1], $index_id) if defined $index_id;
-      return undef;
-    })->then (sub {
-      return temma $app, 'group.index.index.html.tm', {
-        account => $opts->{account},
-        group => $opts->{group},
-        group_member => $opts->{group_member},
-        index => $_[0],
-        tag => $path->[3],
-      };
-    });
-  }
-
   if (@$path == 3 and $path->[2] eq 'search') {
     # /g/{}/search
     return temma $app, 'group.search.html.tm', {
@@ -556,22 +538,10 @@ sub group_object ($$$$) {
         }
         # XXX owner_status only can be changed by group owners
 
-        if ($app->bare_param ('edit_tag')) {
-          my @old_tags = sort { $a cmp $b } keys %{$object->{data}->{tags} or {}};
-          $object->{data}->{tags} = {map { $_ => 1 } @{$app->text_param_list ('tag')}};
-          my @new_tags = sort { $a cmp $b } keys %{$object->{data}->{tags} or {}};
-          unless (@old_tags == @new_tags and
-                  (join $;, sort { $a cmp $b } @old_tags) eq
-                  (join $;, sort { $a cmp $b } @new_tags)) { ## This check is not strict but good enough.
-            $changes->{fields}->{tags} = 1;
-          }
-        }
-
         my $search_data;
         if ($changes->{fields}->{title} or
             $changes->{fields}->{body} or
-            $changes->{fields}->{body_type} or
-            $changes->{fields}->{tags}) {
+            $changes->{fields}->{body_type}) {
           my $body;
           if ($object->{data}->{body_type} == 1) { # html
             my $doc = new Web::DOM::Document;
@@ -582,9 +552,8 @@ sub group_object ($$$$) {
             $body = $object->{data}->{body};
           }
           $search_data = join "\n",
-              keys %{$object->{data}->{tags}},
-              $object->{data}->{title},
-              $body;
+              $body,
+              $object->{data}->{title};
         }
 
         my $time = time;
@@ -658,37 +627,6 @@ sub group_object ($$$$) {
               });
             }
           });
-        })->then (sub {
-#XXX
-          return unless $changes->{fields}->{tags} or
-                        $changes->{fields}->{timestamp};
-          my @tag_key = map {
-            sha1_hex +Dongry::Type->serialize ('text', $_);
-          } keys %{$object->{data}->{tags} or {}};
-          if (@tag_key) {
-            return $db->insert ('tag_object', [map {
-              {
-                group_id => Dongry::Type->serialize ('text', $path->[1]),
-                tag_key => $_,
-                object_id => Dongry::Type->serialize ('text', $path->[3]),
-                created => $time,
-                timestamp => $object->{data}->{timestamp},
-              };
-            } @tag_key], duplicate => {
-              timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
-            })->then (sub {
-              return $db->delete ('tag_object', {
-                group_id => Dongry::Type->serialize ('text', $path->[1]),
-                object_id => Dongry::Type->serialize ('text', $path->[3]),
-                tag_key => {-not_in => \@tag_key},
-              });
-            });
-          } else { # no @tag_key
-            return $db->delete ('tag_object', {
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
-              object_id => Dongry::Type->serialize ('text', $path->[3]),
-            });
-          }
         })->then (sub {
           delete $changes->{fields} unless keys %{$changes->{fields} or {}};
           return unless keys %$changes;
@@ -773,19 +711,6 @@ sub group_object ($$$$) {
           my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $wiki_name);
           $cond{wiki_name_key} = $wiki_name_key;
         }
-      } else {
-#XXX
-        my $tag = $app->text_param ('tag');
-        if (defined $tag) {
-          my $tag_key = sha1_hex +Dongry::Type->serialize ('text', $tag);
-          $table = 'tag_object';
-          $cond{tag_key} = $tag_key;
-        }
-      }
-      my $xptag = $app->text_param ('excluded_ptag');
-      if (defined $xptag) {
-        my $xptag_key = sha1_hex +Dongry::Type->serialize ('text', $xptag);
-        $cond{tag_key} = {'!=', $xptag_key};
       }
       if (defined $table) {
         my $ref = $app->bare_param ('ref');

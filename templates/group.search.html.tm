@@ -31,8 +31,6 @@
           <button type=submit>検索</button>
         </form>
 
-        <p hidden class=search-tag-link><strong>キーワード</strong>: <a href data-href-template=t/{name}/><tag-name data-field=name /></a></p>
-
         <p><strong>記事</strong>:</p>
 
         <template>

@@ -412,25 +412,6 @@ iframe.control[data-disabled] {
   pointer-events: none;
 }
 
-tag-list {
-  display: block;
-}
-
-tag-list a {
-  margin-right: .5em;
-  text-decoration: none;
-}
-
-tag-list a:hover,
-tag-list a:active {
-  text-decoration: underline;
-}
-
-tag-name::before {
-  content: "#";
-  padding-right: .2em;
-}
-
 list-container {
   display: block;
 }

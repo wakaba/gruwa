@@ -3,17 +3,6 @@
   <form method=post action=javascript:>
     <header>
       <p><input name=title placeholder=題名>
-      <p><list-control name=tag key=tags list=tag-list allowadd>
-        <input type=hidden name=edit_tag value=1>
-        <template>
-          <list-item-label data-field=value />
-        </template>
-        <list-control-main placeholder=タグ />
-        <list-control-footer>
-          <button type=button class=edit-button title=編集>...</button>
-          <list-dropdown hidden />
-        </list-control-footer>
-      </list-control>
     </header>
     <main>
       <menu>
@@ -82,12 +71,6 @@
     <template data-label=title data-value=index_id>
     </template>
     <datalist id=index-list />
-  </list-container>
-
-  <list-container type=datalist src=i/list.json key=index_list><!-- XXX -->
-    <template data-label=title data-value=title>
-    </template>
-    <datalist id=tag-list />
   </list-container>
 
   <template id=list-control-editor>

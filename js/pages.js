@@ -163,16 +163,6 @@ function fillFields (rootEl, el, object) {
       } catch (e) {
         console.log (e); // XXX
       }
-    } else if (field.localName === 'tag-list') {
-      field.textContent = '';
-      Object.keys (value || {}).forEach (function (tag) {
-        var a = document.createElement ('a');
-        a.href = document.documentElement.getAttribute ('data-group-url') + '/t/' + encodeURIComponent (tag) + '/';
-        var tagName = document.createElement ('tag-name');
-        tagName.textContent = tag;
-        a.appendChild (tagName);
-        field.appendChild (a);
-      });
     } else if (field.localName === 'index-list') {
       field.textContent = '';
       Object.keys (value || {}).forEach (function (indexId) {
@@ -389,8 +379,7 @@ function upgradeList (el) {
   var load = function () {
     var url = el.getAttribute ('src') || 'o/get.json?with_data=1';
     [
-      'src-object_id', 'src-index_id', 'src-tag',
-      'src-wiki_name', 'src-excluded_ptag',
+      'src-object_id', 'src-index_id', 'src-wiki_name',
     ].forEach (function (attr) {
       var value = el.getAttribute (attr);
       if (value) {
@@ -431,11 +420,6 @@ function upgradeList (el) {
   el.load = function () {
     as.start ({stages: ["prep", "load", "show"]});
     nextRef = null;
-    $$ (el, '.search-tag-link').forEach (function (e) {
-      var q = el.getAttribute ('param-q');
-      e.hidden = ! /^\s*\S+\s*$/.test (q);
-      fillFields (e, e, {name: q.replace (/^\s+/, '').replace (/\s+$/, '')});
-    });
     as.stageEnd ("prep");
     load ().then (function (json) {
       el.clearObjects ();

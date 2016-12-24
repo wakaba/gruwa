@@ -45,7 +45,7 @@
 
     <list-container listitemtype=object key=objects
         pl:src-index_id="$group->{options}->{default_keyword_index_id}"
-        src-ptag=GroupTop>
+        src-wiki_name=GroupTop>
       <template class=object>
         <main><iframe data-data-field=body /></main>
       </template>
