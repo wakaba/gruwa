@@ -461,6 +461,15 @@ list-container > action-status progress:not([hidden]) {
   margin-bottom: .5em;
 }
 
+hr {
+  visibility: hidden;
+}
+
+dfn {
+  font-style: normal;
+  font-weight: bolder;
+}
+
 /*
 
 Copyright 2016 Wakaba <wakaba@suikawiki.org>.

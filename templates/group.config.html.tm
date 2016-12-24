@@ -58,7 +58,7 @@
           </table>
 
           <p class=operations>
-            <input type=index_type value=1>
+            <input type=hidden name=index_type value=1>
             <button type=submit class=save-button>作成する</>
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
@@ -77,7 +77,7 @@
           </table>
 
           <p class=operations>
-            <input type=index_type value=2>
+            <input type=hidden name=index_type value=2>
             <button type=submit class=save-button>作成する</>
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>

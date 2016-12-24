@@ -56,6 +56,9 @@
     </list-container>
   </section>
 
+  <!-- Necessary for checkboxes -->
+  <t:include path=_object_editor.html.tm />
+
 <!--
 
 Copyright 2016 Wakaba <wakaba@suikawiki.org>.

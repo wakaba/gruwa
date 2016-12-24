@@ -57,7 +57,9 @@
       <summary>グループの作成</summary>
 
       <form method=post action=javascript: data-action=g/create.json
-          data-href-template=/g/{group_id}/config>
+          data-additional-stages=createGroupWiki
+          data-href-template=/g/{group_id}/
+          data-prompt="グループを作成します。この操作は取り消せません。よろしいですか。">
         <table class=config>
           <tbody>
             <tr>
@@ -67,7 +69,30 @@
 
         <p class=operations>
           <button type=submit class=save-button>作成する</>
-          <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+          <action-status hidden
+              stage-fetch=グループを作成中...
+              stage-creategroupwiki_1=グループのWikiを作成中...
+              stage-creategroupwiki_2=グループの設定中...
+              stage-next=グループに移動します... />
       </form>
     </details>
   </section>
+
+<!--
+
+Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Affero General Public License for more details.
+
+You does not have received a copy of the GNU Affero General Public
+License along with this program, see <http://www.gnu.org/licenses/>.
+
+-->

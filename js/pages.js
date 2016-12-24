@@ -950,24 +950,60 @@ ActionStatus.prototype.end = function (opts) {
   });
 }; // end
 
+
+var stageActions = [];
+
+stageActions.createGroupWiki = function (args) {
+  args.as.stageStart ('creategroupwiki_1');
+  var fd = new FormData;
+  fd.append ('title', 'Wiki');
+  fd.append ('index_type', 2);
+  return gFetch ("g/" + args.result.group_id + '/i/create.json', {post: true, formData: fd}).then (function (json) {
+    args.as.stageEnd ('creategroupwiki_1');
+    args.as.stageStart ('creategroupwiki_2');
+    var fd2 = new FormData;
+    fd2.append ('default_wiki_index_id', json.index_id);
+    return gFetch ("g/" + args.result.group_id + '/edit.json', {post: true, formData: fd2});
+  }).then (function () {
+    args.as.stageEnd ('creategroupwiki_2');
+  });
+}; // createGroupWiki
+stageActions.createGroupWiki.stages = ["creategroupwiki_1", "creategroupwiki_2"];
+
 function upgradeForm (form) {
   form.onsubmit = function () {
+    if (!confirm (form.getAttribute ('data-prompt'))) return;
+
+    var addStages = form.getAttribute ('data-additional-stages').split (/\s+/);
+    var stages = ["prep", "fetch"];
+    addStages.forEach (function (stage) {
+      stages = stages.concat (stageActions[stage].stages);
+    });
+    stages = stages.concat (["next"]);
     var nextURL = form.getAttribute ('data-href-template');
     var as = getActionStatus (form);
-    as.start ({stages: ["prep", "fetch", "next"]});
+    as.start ({stages: stages});
     var fd = new FormData (form); // this must be done before withFormDisabled
     withFormDisabled (nextURL ? form : null, function () {
       as.stageEnd ("prep");
       as.stageStart ("fetch");
       return gFetch (form.getAttribute ('data-action'), {post: true, formData: fd}).then (function (json) {
         as.stageEnd ("fetch");
-        if (nextURL) {
-          as.stageStart ("next");
-          location.href = nextURL.replace (/\{(\w+)\}/g, function (_, key) {
-            return json[key];
+        var p = Promise.resolve ();
+        addStages.forEach (function (stage) {
+          p = p.then (function () {
+            return stageActions[stage] ({result: json, fd: fd, as: as});
           });
-          return new Promise (function () { }); // keep form disabled
-        }
+        });
+        return p.then (function () {
+          if (nextURL) {
+            as.stageStart ("next");
+            location.href = nextURL.replace (/\{(\w+)\}/g, function (_, key) {
+              return json[key];
+            });
+            return new Promise (function () { }); // keep form disabled
+          }
+        });
       });
     }).then (function () {
       as.end ({ok: true});
