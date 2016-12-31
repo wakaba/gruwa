@@ -120,6 +120,14 @@ return sub {
             return $accounts->close;
           } AccountPages->main ($app, $path, $db, $accounts);
         }
+        if ($path->[0] eq 'u') {
+          # /u
+          my $accounts = Web::Transport::ConnectionClient->new_from_url
+              ($AccountsURL);
+          return promised_cleanup {
+            return $accounts->close;
+          } AccountPages->user ($app, $path, $accounts);
+        }
 
         if (@$path == 1) {
           return CommonPages->main ($app, $path, $db);

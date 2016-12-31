@@ -186,6 +186,42 @@ sub dashboard ($$$) {
   return temma $app, 'dashboard.html.tm', {account => $account_data};
 } # dashboard
 
+sub user ($$$$) {
+  my ($class, $app, $path, $accounts) = @_;
+
+  if (@$path == 2 and $path->[1] eq 'info.json') {
+    # /u/info.json
+    return $accounts->request (
+      method => 'POST',
+      path => ['profiles'],
+      params => {
+        account_id => $app->bare_param_list ('account_id')->to_a,
+        user_status => 1, # ACCOUNT_STATUS_ENABLED,
+        admin_status => 1, # ACCOUNT_STATUS_ENABLED,
+        #terms_version
+        #with_linked => ['id', 'name'],
+        with_data => ['name'],
+      },
+      bearer => $app->config->{accounts}->{key},
+    )->then (sub {
+      my $res = $_[0];
+      die $res unless $res->status == 200;
+      my $json = json_bytes2perl $res->body_bytes;
+      return json $app, {accounts => {map {
+        my $account = $json->{accounts}->{$_};
+        my $name = $account->{name} // '';
+        $name = $account->{account_id} unless length $name;
+        $_ => {
+          account_id => ''.$account->{account_id},
+          name => $name,
+        };
+      } keys %{$json->{accounts}}}};
+    });
+  } # /u/info.json
+
+  return $app->throw_error (404);
+} # user
+
 1;
 
 =head1 LICENSE

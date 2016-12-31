@@ -21,6 +21,7 @@ sub error ($$) {
 } # error
 
 my $Accounts = {};
+my $AccountsById = {};
 
 return sub {
   my $http = Wanage::HTTP->new_from_psgi_env ($_[0]);
@@ -61,12 +62,20 @@ return sub {
       } else {
         return json $app, {};
       }
+    } elsif ($path eq '/profiles') {
+      my $ids = $app->bare_param_list ('account_id');
+      return json $app, {accounts => {map {
+        ($_->{account_id} => $_);
+      } grep { defined $_ } map {
+        $AccountsById->{$_};
+      } @$ids}};
     } elsif ($path eq '/create-for-test') {
       my $sk = int rand 100000000000;
       my $data = json_bytes2perl $app->bare_param ('data');
       $data->{account_id} = int rand 100000000000;
       $data->{has_account} = 1;
       $Accounts->{$sk} = $data;
+      $AccountsById->{$data->{account_id}} = $data;
       return json $app, {cookies => {sk => $sk},
                          account_id => $data->{account_id}};
     }
