@@ -70,3 +70,7 @@
 	path = modules/web-markup
 	url = https://github.com/manakai/perl-web-markup
 	track = master
+[submodule "modules/web-css"]
+	path = modules/web-css
+	url = https://github.com/manakai/perl-web-css
+	track = master

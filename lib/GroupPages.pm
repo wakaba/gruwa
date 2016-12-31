@@ -564,6 +564,14 @@ sub group_object ($$$$) {
               my $name = $_->get_attribute ('data-wiki-name');
               $body .= "\n" . $name if defined $name;
             }
+            my $x = 0;
+            my $y = 0;
+            for ($doc->query_selector_all ('input[type=checkbox /* XXX i */]:not([hidden])')->to_list) {
+              $x++;
+              $y++ if $_->has_attribute ('checked');
+            }
+            $object->{data}->{all_checkbox_count} = $x;
+            $object->{data}->{checked_checkbox_count} = $y;
           } elsif ($object->{data}->{body_type} == 2) { # plain text
             $body = $object->{data}->{body};
           }

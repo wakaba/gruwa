@@ -279,6 +279,45 @@ Test {
   });
 } n => 26, name => 'index_id changes';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body_type => 1, # html
+      body => q{
+      },
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is $object->{data}->{all_checkbox_count}, 0;
+      is $object->{data}->{checked_checkbox_count}, 0;
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body_type => 1, # html
+      body => q{
+        <input type="checkbox">
+        <p><input type="checkbox" checked="">
+        <template><input type="checkbox" checked=""></template>
+      },
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is $object->{data}->{all_checkbox_count}, 2;
+      is $object->{data}->{checked_checkbox_count}, 1;
+    } $current->c;
+  });
+} n => 4, name => 'checkbox count';
+
 RUN;
 
 =head1 LICENSE
