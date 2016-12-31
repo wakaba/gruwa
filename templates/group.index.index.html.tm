@@ -60,9 +60,12 @@
       </t:if>
       <t:if x="defined $wiki_name">
         <t:attr name="'src-wiki_name'" value=$wiki_name>
+        <t:attr name="'sortkey'" value="'created'">
       <t:else>
         <t:if x="defined $index and $index->{index_type} == 1 # blog">
           <t:attr name="'grouped'" value=1>
+        <t:else>
+          <t:attr name="'sortkey'" value="'created'">
         </t:if>
       </t:if>
       <t:if x="not defined $wiki_name and

@@ -359,6 +359,8 @@ function upgradeList (el) {
       var sortKey = el.getAttribute ('sortkey');
       if (sortKey === 'updated') {
         sorter = function (a, b) { return b.updated - a.updated };
+      } else if (sortKey === 'created') {
+        sorter = function (a, b) { return b.created - a.created };
       } else if (sortKey === 'timestamp,created') {
         sorter = function (a, b) { return b.timestamp - a.timestamp || b.created - a.created };
       }
