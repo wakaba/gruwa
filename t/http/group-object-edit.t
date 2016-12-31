@@ -318,6 +318,73 @@ Test {
   });
 } n => 4, name => 'checkbox count';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      todo_state => 2, # closed
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is $object->{data}->{todo_state}, 2;
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      todo_state => 0, # default
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is $object->{data}->{todo_state}, 0;
+    } $current->c;
+  });
+} n => 2, name => 'todo state';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1', index_type => 3});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_index_id => 1,
+      index_id => $current->o ('i1')->{index_id},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is $object->{data}->{todo_state}, 1;
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      todo_state => 0, # default
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_index_id => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is $object->{data}->{todo_state}, 0;
+    } $current->c;
+  });
+} n => 2, name => 'todo state';
+
 RUN;
 
 =head1 LICENSE

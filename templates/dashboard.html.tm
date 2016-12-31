@@ -58,7 +58,7 @@
 
       <form method=post action=javascript: data-action=g/create.json
           data-additional-stages=createGroupWiki
-          data-href-template=/g/{group_id}/
+          data-href-template=/g/{group_id}/config
           data-prompt="グループを作成します。この操作は取り消せません。よろしいですか。">
         <table class=config>
           <tbody>

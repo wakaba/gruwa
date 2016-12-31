@@ -381,6 +381,7 @@ sub group_index ($$$$) {
           index_type => $index->{index_type},
             ## 1 blog
             ## 2 wiki
+            ## 3 todo list
         };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/i/{index_id}/edit.json
@@ -541,7 +542,8 @@ sub group_object ($$$$) {
             $changes->{fields}->{$key} = 1;
           }
         }
-        for my $key (qw(timestamp body_type user_status owner_status)) {
+        for my $key (qw(timestamp body_type user_status owner_status
+                        todo_state)) {
           my $value = $app->bare_param ($key);
           if (defined $value) {
             $object->{data}->{$key} = 0+$value;
@@ -607,6 +609,7 @@ sub group_object ($$$$) {
           $object->{data}->{index_ids} = {map { $_ => 1 } @$index_ids};
           $changes->{fields}->{index_ids} = 1;
 
+          my $index_id_to_type = {};
           return Promise->resolve->then (sub {
             return unless @new_id;
             return $db->select ('index', {
@@ -614,11 +617,19 @@ sub group_object ($$$$) {
               index_id => {-in => \@new_id},
               owner_status => 1, # open
               user_status => 1, # open
-            }, fields => ['index_id'])->then (sub {
-              my $has_index = {map { $_->{index_id} => 1 } @{$_[0]->all}};
+            }, fields => ['index_id', 'index_type'])->then (sub {
+              $index_id_to_type = {map {
+                $_->{index_id} => $_->{index_type};
+              } @{$_[0]->all}};
               for (@new_id) {
                 return $app->throw_error (400, reason_phrase => 'Bad |index_id| ('.$_.')')
-                    unless $has_index->{$_};
+                    unless exists $index_id_to_type->{$_};
+                if ($index_id_to_type->{$_} == 3) { # todo
+                  unless (defined $object->{data}->{todo_state}) {
+                    $object->{data}->{todo_state} = 1; # open
+                    $changes->{fields}->{todo_state} = 1;
+                  }
+                }
               }
             });
           })->then (sub {

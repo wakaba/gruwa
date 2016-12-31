@@ -26,8 +26,10 @@
             <tr>
               <th>種別
               <td>
-                <t:if x="$index->{index_type} == 1">    日記
-                <t:elsif x="$index->{index_type} == 2"> Wiki </t:if>
+                <t:if    x="$index->{index_type} == 1"> 日記
+                <t:elsif x="$index->{index_type} == 2"> Wiki
+                <t:elsif x="$index->{index_type} == 3"> TODO リスト
+                <t:else><t:text value="$index->{index_type}"></t:if>
             <tr>
               <th><label for=edit-title>題名</>
               <td><input name=title pl:value="$index->{title}" id=edit-title required>

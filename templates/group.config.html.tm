@@ -82,6 +82,25 @@
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
       </details>
+
+      <details>
+        <summary>TODOリストの作成</summary>
+
+        <form method=post action=javascript: data-action=i/create.json
+            data-href-template=/g/{group_id}/i/{index_id}/config>
+          <table class=config>
+            <tbody>
+              <tr>
+                <th><label for=create-todo-list-title>TODOリストの題名</>
+                <td><input name=title id=create-todo-list-title required>
+          </table>
+
+          <p class=operations>
+            <input type=hidden name=index_type value=3>
+            <button type=submit class=save-button>作成する</>
+            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+        </form>
+      </details>
     </section>
   </section>
 
