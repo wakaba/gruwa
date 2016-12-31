@@ -31,6 +31,9 @@ html { /* [data-thema=green] */
   --small-color: gray;
   --small-background-color: transparent;
 
+  --disabled-color: gray;
+  --disabled-background-color: transparent;
+
   --link-color: rgb(0, 0, 238);
   --link-background-color: transparent;
 
@@ -472,6 +475,11 @@ hr {
 dfn {
   font-style: normal;
   font-weight: bolder;
+}
+
+account-name[loading] {
+  color: var(--disabled-color);
+  background-color: var(--disabled-background-color);
 }
 
 /*

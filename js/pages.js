@@ -141,8 +141,8 @@ function fillFields (contextEl, rootEl, el, object) {
         field.parentNode.setAttribute ('data-value', value);
       }
     } else if (field.localName === 'account-name') {
-      field.setAttribute ('account', value);
-      field.textContent = value; // XXX
+      field.setAttribute ('account_id', value);
+      field.textContent = value;
     } else {
       field.textContent = value || field.getAttribute ('data-empty');
     }
@@ -1061,6 +1061,46 @@ function upgradeForm (form) {
   };
 } // upgradeForm
 
+(function () {
+  var accountData = {};
+  var waiting = {};
+  var timer = null;
+  window.upgradeAccountName = function (e) {
+    var id = e.getAttribute ('account_id');
+    e.setAttribute ('loading', '');
+    var entry = accountData[id];
+    if (!entry) {
+      entry = accountData[id] = new Promise (function (x, y) { waiting[id] = [x, y] });
+
+      clearTimeout (timer);
+      timer = setTimeout (function () {
+        var ids = waiting;
+        waiting = {};
+        var fd = new FormData;
+        Object.keys (ids).forEach (function (id) {
+          fd.append ('account_id', id);
+        });
+        fetch ('/u/info.json', {method: 'POST', body: fd}).then (function (res) {
+          if (res.status !== 200) throw res;
+          return res.json ();
+        }).then (function (json) {
+          Object.keys (ids).forEach (function (id) {
+            ids[id][0] (json.accounts[id]); // or undefined
+          });
+        }, function (error) {
+          Object.values (ids).forEach (function (_) { _[1] (error) });
+        });
+      }, 500);
+    }
+    entry.then (function (account) {
+      e.textContent = account.name;
+      e.removeAttribute ('loading');
+    }, function (error) {
+      console.log (error); // XXX
+    });
+  }; // upgradeAccountName
+}) ();
+
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {
     Array.prototype.forEach.call (m.addedNodes, function (x) {
@@ -1068,6 +1108,12 @@ function upgradeForm (form) {
         upgradeList (x);
       } else if (x.localName) {
         $$ (x, 'list-container').forEach (upgradeList);
+      }
+      if (x.localName === 'account-name' &&
+          x.hasAttribute ('account_id')) {
+        upgradeAccountName (x);
+      } else if (x.localName) {
+        $$ (x, 'account-name[account_id]').forEach (upgradeAccountName);
       }
       if (x.localName === 'form') {
         if (x.getAttribute ('action') === 'javascript' &&
@@ -1082,3 +1128,4 @@ function upgradeForm (form) {
 })).observe (document.documentElement, {childList: true, subtree: true});
 $$ (document, 'list-container').forEach (upgradeList);
 $$ (document, 'form[action="javascript:"][data-action]').forEach (upgradeForm);
+$$ (document, 'account-name[account_id]').forEach (upgradeAccountName);
