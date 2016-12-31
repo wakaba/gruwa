@@ -312,7 +312,7 @@ sub group_members_json ($) {
       my $current = $members->{$account_data->{account_id}};
       if (defined $current and
           ($current->{member_type} == 2 or # owner
-           $current->{member_type} == 1) and # open
+           $current->{member_type} == 1) and # member
           $current->{owner_status} == 1 and # open
           $current->{user_status} == 1) { # open
         return json $app, {members => $members};
@@ -583,6 +583,17 @@ sub group_object ($$$$) {
               $object->{data}->{title};
         }
 
+        if ($app->bare_param ('edit_assigned_account_id')) {
+          my $ids = $app->bare_param_list ('assigned_account_id');
+          my $old = [keys %{$object->{data}->{assigned_account_ids} || {}}];
+          unless (@$ids == @$old and
+                  ((join $;, sort { $a cmp $b } @$ids) eq
+                   (join $;, sort { $a cmp $b } @$old))) {
+            $object->{data}->{assigned_account_ids} = {map { $_ => 1 } @$ids};
+            $changes->{fields}->{assigned_account_ids} = 1;
+          }
+        }
+
         my $time = time;
         return Promise->resolve->then (sub {
           return unless $app->bare_param ('edit_index_id');
@@ -725,6 +736,9 @@ sub group_object ($$$$) {
             });
           });
         })->then (sub {
+          return json $app, {
+            object_revision_id => ''.$object->{data}->{object_revision_id},
+          } if keys %{$changes->{fields}};
           return json $app, {};
         });
       } else {

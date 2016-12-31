@@ -159,6 +159,10 @@ function fillFields (contextEl, rootEl, el, object) {
       field.hidden = !value;
     }
   });
+  $$ (el, '[data-if-data-non-empty-field]').forEach (function (field) {
+    var value = object.data[field.getAttribute ('data-if-data-non-empty-field')];
+    field.hidden = !(value && Object.keys (value).length);
+  });
   $$ (el, '[data-checked-field]').forEach (function (field) {
     field.checked = object[field.getAttribute ('data-checked-field')];
   });
@@ -224,6 +228,14 @@ function fillFields (contextEl, rootEl, el, object) {
         });
         field.appendChild (a);
       });
+    } else if (field.localName === 'account-list') {
+      field.textContent = '';
+      Object.keys (value || {}).forEach (function (accountId) {
+        var a = document.createElement ('account-name');
+        a.setAttribute ('account_id', accountId);
+        a.textContent = accountId;
+        field.appendChild (a);
+      });
     } else if (field.localName === 'iframe') {
       field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
       field.setAttribute ('srcdoc', createBodyHTML (value, {}));
@@ -277,10 +289,11 @@ function upgradeList (el) {
     } else {
       main = $$ (this, 'list-main')[0];
     }
-    if (!template || !main) return null;
+    if (!template || !main) return Promise.resolve (null);
 
     var listObjects = Object.values (objects);
     var appended = false;
+    var wait = [];
 
     var itemType = el.getAttribute ('listitemtype');
     var elementType = {
@@ -390,6 +403,12 @@ function upgradeList (el) {
           item.className = template.className;
           var key = template.getAttribute ('data-label');
           if (key) item.setAttribute ('label', object[key]);
+          var aKey = template.getAttribute ('data-account-label');
+          if (aKey) {
+            wait.push ($with ('account', {accountId: object.account_id}).then (function (account) {
+              item.setAttribute ('label', account[aKey]);
+            }));
+          }
           var key = template.getAttribute ('data-value');
           if (key) item.setAttribute ('value', object[key]);
           main.appendChild (item);
@@ -419,7 +438,7 @@ function upgradeList (el) {
       button.hidden = ! (opts.hasNext && appended);
     });
 
-    return main;
+    return Promise.all (wait).then (function () { return main });
   }; // showObjects
 
   var nextRef = null;
@@ -456,13 +475,14 @@ function upgradeList (el) {
   var show = function (json) {
     var key = el.getAttribute ('key');
     var hasNext = json.next_ref && nextRef !== json.next_ref;
-    var main = el.showObjects (json[key], {hasNext: hasNext});
-    if (hasNext) {
-      nextRef = json.next_ref;
-    } else {
-      nextRef = null;
-    }
-    return main; // or null
+    return el.showObjects (json[key], {hasNext: hasNext}).then (function (main) {
+      if (hasNext) {
+        nextRef = json.next_ref;
+      } else {
+        nextRef = null;
+      }
+      return main; // or null
+    });
   }; // show
 
   el.load = function () {
@@ -786,8 +806,9 @@ function editObject (article, object, opts) {
         as.end ({ok: true});
       } else { // new object
         return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
-          document.querySelector ('list-container[src-index_id]')
+          return document.querySelector ('list-container[src-index_id]')
               .showObjects (json.objects, {prepend: true});
+        }).then (function () {
           //as.stageEnd ("update");
           as.end ({ok: true});
         }, function (error) {
@@ -1065,9 +1086,9 @@ function upgradeForm (form) {
   var accountData = {};
   var waiting = {};
   var timer = null;
-  window.upgradeAccountName = function (e) {
-    var id = e.getAttribute ('account_id');
-    e.setAttribute ('loading', '');
+
+  $with.register ('account', function (opts) {
+    var id = opts.accountId;
     var entry = accountData[id];
     if (!entry) {
       entry = accountData[id] = new Promise (function (x, y) { waiting[id] = [x, y] });
@@ -1092,14 +1113,19 @@ function upgradeForm (form) {
         });
       }, 500);
     }
-    entry.then (function (account) {
-      e.textContent = account.name;
-      e.removeAttribute ('loading');
-    }, function (error) {
-      console.log (error); // XXX
-    });
-  }; // upgradeAccountName
+    return entry;
+  }); // $with ('account')
 }) ();
+
+function upgradeAccountName (e) {
+  e.setAttribute ('loading', '');
+  $with ('account', {accountId: e.getAttribute ('account_id')}).then (function (account) {
+    e.textContent = account.name;
+    e.removeAttribute ('loading');
+  }, function (error) {
+    console.log (error); // XXX
+  });
+} // upgradeAccountName
 
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {

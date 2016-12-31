@@ -385,6 +385,90 @@ Test {
   });
 } n => 2, name => 'todo state';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1', index_type => 3});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_assigned_account_id => 1,
+      assigned_account_id => 532523333,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1', revision_id => $_[0]->{json}->{object_revision_id});
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is 0+keys %{$object->{data}->{assigned_account_ids}}, 1;
+      ok $object->{data}->{assigned_account_ids}->{532523333};
+      ok $object->{revision_data}->{changes}->{fields}->{assigned_account_ids};
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_assigned_account_id => 1,
+      assigned_account_id => 532523333,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{json}->{object_revision_id}, undef;
+    } $current->c;
+    return $current->object ($current->o ('o1'), account => 'a1', revision_id => $result->{json}->{object_revision_id});
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is 0+keys %{$object->{data}->{assigned_account_ids}}, 1;
+      ok $object->{data}->{assigned_account_ids}->{532523333};
+      ok ! $object->{revision_data}->{changes}->{fields}->{assigned_account_ids};
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_assigned_account_id => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      like $result->{res}->body_bytes, qr{"object_revision_id"\s*:\s*"};
+    } $current->c;
+    return $current->object ($current->o ('o1'), account => 'a1', revision_id => $result->{json}->{object_revision_id});
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is 0+keys %{$object->{data}->{assigned_account_ids}}, 0;
+      ok $object->{revision_data}->{changes}->{fields}->{assigned_account_ids};
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_assigned_account_id => 1,
+      assigned_account_id => 532523366,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1', revision_id => $_[0]->{json}->{object_revision_id});
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is 0+keys %{$object->{data}->{assigned_account_ids}}, 1;
+      ok $object->{data}->{assigned_account_ids}->{532523366};
+      ok $object->{revision_data}->{changes}->{fields}->{assigned_account_ids};
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_assigned_account_id => 1,
+      assigned_account_id => [532523333, 6444444],
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1', revision_id => $_[0]->{json}->{object_revision_id});
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is 0+keys %{$object->{data}->{assigned_account_ids}}, 2;
+      ok $object->{data}->{assigned_account_ids}->{532523333};
+      ok $object->{data}->{assigned_account_ids}->{6444444};
+      ok $object->{revision_data}->{changes}->{fields}->{assigned_account_ids};
+    } $current->c;
+  });
+} n => 17, name => 'assigned_account_id';
+
 RUN;
 
 =head1 LICENSE

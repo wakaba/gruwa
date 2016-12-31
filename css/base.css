@@ -303,7 +303,7 @@ list-dropdown list-item label {
   cursor: pointer;
 }
 
-list-dropdown .add-form {
+list-dropdown .add-form:not([hidden]) {
   display: table;
   width: 100%;
   margin: 0;
@@ -311,7 +311,7 @@ list-dropdown .add-form {
   padding: 0;
 }
 
-list-dropdown .add-form > span {
+list-dropdown .add-form > span:not([hidden]) {
   display: table-cell;
 }
 

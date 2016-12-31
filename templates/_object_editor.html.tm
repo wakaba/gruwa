@@ -47,7 +47,22 @@
             <th>日付
             <td><input type=date name=timestamp required>
           <tr>
-            <th>日記
+            <th>担当者
+            <td>
+              <list-control name=assigned_account_id key=assigned_account_ids list=member-list>
+                <input type=hidden name=edit_assigned_account_id value=1>
+                <template>
+                  <list-item-label data-field=label />
+                </template>
+                <list-control-main />
+                <list-control-footer>
+                  <button type=button class=edit-button title=編集>...</button>
+                  <list-dropdown hidden />
+                </list-control-footer>
+              </list-control>
+        <tbody>
+          <tr>
+            <th>所属
             <td>
               <list-control name=index_id key=index_ids list=index-list>
                 <input type=hidden name=edit_index_id value=1>
@@ -83,6 +98,12 @@
     <template data-label=title data-value=index_id>
     </template>
     <datalist id=index-list />
+  </list-container>
+
+  <list-container type=datalist src=members.json key=members>
+    <template data-account-label=name data-value=account_id>
+    </template>
+    <datalist id=member-list />
   </list-container>
 
   <template id=list-control-editor>

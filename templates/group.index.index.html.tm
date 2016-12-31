@@ -94,6 +94,10 @@
               <action-status hidden
                   stage-edit=保存中...
                   ok=保存しました />
+              <span data-if-data-non-empty-field=assigned_account_ids>
+                担当者:
+                <account-list data-data-field=assigned_account_ids />
+              </span>
               <index-list data-data-field=index_ids />
               <time data-field=created class=ambtime />
               (<time data-field=updated class=ambtime /> 編集)
