@@ -551,6 +551,7 @@ sub group_object ($$$$) {
           }
         }
         # XXX owner_status only can be changed by group owners
+        # XXX write object action record when |todo_state| is changed
 
         my $search_data;
         if ($changes->{fields}->{title} or

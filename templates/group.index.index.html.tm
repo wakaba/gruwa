@@ -85,6 +85,8 @@
             <div class=edit-by-dblclick>
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
+            <div data-if-data-field=todo_state data-if-value=1 hidden>未完了</div>
+            <div data-if-data-field=todo_state data-if-value=2 hidden>完了済み</div>
           </header>
           <main><iframe data-data-field=body /></main>
           <footer>
@@ -97,6 +99,24 @@
               (<time data-field=updated class=ambtime /> 編集)
               <button type=button class=edit-button>編集</button>
           </footer>
+          <div class=actions>
+            <div data-if-data-field=todo_state data-if-value=1>
+              <form action=javascript: data-data-action-template=o/{object_id}/edit.json>
+                <input type=hidden name=todo_state value=2 class=data-field>
+                <p><button type=submit class=save-button>完了</button>
+                  <action-status hidden
+                      stage-fetch=変更中... />
+              </form>
+            </div>
+            <div data-if-data-field=todo_state data-if-value=2>
+              <form action=javascript: data-data-action-template=o/{object_id}/edit.json>
+                <input type=hidden name=todo_state value=1 class=data-field>
+                <p><button type=submit class=save-button>未完了に戻す</button>
+                  <action-status hidden
+                      stage-fetch=変更中... />
+              </form>
+            </div>
+          </div>
         </template>
       </t:if>
 

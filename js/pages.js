@@ -150,6 +150,15 @@ function fillFields (contextEl, rootEl, el, object) {
   $$ (el, '[data-if-field]').forEach (function (field) {
     field.hidden = !object[field.getAttribute ('data-if-field')];
   });
+  $$ (el, '[data-if-data-field]').forEach (function (field) {
+    var value = object.data[field.getAttribute ('data-if-data-field')];
+    var ifValue = field.getAttribute ('data-if-value');
+    if (ifValue) {
+      field.hidden = ifValue != value;
+    } else {
+      field.hidden = !value;
+    }
+  });
   $$ (el, '[data-checked-field]').forEach (function (field) {
     field.checked = object[field.getAttribute ('data-checked-field')];
   });
@@ -169,6 +178,12 @@ function fillFields (contextEl, rootEl, el, object) {
     field.setAttribute ('src', field.getAttribute ('data-src-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return object[k];
     }));
+  });
+  $$ (el, '[data-data-action-template]').forEach (function (field) {
+    field.setAttribute ('data-action', field.getAttribute ('data-data-action-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+      return object[k];
+    }));
+    field.parentObject = object;
   });
   $$ (el, '[data-parent-template]').forEach (function (field) {
     field.setAttribute ('data-parent', field.getAttribute ('data-parent-template').replace (/\{([^{}]+)\}/g, function (_, k) {
@@ -288,6 +303,9 @@ function upgradeList (el) {
                 }
               });
             }; // updateView
+            item.addEventListener ('objectdataupdate', function (ev) {
+              this.updateView ();
+            });
             item.addEventListener ('editablecontrolchange', function (ev) {
               var as = getActionStatus (item);
               as.start ({stages: ["formdata", "create", "edit", "update"]});
@@ -1021,6 +1039,17 @@ function upgradeForm (form) {
               return json[key];
             });
             return new Promise (function () { }); // keep form disabled
+          } else {
+            if (form.parentObject) {
+              var updated = false;
+              $$ (form, '.data-field').forEach (function (e) {
+                form.parentObject.data[e.name] = e.value;
+                updated = true;
+              });
+              if (updated) {
+                form.dispatchEvent (new Event ('objectdataupdate', {bubbles: true}));
+              }
+            }
           }
         });
       });

@@ -281,6 +281,23 @@ article.object > header h1 a {
   min-width: 5em;
 }
 
+article.object > header [data-if-data-field=todo_state]:not([hidden]) {
+  display: inline-block;
+  margin: .3em 0;
+  padding: .3em;
+  font-size: 80%;
+}
+
+article.object > header [data-if-data-field=todo_state][data-if-value="1"] {
+  background: red;
+  color: white;
+}
+
+article.object > header [data-if-data-field=todo_state][data-if-value="2"] {
+  background: green;
+  color: white;
+}
+
 edit-container {
 
 }
@@ -366,6 +383,10 @@ article.object > footer index-list a {
 
 article.object > footer index-list a.this-index {
   display: none;
+}
+
+article.object > .actions form {
+  border-style: none;
 }
 
 list-container[key=objects] action-status {
