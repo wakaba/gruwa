@@ -52,7 +52,7 @@
       </t:if>
     </header>
 
-    <list-container key=objects>
+    <list-container key=objects query>
       <t:if x="defined $object">
         <t:attr name="'src-object_id'" value="$object->{object_id}">
       <t:elsif x="defined $index">
@@ -88,9 +88,9 @@
         <t:attr name="'type'" value="'table'">
         <template>
           <td>
-            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済み />
+            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
             <span data-if-data-field=all_checkbox_count>
-              <span data-data-field=checked_checkbox_count /> /
+              <span data-data-field=checked_checkbox_count data-empty=0 /> /
               <span data-data-field=all_checkbox_count />
             </span>
           <th scope=row>
@@ -100,6 +100,8 @@
           <td>
             <time data-field=created class=ambtime />
             (<time data-field=updated class=ambtime /> 編集)
+          <td title=担当者>
+            <account-list data-data-field=assigned_account_ids />
         </template>
       <t:else><!-- index_type == 1 (blog), wiki page, object permalink -->
         <t:attr name="'listitemtype'" value="'object'">
@@ -108,7 +110,7 @@
             <div class=edit-by-dblclick>
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
-            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済み />
+            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
           </header>
           <main><iframe data-data-field=body /></main>
           <footer>
@@ -155,6 +157,37 @@
 
       <t:if x="not defined $wiki_name and
                defined $index and $index->{index_type} == 3 # todo">
+        <menu>
+          <list-query>
+            <list-control name=todo_state key=todo_states list=todo-state-list>
+              <template>
+                <list-item-label data-field=label />
+              </template>
+              <list-control-main />
+              <list-control-footer>
+                <button type=button class=edit-button title=編集>...</button>
+                <list-dropdown hidden />
+              </>
+              <datalist id=todo-state-list data-loaded>
+                <option label=未完了 value=1>
+                <option label=完了済 value=2>
+              </datalist>
+            </list-control>
+            <list-control name=assigned_account_id key=assigned_account_ids list=member-list>
+              <template>
+                <list-item-label data-field=label />
+              </template>
+              <list-control-main />
+              <list-control-footer>
+                <button type=button class=edit-button title=編集>...</button>
+                <list-dropdown hidden />
+              </>
+            </list-control>
+          </list-query>
+
+          <button type=button class=reload-button hidden>再読込</button>
+        </menu>
+
         <table>
           <tbody>
         </table>
