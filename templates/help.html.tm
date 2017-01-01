@@ -25,7 +25,19 @@
 
     <p><dfn id=gruwa>Gruwa</> (ぐるわ) は、グループウェアのようなものです。
 
-    <section id=blog-index>
+    <section id=groups>
+      <h1>グループ</h1>
+
+      <p>グループには次の機能があります。
+
+      <ul>
+        <li><a href=#blogs>日記</a>
+        <li><a href=#wiki>Wiki</a>
+        <li><a href=#todos>TODO リスト</a>
+      </ul>
+    </section>
+
+    <section id=blogs>
       <h1>日記</h1>
 
       <p>グループ内に日記を作ることができます。日記は、
@@ -39,7 +51,7 @@
       既定の日記は、<a href=/dashboard>ダッシュボード</a>やグループ内ページのヘッダーからリンクされるので、すぐに移動できます。
     </section>
 
-    <section id=wiki-index>
+    <section id=wikis>
       <h1>Wiki</h1>
 
       <p>グループ内に Wiki を作ることができます。
@@ -58,6 +70,22 @@
 
       <p>Wiki の記事は、題名 (<dfn id=wiki-name>Wiki名</dfn>) で識別されます。
       他の記事から「Wiki名リンク」を使ってリンクできます。
+    </section>
+
+    <section id=todos>
+      <h1>TODO リスト</h1>
+
+      <p>グループ内に TODO リストを作ることができます。
+
+    </section>
+
+    <section id=objects>
+      <h1>記事</h1>
+
+      <p>記事ごとに「所属」を選ぶことができます。記事は複数の日記や
+      Wiki などに所属させることができます。例えば、
+      個人の開発日記とプロジェクト進行まとめ日記の両方に所属させたり、
+      TODO 項目をプロジェクトで分類するためにプロジェクト日記に所属させたりできます。
     </section>
 
     <section id=search>
@@ -89,7 +117,7 @@
 
 <!--
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

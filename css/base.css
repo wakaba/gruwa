@@ -482,9 +482,26 @@ account-name[loading] {
   background-color: var(--disabled-background-color);
 }
 
+todo-state:not([hidden]) {
+  display: inline-block;
+  margin: .3em 0;
+  padding: .3em;
+  font-size: 80%;
+}
+
+todo-state[value="1"] {
+  background: red;
+  color: white;
+}
+
+todo-state[value="2"] {
+  background: green;
+  color: white;
+}
+
 /*
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

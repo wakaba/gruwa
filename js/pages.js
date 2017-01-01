@@ -2,6 +2,22 @@ function $$ (n, s) {
   return Array.prototype.slice.call (n.querySelectorAll (s));
 } // $$
 
+function $$c (n, s) {
+  return Array.prototype.filter.call (n.querySelectorAll (s), function (e) {
+    var f = e.parentNode;
+    while (f) {
+      if (f === n) break;
+      if (f.localName === 'list-container' ||
+          f.localName === 'edit-container' ||
+          f.localName === 'list-control') {
+        return false;
+      }
+      f = f.parentNode;
+    }
+    return true;
+  });
+} // $$c
+
 (function () {
   var handlers = {};
   var promises = {};
@@ -253,6 +269,17 @@ function fillFields (contextEl, rootEl, el, object) {
         };
         field.onload = null;
       };
+    } else if (field.localName === 'todo-state') {
+      if (value) {
+        field.setAttribute ('value', value);
+        value = field.getAttribute ('label-' + value);
+      }
+      if (value) {
+        field.textContent = value;
+        field.hidden = false;
+      } else {
+        field.hidden = true;
+      }
     } else {
       field.textContent = value || field.getAttribute ('data-empty') || '';
     }
@@ -274,7 +301,7 @@ function upgradeList (el) {
   var as = getActionStatus (el);
 
   el.clearObjects = function () {
-    var main = $$ (this, 'list-main')[0];
+    var main = $$c (this, 'list-main')[0];
     if (main) main.textContent = '';
   }; // clearObjects
 
@@ -283,11 +310,11 @@ function upgradeList (el) {
     var type = el.getAttribute ('type');
     var main;
     if (type === 'table') {
-      main = $$ (this, 'table tbody')[0];
+      main = $$c (this, 'table > tbody')[0];
     } else if (type === 'datalist') {
-      main = $$ (this, 'datalist')[0];
+      main = $$c (this, 'datalist')[0];
     } else {
-      main = $$ (this, 'list-main')[0];
+      main = $$c (this, 'list-main')[0];
     }
     if (!template || !main) return Promise.resolve (null);
 
@@ -324,7 +351,7 @@ function upgradeList (el) {
               as.start ({stages: ["formdata", "create", "edit", "update"]});
               var open = false; // XXX true if edit-container is modified but not saved
               editObject (item, object, {open: open}).then (function () {
-                $$ (item, 'edit-container iframe.control[data-name=body]').forEach (function (e) {
+                $$c (item, 'edit-container iframe.control[data-name=body]').forEach (function (e) {
                   e.sendChange (ev.data);
                 });
                 return item.save ({actionStatus: as});
@@ -420,13 +447,17 @@ function upgradeList (el) {
           item.className = template.className;
           item.appendChild (template.content.cloneNode (true));
           fill (item, object);
-          main.appendChild (item);
+          if (opts.prepend) {
+            main.insertBefore (item, main.firstChild);
+          } else {
+            main.appendChild (item);
+          }
           appended = true;
         });
       }
     } // not grouped
 
-    $$ (this, 'list-is-empty').forEach (function (e) {
+    $$c (this, 'list-is-empty').forEach (function (e) {
       if (main.firstElementChild) {
         e.hidden = true;
       } else {
@@ -434,7 +465,7 @@ function upgradeList (el) {
       }
     });
 
-    $$ (this, '.next-page-button').forEach (function (button) {
+    $$c (this, '.next-page-button').forEach (function (button) {
       button.hidden = ! (opts.hasNext && appended);
     });
 
@@ -510,7 +541,7 @@ function upgradeList (el) {
   }; // load
   el.load ();
 
-  $$ (el, '.next-page-button').forEach (function (button) {
+  $$c (el, '.next-page-button').forEach (function (button) {
     button.onclick = function () {
       button.disabled = true;
       as.start ({stages: ["prep", "load", "show"]});
@@ -525,8 +556,8 @@ function upgradeList (el) {
     };
   });
 
-  $$ (el, 'article.object.new').forEach (function (article) {
-    $$ (article, '.edit-button').forEach (function (button) {
+  $$c (el, 'article.object.new').forEach (function (article) {
+    $$c (article, '.edit-button').forEach (function (button) {
       button.onclick = function () {
         var data = {index_ids: {}, timestamp: (new Date).valueOf () / 1000};
         data.index_ids[el.getAttribute ('src-index_id')] = 1;
@@ -582,13 +613,13 @@ function editObject (article, object, opts) {
     });
   }; // save
 
-  $$ (form, 'main .control, header input').forEach (function (control) {
+  $$c (form, 'main .control, header input').forEach (function (control) {
     control.onfocus = function () {
       container.scrollIntoView ();
     };
   });
 
-  $$ (form, 'iframe.control[data-name]').forEach (function (control) {
+  $$c (form, 'iframe.control[data-name]').forEach (function (control) {
     var value = object.data[control.getAttribute ('data-name')];
     var valueWaitings = [];
     control.setAttribute ('sandbox', 'allow-scripts allow-popups');
@@ -638,48 +669,48 @@ function editObject (article, object, opts) {
       mc.port2.postMessage ({type: "change", value: data});
     };
   });
-  $$ (form, 'button[data-action=execCommand]').forEach (function (b) {
+  $$c (form, 'button[data-action=execCommand]').forEach (function (b) {
     b.onclick = function () {
       var ed = form.querySelector ('iframe.control[data-name=body]');
       ed.sendExecCommand (this.getAttribute ('data-command'), this.getAttribute ('data-value'));
       ed.focus ();
     };
   });
-  $$ (form, 'button[data-action=setBlock]').forEach (function (b) {
+  $$c (form, 'button[data-action=setBlock]').forEach (function (b) {
     b.onclick = function () {
       var ed = form.querySelector ('iframe.control[data-name=body]');
       ed.setBlock (this.getAttribute ('data-value'));
       ed.focus ();
     };
   });
-  $$ (form, 'button[data-action=insertSection]').forEach (function (b) {
+  $$c (form, 'button[data-action=insertSection]').forEach (function (b) {
     b.onclick = function () {
       var ed = form.querySelector ('iframe.control[data-name=body]');
       ed.insertSection ();
       ed.focus ();
     };
   });
-  $$ (form, 'button[data-action=indent], button[data-action=outdent], button[data-action=insertControl], button[data-action=link]').forEach (function (b) {
+  $$c (form, 'button[data-action=indent], button[data-action=outdent], button[data-action=insertControl], button[data-action=link]').forEach (function (b) {
     b.onclick = function () {
       var ed = form.querySelector ('iframe.control[data-name=body]');
       ed.sendAction (b.getAttribute ('data-action'), b.getAttribute ('data-command'), b.getAttribute ('data-value'));
       ed.focus ();
     };
   });
-  $$ (form, 'input[name]:not([type])').forEach (function (control) {
+  $$c (form, 'input[name]:not([type])').forEach (function (control) {
     var value = object.data[control.name]
     if (value) {
       control.value = value;
     }
   });
-  $$ (form, 'input[name][type=date]').forEach (function (control) {
+  $$c (form, 'input[name][type=date]').forEach (function (control) {
     var value = object.data[control.name];
     if (value != null) {
       control.valueAsNumber = value * 1000;
     }
   });
 
-  $$ (form, 'list-control[name]').forEach (function (control) {
+  $$c (form, 'list-control[name]').forEach (function (control) {
     control.clearItems = function () {
       control.items = [];
       var main = control.querySelector ('list-control-main');
@@ -691,7 +722,7 @@ function editObject (article, object, opts) {
       var main = control.querySelector ('list-control-main');
       $with (control.getAttribute ('list')).then (function (datalist) {
         var valueToLabel = {};
-        $$ (datalist, 'option').forEach (function (option) {
+        $$c (datalist, 'option').forEach (function (option) {
           valueToLabel[option.value] = option.label;
         });
         newItems.forEach (function (item) {
@@ -705,7 +736,7 @@ function editObject (article, object, opts) {
     };
 
     wait.push ($with (control.getAttribute ('list')).then (function (datalist) {
-      $$ (control, '.edit-button').forEach (function (el) {
+      $$c (control, '.edit-button').forEach (function (el) {
         el.onclick = function () {
           if (!control.editor) {
             var template = document.querySelector ('#list-control-editor');
@@ -728,7 +759,7 @@ function editObject (article, object, opts) {
               fillFields (listEl, itemEl, itemEl, option);
               listEl.appendChild (itemEl);
             }; // addItem
-            $$ (datalist, 'option').forEach (function (option) {
+            $$c (datalist, 'option').forEach (function (option) {
               addItem ({
                 label: option.label,
                 value: option.value,
@@ -746,7 +777,7 @@ function editObject (article, object, opts) {
               }
             });
             listEl.onchange = function () {
-              var items = $$ (listEl, 'list-item').filter (function (itemEl) {
+              var items = $$c (listEl, 'list-item').filter (function (itemEl) {
                 return itemEl.querySelector ('input[type=checkbox]:checked');
               }).map (function (el) {
                 return {value: el.getAttribute ('value')};
@@ -756,10 +787,10 @@ function editObject (article, object, opts) {
             };
 
             var allowAdd = control.hasAttribute ('allowadd');
-            $$ (control.editor, '.add-form').forEach (function (e) {
+            $$c (control.editor, '.add-form').forEach (function (e) {
               e.hidden = !allowAdd;
               if (!allowAdd) return;
-              $$ (e, '.add-button').forEach (function (b) {
+              $$c (e, '.add-button').forEach (function (b) {
                 b.onclick = function () {
                   var input = e.querySelector ('input');
                   var v = input.value;
@@ -786,12 +817,12 @@ function editObject (article, object, opts) {
 
     // XXX autosave
 
-    $$ (form, '.cancel-button').forEach (function (button) {
-      button.onclick = function () {
-        container.hidden = true;
-        article.classList.remove ('editing');
-      };
-    });
+  $$c (form, '.cancel-button').forEach (function (button) {
+    button.onclick = function () {
+      container.hidden = true;
+      article.classList.remove ('editing');
+    };
+  });
 
   form.onsubmit = function () {
     var as = getActionStatus (form);
@@ -826,7 +857,7 @@ function editObject (article, object, opts) {
 
   var resize = function () {
     var h1 = 0;
-    $$ (container, 'form > header, form > main > menu, form > footer').forEach (function (e) {
+    $$c (container, 'form > header, form > main > menu, form > footer').forEach (function (e) {
       h1 += e.offsetHeight;
     });
     var h = document.documentElement.clientHeight - h1;
@@ -1155,3 +1186,22 @@ function upgradeAccountName (e) {
 $$ (document, 'list-container').forEach (upgradeList);
 $$ (document, 'form[action="javascript:"][data-action]').forEach (upgradeForm);
 $$ (document, 'account-name[account_id]').forEach (upgradeAccountName);
+
+/*
+
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Affero General Public License for more details.
+
+You does not have received a copy of the GNU Affero General Public
+License along with this program, see <http://www.gnu.org/licenses/>.
+
+*/

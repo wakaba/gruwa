@@ -64,6 +64,10 @@
       <t:else>
         <t:if x="defined $index and $index->{index_type} == 1 # blog">
           <t:attr name="'grouped'" value=1>
+        <t:elsif x="defined $index and $index->{index_type} == 2 # wiki">
+          <t:attr name="'sortkey'" value="'updated'">
+        <t:elsif x="defined $index and $index->{index_type} == 3 # todo">
+          <t:attr name="'sortkey'" value="'updated'">
         <t:else>
           <t:attr name="'sortkey'" value="'created'">
         </t:if>
@@ -78,15 +82,33 @@
             (<time data-field=updated class=ambtime /> 編集)
           </a></p>
         </template>
-      <t:else>
+      <t:elsif x="not defined $wiki_name and
+                  defined $index and $index->{index_type} == 3 # todo">
+        <t:attr name="'src-limit'" value=100>
+        <t:attr name="'type'" value="'table'">
+        <template>
+          <td>
+            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済み />
+            <span data-if-data-field=all_checkbox_count>
+              <span data-data-field=checked_checkbox_count /> /
+              <span data-data-field=all_checkbox_count />
+            </span>
+          <th scope=row>
+            <a data-href-template={GROUP}/o/{object_id}/>
+              <span data-data-field=title data-empty=■ />
+            </a>
+          <td>
+            <time data-field=created class=ambtime />
+            (<time data-field=updated class=ambtime /> 編集)
+        </template>
+      <t:else><!-- index_type == 1 (blog), wiki page, object permalink -->
         <t:attr name="'listitemtype'" value="'object'">
         <template class=object>
           <header>
             <div class=edit-by-dblclick>
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
-            <div data-if-data-field=todo_state data-if-value=1 hidden>未完了</div>
-            <div data-if-data-field=todo_state data-if-value=2 hidden>完了済み</div>
+            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済み />
           </header>
           <main><iframe data-data-field=body /></main>
           <footer>
@@ -131,7 +153,14 @@
         </article>
       </t:if>
 
-      <list-main></list-main>
+      <t:if x="not defined $wiki_name and
+               defined $index and $index->{index_type} == 3 # todo">
+        <table>
+          <tbody>
+        </table>
+      <t:else>
+        <list-main></list-main>
+      </t:if>
 
       <t:if x="defined $wiki_name">
         <list-is-empty hidden>
@@ -163,7 +192,7 @@
 
 <!--
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
