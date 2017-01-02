@@ -1,8 +1,9 @@
 <html t:params="$group $index? $object? $wiki_name? $account $group_member $app"
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-index="defined $index ? $index->{index_id} : undef"
-    pl:data-theme="defined $index ? $index->{options}->{theme}
-                                  : $group->{options}->{theme}">
+    pl:data-theme="(defined $index && defined $index->{options}->{theme})
+                       ? $index->{options}->{theme}
+                       : $group->{options}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     <t:if x="defined $object">
@@ -52,7 +53,7 @@
       </t:if>
     </header>
 
-    <list-container key=objects query>
+    <list-container key=objects>
       <t:if x="defined $object">
         <t:attr name="'src-object_id'" value="$object->{object_id}">
       <t:elsif x="defined $index">
@@ -66,7 +67,10 @@
           <t:attr name="'grouped'" value=1>
         <t:elsif x="defined $index and $index->{index_type} == 2 # wiki">
           <t:attr name="'sortkey'" value="'updated'">
-        <t:elsif x="defined $index and $index->{index_type} == 3 # todo">
+        <t:elsif x="defined $index and
+                    ($index->{index_type} == 3 or # todo
+                     $index->{index_type} == 4 or # label
+                     $index->{index_type} == 5) # milestone">
           <t:attr name="'sortkey'" value="'updated'">
         <t:else>
           <t:attr name="'sortkey'" value="'created'">
@@ -83,9 +87,13 @@
           </a></p>
         </template>
       <t:elsif x="not defined $wiki_name and
-                  defined $index and $index->{index_type} == 3 # todo">
+                  defined $index and
+                  ($index->{index_type} == 3 or # todo
+                   $index->{index_type} == 4 or # label
+                   $index->{index_type} == 5) # milestone">
         <t:attr name="'src-limit'" value=100>
         <t:attr name="'type'" value="'table'">
+        <t:attr name="'query'" value="''">
         <template>
           <td>
             <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
@@ -148,7 +156,12 @@
         </template>
       </t:if>
 
-      <t:if x="defined $index and not defined $object and not defined $wiki_name">
+      <t:if x="defined $index and
+               not defined $object and
+               not defined $wiki_name and
+               ($index->{index_type} == 1 or # blob
+                $index->{index_type} == 2 or # wiki
+                $index->{index_type} == 3) # todo">
         <article class="object new">
           <p class=operations>
             <button type=button class=edit-button>新しい記事を書く</button>
@@ -156,7 +169,10 @@
       </t:if>
 
       <t:if x="not defined $wiki_name and
-               defined $index and $index->{index_type} == 3 # todo">
+               defined $index and
+               ($index->{index_type} == 3 or # todo
+                $index->{index_type} == 4 or # label
+                $index->{index_type} == 5) # milestone">
         <menu>
           <list-query>
             <list-control name=todo_state key=todo_states list=todo-state-list>
