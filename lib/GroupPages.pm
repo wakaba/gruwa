@@ -338,11 +338,13 @@ sub group_index ($$$$) {
   my $db = $opts->{db};
 
   if (@$path == 4 and $path->[3] eq 'list.json') {
-    # /g/{}/i/list.json
+    # /g/{group_id}/i/list.json
+    my $i_types = $app->bare_param_list ('index_type');
     return $db->select ('index', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
       owner_status => 1,
       user_status => 1,
+      (@$i_types ? (index_type => {-in => $i_types}) : ()),
     }, fields => ['index_id', 'index_type', 'title', 'updated'])->then (sub {
       return json $app, {index_list => {map {
         $_->{index_id} => {

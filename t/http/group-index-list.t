@@ -76,11 +76,35 @@ Test {
   });
 } n => 13, name => '/g/{}/i/list.json has an item';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {index_type => 4, group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_index (i2 => {index_type => 7, group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_index (i3 => {index_type => 17, group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->get_json (['i', 'list.json'], {
+      index_type => [4, 7],
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{index_list}}, 2;
+      ok $result->{json}->{index_list}->{$current->o ('i1')->{index_id}};
+      ok $result->{json}->{index_list}->{$current->o ('i2')->{index_id}};
+    } $current->c;
+  });
+} n => 3, name => '/g/{}/i/list.json index_type';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
