@@ -7,6 +7,7 @@ use Dongry::Type;
 use Dongry::Type::JSONPS;
 use Dongry::SQL qw(where);
 use Digest::SHA qw(sha1_hex);
+use Web::DateTime::Parser;
 use Web::DOM::Document;
 
 use Results;
@@ -377,11 +378,14 @@ sub group_index ($$$$) {
           title => $index->{title},
           created => $index->{created},
           updated => $index->{updated},
-          theme => $index->{options}->{theme},
           index_type => $index->{index_type},
             ## 1 blog
             ## 2 wiki
             ## 3 todo list
+            ## 4 label
+            ## 5 milestone
+          theme => $index->{options}->{theme},
+          deadline => $index->{options}->{deadline},
         };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/i/{index_id}/edit.json
@@ -391,10 +395,30 @@ sub group_index ($$$$) {
         my $title = $app->text_param ('title') // '';
         $update{title} = Dongry::Type->serialize ('text', $title)
             if length $title;
-        my $theme = $app->text_param ('theme') // '';
-        if (length $theme) {
-          my $options = $opts->{group}->{options};
-          $options->{theme} = $theme;
+        my $options = $opts->{group}->{options};
+        my $options_modified;
+        for my $key (qw(theme)) {
+          my $value = $app->text_param ($key) // '';
+          if (length $value) {
+            $options->{$key} = $value;
+            $options_modified = 1;
+          }
+        }
+        {
+          my $value = $app->bare_param ('deadline');
+          if (defined $value) {
+            my $parser = Web::DateTime::Parser->new;
+            $parser->onerror (sub { });
+            my $dt = $parser->parse_date_string ($value);
+            if (defined $dt) {
+              $options->{deadline} = $dt->to_unix_number;
+            } else {
+              delete $options->{deadline};
+            }
+            $options_modified = 1;
+          }
+        }
+        if ($options_modified) {
           $update{options} = Dongry::Type->serialize ('json', $options);
           # XXX need transaction for editing options :-<
         }

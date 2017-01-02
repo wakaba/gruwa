@@ -29,19 +29,40 @@
                 <t:if    x="$index->{index_type} == 1"> 日記
                 <t:elsif x="$index->{index_type} == 2"> Wiki
                 <t:elsif x="$index->{index_type} == 3"> TODO リスト
+                <t:elsif x="$index->{index_type} == 4"> ラベル
+                <t:elsif x="$index->{index_type} == 5"> 里程標
                 <t:else><t:text value="$index->{index_type}"></t:if>
             <tr>
-              <th><label for=edit-title>題名</>
+              <th><label for=edit-title>名前</>
               <td><input name=title pl:value="$index->{title}" id=edit-title required>
-            <tr>
-              <th><label for=edit-theme>配色</>
-              <td>
-                <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme>
-                  <option value=green pl:selected="$index->{options}->{theme} eq 'green'?'':undef">緑
-                  <option value=blue pl:selected="$index->{options}->{theme} eq 'blue'?'':undef">青
-                  <option value=red pl:selected="$index->{options}->{theme} eq 'red'?'':undef">赤
-                  <option value=black pl:selected="$index->{options}->{theme} eq 'black'?'':undef">黒
-                </select>
+            </tr>
+            <t:if x="$index->{index_type} == 1 or
+                     $index->{index_type} == 2 or
+                     $index->{index_type} == 3 or
+                     $index->{index_type} == 4">
+              <tr>
+                <th>
+                  <label for=edit-theme>
+                    <t:if x="$index->{index_type} == 4">色
+                    <t:else>配色</t:if>
+                  </>
+                <td>
+                  <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme>
+                    <option value=green pl:selected="$index->{options}->{theme} eq 'green'?'':undef">緑
+                    <option value=blue pl:selected="$index->{options}->{theme} eq 'blue'?'':undef">青
+                    <option value=red pl:selected="$index->{options}->{theme} eq 'red'?'':undef">赤
+                    <option value=black pl:selected="$index->{options}->{theme} eq 'black'?'':undef">黒
+                  </select>
+            </t:if>
+            <t:if x="$index->{index_type} == 5">
+              <tr>
+                <th><label for=edit-deadline>締切</label>
+                <td><input type=date name=deadline pl:value="
+                  defined $index->{options}->{deadline}
+                      ? Web::DateTime->new_from_unix_time ($index->{options}->{deadline})->to_date_string
+                      : undef
+                ">
+            </t:if>
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>
@@ -78,7 +99,7 @@
 
 <!--
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

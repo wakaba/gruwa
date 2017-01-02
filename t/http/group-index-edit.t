@@ -136,11 +136,50 @@ Test {
   });
 } n => 4, name => 'index_type';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_group (g2 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1', title => "\x{900}"});
+  })->then (sub {
+    return $current->post_json (['i', $current->o ('i1')->{index_id}, 'edit.json'], {deadline => '2016-01-10'}, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->index ($current->o ('i1'), account => 'a1');
+  })->then (sub {
+    my $index = $_[0];
+    test {
+      is $index->{deadline}, '1452384000';
+      ok $index->{updated} > $index->{created};
+    } $current->c;
+    return $current->post_json (['i', $current->o ('i1')->{index_id}, 'edit.json'], {deadline => ''}, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->index ($current->o ('i1'), account => 'a1');
+  })->then (sub {
+    my $index = $_[0];
+    test {
+      is $index->{deadline}, undef;
+      ok $index->{updated} > $index->{created};
+    } $current->c;
+    return $current->post_json (['i', $current->o ('i1')->{index_id}, 'edit.json'], {deadline => 'abcee'}, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->index ($current->o ('i1'), account => 'a1');
+  })->then (sub {
+    my $index = $_[0];
+    test {
+      is $index->{deadline}, undef;
+      ok $index->{updated} > $index->{created};
+    } $current->c;
+  });
+} n => 6, name => 'deadline';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

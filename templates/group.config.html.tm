@@ -101,6 +101,44 @@
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
       </details>
+
+      <details>
+        <summary>ラベルの作成</summary>
+
+        <form method=post action=javascript: data-action=i/create.json
+            data-href-template=/g/{group_id}/i/{index_id}/config>
+          <table class=config>
+            <tbody>
+              <tr>
+                <th><label for=create-label-title>ラベル</>
+                <td><input name=title id=create-label-title required>
+          </table>
+
+          <p class=operations>
+            <input type=hidden name=index_type value=4>
+            <button type=submit class=save-button>作成する</>
+            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+        </form>
+      </details>
+
+      <details>
+        <summary>里程標の作成</summary>
+
+        <form method=post action=javascript: data-action=i/create.json
+            data-href-template=/g/{group_id}/i/{index_id}/config>
+          <table class=config>
+            <tbody>
+              <tr>
+                <th><label for=create-milestone-title>里程標の名前</>
+                <td><input name=title id=create-milestone-title required>
+          </table>
+
+          <p class=operations>
+            <input type=hidden name=index_type value=5>
+            <button type=submit class=save-button>作成する</>
+            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+        </form>
+      </details>
     </section>
   </section>
 

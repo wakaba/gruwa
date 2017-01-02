@@ -24,6 +24,7 @@
     <h1>ヘルプ</>
 
     <p><dfn id=gruwa>Gruwa</> (ぐるわ) は、グループウェアのようなものです。
+    <a href=#groups>グループ</a>に参加して、その中で色々なことができます。
 
     <section id=groups>
       <h1>グループ</h1>
@@ -34,7 +35,12 @@
         <li><a href=#blogs>日記</a>
         <li><a href=#wiki>Wiki</a>
         <li><a href=#todos>TODO リスト</a>
+        <li><a href=#labels>ラベル</a>
+        <li><a href=#milestones>里程標</a>
       </ul>
+
+      <p>グループの参加者は、所有者と一般参加者に分かれます。
+      所有者は、グループの参加者を管理することができます。
     </section>
 
     <section id=blogs>
@@ -49,6 +55,11 @@
 
       <p>グループ内の日記のうちの1つを自分の<dfn id=default-blog-index>既定の日記</dfn>に選ぶことができます。
       既定の日記は、<a href=/dashboard>ダッシュボード</a>やグループ内ページのヘッダーからリンクされるので、すぐに移動できます。
+
+      <hr>
+
+      <p>日記内では、日毎に何本でも<a href=#objects>記事</a>を書くことができます。
+      標準では当日の記事となりますが、他の日付に設定することもできます。
     </section>
 
     <section id=wikis>
@@ -68,8 +79,9 @@
 
       <hr>
 
-      <p>Wiki の記事は、題名 (<dfn id=wiki-name>Wiki名</dfn>) で識別されます。
-      他の記事から「Wiki名リンク」を使ってリンクできます。
+      <p>Wiki の<a href=#objects>記事</a>は、
+      題名 (<dfn id=wiki-name>Wiki名</dfn>) で識別されます。
+      他の<a href=#objects>記事</a>から「Wiki名リンク」を使ってリンクできます。
     </section>
 
     <section id=todos>
@@ -77,10 +89,39 @@
 
       <p>グループ内に TODO リストを作ることができます。
 
+      <p>TODO リストは<a href=#labels>ラベル</a>や<a href=#milestones>里程標</a>で整理できます。
+    </section>
+
+    <section id=labels>
+      <h1>ラベル</h1>
+
+      <p>グループ内に整理のためのラベルを設けることができます。
+
+      <p>ラベルには、わかりやすいように色を設定できます。
+
+      <hr>
+
+      <p><a href=#objects>記事</a>にはラベルを付けることができます。
+    </section>
+
+    <section id=milestones>
+      <h1><ruby>里程標<rt>マイルストーン</ruby></h1>
+
+      <p>グループ内に里程標を置くことができます。
+      里程標は、計画の各段階や期限を切った予定をまとめるために使えます。
+
+      <p>里程標には締切日を設定できます。
+
+      <hr>
+
+      <p><a href=#objects>記事</a>は里程標に登録できます。
     </section>
 
     <section id=objects>
       <h1>記事</h1>
+
+      <p><a href=#blogs>日記</a>や <a href=#wikis>Wiki</a> や 
+      <a href=#todos>TODO リスト</a>の各項目のことを<dfn>記事</dfn>といいます。
 
       <p>記事ごとに「所属」を選ぶことができます。記事は複数の日記や
       Wiki などに所属させることができます。例えば、
