@@ -385,6 +385,7 @@ sub group_index ($$$$) {
             ## 4 label
             ## 5 milestone
           theme => $index->{options}->{theme},
+          color => $index->{options}->{color},
           deadline => $index->{options}->{deadline},
         };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
@@ -397,7 +398,7 @@ sub group_index ($$$$) {
             if length $title;
         my $options = $opts->{group}->{options};
         my $options_modified;
-        for my $key (qw(theme)) {
+        for my $key (qw(theme color)) {
           my $value = $app->text_param ($key) // '';
           if (length $value) {
             $options->{$key} = $value;
@@ -481,6 +482,16 @@ sub group_index ($$$$) {
     my $time = time;
     return $db->execute ('select uuid_short() as uuid')->then (sub {
       my $index_id = $_[0]->first->{uuid};
+      my $index_type = 0+($app->bare_param ('index_type') || 0);
+      my $options = {};
+      if ($index_type == 1 and $index_type == 2 and $index_type == 3) {
+        $options->{theme} = 'green';
+      } elsif ($index_type == 4) {
+        $options->{color} = sprintf '#%02X%02X%02X',
+            int rand 256,
+            int rand 256,
+            int rand 256;
+      }
       return $db->insert ('index', [{
         group_id => Dongry::Type->serialize ('text', $path->[1]),
         index_id => $index_id,
@@ -489,8 +500,8 @@ sub group_index ($$$$) {
         updated => $time,
         owner_status => 1, # open
         user_status => 1, # open
-        index_type => 0+($app->bare_param ('index_type') || 0),
-        options => '{"theme":"green"}',
+        index_type => $index_type,
+        options => Dongry::Type->serialize ('json', $options),
       }])->then (sub {
         return json $app, {
           group_id => $path->[1],

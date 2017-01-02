@@ -38,14 +38,10 @@
             </tr>
             <t:if x="$index->{index_type} == 1 or
                      $index->{index_type} == 2 or
-                     $index->{index_type} == 3 or
-                     $index->{index_type} == 4">
+                     $index->{index_type} == 3">
               <tr>
                 <th>
-                  <label for=edit-theme>
-                    <t:if x="$index->{index_type} == 4">色
-                    <t:else>配色</t:if>
-                  </>
+                  <label for=edit-theme>配色</>
                 <td>
                   <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme>
                     <option value=green pl:selected="$index->{options}->{theme} eq 'green'?'':undef">緑
@@ -53,6 +49,29 @@
                     <option value=red pl:selected="$index->{options}->{theme} eq 'red'?'':undef">赤
                     <option value=black pl:selected="$index->{options}->{theme} eq 'black'?'':undef">黒
                   </select>
+            </t:if>
+            <t:if x="$index->{index_type} == 4">
+              <tr>
+                <th><label for=edit-color>色</label>
+                <td>
+                  <input type=color name=color pl:value="$index->{options}->{color}" list=color-list>
+                  <datalist id=color-list>
+                    <option value=#800000>
+                    <option value=#ff0000>
+                    <option value=#800080>
+                    <option value=#ff00ff>
+                    <option value=#008000>
+                    <option value=#00ff00>
+                    <option value=#808000>
+                    <option value=#ffff00>
+                    <option value=#000080>
+                    <option value=#0000ff>
+                    <option value=#008080>
+                    <option value=#00ffff>
+                    <option value=#c0c0c0>
+                    <option value=#808080>
+                    <option value=#000000>
+                  </datalist>
             </t:if>
             <t:if x="$index->{index_type} == 5">
               <tr>
