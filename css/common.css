@@ -360,11 +360,11 @@ edit-container > form > footer p {
   background-color: var(--small-background-color);
 }
 
-article.object > footer index-list a {
+article.object > footer index-list > * {
   margin-right: .5em;
 }
 
-article.object > footer index-list a.this-index {
+article.object > footer index-list > .this-index {
   display: none;
 }
 
@@ -569,6 +569,14 @@ list-is-empty:not([hidden]) {
 .help p {
   text-indent: 1em;
   line-height: 2.0;
+}
+
+index-list-item .colored:not([hidden]) {
+  display: inline-block;
+  min-width: 4em;
+  padding: .2em .5em;
+  text-align: center;
+  text-decoration: none;
 }
 
 /*

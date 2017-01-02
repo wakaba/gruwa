@@ -185,6 +185,14 @@ sub create_index ($$$) {
     group => ($opts->{group} // die "No |group|"),
   )->then (sub {
     $self->{objects}->{$name // 'X'} = $_[0]->{json};
+    my %edit;
+    for (qw(theme color deadline)) {
+      $edit{$_} = $opts->{$_} if defined $opts->{$_};
+    }
+    return unless keys %edit;
+    return $self->post_json (['i', $_[0]->{json}->{index_id}, 'edit.json'], {
+      %edit,
+    }, account => $opts->{account}, group => $opts->{group});
   });
 } # create_index
 

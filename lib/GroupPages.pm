@@ -345,14 +345,18 @@ sub group_index ($$$$) {
       owner_status => 1,
       user_status => 1,
       (@$i_types ? (index_type => {-in => $i_types}) : ()),
-    }, fields => ['index_id', 'index_type', 'title', 'updated'])->then (sub {
+    }, fields => ['index_id', 'index_type', 'title', 'updated', 'options'])->then (sub {
       return json $app, {index_list => {map {
+        my $index_options = Dongry::Type->parse ('json', $_->{options});
         $_->{index_id} => {
           group_id => $path->[1],
           index_id => ''.$_->{index_id},
-          index_type => $_->{index_type},
           title => Dongry::Type->parse ('text', $_->{title}),
           updated => $_->{updated},
+          index_type => $_->{index_type},
+          theme => $index_options->{theme},
+          color => $index_options->{color},
+          deadline => $index_options->{deadline},
         };
       } @{$_[0]->all}}};
     });

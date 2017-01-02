@@ -216,8 +216,22 @@ function fillFields (contextEl, rootEl, el, object) {
       return encodeURIComponent (object[k]);
     }));
   });
+  $$ (el, '[data-color-data-field]').forEach (function (field) {
+    var value = object.data ? object.data[field.getAttribute ('data-color-data-field')] : null;
+    if (value) {
+      var m = value.match (/#(..)(..)(..)/);
+      var r = parseInt ("0x" + m[1]);
+      var g = parseInt ("0x" + m[2]);
+      var b = parseInt ("0x" + m[3]);
+      var y = 0.299 * r + 0.587 * g + 0.114 * b;
+      var c = y > 127 + 64 ? 0 : 255;
+      field.style.backgroundColor = value;
+      field.style.color = 'rgb('+c+','+c+','+c+')';
+      field.classList.add ('colored');
+    }
+  });
   $$ (el, '[data-data-field]').forEach (function (field) {
-    var value = object.data[field.getAttribute ('data-data-field')];
+    var value = object.data ? object.data[field.getAttribute ('data-data-field')] : null;
     if (field.localName === 'time') {
       var date = new Date (parseFloat (value) * 1000);
       try {
@@ -228,22 +242,23 @@ function fillFields (contextEl, rootEl, el, object) {
       }
     } else if (field.localName === 'index-list') {
       field.textContent = '';
-      Object.keys (value || {}).forEach (function (indexId) {
-        var a = document.createElement ('a');
-        a.href = document.documentElement.getAttribute ('data-group-url') + '/i/' + encodeURIComponent (indexId) + '/';
-        a.textContent = indexId;
-        $with ('index-list').then (function (datalist) {
-          if (!datalist.indexIdToLabel) {
-            var list = {};
-            $$ (datalist, 'option').forEach (function (option) {
-              list[option.value] = option.label;
-            });
-            datalist.indexIdToLabel = list;
-          }
-          a.textContent = datalist.indexIdToLabel[indexId] || indexId;
-          a.classList.toggle ('this-index', indexId == document.documentElement.getAttribute ('data-index'));
+      var template = document.querySelector ('#index-list-item-template');
+      $with ('index-list').then (function (datalist) {
+        if (!datalist.indexIdToOption) {
+          var list = {};
+          $$ (datalist, 'option').forEach (function (option) {
+            list[option.value] = option;
+          });
+          datalist.indexIdToOption = list;
+        }
+        Object.keys (value || {}).forEach (function (indexId) {
+          var item = document.createElement ('index-list-item');
+          item.appendChild (template.content.cloneNode (true));
+          var object = datalist.indexIdToOption[indexId] || {value: indexId, label: indexId, data: {}};
+          fillFields (item, item, item, object);
+          item.classList.toggle ('this-index', indexId == document.documentElement.getAttribute ('data-index'));
+          field.appendChild (item);
         });
-        field.appendChild (a);
       });
     } else if (field.localName === 'account-list') {
       field.textContent = '';
@@ -670,6 +685,7 @@ function upgradeList (el) {
           }
           var key = template.getAttribute ('data-value');
           if (key) item.setAttribute ('value', object[key]);
+          item.data = object;
           main.appendChild (item);
           appended = true;
         });

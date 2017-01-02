@@ -237,6 +237,9 @@
     </t:if>
   </section>
 
+  <template id=index-list-item-template>
+    <a data-href-template={GROUP}/i/{value}/ data-field=label data-color-data-field=color class=label-index></a>
+  </template>
   <t:include path=_object_editor.html.tm />
 
 <!--
