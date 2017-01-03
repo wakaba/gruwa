@@ -194,18 +194,24 @@
                   <span data-data-field=title></span>
                 </label>
               </template>
+              <template data-name=edit-milestone-clear>
+                <label>
+                  <input type=radio name=MILESTONE value checked>
+                  (制約なし)
+                </label>
+              </template>
 
-              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' />
+              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' data-empty=(里程標制約なし) />
               <popup-menu>
                 <button type=button title=選択>...</button>
                 <menu hidden>
                   <form action=javascript:>
-                    <list-control-list editable template=edit-milestone filters='[{"key": ["data", "index_type"], "value": "5"}]' />
+                    <list-control-list editable template=edit-milestone clear-template=edit-milestone-clear filters='[{"key": ["data", "index_type"], "value": "5"}]' />
                   </form>
                 </menu>
               </popup-menu>
 
-              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "4"}]' />
+              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "4"}]' data-empty=(ラベル制約なし) />
               <popup-menu>
                 <button type=button title=選択>...</button>
                 <menu hidden>
@@ -224,13 +230,19 @@
                   <span data-data-account-field=name></span>
                 </label>
               </template>
+              <template data-name=edit-clear>
+                <label>
+                  <input type=radio name=ONE value checked>
+                  (制約なし)
+                </label>
+              </template>
 
-              <list-control-list template=view data-empty=(なし) />
+              <list-control-list template=view data-empty=(担当者制約なし) />
               <popup-menu>
                 <button type=button title=変更>...</button>
                 <menu hidden>
                   <form action=javascript:>
-                    <list-control-list editable template=edit />
+                    <list-control-list editable template=edit clear-template=edit-clear />
                   </form>
                 </menu>
               </popup-menu>

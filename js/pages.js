@@ -775,10 +775,18 @@ function upgradeList (el) {
             query.todo_states = {1: true};
           }
         } else {
-          query[ev.target.getAttribute ('key')] = {};
-          ev.target.getSelectedValues ().forEach (function (value) {
-            query[ev.target.getAttribute ('key')][value] = true;
-          });
+          var key = ev.target.getAttribute ('key');
+          if (key === 'assigned_account_ids') {
+            query.assigned = null;
+            ev.target.getSelectedValues ().forEach (function (value) {
+              query.assigned = value;
+            });
+          } else {
+            query[key] = {};
+            ev.target.getSelectedValues ().forEach (function (value) {
+              query[key][value] = true;
+            });
+          }
         }
         el.clearObjects ();
         el.load ();
@@ -795,7 +803,7 @@ function upgradeList (el) {
         }
         if (query.assigned) {
           url += /\?/.test (url) ? '&' : '?';
-          url += 'assigned=' + encodeURIComponent (assigned);
+          url += 'assigned=' + encodeURIComponent (query.assigned);
         }
         Object.keys (query.index_ids).forEach (function (a) {
           url += /\?/.test (url) ? '&' : '?';
@@ -1234,7 +1242,7 @@ function upgradeListControl (control) {
                   }
                 });
               }
-              control._selectedValues.push (ev.target.value);
+              if (ev.target.value) control._selectedValues.push (ev.target.value);
               control._selectedValues = control._selectedValues.filter (function (x) {
                 found[x] = found[x] || 0;
                 return ! found[x]++;
@@ -1260,6 +1268,12 @@ function upgradeListControl (control) {
         list.textContent = list.getAttribute ('data-empty') || '';
       }
 
+      var cTemplate = templates[list.getAttribute ('clear-template') || ''];
+      if (cTemplate) {
+        var item = document.createElement ('list-item');
+        item.appendChild (cTemplate.content.cloneNode (true));
+        list.appendChild (item);
+      }
       var template = templates[list.getAttribute ('template')];
       objects.forEach (function (object) {
         var item = document.createElement ('list-item');

@@ -551,6 +551,7 @@ sub group_object ($$$$) {
             return $db->select ('index', {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
               index_id => {-in => $index_ids},
+              index_type => {-in => [1, 2, 3]}, # blog wiki todo
               user_status => 1, # open
               owner_status => 1, # open
             }, fields => ['index_id', 'title', 'options'], limit => 1)->then (sub {

@@ -88,23 +88,29 @@
             <span data-data-field=title></span>
           </label>
         </template>
+        <template data-name=edit-milestone-clear>
+          <label>
+            <input type=radio name=MILESTONE checked value>
+            なし
+          </label>
+        </template>
 
         <table class=config>
           <tbody>
             <tr>
               <th>里程標
               <td>
-                <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' />
+                <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' data-empty=(なし) />
                 <popup-menu>
                   <button type=button title=変更>...</button>
                   <menu hidden>
-                    <list-control-list editable template=edit-milestone filters='[{"key": ["data", "index_type"], "value": "5"}]' />
+                    <list-control-list editable template=edit-milestone clear-template=edit-milestone-clear filters='[{"key": ["data", "index_type"], "value": "5"}]' />
                   </menu>
                 </popup-menu>
             <tr>
               <th>ラベル
               <td>
-                <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "4"}]' />
+                <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "4"}]' data-empty=(なし) />
                 <popup-menu>
                   <button type=button title=変更>...</button>
                   <menu hidden>
@@ -114,7 +120,7 @@
             <tr>
               <th>日記、Wiki、TODOリスト
               <td>
-                <list-control-list template=view filters='[{"key": ["data", "index_type"], "valueIn": {"1": true, "2": true, "3": true}}]' />
+                <list-control-list template=view filters='[{"key": ["data", "index_type"], "valueIn": {"1": true, "2": true, "3": true}}]' data-empty=(なし) />
                 <popup-menu>
                   <button type=button title=変更>...</button>
                   <menu hidden>
