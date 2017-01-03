@@ -112,7 +112,9 @@ function createBodyHTML (value, opts) {
 
   if (opts.edit) {
     doc.body.setAttribute ('contenteditable', '');
-    doc.body.setAttribute ('onload', 'document.body.focus ()');
+    if (!opts.focusTitle) {
+      doc.body.setAttribute ('onload', 'document.body.focus ()');
+    }
   }
   doc.body.innerHTML = value || '';
 
@@ -326,14 +328,14 @@ function fillFields (contextEl, rootEl, el, object) {
   }
 } // fillFields
 
-function fillFormControls (form, object) {
+function fillFormControls (form, object, opts) {
   var wait = [];
 
   $$c (form, 'iframe.control[data-name]').forEach (function (control) {
     var value = object.data[control.getAttribute ('data-name')];
     var valueWaitings = [];
     control.setAttribute ('sandbox', 'allow-scripts allow-popups');
-    control.setAttribute ('srcdoc', createBodyHTML (value, {edit: true}));
+    control.setAttribute ('srcdoc', createBodyHTML (value, {edit: true, focusTitle: opts.focusTitle}));
     var mc = new MessageChannel;
     control.onload = function () {
       this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
@@ -728,7 +730,7 @@ function upgradeList (el) {
         data.index_ids[el.getAttribute ('src-index_id')] = 1;
         var wikiName = el.getAttribute ('src-wiki_name');
         if (wikiName) data.title = wikiName;
-        editObject (article, {data: data}, {open: true});
+        editObject (article, {data: data}, {open: true, focusTitle: button.hasAttribute ('data-focus-title')});
       };
     });
   });
@@ -763,7 +765,7 @@ function upgradeList (el) {
       qp.index.forEach (function (i) { query.index_ids[i] = true });
     }
     $$c (el, 'list-query').forEach (function (e) {
-      fillFormControls (e, {data: query});
+      fillFormControls (e, {data: query}, {});
       e.onchange = function (ev) {
         if (ev.target.name === 'todo') {
           query.todo = ev.target.value;
@@ -837,35 +839,26 @@ function editObject (article, object, opts) {
   var template = document.querySelector ('#edit-form-template');
 
   var container = article.querySelector ('edit-container');
-  if (container) {
-    if (opts.open) {
-      container.hidden = false;
-      article.classList.add ('editing');
-      var body = container.querySelector ('.control[data-name=body]');
-      if (body) body.focus ();
-    }
-    return Promise.all (wait);
-  }
+  if (!container) {
+    container = document.createElement ('edit-container');
+    container.hidden = true;
+    container.appendChild (template.content.cloneNode (true));
+    article.appendChild (container);
+    var form = container.querySelector ('form');
 
-  container = document.createElement ('edit-container');
-  container.hidden = true;
-  container.appendChild (template.content.cloneNode (true));
-  article.appendChild (container);
-  var form = container.querySelector ('form');
+    article.save = function (opts) {
+      return withFormDisabled (form, function () {
+        return saveObject (article, form, object, opts);
+      });
+    }; // save
 
-  article.save = function (opts) {
-    return withFormDisabled (form, function () {
-      return saveObject (article, form, object, opts);
+    $$c (form, 'main .control, header input').forEach (function (control) {
+      control.onfocus = function () {
+        container.scrollIntoView ();
+      };
     });
-  }; // save
 
-  $$c (form, 'main .control, header input').forEach (function (control) {
-    control.onfocus = function () {
-      container.scrollIntoView ();
-    };
-  });
-
-  wait.push (fillFormControls (form, object));
+    wait.push (fillFormControls (form, object, {focusTitle: opts.focusTitle}));
 
   // XXX autosave
 
@@ -918,11 +911,18 @@ function editObject (article, object, opts) {
   addEventListener ('resize', resize);
   wait.push (Promise.resolve ().then (resize));
 
+  } // !container
+
   if (opts.open) {
     container.hidden = false;
     article.classList.add ('editing');
-    var body = container.querySelector ('.control[data-name=body]');
-    if (body) body.focus ();
+    if (opts.focusTitle) {
+      var title = container.querySelector ('input[name=title]');
+      if (title) title.focus ();
+    } else {
+      var body = container.querySelector ('.control[data-name=body]');
+      if (body) body.focus ();
+    }
   }
 
   return Promise.all (wait);

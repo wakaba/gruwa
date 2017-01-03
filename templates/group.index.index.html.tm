@@ -157,14 +157,19 @@
 
       <t:if x="defined $index and
                not defined $object and
-               not defined $wiki_name and
-               ($index->{index_type} == 1 or # blob
-                $index->{index_type} == 2 or # wiki
-                $index->{index_type} == 3) # todo">
-        <article class="object new">
-          <p class=operations>
-            <button type=button class=edit-button>新しい記事を書く</button>
-        </article>
+               not defined $wiki_name">
+        <t:if x="$index->{index_type} == 1 or # blob
+                 $index->{index_type} == 2 # wiki">
+          <article class="object new">
+            <p class=operations>
+              <button type=button class=edit-button>新しい記事を書く</button>
+          </article>
+        <t:elsif x="$index->{index_type} == 3 # todo">
+          <article class="object new">
+            <p class=operations>
+              <button type=button class=edit-button data-focus-title>新しい TODO</button>
+          </article>
+        </t:if>
       </t:if>
 
       <t:if x="not defined $wiki_name and
