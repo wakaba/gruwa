@@ -49,31 +49,49 @@
           <tr>
             <th>担当者
             <td>
+              <input type=hidden name=edit_assigned_account_id value=1>
               <list-control name=assigned_account_id key=assigned_account_ids list=member-list>
-                <input type=hidden name=edit_assigned_account_id value=1>
-                <template>
-                  <list-item-label data-field=label />
+                <template data-name=view>
+                  <list-item-label data-data-account-field=name />
                 </template>
-                <list-control-main />
-                <list-control-footer>
-                  <button type=button class=edit-button title=編集>...</button>
-                  <list-dropdown hidden />
-                </list-control-footer>
+                <template data-name=edit>
+                  <label>
+                    <input type=checkbox data-data-field=account_id data-checked-field=selected>
+                    <span data-data-account-field=name></span>
+                  </label>
+                </template>
+
+                <list-control-list template=view />
+                <popup-menu>
+                  <button type=button title=変更>...</button>
+                  <menu hidden>
+                    <list-control-list editable template=edit />
+                  </menu>
+                </popup-menu>
               </list-control>
         <tbody>
           <tr>
             <th>所属
             <td>
+              <input type=hidden name=edit_index_id value=1>
               <list-control name=index_id key=index_ids list=index-list>
-                <input type=hidden name=edit_index_id value=1>
-                <template>
-                  <list-item-label data-field=label />
+                <template data-name=view>
+                  <list-item-label data-data-field=title data-color-data-field=color />
                 </template>
-                <list-control-main />
-                <list-control-footer>
-                  <button type=button class=edit-button title=編集>...</button>
-                  <list-dropdown hidden />
-                </list-control-footer>
+                <template data-name=edit>
+                  <label data-color-data-field=color>
+                    <input type=checkbox data-data-field=index_id data-checked-field=selected>
+                    <span data-data-field=title></span>
+                  </label>
+                </template>
+
+                <list-control-list template=view />
+                <popup-menu>
+                  <button type=button title=変更>...</button>
+                  <menu hidden>
+                    <list-control-list editable template=edit />
+                  </menu>
+                </popup-menu>
               </list-control>
       </table>
     </details>
@@ -94,32 +112,5 @@
       data-link-url-prompt=リンク先のURLを指定してください。
       data-link-wiki-name-prompt=リンク先のWiki名を指定してください。 />
 
-  <list-container type=datalist src=i/list.json key=index_list>
-    <template data-label=title data-value=index_id>
-    </template>
-    <datalist id=index-list />
-  </list-container>
-
-  <list-container type=datalist src=members.json key=members>
-    <template data-account-label=name data-value=account_id>
-    </template>
-    <datalist id=member-list />
-  </list-container>
-
-  <template id=list-control-editor>
-    <template>
-      <label>
-        <input type=checkbox data-checked-field=selected>
-        <span data-field=label></span>
-      </label>
-    </template>
-    <form hidden class=add-form>
-      <span>
-        <input required>
-      </span>
-      <span>
-        <button type=submit class=add-button title=追加>+</>
-      </span>
-    </form>
-    <list-editor-main />
-  </template>
+  <list-container type=$with id=index-list src=i/list.json key=index_list itemkey=index_id />
+  <list-container type=$with id=member-list src=members.json key=members itemkey=account_id accounts />

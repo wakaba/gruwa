@@ -216,6 +216,20 @@ function fillFields (contextEl, rootEl, el, object) {
       return encodeURIComponent (object[k]);
     }));
   });
+  $$ (el, '[data-color-field]').forEach (function (field) {
+    var value = object[field.getAttribute ('data-color-field')];
+    if (value) {
+      var m = value.match (/#(..)(..)(..)/);
+      var r = parseInt ("0x" + m[1]);
+      var g = parseInt ("0x" + m[2]);
+      var b = parseInt ("0x" + m[3]);
+      var y = 0.299 * r + 0.587 * g + 0.114 * b;
+      var c = y > 127 + 64 ? 0 : 255;
+      field.style.backgroundColor = value;
+      field.style.color = 'rgb('+c+','+c+','+c+')';
+      field.classList.add ('colored');
+    }
+  });
   $$ (el, '[data-color-data-field]').forEach (function (field) {
     var value = object.data ? object.data[field.getAttribute ('data-color-data-field')] : null;
     if (value) {
@@ -232,7 +246,10 @@ function fillFields (contextEl, rootEl, el, object) {
   });
   $$ (el, '[data-data-field]').forEach (function (field) {
     var value = object.data ? object.data[field.getAttribute ('data-data-field')] : null;
-    if (field.localName === 'time') {
+    if (field.localName === 'input' ||
+        field.localName === 'select') {
+      field.value = value;
+    } else if (field.localName === 'time') {
       var date = new Date (parseFloat (value) * 1000);
       try {
         field.setAttribute ('datetime', date.toISOString ());
@@ -243,18 +260,11 @@ function fillFields (contextEl, rootEl, el, object) {
     } else if (field.localName === 'index-list') {
       field.textContent = '';
       var template = document.querySelector ('#index-list-item-template');
-      $with ('index-list').then (function (datalist) {
-        if (!datalist.indexIdToOption) {
-          var list = {};
-          $$ (datalist, 'option').forEach (function (option) {
-            list[option.value] = option;
-          });
-          datalist.indexIdToOption = list;
-        }
+      $with ('index-list').then (function (list) {
         Object.keys (value || {}).forEach (function (indexId) {
           var item = document.createElement ('index-list-item');
           item.appendChild (template.content.cloneNode (true));
-          var object = datalist.indexIdToOption[indexId] || {value: indexId, label: indexId, data: {}};
+          var object = list[indexId] || {index_id: indexId, title: indexId};
           fillFields (item, item, item, object);
           item.classList.toggle ('this-index', indexId == document.documentElement.getAttribute ('data-index'));
           field.appendChild (item);
@@ -299,6 +309,9 @@ function fillFields (contextEl, rootEl, el, object) {
     } else {
       field.textContent = value || field.getAttribute ('data-empty') || '';
     }
+  });
+  $$ (el, '[data-data-account-field]').forEach (function (field) {
+    field.textContent = object && object.data && object.data.account ? object.data.account[field.getAttribute ('data-data-account-field')] : null;
   });
   if (rootEl.startEdit) {
     $$ (el, '.edit-button').forEach (function (button) {
@@ -405,116 +418,10 @@ function fillFormControls (form, object) {
   });
 
   $$c (form, 'list-control[name]').forEach (function (control) {
-    var modified = false;
+    upgradeListControl (control);
 
-    control.clearItems = function () {
-      control.items = [];
-      var main = control.querySelector ('list-control-main');
-      main.textContent = '';
-    };
-    control.addItems = function (newItems) {
-      control.items = control.items.concat (newItems);
-      var template = control.querySelector ('template');
-      var main = control.querySelector ('list-control-main');
-      $with (control.getAttribute ('list')).then (function (datalist) {
-        var valueToLabel = {};
-        $$c (datalist, 'option').forEach (function (option) {
-          valueToLabel[option.value] = option.label;
-        });
-        newItems.forEach (function (item) {
-          var itemEl = document.createElement ('list-item');
-          itemEl.appendChild (template.content.cloneNode (true));
-          item.label = valueToLabel[item.value];
-          fillFields (main, itemEl, itemEl, item);
-          main.appendChild (itemEl);
-        });
-      });
-    };
-
-    wait.push ($with (control.getAttribute ('list')).then (function (datalist) {
-      $$c (control, '.edit-button').forEach (function (el) {
-        el.onclick = function () {
-          if (!control.editor) {
-            var template = document.querySelector ('#list-control-editor');
-            if (!template) return;
-            control.editor = control.querySelector ('list-dropdown');
-            control.editor.appendChild (template.content.cloneNode (true));
-            control.editor.hidden = true;
-
-            var eTemplate = control.editor.querySelector ('template');
-            var valueToSelected = {};
-            var valueListed = {};
-            control.items.forEach (function (item) {
-              valueToSelected[item.value] = true;
-            });
-            var listEl = control.editor.querySelector ('list-editor-main');
-            var addItem = function (option) {
-              var itemEl = document.createElement ('list-item');
-              itemEl.appendChild (eTemplate.content.cloneNode (true));
-              itemEl.setAttribute ('value', option.value);
-              fillFields (listEl, itemEl, itemEl, option);
-              listEl.appendChild (itemEl);
-            }; // addItem
-            $$c (datalist, 'option').forEach (function (option) {
-              addItem ({
-                label: option.label,
-                value: option.value,
-                selected: valueToSelected[option.value],
-              });
-              valueListed[option.value] = true;
-            });
-            control.items.forEach (function (item) {
-              if (!valueListed[item.value]) {
-                addItem ({
-                  label: item.value,
-                  value: item.value,
-                  selected: true,
-                });
-              }
-            });
-            listEl.onchange = function (ev) {
-              var items = $$c (listEl, 'list-item').filter (function (itemEl) {
-                return itemEl.querySelector ('input[type=checkbox]:checked');
-              }).map (function (el) {
-                return {value: el.getAttribute ('value')};
-              });
-              control.clearItems ();
-              control.addItems (items);
-              modified = true;
-              ev.stopPropagation ();
-            };
-
-            var allowAdd = control.hasAttribute ('allowadd');
-            $$c (control.editor, '.add-form').forEach (function (e) {
-              e.hidden = !allowAdd;
-              if (!allowAdd) return;
-              $$c (e, '.add-button').forEach (function (b) {
-                b.onclick = function () {
-                  var input = e.querySelector ('input');
-                  var v = input.value;
-                  if (!v) return;
-                  addItem ({label: v, value: v, selected: true});
-                  listEl.dispatchEvent (new Event ('change'));
-                  input.value = '';
-                };
-              });
-            });
-          }
-          control.editor.hidden = !control.editor.hidden;
-          el.classList.toggle ('active', !control.editor.hidden);
-          if (modified && control.editor.hidden) {
-            modified = false;
-            control.dispatchEvent (new Event ('change', {bubbles: true}));
-          }
-        };
-      });
-
-      var dataKey = control.getAttribute ('key');
-      control.addItems (Object.keys (object.data[dataKey] || {}).map (function (v) {
-        return {value: v};
-      }));
-    })); // $with
-    control.clearItems ();
+    var dataKey = control.getAttribute ('key');
+    control.setSelectedValues (Object.keys (object.data[dataKey] || {}));
   }); // list-control
 
   return Promise.all (wait);
@@ -531,8 +438,8 @@ function upgradeList (el) {
     var type = this.getAttribute ('type');
     if (type === 'table') {
       return $$c (this, 'table > tbody')[0];
-    } else if (type === 'datalist') {
-      return $$c (this, 'datalist')[0];
+    } else if (type === '$with') {
+      return {};
     } else {
       return $$c (this, 'list-main')[0];
     }
@@ -546,7 +453,8 @@ function upgradeList (el) {
   el.showObjects = function (objects, opts) {
     var template = $$ (this, 'template')[0];
     var main = el.getListMain ();
-    if (!template || !main) return Promise.resolve (null);
+    if (!main) return Promise.resolve (null);
+    if (main.localName && !template) return Promise.resolve (null);
 
     var listObjects = Object.values (objects);
 
@@ -574,7 +482,7 @@ function upgradeList (el) {
       object: 'article',
     }[itemType] || {
       table: 'tr',
-      datalist: 'option',
+      $with: '$with',
     }[el.getAttribute ('type')] || 'list-item';
 
     var fill = function (item, object) {
@@ -671,24 +579,23 @@ function upgradeList (el) {
       }
       if (sorter) listObjects = listObjects.sort (sorter);
 
-      if (elementType === 'option') {
+      if (elementType === '$with') {
+        var itemKey = el.getAttribute ('itemkey');
+        var list = {};
+        var mergeAccounts = el.hasAttribute ('accounts');
+        var w = [];
         listObjects.forEach (function (object) {
-          var item = document.createElement (elementType);
-          item.className = template.className;
-          var key = template.getAttribute ('data-label');
-          if (key) item.setAttribute ('label', object[key]);
-          var aKey = template.getAttribute ('data-account-label');
-          if (aKey) {
-            wait.push ($with ('account', {accountId: object.account_id}).then (function (account) {
-              item.setAttribute ('label', account[aKey]);
+          var key = object[itemKey];
+          list[key] = object;
+          if (mergeAccounts) {
+            w.push ($with ('account', {accountId: key}).then (function (account) {
+              object.account = account || {name: key};
             }));
           }
-          var key = template.getAttribute ('data-value');
-          if (key) item.setAttribute ('value', object[key]);
-          item.data = object;
-          main.appendChild (item);
-          appended = true;
         });
+        wait.push (Promise.all (w).then (function () {
+          $with.register (el.id, function () { return list });
+        }));
       } else {
         listObjects.forEach (function (object) {
           var item = document.createElement (elementType);
@@ -782,10 +689,6 @@ function upgradeList (el) {
       el.clearObjects ();
       return show (json);
     }).then (function (main) {
-      if (main && main.localName === 'datalist' && main.id) {
-        main.setAttribute ('data-loaded', '');
-        upgradeDatalist (main);
-      }
       as.end ({ok: true});
     }).catch (function (error) {
       as.end ({error: error});
@@ -1022,9 +925,9 @@ function saveObject (article, form, object, opts) {
   $$ (form, 'list-control[name]').forEach (function (control) {
     var name = control.getAttribute ('name');
     var cc = {};
-    control.items.forEach (function (item) {
-      fd.append (name, item.value);
-      cc[item.value] = 1;
+    control.getSelectedValues ().forEach (function (value) {
+      fd.append (name, value);
+      cc[value] = 1;
     });
     c.push (function () { object.data[control.getAttribute ('key')] = cc });
   });
@@ -1232,6 +1135,105 @@ function upgradeForm (form) {
   };
 } // upgradeForm
 
+function upgradeListControl (control) {
+  control._selectedValues = [];
+
+  control.setSelectedValues = function (values) {
+    this._selectedValues = values;
+    this._updateView ();
+  }; // setSelectedValues
+
+  control.getSelectedValues = function () {
+    return this._selectedValues;
+  }; // getSelectedValues
+
+  control.getAvailObjects = function () {
+    return this._availObjects;
+  }; // getAvailObjects
+
+  control._updateView = function () {
+    var avail = this._availObjects;
+    if (!avail) return;
+
+    var templates = {};
+    $$c (control, 'template').forEach (function (e) {
+      templates[e.getAttribute ('data-name')] = e;
+    });
+
+    $$c (control, 'list-control-list').forEach (function (list) {
+      list.textContent = '';
+      var objects;
+      if (list.hasAttribute ('editable')) {
+        var hasValue = {};
+        objects = control._selectedValues.map (function (value) {
+          hasValue[value] = true;
+          return {data: avail[value] || {}, selected: true};
+        }).concat (Object.keys (avail).filter (function (value) {
+          return ! hasValue[value];
+        }).map (function (value) {
+          return {data: avail[value]};
+        }));
+
+        list.onchange = function (ev) {
+          if (ev.target.localName === 'input') {
+            if (ev.target.checked) {
+              control._selectedValues.push (ev.target.value);
+            } else {
+              control._selectedValues = control._selectedValues.filter (function (v) { return v !== ev.target.value });
+            }
+            control._updateView ();
+            control.dispatchEvent (new Event ('change', {bubbles: true}));
+          }
+          ev.stopPropagation ();
+        }; // onchange
+      } else {
+        objects = control._selectedValues.map (function (value) {
+          return {data: avail[value] || {}};
+        });
+      }
+      var template = templates[list.getAttribute ('template')];
+      objects.forEach (function (object) {
+        var item = document.createElement ('list-item');
+        item.appendChild (template.content.cloneNode (true));
+        fillFields (list, item, item, object);
+        list.appendChild (item);
+      });
+    });
+  }; // _updateView
+
+  $with (control.getAttribute ('list')).then (function (list) {
+    control._availObjects = list;
+    control._updateView ();
+  });
+} // upgradeListControl
+
+function upgradePopupMenu (e) {
+  var listeners = [];
+  var toggle = function (b) {
+    e.classList.toggle ('active');
+    var isActive = e.classList.contains ('active');
+    $$c (e, 'menu').forEach (function (m) {
+      m.hidden = !isActive;
+    });
+    if (e.isActive) {
+      var f = function (ev) {
+        toggle ();
+      };
+      window.addEventListener ('click', f);
+      listeners.push (f);
+    } else {
+      listeners.forEach (function (f) {
+        window.removeEventListner ('click', f);
+      });
+      listeners = [];
+    }
+  }; // toggle
+  $$c (e, 'button').forEach (function (b) {
+    b.onclick = function () { toggle (this) };
+  });
+  e.onclick = function (ev) { ev.stopPropagation () };
+} // upgradePopupMenu
+
 (function () {
   var accountData = {};
   var waiting = {};
@@ -1277,14 +1279,6 @@ function upgradeAccountName (e) {
   });
 } // upgradeAccountName
 
-function upgradeDatalist (e) {
-  if (e.id) {
-    $with.register (e.id, function () {
-      return e;
-    });
-  }
-} // upgradeDatalist
-
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {
     Array.prototype.forEach.call (m.addedNodes, function (x) {
@@ -1307,10 +1301,10 @@ function upgradeDatalist (e) {
       } else if (x.localName) {
         $$ (x, 'form[action="javascript:"][data-action]').forEach (upgradeForm);
       }
-      if (x.localName === 'datalist' && x.id && x.hasAttribute ('data-loaded')) {
-        upgradeDataList (x);
+      if (x.localName === 'popup-menu') {
+        upgradePopupMenu (x);
       } else if (x.localName) {
-        $$ (x, 'datalist[id][data-loaded]').forEach (upgradeDatalist);
+        $$ (x, 'popup-menu').forEach (upgradePopupMenu);
       }
     });
   });
@@ -1318,7 +1312,7 @@ function upgradeDatalist (e) {
 $$ (document, 'list-container').forEach (upgradeList);
 $$ (document, 'form[action="javascript:"][data-action]').forEach (upgradeForm);
 $$ (document, 'account-name[account_id]').forEach (upgradeAccountName);
-$$ (document, 'datalist[id][data-loaded]').forEach (upgradeDatalist);
+$$ (document, 'popup-menu').forEach (upgradePopupMenu);
 
 /*
 

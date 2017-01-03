@@ -238,7 +238,7 @@
   </section>
 
   <template id=index-list-item-template>
-    <a data-href-template={GROUP}/i/{value}/ data-field=label data-color-data-field=color class=label-index></a>
+    <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
   </template>
   <t:include path=_object_editor.html.tm />
 
