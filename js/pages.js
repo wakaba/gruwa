@@ -1161,7 +1161,6 @@ function upgradeListControl (control) {
     });
 
     $$c (control, 'list-control-list').forEach (function (list) {
-      list.textContent = '';
       var objects;
       if (list.hasAttribute ('editable')) {
         var hasValue = {};
@@ -1177,7 +1176,19 @@ function upgradeListControl (control) {
         list.onchange = function (ev) {
           if (ev.target.localName === 'input') {
             if (ev.target.checked) {
+              var found = {};
+              if (ev.target.type === 'radio') {
+                $$ (list, 'input[type=radio]:not(:checked)').forEach (function (i) {
+                  if (i.name === ev.target.name) {
+                    found[i.value] = true;
+                  }
+                });
+              }
               control._selectedValues.push (ev.target.value);
+              control._selectedValues = control._selectedValues.filter (function (x) {
+                found[x] = found[x] || 0;
+                return ! found[x]++;
+              });
             } else {
               control._selectedValues = control._selectedValues.filter (function (v) { return v !== ev.target.value });
             }
@@ -1191,6 +1202,38 @@ function upgradeListControl (control) {
           return {data: avail[value] || {}};
         });
       }
+      var filters = list.getAttribute ('filters');
+      if (filters) {
+        filters = JSON.parse (filters);
+        objects = objects.filter (function (object) {
+          for (var i = 0; i < filters.length; i++) {
+            var filter = filters[i];
+            if (filter.key) {
+              var v = object;
+              for (var k = 0; k < filter.key.length; k++) {
+                v = v[filter.key[k]];
+                if (!v) {
+                  v = null;
+                  break;
+                }
+              }
+              if (filter.valueIn) {
+                if (!filter.valueIn[v]) return false;
+              } else {
+                if (filter.value != v) return false;
+              }
+            }
+          }
+          return true;
+        });
+      }
+
+      if (objects.length) {
+        list.textContent = '';
+      } else {
+        list.textContent = list.getAttribute ('data-empty') || '';
+      }
+
       var template = templates[list.getAttribute ('template')];
       objects.forEach (function (object) {
         var item = document.createElement ('list-item');
@@ -1215,7 +1258,7 @@ function upgradePopupMenu (e) {
     $$c (e, 'menu').forEach (function (m) {
       m.hidden = !isActive;
     });
-    if (e.isActive) {
+    if (isActive) {
       var f = function (ev) {
         toggle ();
       };
@@ -1223,7 +1266,7 @@ function upgradePopupMenu (e) {
       listeners.push (f);
     } else {
       listeners.forEach (function (f) {
-        window.removeEventListner ('click', f);
+        window.removeEventListener ('click', f);
       });
       listeners = [];
     }
@@ -1231,7 +1274,12 @@ function upgradePopupMenu (e) {
   $$c (e, 'button').forEach (function (b) {
     b.onclick = function () { toggle (this) };
   });
-  e.onclick = function (ev) { ev.stopPropagation () };
+  e.onclick = function (ev) {
+    if (ev.target.localName === 'input') {
+      toggle ();
+    }
+    ev.stopPropagation ();
+  };
 } // upgradePopupMenu
 
 (function () {

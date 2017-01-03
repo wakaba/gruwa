@@ -61,31 +61,7 @@
                   </label>
                 </template>
 
-                <list-control-list template=view />
-                <popup-menu>
-                  <button type=button title=変更>...</button>
-                  <menu hidden>
-                    <list-control-list editable template=edit />
-                  </menu>
-                </popup-menu>
-              </list-control>
-        <tbody>
-          <tr>
-            <th>所属
-            <td>
-              <input type=hidden name=edit_index_id value=1>
-              <list-control name=index_id key=index_ids list=index-list>
-                <template data-name=view>
-                  <list-item-label data-data-field=title data-color-data-field=color />
-                </template>
-                <template data-name=edit>
-                  <label data-color-data-field=color>
-                    <input type=checkbox data-data-field=index_id data-checked-field=selected>
-                    <span data-data-field=title></span>
-                  </label>
-                </template>
-
-                <list-control-list template=view />
+                <list-control-list template=view data-empty=(なし) />
                 <popup-menu>
                   <button type=button title=変更>...</button>
                   <menu hidden>
@@ -94,6 +70,59 @@
                 </popup-menu>
               </list-control>
       </table>
+
+      <input type=hidden name=edit_index_id value=1>
+      <list-control name=index_id key=index_ids list=index-list>
+        <template data-name=view>
+          <list-item-label data-data-field=title data-color-data-field=color />
+        </template>
+        <template data-name=edit>
+          <label data-color-data-field=color>
+            <input type=checkbox data-data-field=index_id data-checked-field=selected>
+            <span data-data-field=title></span>
+          </label>
+        </template>
+        <template data-name=edit-milestone>
+          <label data-color-data-field=color>
+            <input type=radio name=MILESTONE data-data-field=index_id data-checked-field=selected>
+            <span data-data-field=title></span>
+          </label>
+        </template>
+
+        <table class=config>
+          <tbody>
+            <tr>
+              <th>里程標
+              <td>
+                <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' />
+                <popup-menu>
+                  <button type=button title=変更>...</button>
+                  <menu hidden>
+                    <list-control-list editable template=edit-milestone filters='[{"key": ["data", "index_type"], "value": "5"}]' />
+                  </menu>
+                </popup-menu>
+            <tr>
+              <th>ラベル
+              <td>
+                <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "4"}]' />
+                <popup-menu>
+                  <button type=button title=変更>...</button>
+                  <menu hidden>
+                    <list-control-list editable template=edit filters='[{"key": ["data", "index_type"], "value": "4"}]' />
+                  </menu>
+                </popup-menu>
+            <tr>
+              <th>日記、Wiki、TODOリスト
+              <td>
+                <list-control-list template=view filters='[{"key": ["data", "index_type"], "valueIn": {"1": true, "2": true, "3": true}}]' />
+                <popup-menu>
+                  <button type=button title=変更>...</button>
+                  <menu hidden>
+                    <list-control-list editable template=edit filters='[{"key": ["data", "index_type"], "valueIn": {"1": true, "2": true, "3": true}}]' />
+                  </menu>
+                </popup-menu>
+        </table>
+      </list-control>
     </details>
   </form>
 </template>
