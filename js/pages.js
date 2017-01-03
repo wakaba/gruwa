@@ -277,11 +277,12 @@ function fillFields (contextEl, rootEl, el, object) {
       });
     } else if (field.localName === 'account-list') {
       field.textContent = '';
+      var template = document.querySelector ('#account-list-item-template');
       Object.keys (value || {}).forEach (function (accountId) {
-        var a = document.createElement ('account-name');
-        a.setAttribute ('account_id', accountId);
-        a.textContent = accountId;
-        field.appendChild (a);
+        var item = document.createElement ('list-item');
+        item.appendChild (template.content.cloneNode (true));
+        fillFields (item, item, item, {account_id: accountId});
+        field.appendChild (item);
       });
     } else if (field.localName === 'iframe') {
       field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
@@ -310,6 +311,13 @@ function fillFields (contextEl, rootEl, el, object) {
         field.hidden = false;
       } else {
         field.hidden = true;
+      }
+    } else if (field.localName === 'progress') {
+      field.setAttribute ('value', value);
+      var maxKey = field.getAttribute ('data-max-data-field');
+      if (maxKey) {
+        var max = object.data ? object.data[maxKey] : null;
+        if (max) field.setAttribute ('max', max);
       }
     } else {
       field.textContent = value || field.getAttribute ('data-empty') || '';

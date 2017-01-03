@@ -559,6 +559,96 @@ list-container.object-search search-snippet {
   color: var(--main-color);
 }
 
+.todo-list list-main {
+  display: block;
+}
+
+.todo-list list-main > list-item {
+  display: block;
+  margin-bottom: .2em;
+  border-radius: .2em;
+  padding: .2em;
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+}
+
+.todo-list list-main > list-item:nth-child(2n) {
+  background-color: var(--light-2-background-color);
+  color: var(--light-2-color);
+}
+
+.todo-list list-main > list-item::after {
+  content: "";
+  clear: both;
+  display: block;
+}
+
+.todo-list list-main > list-item > todo-state {
+  float: left;
+  margin-right: .5em;
+  font-size: 70%;
+}
+
+.todo-list list-main > list-item .main-line {
+}
+
+.todo-list list-main > list-item .main-line a {
+  display: block;
+  padding-top: .3em;
+  padding-bottom: .3em;
+  font-weight: bolder;
+}
+
+.todo-list list-main > list-item .main-line a {
+  text-decoration: none;
+}
+
+.todo-list list-main > list-item .info-line {
+  font-size: 80%;
+  margin-left: 5rem;
+  padding-top: .3em;
+  padding-bottom: .3em;
+  background-color: var(--small-background-color);
+  color: var(--small-color);
+}
+
+.todo-list list-main > list-item .info-line index-list a,
+.todo-list list-main > list-item .info-line account-list a {
+  margin-left: 1em;
+  text-decoration: none;
+}
+
+.todo-list list-main > list-item .info-line checkbox-count:not([hidden]) {
+  display: inline-block;
+  min-width: 5em;
+  margin-right: 1rem;
+  vertical-align: middle;
+}
+
+.todo-list list-main > list-item .info-line checkbox-count > span {
+  display: block;
+  text-align: center;
+  line-height: 1.0;
+  font-size: 80%;
+}
+
+.todo-list list-main > list-item .info-line checkbox-count count-value {
+  font-weight: bolder;
+  font-family: cursive;
+}
+
+.todo-list list-main > list-item .info-line checkbox-count progress {
+  display: block;
+  width: 5rem;
+  height: .6em;
+  line-height: 1.0;
+  font-size: 80%;
+}
+
+.todo-list .pager {
+  margin-top: .5em;
+}
+
 list-is-empty:not([hidden]) {
   display: block;
   margin-top: 1em;

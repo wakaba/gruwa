@@ -205,6 +205,10 @@ form {
   text-align: right;
 }
 
+.operations.pager {
+  text-align: center;
+}
+
 .operations > * {
   direction: ltr;
 }
@@ -336,7 +340,8 @@ button:enabled {
   cursor: pointer;
 }
 
-.edit-button {
+.edit-button,
+.next-page-button {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -348,11 +353,13 @@ button:enabled {
   background: rgba(236, 236, 255, 0.7);
 }
 
-.edit-button:hover:enabled {
+.edit-button:hover:enabled,
+.next-page-button:hover:enabled {
   background: rgb(236, 236, 255);
 }
 
-.edit-button:disabled {
+.edit-button:disabled,
+.next-page-button:disabled {
   color: gray;
 }
 
@@ -487,6 +494,7 @@ todo-state:not([hidden]) {
   margin: .3em 0;
   padding: .3em;
   font-size: 80%;
+  text-align: center;
 }
 
 todo-state[value="1"] {

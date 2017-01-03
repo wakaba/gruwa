@@ -93,17 +93,21 @@
                    $index->{index_type} == 5) # milestone">
         <t:attr name="'src-limit'" value=100>
         <t:attr name="'query'" value="''">
+        <t:class name="'todo-list'">
         <template>
           <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
-          <p>
+          <p class=main-line>
             <a data-href-template={GROUP}/o/{object_id}/>
               <span data-data-field=title data-empty=■ />
             </a>
-          <p>
-            <span data-if-data-field=all_checkbox_count>
-              <span data-data-field=checked_checkbox_count data-empty=0 /> /
-              <span data-data-field=all_checkbox_count />
-            </span>
+          <p class=info-line>
+            <checkbox-count data-if-data-field=all_checkbox_count>
+              <span>
+                <count-value data-data-field=checked_checkbox_count data-empty=0 /> /
+                <count-value data-data-field=all_checkbox_count />
+              </span>
+              <progress data-data-field=checked_checkbox_count data-max-data-field=all_checkbox_count />
+            </checkbox-count>
             <time data-field=created class=ambtime />
             (<time data-field=updated class=ambtime /> 編集)
             <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=里程標 />
@@ -260,11 +264,17 @@
         <template id=index-list-item-template>
           <a data-href-template=./?index={index_id} data-field=title data-color-field=color class=label-index></a>
         </template>
+        <template id=account-list-item-template>
+          <a data-href-template=./?assigned={account_id}><account-name data-field=account_id /></a>
+        </template>
 
         <list-main/>
       <t:else>
         <template id=index-list-item-template>
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
+        </template>
+        <template id=account-list-item-template>
+          <account-name data-field=account_id />
         </template>
 
         <list-main></list-main>
@@ -283,7 +293,7 @@
 
       <action-status hidden stage-load=読み込み中... />
       <t:if x="not defined $wiki_name">
-        <p class=operations>
+        <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       </t:if>
     </list-container>

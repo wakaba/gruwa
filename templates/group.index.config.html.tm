@@ -113,6 +113,10 @@
             <action-status hidden stage-fetch=保存中... ok=保存しました。 />
         </form>
       </t:if>
+
+      <t:if x="$index->{index_type} == 3 # todo">
+        <p>ラベルや里程標は、<a href=../../config>グループ設定</a>から作成できます。
+      </t:if>
     </section>
   </section>
 
