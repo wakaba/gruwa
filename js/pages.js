@@ -261,12 +261,15 @@ function fillFields (contextEl, rootEl, el, object) {
       field.textContent = '';
       var template = document.querySelector ('#index-list-item-template');
       $with ('index-list').then (function (list) {
-        Object.keys (value || {}).forEach (function (indexId) {
+        var objects = Object.keys (value || {}).map (function (indexId) {
+          return list[indexId] || {index_id: indexId, title: indexId};
+        });
+        objects = applyFilters (objects, field.getAttribute ('filters'));
+        objects.forEach (function (object) {
           var item = document.createElement ('index-list-item');
           item.appendChild (template.content.cloneNode (true));
-          var object = list[indexId] || {index_id: indexId, title: indexId};
           fillFields (item, item, item, object);
-          item.classList.toggle ('this-index', indexId == document.documentElement.getAttribute ('data-index'));
+          item.classList.toggle ('this-index', object.index_id == document.documentElement.getAttribute ('data-index'));
           field.appendChild (item);
         });
       });
@@ -404,16 +407,18 @@ function fillFormControls (form, object) {
       ed.focus ();
     };
   });
-  $$c (form, 'input[name]:not([type])').forEach (function (control) {
+  $$c (form, 'input[name]').forEach (function (control) {
     var value = object.data[control.name];
-    if (value) {
-      control.value = value;
-    }
-  });
-  $$c (form, 'input[name][type=date]').forEach (function (control) {
-    var value = object.data[control.name];
-    if (value != null) {
-      control.valueAsNumber = value * 1000;
+    if (control.type === 'date') {
+      if (value != null) {
+        control.valueAsNumber = value * 1000;
+      }
+    } else if (control.type === 'radio') {
+      control.checked = control.value == value;
+    } else if (control.type === 'text') {
+      if (value) {
+        control.value = value;
+      }
     }
   });
 
@@ -462,15 +467,16 @@ function upgradeList (el) {
       listObjects = listObjects.filter (function (o) {
         if (!query.todo_states[o.data.todo_state]) return false;
 
-        var checkAssigned = false;
-        var foundAssigned = false;
-        Object.keys (query.assigned_account_ids).forEach (function (a) {
-          checkAssigned = true;
-          if ((o.data.assigned_account_ids || {})[a]) foundAssigned = true;
-        });
-        if (checkAssigned && !foundAssigned) return false;
+        if (query.assigned) {
+          if (!(o.data.assigned_account_ids || {})[query.assigned]) return;
+        }
 
-        return true;
+        var result = true;
+        Object.keys (query.index_ids).forEach (function (a) {
+          if ( ! ( (o.data.index_ids || {})[a] ) ) result = false;
+        });
+
+        return result;
       });
     }
 
@@ -506,7 +512,7 @@ function upgradeList (el) {
               as.start ({stages: ["formdata", "create", "edit", "update"]});
               var open = false; // XXX true if edit-container is modified but not saved
               editObject (item, object, {open: open}).then (function () {
-                $$c (item, 'edit-container iframe.control[data-name=body]').forEach (function (e) {
+                $$ /* not $$c*/ (item, 'edit-container iframe.control[data-name=body]').forEach (function (e) {
                   e.sendChange (ev.data);
                 });
                 return item.save ({actionStatus: as});
@@ -736,7 +742,7 @@ function upgradeList (el) {
 
   if (el.hasAttribute ('query')) {
     if (!query) {
-      var qp = {todo: []};
+      var qp = {todo: [], assigned: [], index: []};
       location.search.replace (/^\?/, '').split (/&/).forEach (function (_) {
         _ = _.split (/=/, 2);
         _[0] = decodeURIComponent (_[0]);
@@ -744,24 +750,36 @@ function upgradeList (el) {
         qp[_[0]] = qp[_[0]] || [];
         qp[_[0]].push (_[1]);
       });
-      query = {todo_states: {1: true}, assigned_account_ids: {}};
-      if (qp.todo[0] === "all") {
-        query.todo_states[2] = true;
-      } else if (qp.todo[0] === 'closed') {
-        query.todo_states[2] = true;
-        delete query.todo_states[1];
+      query = {todo: qp.todo[0] || "open",
+               assigned: qp.assigned[0],
+               index_ids: {}};
+      if (query.todo === 'all') {
+        query.todo_states = {1: true, 2: true};
+      } else if (query.todo === 'closed') {
+        query.todo_states = {2: true};
+      } else {
+        query.todo_states = {1: true};
       }
-      (qp.assigned || []).forEach (function (a) {
-        query.assigned_account_ids[a] = true;
-      });
+      qp.index.forEach (function (i) { query.index_ids[i] = true });
     }
     $$c (el, 'list-query').forEach (function (e) {
       fillFormControls (e, {data: query});
       e.onchange = function (ev) {
-        query[ev.target.getAttribute ('key')] = {};
-        ev.target.items.forEach (function (item) {
-          query[ev.target.getAttribute ('key')][item.value] = true;
-        });
+        if (ev.target.name === 'todo') {
+          query.todo = ev.target.value;
+          if (query.todo === 'all') {
+            query.todo_states = {1: true, 2: true};
+          } else if (query.todo === 'closed') {
+            query.todo_states = {2: true};
+          } else {
+            query.todo_states = {1: true};
+          }
+        } else {
+          query[ev.target.getAttribute ('key')] = {};
+          ev.target.getSelectedValues ().forEach (function (value) {
+            query[ev.target.getAttribute ('key')][value] = true;
+          });
+        }
         el.clearObjects ();
         el.load ();
 
@@ -775,9 +793,13 @@ function upgradeList (el) {
             url += '?todo=closed';
           }
         }
-        Object.keys (query.assigned_account_ids).forEach (function (a) {
+        if (query.assigned) {
           url += /\?/.test (url) ? '&' : '?';
-          url += 'assigned=' + encodeURIComponent (a);
+          url += 'assigned=' + encodeURIComponent (assigned);
+        }
+        Object.keys (query.index_ids).forEach (function (a) {
+          url += /\?/.test (url) ? '&' : '?';
+          url += 'index=' + encodeURIComponent (a);
         });
         history.replaceState (null, null, url);
       };
@@ -953,6 +975,34 @@ function saveObject (article, form, object, opts) {
     });
   });
 } // saveObject
+
+function applyFilters (objects, filtersText) {
+  if (filtersText) {
+    var filters = JSON.parse (filtersText);
+    objects = objects.filter (function (object) {
+      for (var i = 0; i < filters.length; i++) {
+        var filter = filters[i];
+        if (filter.key) {
+          var v = object;
+          for (var k = 0; k < filter.key.length; k++) {
+                v = v[filter.key[k]];
+                if (!v) {
+                  v = null;
+                  break;
+                }
+              }
+              if (filter.valueIn) {
+                if (!filter.valueIn[v]) return false;
+              } else {
+                if (filter.value != v) return false;
+              }
+            }
+          }
+          return true;
+        });
+      }
+  return objects;
+} // applyFilters
 
 function getActionStatus (container) {
   var as = new ActionStatus;
@@ -1202,31 +1252,7 @@ function upgradeListControl (control) {
           return {data: avail[value] || {}};
         });
       }
-      var filters = list.getAttribute ('filters');
-      if (filters) {
-        filters = JSON.parse (filters);
-        objects = objects.filter (function (object) {
-          for (var i = 0; i < filters.length; i++) {
-            var filter = filters[i];
-            if (filter.key) {
-              var v = object;
-              for (var k = 0; k < filter.key.length; k++) {
-                v = v[filter.key[k]];
-                if (!v) {
-                  v = null;
-                  break;
-                }
-              }
-              if (filter.valueIn) {
-                if (!filter.valueIn[v]) return false;
-              } else {
-                if (filter.value != v) return false;
-              }
-            }
-          }
-          return true;
-        });
-      }
+      objects = applyFilters (objects, list.getAttribute ('filters'));
 
       if (objects.length) {
         list.textContent = '';

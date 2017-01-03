@@ -92,24 +92,23 @@
                    $index->{index_type} == 4 or # label
                    $index->{index_type} == 5) # milestone">
         <t:attr name="'src-limit'" value=100>
-        <t:attr name="'type'" value="'table'">
         <t:attr name="'query'" value="''">
         <template>
-          <td>
-            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+          <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+          <p>
+            <a data-href-template={GROUP}/o/{object_id}/>
+              <span data-data-field=title data-empty=■ />
+            </a>
+          <p>
             <span data-if-data-field=all_checkbox_count>
               <span data-data-field=checked_checkbox_count data-empty=0 /> /
               <span data-data-field=all_checkbox_count />
             </span>
-          <th scope=row>
-            <a data-href-template={GROUP}/o/{object_id}/>
-              <span data-data-field=title data-empty=■ />
-            </a>
-          <td>
             <time data-field=created class=ambtime />
             (<time data-field=updated class=ambtime /> 編集)
-          <td title=担当者>
-            <account-list data-data-field=assigned_account_ids />
+            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=里程標 />
+            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "4"}]' title=ラベル />
+            <account-list data-data-field=assigned_account_ids title=担当者 />
         </template>
       <t:else><!-- index_type == 1 (blog), wiki page, object permalink -->
         <t:attr name="'listitemtype'" value="'object'">
@@ -175,39 +174,82 @@
                 $index->{index_type} == 5) # milestone">
         <menu>
           <list-query>
-            <list-control name=todo_state key=todo_states list=todo-state-list>
-              <template>
-                <list-item-label data-field=label />
+            <label><input type=radio name=todo value=open> 未完了</label>
+            <label><input type=radio name=todo value=closed> 完了済</label>
+            <label><input type=radio name=todo value=all> すべて</label>
+
+            <list-control name=index_id key=index_ids list=index-list>
+              <template data-name=view>
+                <list-item-label data-data-field=title data-color-data-field=color />
               </template>
-              <list-control-main />
-              <list-control-footer>
-                <button type=button class=edit-button title=編集>...</button>
-                <list-dropdown hidden />
-              </>
-              <datalist id=todo-state-list data-loaded>
-                <option label=未完了 value=1>
-                <option label=完了済 value=2>
-              </datalist>
+              <template data-name=edit>
+                <label data-color-data-field=color>
+                  <input type=checkbox data-data-field=index_id data-checked-field=selected>
+                  <span data-data-field=title></span>
+                </label>
+              </template>
+              <template data-name=edit-milestone>
+                <label data-color-data-field=color>
+                  <input type=radio name=MILESTONE data-data-field=index_id data-checked-field=selected>
+                  <span data-data-field=title></span>
+                </label>
+              </template>
+
+              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' />
+              <popup-menu>
+                <button type=button title=選択>...</button>
+                <menu hidden>
+                  <form action=javascript:>
+                    <list-control-list editable template=edit-milestone filters='[{"key": ["data", "index_type"], "value": "5"}]' />
+                  </form>
+                </menu>
+              </popup-menu>
+
+              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "4"}]' />
+              <popup-menu>
+                <button type=button title=選択>...</button>
+                <menu hidden>
+                  <list-control-list editable template=edit filters='[{"key": ["data", "index_type"], "value": "4"}]' />
+                </menu>
+              </popup-menu>
             </list-control>
+
             <list-control name=assigned_account_id key=assigned_account_ids list=member-list>
-              <template>
-                <list-item-label data-field=label />
+              <template data-name=view>
+                <list-item-label data-data-account-field=name />
               </template>
-              <list-control-main />
-              <list-control-footer>
-                <button type=button class=edit-button title=編集>...</button>
-                <list-dropdown hidden />
-              </>
+              <template data-name=edit>
+                <label>
+                  <input type=radio name=ONE data-data-field=account_id data-checked-field=selected>
+                  <span data-data-account-field=name></span>
+                </label>
+              </template>
+
+              <list-control-list template=view data-empty=(なし) />
+              <popup-menu>
+                <button type=button title=変更>...</button>
+                <menu hidden>
+                  <form action=javascript:>
+                    <list-control-list editable template=edit />
+                  </form>
+                </menu>
+              </popup-menu>
             </list-control>
           </list-query>
 
           <button type=button class=reload-button hidden>再読込</button>
         </menu>
 
-        <table>
-          <tbody>
-        </table>
+        <template id=index-list-item-template>
+          <a data-href-template=./?index={index_id} data-field=title data-color-field=color class=label-index></a>
+        </template>
+
+        <list-main/>
       <t:else>
+        <template id=index-list-item-template>
+          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
+        </template>
+
         <list-main></list-main>
       </t:if>
 
@@ -237,9 +279,6 @@
     </t:if>
   </section>
 
-  <template id=index-list-item-template>
-    <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
-  </template>
   <t:include path=_object_editor.html.tm />
 
 <!--
