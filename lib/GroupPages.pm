@@ -830,32 +830,43 @@ sub group_object ($$$$) {
     my $next_ref = {};
     my $rev_id;
     return Promise->resolve->then (sub {
-      my $index_id = $app->bare_param ('index_id');
+      my $index_id;
       my $table;
       my %cond;
-      if (defined $index_id) {
-        $table = 'index_object';
-        $cond{index_id} = $index_id;
-        my $wiki_name = $app->text_param ('wiki_name');
-        if (defined $wiki_name) {
-          my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $wiki_name);
-          $cond{wiki_name_key} = $wiki_name_key;
+      my $ref = $app->bare_param ('ref');
+      my $timestamp;
+      my $offset;
+      my $limit = $app->bare_param ('limit') || 20;
+      if (defined $ref) {
+        ($timestamp, $offset) = split /,/, $ref, 2;
+        $next_ref->{$timestamp} = $offset || 0;
+        return $app->throw_error (400, reason_phrase => 'Bad offset')
+            if $offset > 1000;
+        $cond{timestamp} = {'<=', $timestamp} if defined $timestamp;
+      }
+      return $app->throw_error (400, reason_phrase => 'Bad limit')
+          if $limit > 100;
+      my $thread_id = $app->bare_param ('thread_id');
+      if (defined $thread_id) {
+        return {thread_id => $thread_id,
+                object_id => {'!=' => $thread_id},
+                (defined $cond{timestamp} ? (timestamp => $cond{timestamp}) : ()),
+                order => ['timestamp', 'desc', 'created', 'desc'],
+                offset => $offset,
+                limit => $limit};
+      } else {
+        $index_id = $app->bare_param ('index_id');
+        if (defined $index_id) {
+          $table = 'index_object';
+          $cond{index_id} = $index_id;
+          my $wiki_name = $app->text_param ('wiki_name');
+          if (defined $wiki_name) {
+            my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $wiki_name);
+            $cond{wiki_name_key} = $wiki_name_key;
+          }
         }
       }
       if (defined $table) {
-        my $ref = $app->bare_param ('ref');
-        my $timestamp;
-        my $offset;
-        my $limit = $app->bare_param ('limit') || 20;
-        if (defined $ref) {
-          ($timestamp, $offset) = split /,/, $ref, 2;
-          $next_ref->{$timestamp} = $offset || 0;
-          return $app->throw_error (400, reason_phrase => 'Bad offset')
-              if $offset > 1000;
-        }
-        return $app->throw_error (400, reason_phrase => 'Bad limit')
-            if $limit > 100;
-        $cond{timestamp} = {'<=', $timestamp} if defined $timestamp;
         return $db->select ($table, {
           group_id => Dongry::Type->serialize ('text', $path->[1]),
           %cond,
@@ -864,35 +875,44 @@ sub group_object ($$$$) {
           order => ['timestamp', 'desc', 'created', 'desc'],
           offset => $offset, limit => $limit,
         )->then (sub {
-          return [map {
+          return {object_id => {-in => [map {
             $next_ref->{$_->{timestamp}}++;
             $next_ref->{_} = $_->{timestamp};
             $_->{object_id};
-          } @{$_[0]->all}];
+          } @{$_[0]->all}]}};
         });
       } else {
         my $list = $app->bare_param_list ('object_id');
         $rev_id = $app->bare_param ('object_revision_id') if @$list == 1;
-        return $list;
+        return {object_id => {-in => $list}};
       }
     })->then (sub {
-      my $object_ids = $_[0];
-      return [] unless @$object_ids;
+      my $search = $_[0];
+      my $order = delete $search->{order}; # or undef
+      my $offset = delete $search->{offset}; # or undef
+      my $limit = delete $search->{limit}; # or undef
+      return [] unless keys %$search;
+      return [] if defined $search->{object_id} and
+                   defined $search->{object_id}->{-in} and
+                   not @{$search->{object_id}->{-in}};
       return $db->select ('object', {
         group_id => Dongry::Type->serialize ('text', $path->[1]),
-        object_id => {-in => $object_ids},
+        %$search,
 
         # XXX
         owner_status => 1,
         user_status => 1,
       }, fields => ['object_id', 'title', 'timestamp', 'created', 'updated',
                     ($app->bare_param ('with_data') ? 'data' : ())],
+        order => $order, # or undef
+        offset => $offset, # or undef
+        limit => $limit, # or undef
       )->then (sub {
         my $objects = $_[0]->all;
         if (defined $rev_id and @$objects == 1) {
           return $db->select ('object_revision', {
             group_id => Dongry::Type->serialize ('text', $path->[1]),
-            object_id => {-in => $object_ids},
+            object_id => $objects->[0]->{object_id},
             object_revision_id => $rev_id,
           }, fields => ['data', 'revision_data', 'author_account_id',
                         'created', 'user_status', 'owner_status'])->then (sub {
@@ -912,6 +932,12 @@ sub group_object ($$$$) {
             return $objects;
           });
         } else {
+          if (defined $order) {
+            for (@$objects) {
+              $next_ref->{$_->{timestamp}}++;
+              $next_ref->{_} = $_->{timestamp};
+            }
+          }
           return $objects;
         }
       });
