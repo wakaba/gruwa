@@ -1146,6 +1146,23 @@ stageActions.createGroupWiki = function (args) {
 }; // createGroupWiki
 stageActions.createGroupWiki.stages = ["creategroupwiki_1", "creategroupwiki_2"];
 
+stageActions.resetForm = function (args) {
+  args.form.reset ();
+}; // resetForm
+stageActions.resetForm.stages = [];
+
+stageActions.editCreatedObject = function (args) {
+  args.as.stageStart ('editcreatedobject_fetch');
+  var fd = new FormData;
+  $$ (args.form, 'textarea[data-edit-created-object]').forEach (function (f) {
+    fd.append (f.getAttribute ('data-name'), f.value);
+  });
+  return gFetch ('o/' + args.result.object_id + '/edit.json', {post: true, formData: fd}).then (function (json) {
+    args.as.stageEnd ('editcreatedobject_fetch');
+  });
+}; // editCreatedObject
+stageActions.editCreatedObject.stages = ['editcreatedobject_fetch'];
+
 function upgradeForm (form) {
   form.onsubmit = function () {
     var pt = form.getAttribute ('data-prompt');
@@ -1169,7 +1186,7 @@ function upgradeForm (form) {
         var p = Promise.resolve ();
         addStages.forEach (function (stage) {
           p = p.then (function () {
-            return stageActions[stage] ({result: json, fd: fd, as: as});
+            return stageActions[stage] ({result: json, fd: fd, as: as, form: form});
           });
         });
         return p.then (function () {

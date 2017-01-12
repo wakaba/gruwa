@@ -138,7 +138,20 @@
               (<time data-field=updated class=ambtime /> 編集)
               <button type=button class=edit-button>編集</button>
           </footer>
-          <div class=actions>
+          <details class=actions>
+            <summary>コメントを書く</summary>
+
+            <form action=javascript: data-action=o/create.json
+                data-additional-stages="editCreatedObject resetForm">
+              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
+              <textarea data-edit-created-object data-name=body required></textarea>
+              <p class=buttons><button type=submit class=save-button>投稿する</>
+                <action-status hidden
+                    stage-fetch=作成中...
+                    stage-editcreatedobject-fetch=保存中...
+                    ok=投稿しました />
+            </form>
+
             <div data-if-data-field=todo_state data-if-value=1>
               <form action=javascript: data-data-action-template=o/{object_id}/edit.json>
                 <input type=hidden name=todo_state value=2 class=data-field>
@@ -155,7 +168,7 @@
                       stage-fetch=変更中... />
               </form>
             </div>
-          </div>
+          </details>
         </template>
       </t:if>
 
