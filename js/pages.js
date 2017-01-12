@@ -208,6 +208,9 @@ function fillFields (contextEl, rootEl, el, object) {
     }));
     field.parentObject = object;
   });
+  $$ (el, 'form[data-child-form]').forEach (function (field) {
+    field.parentObject = object;
+  });
   $$ (el, '[data-parent-template]').forEach (function (field) {
     field.setAttribute ('data-parent', field.getAttribute ('data-parent-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return encodeURIComponent (object[k]);
@@ -1154,7 +1157,7 @@ stageActions.resetForm.stages = [];
 stageActions.editCreatedObject = function (args) {
   args.as.stageStart ('editcreatedobject_fetch');
   var fd = new FormData;
-  $$ (args.form, 'textarea[data-edit-created-object]').forEach (function (f) {
+  $$ (args.form, 'input[data-edit-created-object]:not([hidden]), textarea[data-edit-created-object]:not([hidden])').forEach (function (f) {
     fd.append (f.getAttribute ('data-name'), f.value);
   });
   return gFetch ('o/' + args.result.object_id + '/edit.json', {post: true, formData: fd}).then (function (json) {
@@ -1163,8 +1166,42 @@ stageActions.editCreatedObject = function (args) {
 }; // editCreatedObject
 stageActions.editCreatedObject.stages = ['editcreatedobject_fetch'];
 
+stageActions.editObject = function (args) {
+  var fd = new FormData;
+  var length = 0;
+  var subform = args.submitButton.getAttribute ('data-subform');
+  var dataUpdated = [];
+  $$ (args.form, 'input[data-edit-object]:not([hidden]), textarea[data-edit-object]:not([hidden])').forEach (function (f) {
+    if (f.getAttribute ('data-subform') != subform) return;
+    fd.append (f.getAttribute ('data-name'), f.value);
+    if (f.classList.contains ('data-field')) {
+      dataUpdated.push ([f.getAttribute ('data-name'), f.value]);
+    }
+    length++;
+  });
+  if (length <= 1) return;
+  args.as.stageStart ('editobject_fetch');
+  return gFetch ('o/' + fd.get ('object_id') + '/edit.json', {post: true, formData: fd}).then (function (json) {
+    args.as.stageEnd ('editobject_fetch');
+    if (args.form.parentObject && dataUpdated.length) {
+      dataUpdated.forEach (function (_) {
+        args.form.parentObject.data[_[0]] = _[1];
+      });
+      args.form.dispatchEvent (new Event ('objectdataupdate', {bubbles: true}));
+    }
+  });
+}; // editObject
+stageActions.editObject.stages = ['editobject_fetch'];
+
 function upgradeForm (form) {
+  var submitButton = null;
+  $$ (form, '[type=submit]').forEach (function (e) {
+    e.onclick = function () { submitButton = this };
+  });
   form.onsubmit = function () {
+    var submit = submitButton;
+    submitButton = null;
+
     var pt = form.getAttribute ('data-prompt');
     if (pt && !confirm (pt)) return;
 
@@ -1186,7 +1223,7 @@ function upgradeForm (form) {
         var p = Promise.resolve ();
         addStages.forEach (function (stage) {
           p = p.then (function () {
-            return stageActions[stage] ({result: json, fd: fd, as: as, form: form});
+            return stageActions[stage] ({result: json, fd: fd, as: as, form: form, submitButton: submit});
           });
         });
         return p.then (function () {
@@ -1199,7 +1236,7 @@ function upgradeForm (form) {
           } else {
             if (form.parentObject) {
               var updated = false;
-              $$ (form, '.data-field').forEach (function (e) {
+              $$ (form, '[name].data-field').forEach (function (e) {
                 form.parentObject.data[e.name] = e.value;
                 updated = true;
               });

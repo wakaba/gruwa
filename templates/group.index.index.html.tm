@@ -142,32 +142,27 @@
             <summary>コメントを書く</summary>
 
             <form action=javascript: data-action=o/create.json
-                data-additional-stages="editCreatedObject resetForm">
+                data-additional-stages="editCreatedObject editObject resetForm"
+                data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
               <textarea data-edit-created-object data-name=body required></textarea>
-              <p class=buttons><button type=submit class=save-button>投稿する</>
+              <p class=buttons>
+                <button type=submit class=save-button>投稿する</>
+
+                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
+                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
+                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
+
+                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
+                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
+                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
+
                 <action-status hidden
                     stage-fetch=作成中...
-                    stage-editcreatedobject-fetch=保存中...
+                    stage-editcreatedobject_fetch=保存中...
+                    stage-editobject_fetch=状態を変更中...
                     ok=投稿しました />
             </form>
-
-            <div data-if-data-field=todo_state data-if-value=1>
-              <form action=javascript: data-data-action-template=o/{object_id}/edit.json>
-                <input type=hidden name=todo_state value=2 class=data-field>
-                <p><button type=submit class=save-button>完了</button>
-                  <action-status hidden
-                      stage-fetch=変更中... />
-              </form>
-            </div>
-            <div data-if-data-field=todo_state data-if-value=2>
-              <form action=javascript: data-data-action-template=o/{object_id}/edit.json>
-                <input type=hidden name=todo_state value=1 class=data-field>
-                <p><button type=submit class=save-button>未完了に戻す</button>
-                  <action-status hidden
-                      stage-fetch=変更中... />
-              </form>
-            </div>
           </details>
         </template>
       </t:if>
