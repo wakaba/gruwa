@@ -221,6 +221,9 @@ sub create_object ($$$) {
                     title body)) {
       $param{$key} = $opts->{$key} if defined $opts->{$key};
     }
+    if (defined $opts->{parent_object}) {
+      $param{parent_object_id} = $self->_get_o ($opts->{parent_object})->{object_id};
+    }
     if (keys %param) {
       return $self->post_json (['o', $_[0]->{json}->{object_id}, 'edit.json'],
                                \%param,

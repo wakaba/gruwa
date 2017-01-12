@@ -469,11 +469,97 @@ Test {
   });
 } n => 17, name => 'assigned_account_id';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_group (g2 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o2 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o3 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o4 => {group => 'g2', account => 'a1'});
+  })->then (sub {
+    return $current->are_errors (
+      ['POST', ['o', $current->o ('o1')->{object_id}, 'edit.json'], {}, account => 'a1', group => 'g1'],
+      [
+        {params => {parent_object_id => 554421111}, status => 404},
+        {params => {parent_object_id => $current->o ('o4')->{object_id}}, status => 404},
+        {params => {parent_object_id => $current->o ('o1')->{object_id}}, status => 409},
+      ],
+    );
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      parent_object_id => $current->o ('o2')->{object_id},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1', revision_id => $_[0]->{json}->{object_revision_id});
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is $object->{data}->{thread_id}, $current->o ('o2')->{object_id};
+      is $object->{data}->{parent_object_id}, $current->o ('o2')->{object_id};
+      ok $object->{revision_data}->{changes}->{fields}->{parent_object_id};
+      ok $object->{revision_data}->{changes}->{fields}->{thread_id};
+    } $current->c;
+    return $current->are_errors (
+      ['POST', ['o', $current->o ('o2')->{object_id}, 'edit.json'], {}, account => 'a1', group => 'g1'],
+      [
+        {params => {parent_object_id => $current->o ('o1')->{object_id}}, status => 409},
+      ],
+    );
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      parent_object_id => $current->o ('o3')->{object_id},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1', revision_id => $_[0]->{json}->{object_revision_id});
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is $object->{data}->{thread_id}, $current->o ('o3')->{object_id};
+      is $object->{data}->{parent_object_id}, $current->o ('o3')->{object_id};
+      ok $object->{revision_data}->{changes}->{fields}->{parent_object_id};
+      ok $object->{revision_data}->{changes}->{fields}->{thread_id};
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o2')->{object_id}, 'edit.json'], {
+      parent_object_id => $current->o ('o1')->{object_id},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o2'), account => 'a1', revision_id => $_[0]->{json}->{object_revision_id});
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is $object->{data}->{thread_id}, $current->o ('o3')->{object_id};
+      is $object->{data}->{parent_object_id}, $current->o ('o1')->{object_id};
+      ok $object->{revision_data}->{changes}->{fields}->{parent_object_id};
+      ok $object->{revision_data}->{changes}->{fields}->{thread_id};
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      parent_object_id => 0,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1', revision_id => $_[0]->{json}->{object_revision_id});
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      is $object->{data}->{thread_id}, $current->o ('o1')->{object_id};
+      is $object->{data}->{parent_object_id}, undef;
+      ok $object->{revision_data}->{changes}->{fields}->{parent_object_id};
+      ok $object->{revision_data}->{changes}->{fields}->{thread_id};
+    } $current->c;
+  });
+} n => 18, name => 'thread';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

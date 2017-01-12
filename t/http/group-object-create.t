@@ -43,6 +43,7 @@ Test {
       is $obj->{title}, '';
       is $obj->{data}->{title}, '';
       is $obj->{data}->{object_revision_id}, $current->o ('o1')->{object_revision_id};
+      is $obj->{data}->{thread_id}, $current->o ('o1')->{object_id};
       ok $obj->{created};
       is $obj->{updated}, $obj->{created};
       is $obj->{timestamp}, $obj->{created};
@@ -62,7 +63,7 @@ Test {
       is $obj->{revision_author_account_id}, $current->o ('a1')->{account_id};
     } $current->c;
   });
-} n => 23, name => 'create object';
+} n => 24, name => 'create object';
 
 RUN;
 

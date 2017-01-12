@@ -494,11 +494,37 @@ Test {
   });
 } n => 2, name => 'wiki name empty';
 
+Test {
+  my $current = shift;
+  my $wiki_name = "\x{6001} " . rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {account => 'a1', group => 'g1'});
+  })->then (sub {
+    return $current->create_object (o2 => {account => 'a1', group => 'g1', parent_object => 'o1'});
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o2')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = $result->{json}->{objects}->{$current->o ('o2')->{object_id}};
+      is $obj->{data}->{parent_object_id}, $current->o ('o1')->{object_id};
+      is $obj->{data}->{thread_id}, $current->o ('o1')->{object_id};
+      like $result->{res}->body_bytes, qr{"parent_object_id"\s*:\s*"};
+      like $result->{res}->body_bytes, qr{"thread_id"\s*:\s*"};
+    } $current->c;
+  });
+} n => 4, name => 'thread';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

@@ -588,8 +588,11 @@ sub group_object ($$$$) {
                         todo_state)) {
           my $value = $app->bare_param ($key);
           if (defined $value) {
-            $object->{data}->{$key} = 0+$value;
-            $changes->{fields}->{$key} = 1;
+            my $old = $object->{data}->{$key} || 0;
+            if ($old != $value) {
+              $object->{data}->{$key} = 0+$value;
+              $changes->{fields}->{$key} = 1;
+            }
           }
         }
         # XXX owner_status only can be changed by group owners
@@ -638,6 +641,36 @@ sub group_object ($$$$) {
 
         my $time = time;
         return Promise->resolve->then (sub {
+          my $value = $app->bare_param ('parent_object_id');
+          return unless defined $value;
+          my $old = $object->{data}->{parent_object_id} || 0;
+          return if $old == $value;
+          if ($value) {
+            return $db->select ('object', {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              object_id => $value,
+            }, fields => ['thread_id'])->then (sub {
+              my $v = $_[0]->first;
+              return $app->throw_error
+                  (404, reason_phrase => 'Bad |parent_object_id|')
+                      unless defined $v;
+              $object->{data}->{parent_object_id} = ''.$value;
+              $changes->{fields}->{parent_object_id} = 1;
+              if ($v->{thread_id} != $object->{thread_id}) {
+                $object->{data}->{thread_id} = ''.$v->{thread_id};
+                $changes->{fields}->{thread_id} = 1;
+              }
+              return $app->throw_error (409, reason_phrase => 'Bad |parent_object_id|')
+                  if (my $x = $object->{data}->{thread_id}) == $object->{object_id} ||
+                     (my $y = $object->{data}->{parent_object_id}) == $object->{object_id};
+            });
+          } else {
+            delete $object->{data}->{parent_object_id};
+            $changes->{fields}->{parent_object_id} = 1;
+            $changes->{fields}->{thread_id} = 1;
+            $object->{data}->{thread_id} = ''.$object->{object_id};
+          }
+        })->then (sub {
           return unless $app->bare_param ('edit_index_id');
           ## Note that, even when |$changes->{fields}->{timestamp}| or
           ## |$changes->{fields}->{title}| is true, `index_object`'s
@@ -752,10 +785,10 @@ sub group_object ($$$$) {
               timestamp => $object->{data}->{timestamp},
               updated => $time,
             };
-            $update->{owner_status} = $object->{data}->{owner_status}
-                if $changes->{fields}->{owner_status};
-            $update->{user_status} = $object->{data}->{user_status}
-                if $changes->{fields}->{user_status};
+            for my $key (qw(owner_status user_status thread_id)) {
+              $update->{$key} = $object->{data}->{$key}
+                  if $changes->{fields}->{$key};
+            }
             return $db->update ('object', $update, where => {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
               object_id => Dongry::Type->serialize ('text', $path->[3]),
@@ -1010,6 +1043,7 @@ sub group_object ($$$$) {
       my $data = {index_ids => {}, title => '', body => '', body_type => 2,
                   timestamp => $time,
                   object_revision_id => ''.$ids->{uuid2},
+                  thread_id => ''.$object_id,
                   user_status => 1, # open
                   owner_status => 1}; # open
       my $rev_data = {changes => {action => 'new'}};
@@ -1023,6 +1057,7 @@ sub group_object ($$$$) {
         title => '',
         data => $sdata,
         search_data => '',
+        thread_id => $data->{thread_id},
         created => $time,
         updated => $time,
         timestamp => $time,
