@@ -656,7 +656,7 @@ sub group_object ($$$$) {
                       unless defined $v;
               $object->{data}->{parent_object_id} = ''.$value;
               $changes->{fields}->{parent_object_id} = 1;
-              if ($v->{thread_id} != $object->{thread_id}) {
+              if ($v->{thread_id} != $object->{data}->{thread_id}) {
                 $object->{data}->{thread_id} = ''.$v->{thread_id};
                 $changes->{fields}->{thread_id} = 1;
               }
@@ -753,10 +753,6 @@ sub group_object ($$$$) {
           delete $changes->{fields} unless keys %{$changes->{fields} or {}};
           return unless keys %$changes;
 
-          ## XXX for backcompat
-          $object->{data}->{owner_status} //= 1;
-          $object->{data}->{user_status} //= 1;
-
           my $sdata;
           my $rev_data = {changes => $changes};
           return $db->execute ('select uuid_short() as uuid')->then (sub {
@@ -785,7 +781,14 @@ sub group_object ($$$$) {
               timestamp => $object->{data}->{timestamp},
               updated => $time,
             };
-            for my $key (qw(owner_status user_status thread_id)) {
+
+            ## XXX for backcompat
+            $object->{data}->{owner_status} //= ($changes->{fields}->{owner_status} = 1);
+            $object->{data}->{user_status} //= ($changes->{fields}->{user_status} = 1);
+            $object->{data}->{thread_id} //= ($changes->{fields}->{thread_id} = ''.$object->{object_id});
+
+            for my $key (qw(owner_status user_status thread_id
+                            parent_object_id)) {
               $update->{$key} = $object->{data}->{$key}
                   if $changes->{fields}->{$key};
             }
@@ -855,14 +858,24 @@ sub group_object ($$$$) {
                 offset => $offset,
                 limit => $limit};
       } else {
-        $index_id = $app->bare_param ('index_id');
-        if (defined $index_id) {
-          $table = 'index_object';
-          $cond{index_id} = $index_id;
-          my $wiki_name = $app->text_param ('wiki_name');
-          if (defined $wiki_name) {
-            my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $wiki_name);
-            $cond{wiki_name_key} = $wiki_name_key;
+        my $parent_object_id = $app->bare_param ('parent_object_id');
+        if (defined $parent_object_id) {
+          return {parent_object_id => $parent_object_id,
+                  object_id => {'!=' => $parent_object_id},
+                  (defined $cond{timestamp} ? (timestamp => $cond{timestamp}) : ()),
+                  order => ['timestamp', 'desc', 'created', 'desc'],
+                  offset => $offset,
+                  limit => $limit};
+        } else {
+          $index_id = $app->bare_param ('index_id');
+          if (defined $index_id) {
+            $table = 'index_object';
+            $cond{index_id} = $index_id;
+            my $wiki_name = $app->text_param ('wiki_name');
+            if (defined $wiki_name) {
+              my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $wiki_name);
+              $cond{wiki_name_key} = $wiki_name_key;
+            }
           }
         }
       }
