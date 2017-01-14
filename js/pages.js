@@ -198,7 +198,9 @@ function fillFields (contextEl, rootEl, el, object) {
     });
   });
   $$ (el, '[data-src-template]').forEach (function (field) {
-    field.setAttribute ('src', field.getAttribute ('data-src-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+    field.setAttribute ('src', field.getAttribute ('data-src-template').replace (/\{GROUP\}/g, function () {
+      return document.documentElement.getAttribute ('data-group-url');
+    }).replace (/\{([^{}]+)\}/g, function (_, k) {
       return object[k];
     }));
   });
@@ -493,6 +495,7 @@ function upgradeList (el) {
       });
     }
 
+    var prepend = opts.prepend;
     var appended = false;
     var wait = [];
 
@@ -621,7 +624,7 @@ function upgradeList (el) {
           item.className = template.className;
           item.appendChild (template.content.cloneNode (true));
           fill (item, object);
-          if (opts.prepend) {
+          if (prepend) {
             main.insertBefore (item, main.firstChild);
           } else {
             main.appendChild (item);
@@ -680,7 +683,10 @@ function upgradeList (el) {
   var show = function (json) {
     var key = el.getAttribute ('key');
     var hasNext = json.next_ref && nextRef !== json.next_ref;
-    return el.showObjects (json[key], {hasNext: hasNext}).then (function (main) {
+    return el.showObjects (json[key], {
+      hasNext: hasNext,
+      prepend: el.hasAttribute ('prepend'),
+    }).then (function (main) {
       if (hasNext) {
         nextRef = json.next_ref;
       } else {
@@ -1154,18 +1160,6 @@ stageActions.resetForm = function (args) {
 }; // resetForm
 stageActions.resetForm.stages = [];
 
-stageActions.editCreatedObject = function (args) {
-  args.as.stageStart ('editcreatedobject_fetch');
-  var fd = new FormData;
-  $$ (args.form, 'input[data-edit-created-object]:not([hidden]), textarea[data-edit-created-object]:not([hidden])').forEach (function (f) {
-    fd.append (f.getAttribute ('data-name'), f.value);
-  });
-  return gFetch ('o/' + args.result.object_id + '/edit.json', {post: true, formData: fd}).then (function (json) {
-    args.as.stageEnd ('editcreatedobject_fetch');
-  });
-}; // editCreatedObject
-stageActions.editCreatedObject.stages = ['editcreatedobject_fetch'];
-
 stageActions.editObject = function (args) {
   var fd = new FormData;
   var length = 0;
@@ -1193,6 +1187,33 @@ stageActions.editObject = function (args) {
 }; // editObject
 stageActions.editObject.stages = ['editobject_fetch'];
 
+stageActions.editCreatedObject = function (args) {
+  args.as.stageStart ('editcreatedobject_fetch');
+  var fd = new FormData;
+  $$ (args.form, 'input[data-edit-created-object]:not([hidden]), textarea[data-edit-created-object]:not([hidden])').forEach (function (f) {
+    fd.append (f.getAttribute ('data-name'), f.value);
+  });
+  return gFetch ('o/' + args.result.object_id + '/edit.json', {post: true, formData: fd}).then (function (json) {
+    args.as.stageEnd ('editcreatedobject_fetch');
+  });
+}; // editCreatedObject
+stageActions.editCreatedObject.stages = ['editcreatedobject_fetch'];
+
+stageActions.showCreatedObjectInCommentList = function (args) {
+  args.as.stageStart ('showcreatedobjectincommentlist');
+  return gFetch ('o/get.json?with_data=1&object_id=' + args.result.object_id, {}).then (function (json) {
+    var p = args.form;
+    while (p.parentNode) {
+      p = p.parentNode;
+      if (p.localName === 'article-comments') break;
+    }
+    return $$ (p, 'list-container.comment-list')[0].showObjects (json.objects, {});
+  }).then (function () {
+    args.as.stageEnd ('showcreatedobjectincommentlist');
+  });
+}; // showCreatedObjectInCommentList
+stageActions.showCreatedObjectInCommentList.stages = ['showcreatedobjectincommentlist'];
+
 function upgradeForm (form) {
   var submitButton = null;
   $$ (form, '[type=submit]').forEach (function (e) {
@@ -1215,7 +1236,7 @@ function upgradeForm (form) {
     var as = getActionStatus (form);
     as.start ({stages: stages});
     var fd = new FormData (form); // this must be done before withFormDisabled
-    withFormDisabled (nextURL ? form : null, function () {
+    withFormDisabled (form, function () {
       as.stageEnd ("prep");
       as.stageStart ("fetch");
       return gFetch (form.getAttribute ('data-action'), {post: true, formData: fd}).then (function (json) {

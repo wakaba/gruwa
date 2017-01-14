@@ -138,11 +138,32 @@
               (<time data-field=updated class=ambtime /> 編集)
               <button type=button class=edit-button>編集</button>
           </footer>
+
+          <article-comments>
+
+          <list-container class=comment-list
+              data-src-template="o/get.json?parent_object_id={object_id}&limit=5&with_data=1"
+              key=objects sortkey=timestamp,created prepend>
+            <template>
+              <article>
+                <main><iframe data-data-field=body /></main>
+                <footer>
+                  <a href data-href-template="{GROUP}/o/{object_id}/">
+                    <time data-field=created class=ambtime />
+                    (<time data-field=updated class=ambtime />)
+                  </a>
+                </footer>
+              </article>
+            </template>
+            <action-status hidden stage-load=読み込み中... />
+            <list-main/>
+          </list-container>
+
           <details class=actions>
             <summary>コメントを書く</summary>
 
             <form action=javascript: data-action=o/create.json
-                data-additional-stages="editCreatedObject editObject resetForm"
+                data-additional-stages="editCreatedObject editObject resetForm showCreatedObjectInCommentList"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
               <textarea data-edit-created-object data-name=body required></textarea>
@@ -161,9 +182,12 @@
                     stage-fetch=作成中...
                     stage-editcreatedobject_fetch=保存中...
                     stage-editobject_fetch=状態を変更中...
+                    stage-showcreatedobjectincommentlist=読み込み中...
                     ok=投稿しました />
             </form>
           </details>
+
+          </article-comments>
         </template>
       </t:if>
 
