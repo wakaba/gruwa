@@ -19,6 +19,24 @@ function $$c (n, s) {
   });
 } // $$c
 
+function $$c2 (n, s) {
+  return Array.prototype.filter.call (n.querySelectorAll (s), function (e) {
+    var f = e.parentNode;
+    while (f) {
+      if (f === n) break;
+      if (f.localName === 'list-container' ||
+          f.localName === 'edit-container' ||
+          f.localName === 'list-query' ||
+          f.localName === 'list-control' ||
+          f.localName === 'form') {
+        return false;
+      }
+      f = f.parentNode;
+    }
+    return true;
+  });
+} // $$c2
+
 (function () {
   var handlers = {};
   var promises = {};
@@ -135,7 +153,7 @@ function fillFields (contextEl, rootEl, el, object) {
       object.account_id === document.documentElement.getAttribute ('data-account')) {
     rootEl.classList.add ('account-is-self');
   }
-  $$ (el, '[data-field]').forEach (function (field) {
+  $$c (el, '[data-field]').forEach (function (field) {
     var value = object[field.getAttribute ('data-field')];
     if (field.localName === 'input' ||
         field.localName === 'select') {
@@ -166,10 +184,10 @@ function fillFields (contextEl, rootEl, el, object) {
       field.textContent = value || field.getAttribute ('data-empty');
     }
   });
-  $$ (el, '[data-if-field]').forEach (function (field) {
+  $$c (el, '[data-if-field]').forEach (function (field) {
     field.hidden = !object[field.getAttribute ('data-if-field')];
   });
-  $$ (el, '[data-if-data-field]').forEach (function (field) {
+  $$c (el, '[data-if-data-field]').forEach (function (field) {
     var value = object.data[field.getAttribute ('data-if-data-field')];
     var ifValue = field.getAttribute ('data-if-value');
     if (ifValue) {
@@ -178,14 +196,14 @@ function fillFields (contextEl, rootEl, el, object) {
       field.hidden = !value;
     }
   });
-  $$ (el, '[data-if-data-non-empty-field]').forEach (function (field) {
+  $$c (el, '[data-if-data-non-empty-field]').forEach (function (field) {
     var value = object.data[field.getAttribute ('data-if-data-non-empty-field')];
     field.hidden = !(value && Object.keys (value).length);
   });
-  $$ (el, '[data-checked-field]').forEach (function (field) {
+  $$c (el, '[data-checked-field]').forEach (function (field) {
     field.checked = object[field.getAttribute ('data-checked-field')];
   });
-  $$ (el, '[data-href-template]').forEach (function (field) {
+  $$c (el, '[data-href-template]').forEach (function (field) {
     var template = field.getAttribute ('data-' + contextEl.getAttribute ('data-context') + '-href-template') || field.getAttribute ('data-href-template');
     field.href = template.replace (/\{GROUP\}/g, function () {
       return document.documentElement.getAttribute ('data-group-url');
@@ -197,33 +215,33 @@ function fillFields (contextEl, rootEl, el, object) {
       return encodeURIComponent (object[k]);
     });
   });
-  $$ (el, '[data-src-template]').forEach (function (field) {
+  $$c (el, '[data-src-template]').forEach (function (field) {
     field.setAttribute ('src', field.getAttribute ('data-src-template').replace (/\{GROUP\}/g, function () {
       return document.documentElement.getAttribute ('data-group-url');
     }).replace (/\{([^{}]+)\}/g, function (_, k) {
       return object[k];
     }));
   });
-  $$ (el, '[data-data-action-template]').forEach (function (field) {
+  $$c (el, '[data-data-action-template]').forEach (function (field) {
     field.setAttribute ('data-action', field.getAttribute ('data-data-action-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return object[k];
     }));
     field.parentObject = object;
   });
-  $$ (el, 'form[data-child-form]').forEach (function (field) {
+  $$c (el, 'form[data-child-form]').forEach (function (field) {
     field.parentObject = object;
   });
-  $$ (el, '[data-parent-template]').forEach (function (field) {
+  $$c (el, '[data-parent-template]').forEach (function (field) {
     field.setAttribute ('data-parent', field.getAttribute ('data-parent-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return encodeURIComponent (object[k]);
     }));
   });
-  $$ (el, '[data-context-template]').forEach (function (field) {
+  $$c (el, '[data-context-template]').forEach (function (field) {
     field.setAttribute ('data-context', field.getAttribute ('data-context-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return encodeURIComponent (object[k]);
     }));
   });
-  $$ (el, '[data-color-field]').forEach (function (field) {
+  $$c (el, '[data-color-field]').forEach (function (field) {
     var value = object[field.getAttribute ('data-color-field')];
     if (value) {
       var m = value.match (/#(..)(..)(..)/);
@@ -237,7 +255,7 @@ function fillFields (contextEl, rootEl, el, object) {
       field.classList.add ('colored');
     }
   });
-  $$ (el, '[data-color-data-field]').forEach (function (field) {
+  $$c (el, '[data-color-data-field]').forEach (function (field) {
     var value = object.data ? object.data[field.getAttribute ('data-color-data-field')] : null;
     if (value) {
       var m = value.match (/#(..)(..)(..)/);
@@ -251,7 +269,7 @@ function fillFields (contextEl, rootEl, el, object) {
       field.classList.add ('colored');
     }
   });
-  $$ (el, '[data-data-field]').forEach (function (field) {
+  $$c (el, '[data-data-field]').forEach (function (field) {
     var value = object.data ? object.data[field.getAttribute ('data-data-field')] : null;
     if (field.localName === 'input' ||
         field.localName === 'select') {
@@ -328,14 +346,14 @@ function fillFields (contextEl, rootEl, el, object) {
       field.textContent = value || field.getAttribute ('data-empty') || '';
     }
   });
-  $$ (el, '[data-data-account-field]').forEach (function (field) {
+  $$c (el, '[data-data-account-field]').forEach (function (field) {
     field.textContent = object && object.data && object.data.account ? object.data.account[field.getAttribute ('data-data-account-field')] : null;
   });
   if (rootEl.startEdit) {
-    $$ (el, '.edit-button').forEach (function (button) {
+    $$c (el, '.edit-button').forEach (function (button) {
       button.onclick = function () { rootEl.startEdit () };
     });
-    $$ (el, '.edit-by-dblclick').forEach (function (button) {
+    $$c (el, '.edit-by-dblclick').forEach (function (button) {
       button.ondblclick = function () { rootEl.startEdit () };
     });
   }
@@ -1031,7 +1049,7 @@ function applyFilters (objects, filtersText) {
 
 function getActionStatus (container) {
   var as = new ActionStatus;
-  as.elements = $$ (container, 'action-status');
+  as.elements = $$c2 (container, 'action-status');
   as.elements.forEach (function (e) {
     if (e.hasChildNodes ()) return;
     e.hidden = true;

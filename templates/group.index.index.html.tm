@@ -141,23 +141,26 @@
 
           <article-comments>
 
-          <list-container class=comment-list
-              data-src-template="o/get.json?parent_object_id={object_id}&limit=5&with_data=1"
-              key=objects sortkey=timestamp,created prepend>
-            <template>
-              <article>
-                <main><iframe data-data-field=body /></main>
-                <footer>
-                  <a href data-href-template="{GROUP}/o/{object_id}/">
-                    <time data-field=created class=ambtime />
-                    (<time data-field=updated class=ambtime />)
-                  </a>
-                </footer>
-              </article>
-            </template>
-            <action-status hidden stage-load=読み込み中... />
-            <list-main/>
-          </list-container>
+            <list-container class=comment-list
+                data-src-template="o/get.json?parent_object_id={object_id}&limit=5&with_data=1"
+                key=objects sortkey=timestamp,created prepend>
+              <template>
+                <article>
+                  <main><iframe data-data-field=body /></main>
+                  <footer>
+                    <a href data-href-template="{GROUP}/o/{object_id}/">
+                      <time data-field=created class=ambtime />
+                      (<time data-field=updated class=ambtime />)
+                    </a>
+                  </footer>
+                </article>
+              </template>
+              <p class="operations pager">
+                <button type=button class=next-page-button hidden>もっと昔</button>
+              </p>
+              <action-status hidden stage-load=読み込み中... />
+              <list-main/>
+            </list-container>
 
           <details class=actions>
             <summary>コメントを書く</summary>
