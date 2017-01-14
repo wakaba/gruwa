@@ -145,14 +145,14 @@
                 data-src-template="o/get.json?parent_object_id={object_id}&limit=5&with_data=1"
                 key=objects sortkey=timestamp,created prepend>
               <template>
-                <article>
-                  <main><iframe data-data-field=body /></main>
-                  <footer>
-                    <a href data-href-template="{GROUP}/o/{object_id}/">
+                <article itemscope itemtype=http://schema.org/Comment>
+                  <header>
+                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
                       <time data-field=created class=ambtime />
                       (<time data-field=updated class=ambtime />)
                     </a>
-                  </footer>
+                  </header>
+                  <main><iframe data-data-field=body /></main>
                 </article>
               </template>
               <p class="operations pager">
@@ -170,7 +170,7 @@
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
               <textarea data-edit-created-object data-name=body required></textarea>
-              <p class=buttons>
+              <p class=operations>
                 <button type=submit class=save-button>投稿する</>
 
                 <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>

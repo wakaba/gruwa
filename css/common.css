@@ -381,6 +381,42 @@ list-container[key=objects] > list-is-empty > p {
   margin: 2em;
 }
 
+.comment-list article {
+  margin: .5rem;
+  border: 1px solid;
+  border-color: var(--main-border-color);
+  color: var(--main-color);
+  background-color: var(--main-background-color);
+}
+
+.comment-list article > header {
+  padding: .5rem;
+  font-size: 80%;
+  color: var(--light-1-color);
+  background-color: var(--light-1-background-color);
+}
+
+.comment-list article > header .timestamp {
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+  text-decoration: none;
+}
+
+.comment-list main > iframe {
+  border-style: none;
+  width: 100%;
+}
+
+article-comments .actions form {
+  margin: 0 .5rem;
+}
+
+article-comments .actions form textarea {
+  width: 100%;
+  min-height: 10em;
+  line-height: 1.5;
+}
+
 list-container[key=members] table,
 list-container[key=groups] table {
   border-collapse: collapse;
