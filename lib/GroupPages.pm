@@ -529,14 +529,28 @@ sub create_object ($%) {
                                uuid_short() as uuid2')->then (sub {
     my $ids = $_[0]->first;
     my $object_id = ''.$ids->{uuid1};
-    my $data = {index_ids => {}, title => '', body => '', body_type => 2,
+    my $data = {index_ids => {}, title => '',
                 timestamp => $time,
                 object_revision_id => ''.$ids->{uuid2},
-                thread_id => $object_id,
                 user_status => 1, # open
                 owner_status => 1}; # open
     my $rev_data = {changes => {action => 'new'}};
     ## This does not touch `group`.
+
+    if ($args{body_type} == 3) {
+      $data->{body_type} = $args{body_type};
+      $data->{body_data} = $args{body_data};
+    } else {
+      $data->{body_type} = 2;
+      $data->{body} = '';
+    }
+
+    if (defined $args{parent_object_id}) {
+      $data->{parent_object_id} = ''.$args{parent_object_id};
+      $data->{thread_id} = ''.$args{thread_id};
+    } else {
+      $data->{thread_id} = $object_id;
+    }
 
     my $sdata = Dongry::Type->serialize ('json', $data);
     return $db->insert ('object', [{
@@ -874,20 +888,15 @@ sub group_object ($$$$) {
             }
           })->then (sub {
             return unless keys %$reactions;
-            my $reaction_data = {
-              reaction_type => 2, # reaction type props
-              object_revision_id => $object->{data}->{object_revision_id},
-              delta => $reactions,
-            };
-            return $db->insert ('object_reaction', [{
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
-              object_id => Dongry::Type->serialize ('text', $path->[3]),
-              reaction_type => $reaction_data->{reaction_type},
-              data_object_id => 0,
-              data => Dongry::Type->serialize ('json', $reaction_data),
-              created => $time,
-              timestamp => $time,
-            }]);
+            $reactions->{object_revision_id} = $object->{data}->{object_revision_id};
+            return create_object ($db, 
+              group_id => $path->[1],
+              author_account_id => $opts->{account}->{account_id},
+              body_type => 3, # data
+              body_data => $reactions,
+              parent_object_id => $path->[3],
+              thread_id => $object->{data}->{thread_id},
+            );
           })->then (sub {
             my $update = {
               title => Dongry::Type->serialize ('text', $object->{data}->{title}),
