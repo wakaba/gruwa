@@ -143,7 +143,8 @@
 
             <list-container class=comment-list
                 data-src-template="o/get.json?parent_object_id={object_id}&limit=5&with_data=1"
-                key=objects sortkey=timestamp,created prepend>
+                key=objects sortkey=timestamp,created prepend
+                template-selector=object>
               <template>
                 <article itemscope itemtype=http://schema.org/Comment>
                   <header>
@@ -154,6 +155,32 @@
                   </header>
                   <main><iframe data-data-field=body /></main>
                 </article>
+              </template>
+              <template data-name=close>
+                <p><!-- XXX が -->閉じました。
+                (<time data-field=created class=ambtime />)
+              </template>
+              <template data-name=reopen>
+                <p><!-- XXX が -->開き直しました。
+                (<time data-field=created class=ambtime />)
+              </template>
+              <template data-name=changed>
+                <p><!-- XXX が -->
+                変更しました。
+                <!--
+                <index-list data-field=data.body_data.new.index_ids />
+                を追加しました。
+
+                <index-list data-field=data.body_data.old.index_ids />
+                を削除しました。
+
+                <index-list data-field=data.body_data.new.assigned_account_ids />
+                に割り当てました。
+
+                <index-list data-field=data.body_data.old.assigned_account_ids />
+                への割当を削除しました。
+                -->
+                (<time data-field=created class=ambtime />)
               </template>
               <p class="operations pager">
                 <button type=button class=next-page-button hidden>もっと昔</button>
@@ -296,19 +323,19 @@
           <button type=button class=reload-button hidden>再読込</button>
         </menu>
 
-        <template id=index-list-item-template>
+        <template id=index-list-item-template data-name>
           <a data-href-template=./?index={index_id} data-field=title data-color-field=color class=label-index></a>
         </template>
-        <template id=account-list-item-template>
+        <template id=account-list-item-template data-name>
           <a data-href-template=./?assigned={account_id}><account-name data-field=account_id /></a>
         </template>
 
         <list-main/>
       <t:else>
-        <template id=index-list-item-template>
+        <template id=index-list-item-template data-name>
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
-        <template id=account-list-item-template>
+        <template id=account-list-item-template data-name>
           <account-name data-field=account_id />
         </template>
 

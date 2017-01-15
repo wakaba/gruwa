@@ -465,6 +465,21 @@ function fillFormControls (form, object, opts) {
   return Promise.all (wait);
 } // fillFormControls
 
+var TemplateSelectors = {};
+TemplateSelectors.object = function (object, templates) {
+  if (object.data.body_type == 3) {
+    if (object.data.body_data.new.todo_state == 2) {
+      return templates.close;
+    } else if (object.data.body_data.new.todo_state == 1 &&
+               object.data.body_data.old.todo_state == 2) {
+      return templates.reopen;
+    } else {
+      return templates.changed;
+    }
+  }
+  return null;
+}; // object
+
 function upgradeList (el) {
   if (el.upgraded) return;
   el.upgraded = true;
@@ -489,10 +504,19 @@ function upgradeList (el) {
   }; // clearObjects
 
   el.showObjects = function (objects, opts) {
-    var template = $$ (this, 'template')[0];
+    var templates = {};
+    $$c (this, 'template').forEach (function (e) {
+      var name = e.getAttribute ('data-name');
+      if (name !== null) {
+        templates[name] = e;
+      } else {
+        templates._ = e;
+      }
+    });
     var main = el.getListMain ();
     if (!main) return Promise.resolve (null);
-    if (main.localName && !template) return Promise.resolve (null);
+    if (main.localName && !templates._) return Promise.resolve (null);
+    if (!templates._) templates._ = document.createElement ('template');
 
     var listObjects = Object.values (objects);
 
@@ -563,6 +587,8 @@ function upgradeList (el) {
       }
     }; // fill
 
+    var getTemplate = TemplateSelectors[el.getAttribute ('template-selector')] || function () { return null };
+
     if (el.hasAttribute ('grouped')) {
       var grouped = {};
       listObjects.forEach (function (object) {
@@ -595,6 +621,7 @@ function upgradeList (el) {
 
         grouped[key].forEach (function (object) {
           var item = document.createElement (elementType);
+          var template = getTemplate (object, templates) || templates._;
           item.className = template.className;
           item.appendChild (template.content.cloneNode (true));
           fill (item, object);
@@ -639,6 +666,7 @@ function upgradeList (el) {
       } else {
         listObjects.forEach (function (object) {
           var item = document.createElement (elementType);
+          var template = getTemplate (object, templates) || templates._;
           item.className = template.className;
           item.appendChild (template.content.cloneNode (true));
           fill (item, object);
