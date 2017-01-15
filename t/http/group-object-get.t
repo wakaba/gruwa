@@ -535,6 +535,119 @@ Test {
     } [1..8];
   })->then (sub {
     return $current->get_json (['o', 'get.json'], {
+      thread_id => $current->o ('o0')->{object_id},
+      limit => 3,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{objects}}, 3;
+      ok $result->{json}->{objects}->{$current->o (8)->{object_id}};
+      ok $result->{json}->{objects}->{$current->o (7)->{object_id}};
+      ok $result->{json}->{objects}->{$current->o (6)->{object_id}};
+      ok $result->{json}->{next_ref};
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      thread_id => $current->o ('o0')->{object_id},
+      ref => $result->{json}->{next_ref},
+      limit => 3,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{objects}}, 3;
+      ok $result->{json}->{objects}->{$current->o (5)->{object_id}};
+      ok $result->{json}->{objects}->{$current->o (4)->{object_id}};
+      ok $result->{json}->{objects}->{$current->o (3)->{object_id}};
+      ok $result->{json}->{next_ref};
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      thread_id => $current->o ('o0')->{object_id},
+      ref => $result->{json}->{next_ref},
+      limit => 3,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{objects}}, 2;
+      ok $result->{json}->{objects}->{$current->o (2)->{object_id}};
+      ok $result->{json}->{objects}->{$current->o (1)->{object_id}};
+      ok $result->{json}->{next_ref};
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      thread_id => $current->o ('o0')->{object_id},
+      ref => $result->{json}->{next_ref},
+      limit => 3,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{objects}}, 0;
+      is $result->{json}->{next_ref}, undef;
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      thread_id => $current->o ('o0')->{object_id},
+    }, account => 'a1', group => 'g2');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{objects}}, 0;
+      is $result->{json}->{next_ref}, undef;
+    } $current->c, name => 'different group';
+  });
+} n => 18, name => 'by thread';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o0 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      thread_id => $current->o ('o0')->{object_id},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{objects}}, 0;
+      is $result->{json}->{next_ref}, undef;
+    } $current->c;
+  });
+} n => 2, name => 'by thread - no children';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      thread_id => int rand 1000000000,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{objects}}, 0;
+      is $result->{json}->{next_ref}, undef;
+    } $current->c;
+  });
+} n => 2, name => 'by thread - no thread';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_group (g2 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o0 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return promised_map {
+      return $current->create_object ($_[0] => {group => 'g1', account => 'a1',
+                                                parent_object => 'o0'});
+    } [1..8];
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
       parent_object_id => $current->o ('o0')->{object_id},
       limit => 3,
     }, account => 'a1', group => 'g1');
