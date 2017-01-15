@@ -649,15 +649,16 @@ sub group_object ($$$$) {
             return $db->select ('object', {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
               object_id => $value,
-            }, fields => ['thread_id'])->then (sub {
+            }, fields => ['data'])->then (sub {
               my $v = $_[0]->first;
               return $app->throw_error
                   (404, reason_phrase => 'Bad |parent_object_id|')
                       unless defined $v;
               $object->{data}->{parent_object_id} = ''.$value;
               $changes->{fields}->{parent_object_id} = 1;
-              if ($v->{thread_id} != $object->{data}->{thread_id}) {
-                $object->{data}->{thread_id} = ''.$v->{thread_id};
+              my $data = Dongry::Type->parse ('json', $v->{data});
+              if ($data->{thread_id} != $object->{data}->{thread_id}) {
+                $object->{data}->{thread_id} = $data->{thread_id};
                 $changes->{fields}->{thread_id} = 1;
               }
               return $app->throw_error (409, reason_phrase => 'Bad |parent_object_id|')
@@ -822,8 +823,7 @@ sub group_object ($$$$) {
             $object->{data}->{user_status} //= ($changes->{fields}->{user_status} = 1);
             $object->{data}->{thread_id} //= ($changes->{fields}->{thread_id} = ''.$object->{object_id});
 
-            for my $key (qw(owner_status user_status thread_id
-                            parent_object_id)) {
+            for my $key (qw(owner_status user_status)) {
               $update->{$key} = $object->{data}->{$key}
                   if $changes->{fields}->{$key};
             }
@@ -888,34 +888,24 @@ sub group_object ($$$$) {
       }
       return $app->throw_error (400, reason_phrase => 'Bad limit')
           if $limit > 100;
-      my $thread_id = $app->bare_param ('thread_id');
-      if (defined $thread_id) {
-        return {thread_id => $thread_id,
-                object_id => {'!=' => $thread_id},
-                (defined $cond{timestamp} ? (timestamp => $cond{timestamp}) : ()),
-                order => ['timestamp', 'desc', 'created', 'desc'],
-                offset => $offset,
-                limit => $limit};
+      my $parent_object_id = $app->bare_param ('parent_object_id');
+      if (defined $parent_object_id) {
+        $table = 'object_reaction';
+        $object_col = 'data_object_id';
+        $data_col = 'data';
+        $data_key = 'reaction_data';
+        $cond{object_id} = $parent_object_id;
+        $cond{data_object_id} = {'!=', $parent_object_id};
       } else {
-        my $parent_object_id = $app->bare_param ('parent_object_id');
-        if (defined $parent_object_id) {
-          $table = 'object_reaction';
-          $object_col = 'data_object_id';
-          $data_col = 'data';
-          $data_key = 'reaction_data';
-          $cond{object_id} = $parent_object_id;
-          $cond{data_object_id} = {'!=', $parent_object_id};
-        } else {
-          $index_id = $app->bare_param ('index_id');
-          if (defined $index_id) {
-            $table = 'index_object';
-            $object_col = 'object_id';
-            $cond{index_id} = $index_id;
-            my $wiki_name = $app->text_param ('wiki_name');
-            if (defined $wiki_name) {
-              my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $wiki_name);
-              $cond{wiki_name_key} = $wiki_name_key;
-            }
+        $index_id = $app->bare_param ('index_id');
+        if (defined $index_id) {
+          $table = 'index_object';
+          $object_col = 'object_id';
+          $cond{index_id} = $index_id;
+          my $wiki_name = $app->text_param ('wiki_name');
+          if (defined $wiki_name) {
+            my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $wiki_name);
+            $cond{wiki_name_key} = $wiki_name_key;
           }
         }
       }
@@ -1141,7 +1131,6 @@ sub group_object ($$$$) {
         title => '',
         data => $sdata,
         search_data => '',
-        thread_id => $data->{thread_id},
         created => $time,
         updated => $time,
         timestamp => $time,

@@ -10,3 +10,9 @@ create table if not exists `object_reaction` (
   key (`group_id`, `data_object_id`),
   key (`created`)
 ) default charset=binary engine=innodb;
+
+alter table `object`
+  drop column `thread_id`,
+  drop column `parent_object_id`,
+  drop key `group_id_3`,
+  drop key `group_id_4`;
