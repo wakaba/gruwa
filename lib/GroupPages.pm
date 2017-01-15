@@ -522,6 +522,55 @@ sub group_index ($$$$) {
   return $app->throw_error (404);
 } # group_index
 
+sub create_object ($%) {
+  my ($db, %args) = @_;
+  my $time = time;
+  return $db->execute ('select uuid_short() as uuid1,
+                               uuid_short() as uuid2')->then (sub {
+    my $ids = $_[0]->first;
+    my $object_id = ''.$ids->{uuid1};
+    my $data = {index_ids => {}, title => '', body => '', body_type => 2,
+                timestamp => $time,
+                object_revision_id => ''.$ids->{uuid2},
+                thread_id => $object_id,
+                user_status => 1, # open
+                owner_status => 1}; # open
+    my $rev_data = {changes => {action => 'new'}};
+    ## This does not touch `group`.
+
+    my $sdata = Dongry::Type->serialize ('json', $data);
+    return $db->insert ('object', [{
+      group_id => Dongry::Type->serialize ('text', $args{group_id}),
+      object_id => $object_id,
+      title => '',
+      data => $sdata,
+      search_data => '',
+      created => $time,
+      updated => $time,
+      timestamp => $time,
+      owner_status => $data->{owner_status},
+      user_status => $data->{user_status},
+    }])->then (sub {
+      return $db->insert ('object_revision', [{
+        group_id => Dongry::Type->serialize ('text', $args{group_id}),
+        object_id => $object_id,
+        data => $sdata,
+
+        object_revision_id => $data->{object_revision_id},
+        revision_data => Dongry::Type->serialize ('json', $rev_data),
+        author_account_id => Dongry::Type->serialize ('text', $args{author_account_id}),
+        created => $time,
+
+        owner_status => $data->{owner_status},
+        user_status => $data->{user_status},
+      }]);
+    })->then (sub {
+      return {object_id => $object_id,
+              object_revision_id => $data->{object_revision_id}};
+    });
+  });
+} # create_object
+
 sub group_object ($$$$) {
   my ($class, $app, $path, $opts) = @_;
   my $db = $opts->{db};
@@ -671,7 +720,7 @@ sub group_object ($$$$) {
               $object->{data}->{parent_object_id} = ''.$value;
               $changes->{fields}->{parent_object_id} = 1;
               my $data = Dongry::Type->parse ('json', $v->{data});
-              if ($data->{thread_id} != $object->{data}->{thread_id}) {
+              if ((my $z = $data->{thread_id}) != $object->{data}->{thread_id}) {
                 $object->{data}->{thread_id} = $data->{thread_id};
                 $changes->{fields}->{thread_id} = 1;
               }
@@ -1141,54 +1190,16 @@ sub group_object ($$$$) {
     # /g/{group_id}/o/create.json
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
-    my $time = time;
-    return $db->execute ('select uuid_short() as uuid1,
-                                 uuid_short() as uuid2')->then (sub {
-      my $ids = $_[0]->first;
-      my $object_id = $ids->{uuid1};
-      my $data = {index_ids => {}, title => '', body => '', body_type => 2,
-                  timestamp => $time,
-                  object_revision_id => ''.$ids->{uuid2},
-                  thread_id => ''.$object_id,
-                  user_status => 1, # open
-                  owner_status => 1}; # open
-      my $rev_data = {changes => {action => 'new'}};
-      ## This does not touch `group`.  It will be touched by
-      ## o/{}/edit.json soon.
-
-      my $sdata = Dongry::Type->serialize ('json', $data);
-      return $db->insert ('object', [{
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-        object_id => $object_id,
-        title => '',
-        data => $sdata,
-        search_data => '',
-        created => $time,
-        updated => $time,
-        timestamp => $time,
-        owner_status => $data->{owner_status},
-        user_status => $data->{user_status},
-      }])->then (sub {
-        return $db->insert ('object_revision', [{
-          group_id => Dongry::Type->serialize ('text', $path->[1]),
-          object_id => $object_id,
-          data => $sdata,
-
-          object_revision_id => $data->{object_revision_id},
-          revision_data => Dongry::Type->serialize ('json', $rev_data),
-          author_account_id => Dongry::Type->serialize ('text', $opts->{account}->{account_id}),
-          created => $time,
-
-          owner_status => $data->{owner_status},
-          user_status => $data->{user_status},
-        }]);
-      })->then (sub {
-        return json $app, {
-          group_id => $path->[1],
-          object_id => ''.$object_id,
-          object_revision_id => $data->{object_revision_id},
-        };
-      });
+    return create_object ($db,
+      group_id => $path->[1],
+      author_account_id => $opts->{account}->{account_id},
+    )->then (sub {
+      my $result = $_[0];
+      return json $app, {
+        group_id => $path->[1],
+        object_id => $result->{object_id},
+        object_revision_id => $result->{object_revision_id},
+      };
     });
   }
 
