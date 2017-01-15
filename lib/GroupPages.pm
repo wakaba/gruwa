@@ -857,36 +857,6 @@ sub group_object ($$$$) {
               user_status => $object->{data}->{user_status},
             }]);
           })->then (sub {
-            if ($changes->{fields}->{parent_object_id}) {
-              my $reaction_data = {
-                object_id => Dongry::Type->serialize ('text', $path->[3]),
-              };
-              if ($object->{data}->{parent_object_id}) {
-                return $db->insert ('object_reaction', [{
-                  group_id => Dongry::Type->serialize ('text', $path->[1]),
-                  object_id => Dongry::Type->serialize ('text', $object->{data}->{parent_object_id}),
-                  reaction_type => 1, # reaction type comment
-                  data_object_id => $reaction_data->{object_id},
-                  data => Dongry::Type->serialize ('json', $reaction_data),
-                  created => $time,
-                  timestamp => $time,
-                }])->then (sub {
-                  return $db->delete ('object_reaction', {
-                    group_id => Dongry::Type->serialize ('text', $path->[1]),
-                    object_id => {'!=', Dongry::Type->serialize ('text', $object->{data}->{parent_object_id})},
-                    reaction_type => 1, # reaction type comment
-                    data_object_id => $reaction_data->{object_id},
-                  });
-                });
-              } else {
-                return $db->delete ('object_reaction', {
-                  group_id => Dongry::Type->serialize ('text', $path->[1]),
-                  reaction_type => 1, # reaction type comment
-                  data_object_id => $reaction_data->{object_id},
-                });
-              }
-            }
-          })->then (sub {
             return unless keys %$reactions;
             $reactions->{object_revision_id} = $object->{data}->{object_revision_id};
             return create_object ($db, 
@@ -961,7 +931,6 @@ sub group_object ($$$$) {
     return Promise->resolve->then (sub {
       my $index_id;
       my $table;
-      my $object_col;
       my %cond;
       my $ref = $app->bare_param ('ref');
       my $timestamp;
@@ -987,15 +956,16 @@ sub group_object ($$$$) {
       } else {
         my $parent_object_id = $app->bare_param ('parent_object_id');
         if (defined $parent_object_id) {
-          $table = 'object_reaction';
-          $object_col = 'data_object_id';
-          $cond{object_id} = $parent_object_id;
-          $cond{data_object_id} = {'!=', $parent_object_id};
+          return {parent_object_id => $parent_object_id,
+                  object_id => {'!=' => $parent_object_id},
+                  (defined $cond{timestamp} ? (timestamp => $cond{timestamp}) : ()),
+                  order => ['timestamp', 'desc', 'created', 'desc'],
+                  offset => $offset,
+                  limit => $limit};
         } else {
           $index_id = $app->bare_param ('index_id');
           if (defined $index_id) {
             $table = 'index_object';
-            $object_col = 'object_id';
             $cond{index_id} = $index_id;
             my $wiki_name = $app->text_param ('wiki_name');
             if (defined $wiki_name) {
@@ -1010,14 +980,14 @@ sub group_object ($$$$) {
           group_id => Dongry::Type->serialize ('text', $path->[1]),
           %cond,
         },
-          fields => [$object_col, 'timestamp'],
+          fields => ['object_id', 'timestamp'],
           order => ['timestamp', 'desc', 'created', 'desc'],
           offset => $offset, limit => $limit,
         )->then (sub {
           return {object_id => {-in => [map {
             $next_ref->{$_->{timestamp}}++;
             $next_ref->{_} = $_->{timestamp};
-            $_->{$object_col};
+            $_->{object_id};
           } @{$_[0]->all}]}};
         });
       } else {
