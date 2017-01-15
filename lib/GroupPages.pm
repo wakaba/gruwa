@@ -537,7 +537,7 @@ sub create_object ($%) {
     my $rev_data = {changes => {action => 'new'}};
     ## This does not touch `group`.
 
-    if ($args{body_type} == 3) {
+    if (defined $args{body_type} and $args{body_type} == 3) {
       $data->{body_type} = $args{body_type};
       $data->{body_data} = $args{body_data};
     } else {
