@@ -669,15 +669,9 @@ Test {
     my $result = $_[0];
     test {
       is 0+keys %{$result->{json}->{objects}}, 3;
-      my $o5 = $result->{json}->{objects}->{$current->o (5)->{object_id}};
-      is $o5->{reaction_data}->{object_id}, $current->o (5)->{object_id};
-      is $o5->{reaction_data}->{reaction_type}, 1;
-      my $o4 = $result->{json}->{objects}->{$current->o (4)->{object_id}};
-      is $o4->{reaction_data}->{object_id}, $current->o (4)->{object_id};
-      is $o4->{reaction_data}->{reaction_type}, 1;
-      my $o3 = $result->{json}->{objects}->{$current->o (3)->{object_id}};
-      is $o3->{reaction_data}->{object_id}, $current->o (3)->{object_id};
-      is $o3->{reaction_data}->{reaction_type}, 1;
+      ok $result->{json}->{objects}->{$current->o (5)->{object_id}};
+      ok $result->{json}->{objects}->{$current->o (4)->{object_id}};
+      ok $result->{json}->{objects}->{$current->o (3)->{object_id}};
       ok $result->{json}->{next_ref};
     } $current->c;
     return $current->get_json (['o', 'get.json'], {
@@ -714,7 +708,7 @@ Test {
       is $result->{json}->{next_ref}, undef;
     } $current->c, name => 'different group';
   });
-} n => 21, name => 'by parent_object';
+} n => 18, name => 'by parent_object';
 
 Test {
   my $current = shift;
