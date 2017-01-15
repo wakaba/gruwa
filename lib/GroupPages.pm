@@ -577,6 +577,7 @@ sub group_object ($$$$) {
         $app->requires_same_origin;
 
         my $changes = {};
+        my $reactions = {};
         for my $key (qw(title body)) {
           my $value = $app->text_param ($key);
           if (defined $value) {
@@ -590,13 +591,16 @@ sub group_object ($$$$) {
           if (defined $value) {
             my $old = $object->{data}->{$key} || 0;
             if ($old != $value) {
+              if ($key eq 'todo_state') {
+                $reactions->{old}->{$key} = $old;
+                $reactions->{new}->{$key} = $value;
+              }
               $object->{data}->{$key} = 0+$value;
               $changes->{fields}->{$key} = 1;
             }
           }
         }
         # XXX owner_status only can be changed by group owners
-        # XXX write object action record when |todo_state| is changed
 
         my $search_data;
         if ($changes->{fields}->{title} or
@@ -630,11 +634,21 @@ sub group_object ($$$$) {
 
         if ($app->bare_param ('edit_assigned_account_id')) {
           my $ids = $app->bare_param_list ('assigned_account_id');
-          my $old = [keys %{$object->{data}->{assigned_account_ids} || {}}];
-          unless (@$ids == @$old and
-                  ((join $;, sort { $a cmp $b } @$ids) eq
-                   (join $;, sort { $a cmp $b } @$old))) {
-            $object->{data}->{assigned_account_ids} = {map { $_ => 1 } @$ids};
+          my $new = {map { $_ => 1 } @$ids};
+          my $old = {%{$object->{data}->{assigned_account_ids} || {}}};
+          my $changed;
+          for (keys %$new) {
+            unless (delete $old->{$_}) {
+              $reactions->{new}->{assigned_account_ids}->{$_} = 1;
+              $changed = 1;
+            }
+          }
+          for (keys %$old) {
+            $reactions->{old}->{assigned_account_ids}->{$_} = 1;
+            $changed = 1;
+          }
+          if ($changed) {
+            $object->{data}->{assigned_account_ids} = $new;
             $changes->{fields}->{assigned_account_ids} = 1;
           }
         }
@@ -678,23 +692,25 @@ sub group_object ($$$$) {
           ## `updated` is not updated...
 
           my $index_ids = $app->bare_param_list ('index_id');
-
+          my $new = {map { $_ => 1 } @$index_ids};
+          my $old = {%{$object->{data}->{index_ids} or {}}};
+          my $changed;
           my @new_id;
-          for (@$index_ids) {
-            unless ($object->{data}->{index_ids}->{$_}) {
+          for (keys %$new) {
+            unless (delete $old->{$_}) {
+              $reactions->{new}->{index_ids}->{$_} = 1;
+              $changed = 1;
               push @new_id, $_;
             }
           }
-
-          if (@$index_ids == keys %{$object->{data}->{index_ids}} and
-              not @new_id) {
-            # not changed
-            unless ($changes->{fields}->{timestamp}) {
-              return;
-            }
+          for (keys %$old) {
+            $reactions->{old}->{index_ids}->{$_} = 1;
+            $changed = 1;
           }
 
-          $object->{data}->{index_ids} = {map { $_ => 1 } @$index_ids};
+          return unless $changed or $changes->{fields}->{timestamp};
+
+          $object->{data}->{index_ids} = $new;
           $changes->{fields}->{index_ids} = 1;
 
           my $index_id_to_type = {};
@@ -807,6 +823,22 @@ sub group_object ($$$$) {
                 });
               }
             }
+          })->then (sub {
+            return unless keys %$reactions;
+            my $reaction_data = {
+              reaction_type => 2, # reaction type props
+              object_revision_id => $object->{data}->{object_revision_id},
+              delta => $reactions,
+            };
+            return $db->insert ('object_reaction', [{
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              object_id => Dongry::Type->serialize ('text', $path->[3]),
+              reaction_type => $reaction_data->{reaction_type},
+              data_object_id => 0,
+              data => Dongry::Type->serialize ('json', $reaction_data),
+              created => $time,
+              timestamp => $time,
+            }]);
           })->then (sub {
             my $update = {
               title => Dongry::Type->serialize ('text', $object->{data}->{title}),
@@ -925,7 +957,7 @@ sub group_object ($$$$) {
             if (defined $data_col) {
               $id_to_data->{$_->{$object_col}} = Dongry::Type->parse ('json', $_->{$data_col});
             }
-            $_->{$object_col};
+            $_->{$object_col} ? $_->{$object_col} : ();
           } @{$_[0]->all}]}};
         });
       } else {
