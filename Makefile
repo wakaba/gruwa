@@ -38,7 +38,11 @@ PROVE = ./prove
 
 test: test-deps test-main
 
-test-deps: deps
+test-deps: deps deps-accounts
+
+deps-accounts:
+	perl local/bin/pmbp.pl $(PMBP_OPTIONS) \
+	    --install-perl-app https://github.com/wakaba/accounts
 
 test-main:
 	$(PROVE) t/http/*.t

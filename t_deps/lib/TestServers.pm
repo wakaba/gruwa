@@ -2,6 +2,8 @@ package TestServers;
 use strict;
 use warnings;
 use Path::Tiny;
+use lib path (__FILE__)->parent->parent->parent->child ('local/accounts/t_deps/lib')->stringify;
+use lib path (__FILE__)->parent->parent->parent->child ('local/accounts/t_deps/modules/promised-plackup/lib')->stringify;
 use File::Temp;
 use JSON::PS;
 use Promise;
@@ -15,12 +17,13 @@ use Web::Transport::ConnectionClient;
 
 my $RootPath = path (__FILE__)->parent->parent->parent->absolute;
 
-sub mysqld ($$$$$) {
-  my ($db_dir, $db_name, $migration_status_file, $dumped_file, $set_dsn) = @_;
+sub mysqld ($$$$$$) {
+  my ($db_dir, $db_name, $migration_status_file, $dumped_file, $set_dsn, $set_mysqld) = @_;
   $db_name = 'test_' . int rand 100000 unless defined $db_name;
   my $mysqld = Promised::Mysqld->new;
   $mysqld->set_db_dir ($db_dir) if defined $db_dir;
   return $mysqld->start->then (sub {
+    $set_mysqld->($mysqld);
     if (defined $migration_status_file) {
       my $file = Promised::File->new_from_path ($migration_status_file);
       return $file->is_file->then (sub {
@@ -79,19 +82,18 @@ sub mysqld ($$$$$) {
   });
 } # mysqld
 
-sub web ($$$) {
-  my ($port, $config_file, $dsn_got) = @_;
+sub web ($$$$) {
+  my ($port, $config, $adata_got, $dsn_got) = @_;
   my $command = Promised::Command->new
       ([$RootPath->child ('perl'), $RootPath->child ('bin/server.pl'), $port]);
-  my $temp;
-  my $wait;
-  if (ref $config_file eq 'HASH') {
-    $temp = File::Temp->new;
-    $command->envs->{CONFIG_FILE} = $temp;
-    $wait = Promised::File->new_from_path ($temp)->write_byte_string (perl2json_bytes $config_file);
-  } else {
-    $command->envs->{CONFIG_FILE} = $config_file;
-  }
+  my $temp = File::Temp->new;
+  $command->envs->{CONFIG_FILE} = $temp;
+  my $wait = Promise->resolve ($adata_got)->then (sub {
+    my $adata = $_[0];
+    $config->{accounts} = $adata if defined $adata;
+    return Promised::File->new_from_path ($temp)->write_byte_string
+        (perl2json_bytes $config);
+  });
   my $stop = sub {
     $command->send_signal ('TERM');
     undef $temp;
@@ -109,14 +111,12 @@ sub web ($$$) {
       $failed->($_[0]);
     });
     my $origin = Web::URL->parse_string (qq<http://localhost:$port>);
-    return promised_timeout {
-      return promised_wait_until {
-        my $client = Web::Transport::ConnectionClient->new_from_url ($origin);
-        return $client->request (path => ['robots.txt'])->then (sub {
-          return not $_[0]->is_network_error;
-        });
-      };
-    } 60*2;
+    return promised_wait_until {
+      my $client = Web::Transport::ConnectionClient->new_from_url ($origin);
+      return $client->request (path => ['robots.txt'])->then (sub {
+        return not $_[0]->is_network_error;
+      });
+    } timeout => 60*2;
   })->then (sub {
     $ready->([$stop, $command->wait]);
   }, sub {
@@ -128,29 +128,48 @@ sub web ($$$) {
   return $p;
 } # web
 
-sub accounts_for_test ($) {
-  my ($port) = @_;
-  require Sarze;
-  return Sarze->start (
-    hostports => [[0, $port]],
-    psgi_file_name => path (__FILE__)->parent->parent->child ('accounts-test.psgi'),
-    max_worker_count => 1,
-  )->then (sub {
-    my $sarze = $_[0];
-    return [sub { $sarze->stop }, $sarze->completed];
+sub accounts ($$) {
+  my ($set_adata, $mysqld_got) = @_;
+  return $mysqld_got->then (sub {
+    require Test::AccountServer;
+    my $as = Test::AccountServer->new;
+    $as->set_mysql_server ($_[0]);
+    $as->onbeforestart (sub {
+      my ($self, $args) = @_;
+      #
+    });
+    return $as->start->then (sub {
+      my $account_data = $_[0];
+      my $adata = {
+        url => Web::URL->parse_string ("http://$account_data->{host}")->stringify,
+        key => $account_data->{keys}->{'auth.bearer'},
+        context => rand,
+        servers => ['test1'],
+      };
+      $set_adata->($adata);
+
+      my $stop;
+      my $stopped = Promise->new (sub { $stop = $_[0] });
+      return [sub { return &promised_cleanup ($stop, $as->stop) }, $stopped];
+    });
   });
-} # accounts_for_test
+} # accounts
 
 sub servers ($%) {
   shift;
   my %args = @_;
   my $set_dsn;
   my $dsn_got = Promise->new (sub { $set_dsn = $_[0] });
+  my $set_mysqld;
+  my $mysqld_got = Promise->new (sub { $set_mysqld = $_[0] });
+  my $set_adata;
+  my $adata_got = Promise->new (sub { $set_adata = $_[0] });
+  $adata_got->then ($args{onaccounts}) if defined $args{onaccounts};
 
   return Promise->all ([
-    mysqld ($args{db_dir}, $args{db_name}, $args{migration_status_file}, $args{dumped_file}, $set_dsn),
-    web ($args{port}, $args{config} // $args{config_file}, $dsn_got),
-    defined $args{accounts_for_test_port} ? accounts_for_test ($args{accounts_for_test_port}) : undef,
+    mysqld ($args{db_dir}, $args{db_name}, $args{migration_status_file}, $args{dumped_file}, $set_dsn, $set_mysqld),
+    web ($args{port}, $args{config}, $adata_got, $dsn_got),
+    defined $args{onaccounts} ? accounts ($set_adata, $mysqld_got) : $set_adata->(undef),
   ])->then (sub {
     my $stops = $_[0];
     my @stopped = grep { defined } map { $_->[1] } @$stops;

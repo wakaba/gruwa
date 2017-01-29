@@ -248,21 +248,37 @@ sub object ($$%) {
 sub accounts_client ($) {
   my $self = $_[0];
   return $self->{accounts_client}
-      ||= Web::Transport::ConnectionClient->new_from_url ($self->{accounts_url});
+      ||= Web::Transport::ConnectionClient->new_from_url
+          (Web::URL->parse_string ($self->{accounts}->{url}));
 } # accounts_client
 
 sub create_account ($$$) {
-  my ($self, $name => $account) = @_;
-  $account->{name} //= rand;
+  my ($self, $name => $opts) = @_;
+  $opts->{name} //= "\x{6322}" . rand;
+  my $account = {};
   return $self->accounts_client->request (
     method => 'POST',
-    path => ['create-for-test'],
+    path => ['session'],
     params => {
-      data => perl2json_chars $account,
+      sk_context => $self->{accounts}->{context},
     },
+    bearer => $self->{accounts}->{key},
   )->then (sub {
     die $_[0] unless $_[0]->status == 200;
-    $self->{objects}->{$name // 'X'} = json_bytes2perl $_[0]->body_bytes;
+    $account->{cookies}->{sk} = (json_bytes2perl $_[0]->body_bytes)->{sk};
+    return $self->accounts_client->request (
+      method => 'POST',
+      path => ['create'],
+      params => {
+        sk_context => $self->{accounts}->{context},
+        sk => $account->{cookies}->{sk},
+      },
+      bearer => $self->{accounts}->{key},
+    );
+  })->then (sub {
+    die $_[0] unless $_[0]->status == 200;
+    $account->{account_id} = (json_bytes2perl $_[0]->body_bytes)->{account_id};
+    $self->{objects}->{$name} = $account;
   });
 } # create_account
 

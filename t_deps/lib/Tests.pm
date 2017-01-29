@@ -53,8 +53,7 @@ our @EXPORT = grep { not /^\$/ }
 }
 
 my $ServerURL;
-my $AccountsURL;
-my $AccountsKey = rand;
+my $AccountsData;
 
 push @EXPORT, qw(Test);
 sub Test (&;%) {
@@ -64,8 +63,7 @@ sub Test (&;%) {
     my $current = CurrentTest->new ({
       c => $c,
       url => $ServerURL,
-      accounts_url => $AccountsURL,
-      accounts_key => $AccountsKey,
+      accounts => $AccountsData,
     });
     Promise->resolve ($current)->then ($code)->catch (sub {
       my $error = $_[0];
@@ -85,18 +83,13 @@ sub RUN () {
   my $port = find_listenable_port;
   $ServerURL = Web::URL->parse_string ("http://localhost:$port");
   my $accounts_port = find_listenable_port;
-  $AccountsURL = Web::URL->parse_string ("http://localhost:$accounts_port");
   my $stop = TestServers->servers (
     port => $port,
-    accounts_for_test_port => $accounts_port,
     config => {
       origin => $ServerURL->get_origin->to_ascii,
-      accounts => {
-        url => $AccountsURL->get_origin->to_ascii,
-        key => $AccountsKey,
-        context => rand,
-        servers => ['test1'],
-      },
+    },
+    onaccounts => sub {
+      $AccountsData = shift;
     },
   )->to_cv->recv;
   run_tests;
@@ -108,7 +101,7 @@ sub RUN () {
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
