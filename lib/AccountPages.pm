@@ -8,7 +8,7 @@ use Dongry::Type;
 use Results;
 
 sub main ($$$$$) {
-  my ($class, $app, $path, $db, $accounts) = @_;
+  my ($class, $app, $path, $db, $acall) = @_;
 
   if (@$path == 2 and $path->[1] eq 'login') {
     # /account/login
@@ -17,33 +17,19 @@ sub main ($$$$$) {
       my $server = $app->bare_param ('server') // '';
       return $app->throw_error (400, reason_phrase => 'Bad |server|')
           unless grep { $_ eq $server } @{$app->config->{accounts}->{servers}};
-      return $accounts->request (
-        method => 'POST',
-        path => ['session'],
-        params => {
-          ## don't reuse any existing |sk| cookie for security reason
+      return $acall->(['session'], {
+        ## don't reuse any existing |sk| cookie for security reason
+        sk_context => $app->config->{accounts}->{context},
+      })->(sub {
+        my $json1 = $_[0];
+        return $acall->(['login'], {
           sk_context => $app->config->{accounts}->{context},
-        },
-        bearer => $app->config->{accounts}->{key},
-      )->then (sub {
-        my $res = $_[0];
-        die $res unless $res->status == 200;
-        my $json1 = json_bytes2perl $res->body_bytes;
-        return $accounts->request (
-          method => 'POST',
-          path => ['login'],
-          params => {
-            sk_context => $app->config->{accounts}->{context},
-            sk => $json1->{sk},
-            server => $server,
-            callback_url => $app->http->url->resolve_string (q</account/cb>)->stringify,
-            app_data => $app->text_param ('next'),
-          },
-          bearer => $app->config->{accounts}->{key},
-        )->then (sub {
-          my $res = $_[0];
-          die $res unless $res->status == 200;
-          my $json2 = json_bytes2perl $res->body_bytes;
+          sk => $json1->{sk},
+          server => $server,
+          callback_url => $app->http->url->resolve_string (q</account/cb>)->stringify,
+          app_data => $app->text_param ('next'),
+        })->(sub {
+          my $json2 = $_[0];
           if ($json1->{set_sk}) {
             my $url = Web::URL->parse_string ($app->config->{origin});
             $app->http->set_response_cookie
@@ -67,40 +53,26 @@ sub main ($$$$$) {
 
   if (@$path == 2 and $path->[1] eq 'cb') {
     # /account/cb
-    return $accounts->request (
-      method => 'POST',
-      path => ['cb'],
-      params => {
-        sk_context => $app->config->{accounts}->{context},
-        sk => $app->http->request_cookies->{sk},
-        code => $app->text_param ('code'),
-        state => $app->text_param ('state'),
-        oauth_token => $app->text_param ('oauth_token'),
-        oauth_verifier => $app->text_param ('oauth_verifier'),
-      },
-      bearer => $app->config->{accounts}->{key},
-    )->then (sub {
-      my $res = $_[0];
-      if ($res->status == 200) {
-        my $json = json_bytes2perl $res->body_bytes;
-        my $url = Web::URL->parse_string ($app->http->url->resolve_string ('/dashboard')->stringify);
-        my $next = Web::URL->parse_string ($json->{app_data} // '');
-        unless (defined $next and
-                $next->get_origin->same_origin_as ($url->get_origin)) {
-          $next = $url;
-        }
-        return $app->send_redirect ($next->stringify);
-      } elsif ($res->status == 400) {
-        my $json = json_bytes2perl $res->body_bytes;
-        if (defined $json and ref $json eq 'HASH' and defined $json->{reason}) {
-          $app->http->set_status (400);
-          return $app->send_plain_text ($json->{reason});
-        } else {
-          die $res;
-        }
-      } else {
-        die $res;
+    return $acall->(['cb'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+      code => $app->text_param ('code'),
+      state => $app->text_param ('state'),
+      oauth_token => $app->text_param ('oauth_token'),
+      oauth_verifier => $app->text_param ('oauth_verifier'),
+    })->(sub {
+      my $json = $_[0];
+      my $url = Web::URL->parse_string ($app->http->url->resolve_string ('/dashboard')->stringify);
+      my $next = Web::URL->parse_string ($json->{app_data} // '');
+      unless (defined $next and
+              $next->get_origin->same_origin_as ($url->get_origin)) {
+        $next = $url;
       }
+      return $app->send_redirect ($next->stringify);
+    }, sub {
+      my $json = $_[0];
+      $app->http->set_status (400, reason_phrase => $json->{reason});
+      return $app->send_plain_text ($json->{reason});
     });
   } # /account/cb
 
@@ -187,26 +159,19 @@ sub dashboard ($$$) {
 } # dashboard
 
 sub user ($$$$) {
-  my ($class, $app, $path, $accounts) = @_;
+  my ($class, $app, $path, $acall) = @_;
 
   if (@$path == 2 and $path->[1] eq 'info.json') {
     # /u/info.json
-    return $accounts->request (
-      method => 'POST',
-      path => ['profiles'],
-      params => {
-        account_id => $app->bare_param_list ('account_id')->to_a,
-        user_status => 1, # ACCOUNT_STATUS_ENABLED,
-        admin_status => 1, # ACCOUNT_STATUS_ENABLED,
-        #terms_version
-        #with_linked => ['id', 'name'],
-        with_data => ['name'],
-      },
-      bearer => $app->config->{accounts}->{key},
-    )->then (sub {
-      my $res = $_[0];
-      die $res unless $res->status == 200;
-      my $json = json_bytes2perl $res->body_bytes;
+    return $acall->(['profiles'], {
+      account_id => $app->bare_param_list ('account_id')->to_a,
+      user_status => 1, # ACCOUNT_STATUS_ENABLED,
+      admin_status => 1, # ACCOUNT_STATUS_ENABLED,
+      #terms_version
+      #with_linked => ['id', 'name'],
+      with_data => ['name'],
+    })->(sub {
+      my $json = $_[0];
       return json $app, {accounts => {map {
         my $account = $json->{accounts}->{$_};
         my $name = $account->{name} // '';
@@ -226,7 +191,7 @@ sub user ($$$$) {
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

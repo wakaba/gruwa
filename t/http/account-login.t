@@ -46,7 +46,7 @@ Test {
     test {
       is $res->status, 302;
       like $res->header ('Set-Cookie'), qr{^sk=.+; httponly$};
-      is $res->header ('Location'), 'https://test1/authorize';
+      like $res->header ('Location'), qr{^https://test1/authorize};
     } $current->c;
   });
 } n => 3, name => '/account/login POST with server';
@@ -55,7 +55,7 @@ RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

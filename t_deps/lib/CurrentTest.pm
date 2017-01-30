@@ -272,6 +272,7 @@ sub create_account ($$$) {
       params => {
         sk_context => $self->{accounts}->{context},
         sk => $account->{cookies}->{sk},
+        name => $opts->{name},
       },
       bearer => $self->{accounts}->{key},
     );

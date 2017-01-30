@@ -25,7 +25,40 @@ my $DBSources = {sources => {
   default => {dsn => $dsn, anyevent => 1},
 }};
 
-my $AccountsURL = Web::URL->parse_string ($Config->{accounts}->{url});
+sub accounts ($) {
+  my $app = $_[0];
+  my $accounts = Web::Transport::ConnectionClient->new_from_url
+      (Web::URL->parse_string ($app->config->{accounts}->{url}));
+  my $acall = sub {
+    my ($path, $params) = @_;
+    my $p = $accounts->request (
+      method => 'POST',
+      path => $path,
+      bearer => $app->config->{accounts}->{key},
+      params => $params,
+    );
+    return sub {
+      my ($ok, $ng, $exception) = @_;
+      return $p->then (sub {
+        my $result = $_[0];
+        if ($result->status == 200) {
+          return $ok->(json_bytes2perl $result->body_bytes);
+        } elsif (defined $ng and
+                 not $result->is_network_error and
+                 ($result->header ('Content-Type') // '') =~ m{^application/json}) {
+          my $json = json_bytes2perl $result->body_bytes;
+          if (defined $json and ref $json eq 'HASH' and
+              defined $json->{reason}) {
+            return $ng->($json);
+          }
+        }
+        return $exception->($result) if defined $exception;
+        die $result;
+      }, $exception);
+    };
+  }; # $acall
+  return ($acall, $accounts);
+} # accounts
 
 return sub {
   my $http = Wanage::HTTP->new_from_psgi_env ($_[0]);
@@ -64,26 +97,18 @@ return sub {
           # /g
           # /my
           # /dashboard
-          my $accounts = Web::Transport::ConnectionClient->new_from_url
-              ($AccountsURL);
-
+          my ($acall, $accounts) = accounts $app;
           #my $with_profile = $app->bare_param ('with_profile');
           #my $with_linked = $app->bare_param ('with_links');
           return promised_cleanup {
             return $accounts->close;
-          } $accounts->request (
-            method => 'POST',
-            path => ['info'],
-            bearer => $app->config->{accounts}->{key},
-            params => {
-              sk_context => $app->config->{accounts}->{context},
-              sk => $app->http->request_cookies->{sk},
-              #with_data => $with_profile ? [] : [],
-              #with_linked => $with_linked ? 'name' : undef,
-            },
-          )->then (sub {
-            die $_[0] unless $_[0]->status == 200;
-            my $account_data = json_bytes2perl $_[0]->body_bytes;
+          } $acall->(['info'], {
+            sk_context => $app->config->{accounts}->{context},
+            sk => $app->http->request_cookies->{sk},
+            #with_data => $with_profile ? [] : [],
+            #with_linked => $with_linked ? 'name' : undef,
+          })->(sub {
+            my $account_data = $_[0];
             $account_data->{has_account} = defined $account_data->{account_id};
             if ($path->[0] eq 'my') {
               return AccountPages->mymain ($app, $path, $db, $account_data);
@@ -114,19 +139,17 @@ return sub {
 
         if ($path->[0] eq 'account') {
           # /account (except for /account/info.json)
-          my $accounts = Web::Transport::ConnectionClient->new_from_url
-              ($AccountsURL);
+          my ($acall, $accounts) = accounts $app;
           return promised_cleanup {
             return $accounts->close;
-          } AccountPages->main ($app, $path, $db, $accounts);
+          } AccountPages->main ($app, $path, $db, $acall);
         }
         if ($path->[0] eq 'u') {
           # /u
-          my $accounts = Web::Transport::ConnectionClient->new_from_url
-              ($AccountsURL);
+          my ($acall, $accounts) = accounts $app;
           return promised_cleanup {
             return $accounts->close;
-          } AccountPages->user ($app, $path, $accounts);
+          } AccountPages->user ($app, $path, $acall);
         }
 
         if (@$path == 1) {

@@ -14,24 +14,39 @@ Test {
     my $res = $_[0];
     $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
     my $sk = $1;
-    return $current->are_errors (
-      ['GET', ['account', 'cb'], {
-        code => "abc de",
-      }],
-      [
-        {params => {}, status => 400,
-         response_headers => {location => undef, 'set-cookie' => undef},
-         name => 'no |code|'},
-      ],
-      [
-        {account => undef, status => 400,
-         response_headers => {location => undef, 'set-cookie' => undef},
-         name => 'no |sk|'},
-      ],
-    )->then (sub {
-      return $current->client->request (path => ['account', 'cb'], params => {
-        code => "abc de",
-      }, cookies => {sk => $sk});
+    my $url = Web::URL->parse_string ($res->header ('Location'));
+    my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+    return $client->request (url => $url)->then (sub {
+      my $res = $_[0];
+      die $res unless $res->status == 200;
+      my $code = $res->header ('X-Code');
+      my $state = $res->header ('X-State');
+      return $current->are_errors (
+        ['GET', ['account', 'cb'], {
+          code => $code,
+          state => $state,
+        }],
+        [
+          {params => {state => $state}, status => 400,
+           response_headers => {location => undef, 'set-cookie' => undef},
+           name => 'no |code|'},
+        ],
+        [
+          {params => {code => $code}, status => 400,
+           response_headers => {location => undef, 'set-cookie' => undef},
+           name => 'no |state|'},
+        ],
+        [
+          {account => undef, status => 400,
+           response_headers => {location => undef, 'set-cookie' => undef},
+           name => 'no |sk|'},
+        ],
+      )->then (sub {
+        return $current->client->request (path => ['account', 'cb'], params => {
+          code => $code,
+          state => $state,
+        }, cookies => {sk => $sk});
+      });
     });
   })->then (sub {
     my $res = $_[0];
@@ -54,9 +69,18 @@ Test {
     my $res = $_[0];
     $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
     my $sk = $1;
-    return $current->client->request (path => ['account', 'cb'], params => {
-      code => "abc de",
-    }, cookies => {sk => $sk});
+    my $url = Web::URL->parse_string ($res->header ('Location'));
+    my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+    return $client->request (url => $url)->then (sub {
+      my $res = $_[0];
+      die $res unless $res->status == 200;
+      my $code = $res->header ('X-Code');
+      my $state = $res->header ('X-State');
+      return $current->client->request (path => ['account', 'cb'], params => {
+        code => $code,
+        state => $state,
+      }, cookies => {sk => $sk});
+    });
   })->then (sub {
     my $res = $_[0];
     test {
@@ -78,9 +102,18 @@ Test {
     my $res = $_[0];
     $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
     my $sk = $1;
-    return $current->client->request (path => ['account', 'cb'], params => {
-      code => "abc de",
-    }, cookies => {sk => $sk});
+    my $url = Web::URL->parse_string ($res->header ('Location'));
+    my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+    return $client->request (url => $url)->then (sub {
+      my $res = $_[0];
+      die $res unless $res->status == 200;
+      my $code = $res->header ('X-Code');
+      my $state = $res->header ('X-State');
+      return $current->client->request (path => ['account', 'cb'], params => {
+        code => $code,
+        state => $state,
+      }, cookies => {sk => $sk});
+    });
   })->then (sub {
     my $res = $_[0];
     test {

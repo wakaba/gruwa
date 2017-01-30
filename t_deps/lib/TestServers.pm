@@ -14,8 +14,38 @@ use Promised::Command::Signals;
 use Promised::Mysqld;
 use Web::URL;
 use Web::Transport::ConnectionClient;
+use Sarze;
 
 my $RootPath = path (__FILE__)->parent->parent->parent->absolute;
+
+{
+  use Socket;
+  my $EphemeralStart = 1024;
+  my $EphemeralEnd = 5000;
+
+  sub is_listenable_port ($) {
+    my $port = $_[0];
+    return 0 unless $port;
+    
+    my $proto = getprotobyname('tcp');
+    socket(my $server, PF_INET, SOCK_STREAM, $proto) || die "socket: $!";
+    setsockopt($server, SOL_SOCKET, SO_REUSEADDR, pack("l", 1)) || die "setsockopt: $!";
+    bind($server, sockaddr_in($port, INADDR_ANY)) || return 0;
+    listen($server, SOMAXCONN) || return 0;
+    close($server);
+    return 1;
+  } # is_listenable_port
+
+  my $using = {};
+  sub find_listenable_port () {
+    for (1..10000) {
+      my $port = int rand($EphemeralEnd - $EphemeralStart);
+      next if $using->{$port}++;
+      return $port if is_listenable_port $port;
+    }
+    die "Listenable port not found";
+  } # find_listenable_port
+}
 
 sub mysqld ($$$$$$) {
   my ($db_dir, $db_name, $migration_status_file, $dumped_file, $set_dsn, $set_mysqld) = @_;
@@ -128,15 +158,25 @@ sub web ($$$$) {
   return $p;
 } # web
 
-sub accounts ($$) {
-  my ($set_adata, $mysqld_got) = @_;
+sub accounts ($$$) {
+  my ($set_adata, $mysqld_got, $ext_url_got) = @_;
+  require Test::AccountServer;
+  my $as = Test::AccountServer->new;
   return $mysqld_got->then (sub {
-    require Test::AccountServer;
-    my $as = Test::AccountServer->new;
     $as->set_mysql_server ($_[0]);
+    return $ext_url_got;
+  })->then (sub {
+    my $ext_url = $_[0];
     $as->onbeforestart (sub {
-      my ($self, $args) = @_;
-      #
+      my ($self, %args) = @_;
+      $args{servers}->{test1} = {
+        name => 'test1',
+        url_scheme => $ext_url->scheme,
+        host => $ext_url->hostport,
+        auth_endpoint => '/authorize',
+        token_endpoint => '/token',
+        linked_id_field => 'access_token',
+      };
     });
     return $as->start->then (sub {
       my $account_data = $_[0];
@@ -155,6 +195,52 @@ sub accounts ($$) {
   });
 } # accounts
 
+sub ext_server ($) {
+  my ($set_url) = @_;
+  my $host = '127.0.0.1';
+  my $port = find_listenable_port;
+  $set_url->(Web::URL->parse_string ("http://$host:$port"));
+  return Sarze->start (
+    hostports => [[$host, $port]],
+    eval => q{
+      use strict;
+      use warnings;
+      use Wanage::HTTP;
+      use Warabe::App;
+      use JSON::PS;
+      my $Tokens = {};
+      sub psgi_app {
+        my $http = Wanage::HTTP->new_from_psgi_env (shift);
+        my $app = Warabe::App->new_from_http ($http);
+        $app->execute_by_promise (sub {
+          if ($app->http->url->{path} eq '/authorize') {
+            my $state = $app->bare_param ('state');
+            my $code = rand;
+            my $token = rand;
+            $Tokens->{$code} = $token;
+            $app->http->set_response_header ('X-Code', $code);
+            $app->http->set_response_header ('X-State', $state);
+            return $app->send_error (200);
+          } elsif ($app->http->url->{path} eq '/token') {
+            my $code = $app->bare_param ('code');
+            my $token = delete $Tokens->{$code};
+            return $app->send_error (404) unless defined $token;
+            my $result = {access_token => $token, token_type => 'bearer'};
+            $app->http->set_response_header ('Content-Type', 'application/json');
+            $app->http->send_response_body_as_ref (\perl2json_bytes $result);
+            return $app->http->close_response_body;
+          }
+          return $app->send_error (404);
+        });
+      }
+    },
+    max_worker_count => 1,
+  )->then (sub {
+    my $sarze = $_[0];
+    return [sub { return $sarze->stop }, $sarze->completed];
+  });
+} # ext_server
+
 sub servers ($%) {
   shift;
   my %args = @_;
@@ -165,11 +251,20 @@ sub servers ($%) {
   my $set_adata;
   my $adata_got = Promise->new (sub { $set_adata = $_[0] });
   $adata_got->then ($args{onaccounts}) if defined $args{onaccounts};
+  my $set_ext_url;
+  my $ext_url_got = Promise->new (sub { $set_ext_url = $_[0] });
+  my $port = $args{port} ? $args{port} : find_listenable_port;
+  my $url = Web::URL->parse_string ("http://localhost:$port");
+  if (not defined $args{port}) {
+    $args{config}->{origin} = $url->get_origin->to_ascii;
+  }
 
   return Promise->all ([
     mysqld ($args{db_dir}, $args{db_name}, $args{migration_status_file}, $args{dumped_file}, $set_dsn, $set_mysqld),
-    web ($args{port}, $args{config}, $adata_got, $dsn_got),
-    defined $args{onaccounts} ? accounts ($set_adata, $mysqld_got) : $set_adata->(undef),
+    web ($port, $args{config}, $adata_got, $dsn_got),
+    defined $args{onaccounts} ? accounts ($set_adata, $mysqld_got, $ext_url_got) : $set_adata->(undef),
+    ext_server ($set_ext_url),
+    Promise->resolve ($url)->then ($args{onurl})->then (sub { [] }),
   ])->then (sub {
     my $stops = $_[0];
     my @stopped = grep { defined } map { $_->[1] } @$stops;
