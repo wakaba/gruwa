@@ -91,11 +91,57 @@ return sub {
           return StaticFiles->main ($app, $path, $db);
         }
 
-        if ($path->[0] eq 'g' or
-            $path->[0] eq 'my' or
-            $path->[0] eq 'dashboard') {
-          # /g
-          # /my
+        if (@$path >= 3 and $path->[0] eq 'g' and
+            $path->[1] =~ /\A[0-9]+\z/) { # XXX
+          # /g/{group_id}/...
+
+          my ($acall, $accounts) = accounts $app;
+          #my $with_profile = $app->bare_param ('with_profile');
+          #my $with_linked = $app->bare_param ('with_links');
+          return promised_cleanup {
+            return $accounts->close;
+          } $acall->(['info'], {
+            sk_context => $app->config->{accounts}->{context},
+            sk => $app->http->request_cookies->{sk},
+            #with_data => $with_profile ? [] : [],
+            #with_linked => $with_linked ? 'name' : undef,
+          })->(sub {
+            my $account_data = $_[0];
+            $account_data->{has_account} = defined $account_data->{account_id};
+            unless ($account_data->{has_account}) {
+              if ($app->http->request_method eq 'GET' and
+                  not $path->[-1] =~ /\.json\z/) {
+                my $this_url = Web::URL->parse_string ($app->http->url->stringify);
+                my $url = Web::URL->parse_string (q</account/login>, $this_url);
+                $url->set_query_params ({next => $this_url->stringify});
+                return $app->send_redirect ($url->stringify);
+              } else {
+                return $app->throw_error (403, reason_phrase => 'No user account');
+              }
+            }
+            return GroupPages->main ($app, $path, $db, $account_data);
+          });
+        }
+
+        if (@$path == 2 and
+            $path->[0] eq 'g' and $path->[1] eq 'create.json') {
+          # /g/create.json
+          my ($acall, $accounts) = accounts $app;
+          return promised_cleanup {
+            return $accounts->close;
+          } $acall->(['info'], {
+            sk_context => $app->config->{accounts}->{context},
+            sk => $app->http->request_cookies->{sk},
+          })->(sub {
+            my $account_data = $_[0];
+            $account_data->{has_account} = defined $account_data->{account_id};
+            return $app->throw_error (403, reason_phrase => 'No user account')
+                unless $account_data->{has_account};
+            return GroupPages->create ($app, $path, $db, $account_data);
+          });
+        }
+
+        if ($path->[0] eq 'dashboard') {
           # /dashboard
           my ($acall, $accounts) = accounts $app;
           #my $with_profile = $app->bare_param ('with_profile');
@@ -110,30 +156,35 @@ return sub {
           })->(sub {
             my $account_data = $_[0];
             $account_data->{has_account} = defined $account_data->{account_id};
-            if ($path->[0] eq 'my') {
-              return AccountPages->mymain ($app, $path, $db, $account_data);
-            } else {
-              unless ($account_data->{has_account}) {
-                if ($app->http->request_method eq 'GET' and
-                    not $path->[-1] =~ /\.json\z/) {
-                  my $this_url = Web::URL->parse_string ($app->http->url->stringify);
-                  my $url = Web::URL->parse_string (q</account/login>, $this_url);
-                  $url->set_query_params ({next => $this_url->stringify});
-                  return $app->send_redirect ($url->stringify);
-                } else {
-                  return $app->throw_error (403, reason_phrase => 'No user account');
-                }
-              }
-
-              if ($path->[0] eq 'g') {
-                return GroupPages->main ($app, $path, $db, $account_data);
-              } elsif ($path->[0] eq 'dashboard') {
-                return $app->throw_error (404) unless @$path == 1;
-                return AccountPages->dashboard ($app, $account_data);
+            unless ($account_data->{has_account}) {
+              if ($app->http->request_method eq 'GET' and
+                  not $path->[-1] =~ /\.json\z/) {
+                my $this_url = Web::URL->parse_string ($app->http->url->stringify);
+                my $url = Web::URL->parse_string (q</account/login>, $this_url);
+                $url->set_query_params ({next => $this_url->stringify});
+                return $app->send_redirect ($url->stringify);
               } else {
-                die;
+                return $app->throw_error (403, reason_phrase => 'No user account');
               }
             }
+
+            return $app->throw_error (404) unless @$path == 1;
+            return AccountPages->dashboard ($app, $account_data);
+          });
+        }
+
+        if ($path->[0] eq 'my') {
+          # /my
+          my ($acall, $accounts) = accounts $app;
+          return promised_cleanup {
+            return $accounts->close;
+          } $acall->(['info'], {
+            sk_context => $app->config->{accounts}->{context},
+            sk => $app->http->request_cookies->{sk},
+          })->(sub {
+            my $account_data = $_[0];
+            $account_data->{has_account} = defined $account_data->{account_id};
+            return AccountPages->mymain ($app, $path, $db, $account_data);
           });
         }
 
@@ -171,7 +222,7 @@ return sub {
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

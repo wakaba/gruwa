@@ -34,7 +34,6 @@ sub get_index ($$$) {
 sub main ($$$$$) {
   my ($class, $app, $path, $db, $account_data) = @_;
 
-  if (@$path >= 2 and $path->[1] =~ /\A[0-9]+\z/) {
     # /g/{group_id}
     return $db->select ('group', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
@@ -72,12 +71,14 @@ sub main ($$$$$) {
         });
       }
     });
-  }
+} # main
 
-  if (@$path == 2 and $path->[1] eq 'create.json') {
-    # /g/create.json
-    $app->requires_request_method ({POST => 1});
-    $app->requires_same_origin;
+sub create ($$$$$) {
+  my ($class, $app, $path, $db, $account_data) = @_;
+
+  # /g/create.json
+  $app->requires_request_method ({POST => 1});
+  $app->requires_same_origin;
     my $title = $app->text_param ('title') // '';
     return $app->throw_error (400, reason_phrase => 'Bad |title|')
         unless length $title;
@@ -112,10 +113,7 @@ sub main ($$$$$) {
         };
       });
     });
-  } # /g/create.json
-
-  return $app->send_error (404);
-} # main
+} # create
 
 sub group ($$$$) {
   my ($class, $app, $path, $opts) = @_;
