@@ -1,5 +1,8 @@
-<html t:params="$group $index $group_member $account $app" pl:data-group-url="'/g/'.$group->{group_id}"
-    pl:data-theme="$index->{options}->{theme}">
+<html t:params="$group $index $group_member $account $app"
+    pl:data-group-url="'/g/'.$group->{group_id}"
+    pl:data-theme="(defined $index->{options}->{theme})
+                       ? $index->{options}->{theme}
+                       : $group->{data}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     設定 -
@@ -88,8 +91,8 @@
           <action-status hidden stage-fetch=保存中... ok=保存しました。 />
       </form>
 
-      <t:if x="$group_member->{default_index_id} and
-               $group_member->{default_index_id} == $index->{index_id}">
+      <t:if x="defined $group_member->{data}->{default_index_id} and
+               $group_member->{data}->{default_index_id} == $index->{index_id}">
         <p>この日記は<account-name><t:text value="$account->{name}"></account-name>の<a href=/help#default-blog-index rel=help>既定の日記</a>です。</p>
       <t:elsif x="$index->{index_type} == 1">
         <form method=post action=javascript: pl:data-action="'i/'.$index->{index_id}.'/my.json'">
@@ -101,8 +104,8 @@
         </form>
       </t:if>
 
-      <t:if x="$group->{options}->{default_wiki_index_id} and
-               $group->{options}->{default_wiki_index_id} == $index->{index_id}">
+      <t:if x="$group->{data}->{default_wiki_index_id} and
+               $group->{data}->{default_wiki_index_id} == $index->{index_id}">
         <p>この Wiki は<a href=/help#default-wiki-index rel=help>グループの Wiki</a> です。</p>
       <t:elsif x="$index->{index_type} == 2">
         <form method=post action=javascript: data-action=edit.json>

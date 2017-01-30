@@ -42,7 +42,8 @@ sub accounts ($) {
       return $p->then (sub {
         my $result = $_[0];
         if ($result->status == 200) {
-          return $ok->(json_bytes2perl $result->body_bytes);
+          return $ok->(json_bytes2perl $result->body_bytes) if defined $ok;
+          return;
         } elsif (defined $ng and
                  not $result->is_network_error and
                  ($result->header ('Content-Type') // '') =~ m{^application/json}) {
@@ -75,84 +76,52 @@ return sub {
           ('Strict-Transport-Security',
            'max-age=10886400; includeSubDomains; preload');
 
-      my $db = Dongry::Database->new (%$DBSources);
-      return promised_cleanup {
-        return $db->disconnect;
-      } Promise->resolve->then (sub {
-        my $path = $app->path_segments;
+      my $path = $app->path_segments;
 
-        # XXX tests
-        if ($path->[0] eq 'robots.txt' or
-            $path->[0] eq 'favicon.ico' or
-            $path->[0] eq 'manifest.json' or
-            $path->[0] eq 'css' or
-            $path->[0] eq 'js' or
-            $path->[0] eq 'images') {
-          return StaticFiles->main ($app, $path, $db);
+      # XXX tests
+      if ($path->[0] eq 'robots.txt' or
+          $path->[0] eq 'favicon.ico' or
+          $path->[0] eq 'manifest.json' or
+          $path->[0] eq 'css' or
+          $path->[0] eq 'js' or
+          $path->[0] eq 'images') {
+        return StaticFiles->main ($app, $path);
+      }
+
+      my $db = Dongry::Database->new (%$DBSources);
+      my ($acall, $accounts) = accounts $app;
+      return promised_cleanup {
+        return Promise->all ([
+          $db->disconnect,
+          $accounts->close,
+        ]);
+      } Promise->resolve->then (sub {
+
+        if (@$path == 3 and
+            $path->[0] eq 'g' and
+            $path->[1] =~ /\A[0-9]+\z/ and # XXX
+            $path->[2] eq 'members.json') {
+          # /g/{group_id}/members.json
+          return GroupPages->group_members_json ($app, $path->[1], $acall);
         }
 
         if (@$path >= 3 and $path->[0] eq 'g' and
             $path->[1] =~ /\A[0-9]+\z/) { # XXX
           # /g/{group_id}/...
-
-          my ($acall, $accounts) = accounts $app;
-          #my $with_profile = $app->bare_param ('with_profile');
-          #my $with_linked = $app->bare_param ('with_links');
-          return promised_cleanup {
-            return $accounts->close;
-          } $acall->(['info'], {
-            sk_context => $app->config->{accounts}->{context},
-            sk => $app->http->request_cookies->{sk},
-            #with_data => $with_profile ? [] : [],
-            #with_linked => $with_linked ? 'name' : undef,
-          })->(sub {
-            my $account_data = $_[0];
-            $account_data->{has_account} = defined $account_data->{account_id};
-            unless ($account_data->{has_account}) {
-              if ($app->http->request_method eq 'GET' and
-                  not $path->[-1] =~ /\.json\z/) {
-                my $this_url = Web::URL->parse_string ($app->http->url->stringify);
-                my $url = Web::URL->parse_string (q</account/login>, $this_url);
-                $url->set_query_params ({next => $this_url->stringify});
-                return $app->send_redirect ($url->stringify);
-              } else {
-                return $app->throw_error (403, reason_phrase => 'No user account');
-              }
-            }
-            return GroupPages->main ($app, $path, $db, $account_data);
-          });
+          return GroupPages->main ($app, $path, $db, $acall);
         }
 
         if (@$path == 2 and
             $path->[0] eq 'g' and $path->[1] eq 'create.json') {
           # /g/create.json
-          my ($acall, $accounts) = accounts $app;
-          return promised_cleanup {
-            return $accounts->close;
-          } $acall->(['info'], {
-            sk_context => $app->config->{accounts}->{context},
-            sk => $app->http->request_cookies->{sk},
-          })->(sub {
-            my $account_data = $_[0];
-            $account_data->{has_account} = defined $account_data->{account_id};
-            return $app->throw_error (403, reason_phrase => 'No user account')
-                unless $account_data->{has_account};
-            return GroupPages->create ($app, $path, $db, $account_data);
-          });
+          return GroupPages->create ($app, $acall);
         }
 
         if ($path->[0] eq 'dashboard') {
           # /dashboard
-          my ($acall, $accounts) = accounts $app;
-          #my $with_profile = $app->bare_param ('with_profile');
-          #my $with_linked = $app->bare_param ('with_links');
-          return promised_cleanup {
-            return $accounts->close;
-          } $acall->(['info'], {
+          return $acall->(['info'], {
             sk_context => $app->config->{accounts}->{context},
             sk => $app->http->request_cookies->{sk},
-            #with_data => $with_profile ? [] : [],
-            #with_linked => $with_linked ? 'name' : undef,
           })->(sub {
             my $account_data = $_[0];
             $account_data->{has_account} = defined $account_data->{account_id};
@@ -167,40 +136,36 @@ return sub {
                 return $app->throw_error (403, reason_phrase => 'No user account');
               }
             }
-
             return $app->throw_error (404) unless @$path == 1;
             return AccountPages->dashboard ($app, $account_data);
           });
         }
 
+        if (@$path == 2 and
+            $path->[0] eq 'my' and $path->[1] eq 'groups.json') {
+          # /my/groups.json
+          return AccountPages->mygroups ($app, $acall);
+        }
+
         if ($path->[0] eq 'my') {
           # /my
-          my ($acall, $accounts) = accounts $app;
-          return promised_cleanup {
-            return $accounts->close;
-          } $acall->(['info'], {
+          return $acall->(['info'], {
             sk_context => $app->config->{accounts}->{context},
             sk => $app->http->request_cookies->{sk},
           })->(sub {
             my $account_data = $_[0];
             $account_data->{has_account} = defined $account_data->{account_id};
-            return AccountPages->mymain ($app, $path, $db, $account_data);
+            return AccountPages->mymain ($app, $path, $account_data);
           });
         }
 
         if ($path->[0] eq 'account') {
           # /account (except for /account/info.json)
-          my ($acall, $accounts) = accounts $app;
-          return promised_cleanup {
-            return $accounts->close;
-          } AccountPages->main ($app, $path, $db, $acall);
+          return AccountPages->main ($app, $path, $acall);
         }
         if ($path->[0] eq 'u') {
           # /u
-          my ($acall, $accounts) = accounts $app;
-          return promised_cleanup {
-            return $accounts->close;
-          } AccountPages->user ($app, $path, $acall);
+          return AccountPages->user ($app, $path, $acall);
         }
 
         if (@$path == 1) {

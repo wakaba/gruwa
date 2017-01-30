@@ -2,7 +2,7 @@
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-account="$account->{account_id}"
     pl:data-group-member-type="$group_member->{member_type}"
-    pl:data-theme="$group->{options}->{theme}">
+    pl:data-theme="$group->{data}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     メンバー一覧
@@ -13,7 +13,7 @@
 
   <section class=page>
     <header>
-      <h1><a href=./><t:text value="$group->{title}"></a></h1>
+      <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
       <nav>
         <a href=./>トップ</a>
         / <a href=members class=active>メンバー</a>
@@ -98,7 +98,7 @@
 
 <!--
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

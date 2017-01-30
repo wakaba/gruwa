@@ -2,7 +2,7 @@
 <title t:parse>
   <t:content>
   -
-  <t:text value="$group->{title}">
+  <t:text value="$group->{data}->{title}">
 </>
 <t:if x="not $app->config->{is_production}">
   <meta name=referrer content=no-referrer>

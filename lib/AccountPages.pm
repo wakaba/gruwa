@@ -1,14 +1,12 @@
 package AccountPages;
 use strict;
 use warnings;
-use JSON::PS;
 use Web::URL;
-use Dongry::Type;
 
 use Results;
 
 sub main ($$$$$) {
-  my ($class, $app, $path, $db, $acall) = @_;
+  my ($class, $app, $path, $acall) = @_;
 
   if (@$path == 2 and $path->[1] eq 'login') {
     # /account/login
@@ -80,7 +78,7 @@ sub main ($$$$$) {
 } # main
 
 sub mymain ($$$$$) {
-  my ($class, $app, $path, $db, $account_data) = @_;
+  my ($class, $app, $path, $account_data) = @_;
 
   if (@$path == 2 and $path->[1] eq 'info.json') {
     # /my/info.json
@@ -103,55 +101,60 @@ sub mymain ($$$$$) {
     return json $app, $json;
   } # info
 
-  if (@$path == 2 and $path->[1] eq 'groups.json') {
-    # /my/groups.json
-    return Promise->resolve->then (sub {
-      return {} unless $account_data->{has_account};
-      return $db->select ('group_member', {
-        account_id => Dongry::Type->serialize ('text', $account_data->{account_id}),
-      }, fields => ['group_id', 'member_type', 'user_status', 'owner_status', 'default_index_id'])->then (sub {
-        return {map {
-          $_->{group_id} => {
-            group_id => ''.$_->{group_id},
-            member_type => ($_->{owner_status} == 1 ? $_->{member_type} : 0),
-            user_status => $_->{user_status},
-            owner_status => ($_->{owner_status} == 1 ? $_->{owner_status} : 0),
-            default_index_id => ($_->{owner_status} == 1 ? $_->{default_index_id} ? ''.$_->{default_index_id} : undef : undef),
-          };
-        } @{$_[0]->all}};
-      });
-    })->then (sub {
-      my $groups = $_[0];
-      my $allowed_groups = [map { $_->{group_id} }
-                            grep { $_->{owner_status} == 1 } values %$groups];
-      return $groups unless @$allowed_groups;
-      return $db->select ('group', {
-        group_id => {-in => $allowed_groups},
-
-        # XXX
-        admin_status => 1, # open
-        owner_status => 1, # open
-      }, fields => ['title', 'group_id', 'updated'])->then (sub {
-        my $gs = {};
-        for (@{$_[0]->all}) {
-          $gs->{$_->{group_id}} = {
-            title => Dongry::Type->parse ('text', $_->{title}),
-            updated => $_->{updated},
-          };
-        }
-        for (values %$groups) {
-          $_->{title} = $gs->{$_->{group_id}}->{title};
-          $_->{updated} = $gs->{$_->{group_id}}->{updated};
-        }
-        return $groups;
-      });
-    })->then (sub {
-      return json $app, {groups => $_[0]};
-    });
-  } # groups.json
-
   return $app->throw_error (404);
 } # mymain
+
+sub mygroups ($$$) {
+  my ($class, $app, $acall) = @_;
+  # /my/groups.json
+  my $result = {groups => {}, next_ref => $app->text_param ('ref')};
+  return $acall->(['info'], {
+    sk_context => $app->config->{accounts}->{context},
+    sk => $app->http->request_cookies->{sk},
+  })->(sub {
+    my $account_data = $_[0];
+    return unless defined $account_data->{account_id};
+    return $acall->(['group', 'byaccount'], {
+      context_key => $app->config->{accounts}->{context} . ':group',
+      account_id => $account_data->{account_id},
+      with_data => ['default_index_id'],
+      ref => $result->{next_ref},
+    })->(sub {
+      $result->{groups} = {map {
+        $_->{group_id} => {
+          group_id => $_->{group_id},
+          member_type => ($_->{owner_status} == 1 ? $_->{member_type} : 0),
+          user_status => $_->{user_status},
+          owner_status => ($_->{owner_status} == 1 ? $_->{owner_status} : 0),
+          default_index_id => ($_->{owner_status} == 1 ? $_->{data}->{default_index_id} ? $_->{data}->{default_index_id} : undef : undef),
+        };
+      } values %{$_[0]->{memberships}}};
+      $result->{next_ref} = $_[0]->{next_ref};
+      $result->{has_next} = $_[0]->{has_next};
+    });
+  })->then (sub {
+    my $allowed_groups = [map { $_->{group_id} }
+                          grep { $_->{owner_status} == 1 }
+                          values %{$result->{groups}}];
+    return unless @$allowed_groups;
+    return $acall->(['group', 'profiles'], {
+      context_key => $app->config->{accounts}->{context} . ':group',
+      group_id => $allowed_groups,
+      # XXX
+      admin_status => 1, # open
+      owner_status => 1, # open
+      with_data => ['title'],
+    })->(sub {
+      my $gs = $_[0]->{groups};
+      for (values %{$result->{groups}}) {
+        $_->{title} = $gs->{$_->{group_id}}->{data}->{title};
+        $_->{updated} = $gs->{$_->{group_id}}->{updated};
+      }
+    });
+  })->then (sub {
+    return json $app, $result;
+  });
+} # mygroups
 
 sub dashboard ($$$) {
   my ($class, $app, $account_data) = @_;

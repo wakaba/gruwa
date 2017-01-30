@@ -1,5 +1,5 @@
 <html t:params="$group $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
-    pl:data-theme="$group->{options}->{theme}">
+    pl:data-theme="$group->{data}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     設定
@@ -10,7 +10,7 @@
 
   <section class=page>
     <header>
-      <h1><a href=./><t:text value="$group->{title}"></a></h1>
+      <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
       <nav>
         <a href=./>トップ</a>
         / <a href=members>メンバー</a>
@@ -25,15 +25,15 @@
           <tbody>
             <tr>
               <th><label for=edit-title>グループ名</>
-              <td><input name=title pl:value="$group->{title}" id=edit-title>
+              <td><input name=title pl:value="$group->{data}->{title}" id=edit-title>
             <tr>
               <th><label for=edit-theme>配色</>
               <td>
                 <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme>
-                  <option value=green pl:selected="$group->{options}->{theme} eq 'green'?'':undef">緑
-                  <option value=blue pl:selected="$group->{options}->{theme} eq 'blue'?'':undef">青
-                  <option value=red pl:selected="$group->{options}->{theme} eq 'red'?'':undef">赤
-                  <option value=black pl:selected="$group->{options}->{theme} eq 'black'?'':undef">黒
+                  <option value=green pl:selected="$group->{data}->{theme} eq 'green'?'':undef">緑
+                  <option value=blue pl:selected="$group->{data}->{theme} eq 'blue'?'':undef">青
+                  <option value=red pl:selected="$group->{data}->{theme} eq 'red'?'':undef">赤
+                  <option value=black pl:selected="$group->{data}->{theme} eq 'black'?'':undef">黒
                 </select>
         </table>
         <p class=operations>
@@ -144,7 +144,7 @@
 
 <!--
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

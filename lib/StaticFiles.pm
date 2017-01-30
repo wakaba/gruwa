@@ -23,8 +23,8 @@ sub static ($$$) {
   });
 } # static
 
-sub main ($$$$) {
-  my ($class, $app, $path, $db) = @_;
+sub main ($$$) {
+  my ($class, $app, $path) = @_;
 
   if (@$path == 2 and
       $path->[0] eq 'css' and $path->[1] =~ /\A[A-Za-z0-9-]+\.css\z/) {
@@ -43,7 +43,7 @@ sub main ($$$$) {
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

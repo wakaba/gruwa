@@ -31,89 +31,104 @@ sub get_index ($$$) {
   });
 } # get_index
 
-sub main ($$$$$) {
-  my ($class, $app, $path, $db, $account_data) = @_;
-
-    # /g/{group_id}
-    return $db->select ('group', {
-      group_id => Dongry::Type->serialize ('text', $path->[1]),
-
-      # XXX
-      admin_status => 1,
-      owner_status => 1,
-    }, fields => ['group_id', 'title', 'created', 'updated', 'options'])->then (sub {
-      my $group = $_[0]->first;
-      return $app->throw_error (404, reason_phrase => 'Group not found')
-          unless defined $group;
-      $group->{title} = Dongry::Type->parse ('text', $group->{title});
-      $group->{options} = Dongry::Type->parse ('json', $group->{options});
-
-      if (@$path == 3 and $path->[2] eq 'members.json') {
-        return $class->group_members_json ($app, $path, $db, $group, $account_data);
-      } else {
-        return $db->select ('group_member', {
-          group_id => Dongry::Type->serialize ('text', $path->[1]),
-          account_id => Dongry::Type->serialize ('text', $account_data->{account_id}),
-          member_type => {-in => [
-            1, # member
-            2, # owner
-          ]},
-          user_status => 1, # open
-          owner_status => 1, # open
-        }, fields => ['member_type', 'default_index_id'])->then (sub {
-          my $membership = $_[0]->first;
-          return $app->throw_error (403, reason_phrase => 'Not a group member')
-              unless defined $membership;
-          return $class->group ($app, $path, {
-            account => $account_data,
-            db => $db, group => $group, group_member => $membership,
-          });
-        });
-      }
-    });
-} # main
-
-sub create ($$$$$) {
-  my ($class, $app, $path, $db, $account_data) = @_;
+sub create ($$$) {
+  my ($class, $app, $acall) = @_;
 
   # /g/create.json
   $app->requires_request_method ({POST => 1});
   $app->requires_same_origin;
+
+  return $acall->(['info'], {
+    sk_context => $app->config->{accounts}->{context},
+    sk => $app->http->request_cookies->{sk},
+  })->(sub {
+    my $account_data = $_[0];
+    return $app->throw_error (403, reason_phrase => 'No user account')
+        unless defined $account_data->{account_id};
+
     my $title = $app->text_param ('title') // '';
     return $app->throw_error (400, reason_phrase => 'Bad |title|')
         unless length $title;
-    my $time = time;
-    return $db->execute ('select uuid_short() as uuid')->then (sub {
-      my $gid = $_[0]->first->{uuid};
-      return Promise->all ([
-        $db->insert ('group', [{
-          group_id => $gid,
-          title => Dongry::Type->serialize ('text', $title),
-          created => $time,
-          updated => $time,
-          admin_status => 1, # open
-          owner_status => 1, # open
-          options => '{"theme":"green"}',
-        }]),
-        $db->insert ('group_member', [{
-          group_id => $gid,
-          account_id => Dongry::Type->serialize ('text', $account_data->{account_id}),
-          member_type => 2, # owner
-          user_status => 1, # open
-          owner_status => 1, # open
-          desc => '',
-          created => $time,
-          updated => $time,
-        }]),
-      ])->then (sub {
-        # XXX group log
-        #     ipaddr
-        return json $app, {
-          group_id => ''.$gid,
-        };
-      });
+
+    my $group_id;
+    return $acall->(['group', 'create'], {
+      context_key => $app->config->{accounts}->{context} . ':group',
+      owner_status => 1, # open
+      admin_status => 1, # open
+    })->(sub {
+      $group_id = $_[0]->{group_id};
+      return $acall->(['group', 'data'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $group_id,
+        name => ['title', 'theme'],
+        value => [$title, 'green'],
+      })->();
+    })->then (sub {
+      return $acall->(['group', 'member', 'status'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $group_id,
+        account_id => $account_data->{account_id},
+        member_type => 2, # owner
+        user_status => 1, # open
+        owner_status => 1, # open
+      })->();
+    })->then (sub {
+      # XXX group log
+      #     ipaddr
+      return json $app, {
+        group_id => $group_id,
+      };
     });
+  });
 } # create
+
+sub main ($$$$$) {
+  my ($class, $app, $path, $db, $acall) = @_;
+  # /g/{group_id}/...
+  return $acall->(['info'], {
+    sk_context => $app->config->{accounts}->{context},
+    sk => $app->http->request_cookies->{sk},
+
+    context_key => $app->config->{accounts}->{context} . ':group',
+    group_id => $path->[1],
+    # XXX
+    admin_status => 1,
+    owner_status => 1,
+    with_group_data => ['title', 'theme', 'default_wiki_index_id'],
+    with_group_membership_data => ['default_index_id'],
+  })->(sub {
+    my $account_data = $_[0];
+    unless (defined $account_data->{account_id}) {
+      if ($app->http->request_method eq 'GET' and
+          not $path->[-1] =~ /\.json\z/) {
+        my $this_url = Web::URL->parse_string ($app->http->url->stringify);
+        my $url = Web::URL->parse_string (q</account/login>, $this_url);
+        $url->set_query_params ({next => $this_url->stringify});
+        return $app->send_redirect ($url->stringify);
+      } else {
+        return $app->throw_error (403, reason_phrase => 'No user account');
+      }
+    }
+
+    my $group = $account_data->{group};
+    return $app->throw_error (404, reason_phrase => 'Group not found')
+        unless defined $group;
+
+    my $membership = $account_data->{group_membership};
+    return $app->throw_error (403, reason_phrase => 'Not a group member')
+        if not defined $membership or
+           not ($membership->{member_type} == 1 or # member
+                $membership->{member_type} == 2) or # owner
+           $membership->{user_status} != 1 or # open
+           $membership->{owner_status} != 1; # open
+
+    return $class->group ($app, $path, {
+      account => $account_data,
+      db => $db, group => $group, group_member => $membership,
+      acall => $acall,
+    });
+  });
+} # main
 
 sub group ($$$$) {
   my ($class, $app, $path, $opts) = @_;
@@ -131,7 +146,7 @@ sub group ($$$$) {
 
   if (@$path == 4 and $path->[2] eq 'wiki') {
     # /g/{group_id}/wiki/{wiki_name}
-    return get_index ($db, $path->[1], $opts->{group}->{options}->{default_wiki_index_id})->then (sub {
+    return get_index ($db, $path->[1], $opts->{group}->{data}->{default_wiki_index_id})->then (sub {
       return $class->wiki ($app, $opts, $_[0], $path->[3]);
     });
   }
@@ -148,11 +163,11 @@ sub group ($$$$) {
     my $g = $opts->{group};
     return json $app, {
       group_id => ''.$g->{group_id},
-      title => $g->{title},
+      title => $g->{data}->{title},
       created => $g->{created},
       updated => $g->{updated},
-      theme => $g->{options}->{theme},
-      default_wiki_index_id => $g->{options}->{default_wiki_index_id},
+      theme => $g->{data}->{theme},
+      default_wiki_index_id => $g->{data}->{default_wiki_index_id},
     };
   }
 
@@ -187,16 +202,17 @@ sub group ($$$$) {
     # /g/{group_id}/edit.json
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
-    my %update = (updated => time);
+    my @name;
+    my @value;
     my $title = $app->text_param ('title') // '';
-    $update{title} = Dongry::Type->serialize ('text', $title)
-        if length $title;
-    my $options_modified;
-    my $options = $opts->{group}->{options};
+    if (length $title) {
+      push @name, 'title';
+      push @value, $title;
+    }
     my $theme = $app->text_param ('theme') // '';
     if (length $theme) {
-      $options->{theme} = $theme;
-      $options_modified = 1;
+      push @name, 'theme';
+      push @value, $theme;
     }
     return Promise->resolve->then (sub {
       my $wiki_id = $app->bare_param ('default_wiki_index_id');
@@ -209,20 +225,23 @@ sub group ($$$$) {
       }, fields => ['index_id'])->then (sub {
         return $app->throw_error (400, reason_phrase => 'Bad |default_wiki_index_id|')
             unless $_[0]->first;
-        $options->{default_wiki_index_id} = $wiki_id;
-        $options_modified = 1;
+        push @name, 'default_wiki_index_id';
+        push @value, $wiki_id;
       });
     })->then (sub {
-      if ($options_modified) {
-        $update{options} = Dongry::Type->serialize ('json', $options);
-        # XXX need transaction for editing options :-<
-      }
-
-      return unless 1 < keys %update;
-      return $db->update ('group', \%update, where => {
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-      });
+      return $opts->{acall}->(['group', 'data'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $path->[1],
+        name => \@name,
+        value => \@value,
+      })->();
       # XXX logging
+    })->then (sub {
+      return unless @name;
+      return $opts->{acall}->(['group', 'touch'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $path->[1],
+      });
     })->then (sub {
       return json $app, {};
     });
@@ -231,29 +250,45 @@ sub group ($$$$) {
   return $app->throw_error (404);
 } # group
 
-sub group_members_json ($) {
-  my ($class, $app, $path, $db, $group, $account_data) = @_;
+sub group_members_json ($$$$) {
+  my ($class, $app, $group_id, $acall) = @_;
   # /g/{group_id}/members.json
   if ($app->http->request_method eq 'POST') {
     $app->requires_same_origin;
-    my $account_id = $app->bare_param ('account_id') // '';
-    return $app->throw_error (400, reason_phrase => 'Bad |account_id|')
-        unless $account_id =~ /\A[0-9]+\z/;
+    return $acall->(['info'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
 
-    return $db->select ('group_member', {
-      group_id => Dongry::Type->serialize ('text', $path->[1]),
-      account_id => Dongry::Type->serialize ('text', $account_data->{account_id}),
-    }, fields => ['member_type', 'member_type', 'user_status', 'owner_status'])->then (sub {
-      my $membership = $_[0]->first;
+      context_key => $app->config->{accounts}->{context} . ':group',
+      group_id => $group_id,
+      # XXX
+      group_admin_status => 1,
+      group_owner_status => 1,
+    })->(sub {
+      my $account_data = $_[0];
+
+      return $app->throw_error (403, reason_phrase => 'No user account')
+          unless defined $account_data->{account_id};
+
+      my $group = $account_data->{group};
+      return $app->throw_error (404, reason_phrase => 'Group not found')
+          unless defined $group;
+
+      my $membership = $account_data->{group_membership};
 
       my $is_owner = (
+        defined $membership and
         $membership->{member_type} == 2 and # owner
         $membership->{user_status} == 1 and # open
         $membership->{owner_status} == 1 # open
       );
 
+      my $account_id = $app->bare_param ('account_id') // '';
+      return $app->throw_error (400, reason_phrase => 'Bad |account_id|')
+          unless $account_id =~ /\A[1-9][0-9]*\z/;
+
       my %update;
-      if ($account_id == $account_data->{account_id}) {
+      if ($account_id eq $account_data->{account_id}) {
         unless ($is_owner) {
           $update{user_status} = $app->bare_param ('user_status');
           delete $update{user_status} unless defined $update{user_status};
@@ -261,72 +296,93 @@ sub group_members_json ($) {
       } else {
         return $app->throw_error (403, reason_phrase => 'Not an owner')
             unless $is_owner;
-
         for my $key (qw(owner_status member_type)) {
           $update{$key} = $app->bare_param ($key);
           delete $update{$key} unless defined $update{$key};
         }
       }
 
-      if ($is_owner) {
-        $update{desc} = $app->text_param ('desc');
-        if (defined $update{desc}) {
-          $update{desc} = Dongry::Type->serialize ('text', $update{desc});
-        } else {
-          delete $update{desc};
-        }
-      }
-
-      return unless %update;
-
-      return $db->insert ('group_member', [{
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-        account_id => Dongry::Type->serialize ('text', $account_id),
-        created => time, updated => time,
-        member_type => 0, user_status => 0, owner_status => 0, desc => '',
-        default_index_id => 0,
+      return $acall->(['group', 'member', 'status'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $group_id,
+        account_id => $account_id,
         %update,
-      }], duplicate => {
-        map {
-          $_ => $db->bare_sql_fragment ("values(`$_`)")
-        } keys %update
+      })->(sub {
+        return unless $is_owner;
+        my $desc = $app->text_param ('desc');
+        return unless defined $desc;
+        return $acall->(['group', 'member', 'data'], {
+          context_key => $app->config->{accounts}->{context} . ':group',
+          group_id => $group_id,
+          account_id => $account_id,
+          name => 'desc',
+          value => $desc,
+        })->();
       });
     })->then (sub {
       return json $app, {};
     });
   } else { # GET
-    return $db->select ('group_member', {
-      group_id => Dongry::Type->serialize ('text', $path->[1]),
-    }, fields => ['account_id', 'member_type', 'owner_status', 'user_status', 'desc', 'default_index_id'])->then (sub {
-      my $members = {map {
-        $_->{account_id} => {
-          account_id => ''.$_->{account_id},
-          member_type => $_->{member_type},
-          owner_status => $_->{owner_status},
-          user_status => $_->{user_status},
-          default_index_id => ($_->{default_index_id} ? ''.$_->{default_index_id} : undef),
-          desc => Dongry::Type->parse ('text', $_->{desc}),
-        };
-      } @{$_[0]->all}};
-      my $current = $members->{$account_data->{account_id}};
-      if (defined $current and
-          ($current->{member_type} == 2 or # owner
-           $current->{member_type} == 1) and # member
-          $current->{owner_status} == 1 and # open
-          $current->{user_status} == 1) { # open
-        return json $app, {members => $members};
-      } else {
-        return json $app, {members => {
-          $account_data->{account_id} => {
-            account_id => $account_data->{account_id},
-            member_type => 0,
-            owner_status => $current->{owner_status} || 0,
-            user_status => $current->{user_status} || 0,
-            default_index_id => undef,
-            desc => '',
-          },
-        }};
-      }
+    return $acall->(['info'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+
+      context_key => $app->config->{accounts}->{context} . ':group',
+      group_id => $group_id,
+      # XXX
+      group_admin_status => 1,
+      group_owner_status => 1,
+    })->(sub {
+      my $account_data = $_[0];
+
+      return $app->throw_error (403, reason_phrase => 'No user account')
+          unless defined $account_data->{account_id};
+
+      my $group = $account_data->{group};
+      return $app->throw_error (404, reason_phrase => 'Group not found')
+          unless defined $group;
+
+      my $membership = $account_data->{group_membership};
+
+      my $is_member = (
+        defined $membership and
+        ($membership->{member_type} == 2 or # owner
+         $membership->{member_type} == 1) and # member
+        $membership->{owner_status} == 1 and # open
+        $membership->{user_status} == 1 # open
+      );
+
+      return json $app, {members => {
+        $account_data->{account_id} => {
+          account_id => $account_data->{account_id},
+          member_type => 0,
+          owner_status => $membership->{owner_status} || 0,
+          user_status => $membership->{user_status} || 0,
+          default_index_id => undef,
+          desc => '',
+        },
+      }} unless $is_member;
+
+      return $acall->(['group', 'members'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $group_id,
+        with_data => ['default_index_id', 'desc'],
+        ref => $app->text_param ('ref'),
+      })->(sub {
+        my $members = {map {
+          $_->{account_id} => {
+            account_id => ''.$_->{account_id},
+            member_type => $_->{member_type},
+            owner_status => $_->{owner_status},
+            user_status => $_->{user_status},
+            default_index_id => ($_->{data}->{default_index_id} ? $_->{data}->{default_index_id} : undef),
+            desc => $_->{data}->{desc} // '',
+          };
+        } values %{$_[0]->{memberships}}};
+        return json $app, {members => $members,
+                           next_ref => $_[0]->{next_ref},
+                           has_next => $_[0]->{has_next}};
+      });
     });
   } # GET
 } # group_members_json
@@ -400,7 +456,7 @@ sub group_index ($$$$) {
         my $title = $app->text_param ('title') // '';
         $update{title} = Dongry::Type->serialize ('text', $title)
             if length $title;
-        my $options = $opts->{group}->{options};
+        my $options = $index->{options};
         my $options_modified;
         for my $key (qw(theme color)) {
           my $value = $app->text_param ($key) // '';
@@ -448,13 +504,14 @@ sub group_index ($$$$) {
         my @p;
         my $is_default = $app->bare_param ('is_default');
         if (defined $is_default) {
-          push @p, $db->update ('group_member', {
-            default_index_id => ($is_default ? Dongry::Type->serialize ('text', $path->[3]) : 0),
-            updated => time,
-          }, where => {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            account_id => Dongry::Type->serialize ('text', $opts->{account}->{account_id}),
-          });
+          push @p, $opts->{acall}->(['group', 'member', 'data'], {
+            context_key => $app->config->{accounts}->{context} . ':group',
+            group_id => $path->[1],
+            account_id => $opts->{account}->{account_id},
+            name => 'default_index_id',
+            value => ($is_default ? $path->[3] : 0),
+            # XXX touch
+          })->();
         }
         return Promise->all (\@p)->then (sub {
           return json $app, {};
@@ -488,7 +545,7 @@ sub group_index ($$$$) {
       my $index_id = $_[0]->first->{uuid};
       my $index_type = 0+($app->bare_param ('index_type') || 0);
       my $options = {};
-      if ($index_type == 1 and $index_type == 2 and $index_type == 3) {
+      if ($index_type == 1 or $index_type == 2 or $index_type == 3) {
         $options->{theme} = 'green';
       } elsif ($index_type == 4) {
         $options->{color} = sprintf '#%02X%02X%02X',
@@ -891,11 +948,10 @@ sub group_object ($$$$) {
               object_id => Dongry::Type->serialize ('text', $path->[3]),
             });
           })->then (sub {
-            return $db->update ('group', {
-              updated => $time,
-            }, where => {
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
-            });
+            return $opts->{acall}->(['group', 'touch'], {
+              context_key => $app->config->{accounts}->{context} . ':group',
+              group_id => $path->[1],
+            })->();
           })->then (sub {
             return unless keys %{$object->{data}->{index_ids} or {}};
             return $db->update ('index', {
@@ -1192,8 +1248,8 @@ sub wiki ($$$$$) {
   # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
 
   if (@{$app->path_segments} == 6 and
-      defined $opts->{group}->{options}->{default_wiki_index_id} and
-      $index->{index_id} == $opts->{group}->{options}->{default_wiki_index_id}) {
+      defined $opts->{group}->{data}->{default_wiki_index_id} and
+      $index->{index_id} == $opts->{group}->{data}->{default_wiki_index_id}) {
     return $app->throw_redirect ('/g/'.(Web::URL::Encoding::percent_encode_c $opts->{group}->{group_id}).'/wiki/'.(Web::URL::Encoding::percent_encode_c $wiki_name));
   }
 
@@ -1212,7 +1268,7 @@ sub wiki ($$$$$) {
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

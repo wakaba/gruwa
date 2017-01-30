@@ -1,5 +1,6 @@
-<html t:params="$group $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
-    pl:data-theme="$group->{options}->{theme}">
+<html t:params="$group $account $group_member $app"
+    pl:data-group-url="'/g/'.$group->{group_id}"
+    pl:data-theme="$group->{data}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     トップ
@@ -10,7 +11,7 @@
 
   <section class=page>
     <header>
-      <h1><a href=./><t:text value="$group->{title}"></a></h1>
+      <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
       <nav>
         <a href=./ class=active>トップ</a>
         / <a href=members>メンバー</a>
@@ -49,7 +50,7 @@
     </section>
 
     <list-container listitemtype=object key=objects
-        pl:src-index_id="$group->{options}->{default_keyword_index_id}"
+        pl:src-index_id="$group->{data}->{default_wiki_index_id}"
         src-wiki_name=GroupTop>
       <template class=object>
         <main><iframe data-data-field=body /></main>
@@ -66,7 +67,7 @@
 
 <!--
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

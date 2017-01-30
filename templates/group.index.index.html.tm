@@ -3,7 +3,7 @@
     pl:data-index="defined $index ? $index->{index_id} : undef"
     pl:data-theme="(defined $index && defined $index->{options}->{theme})
                        ? $index->{options}->{theme}
-                       : $group->{options}->{theme}">
+                       : $group->{data}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     <t:if x="defined $object">
@@ -48,7 +48,7 @@
         </nav>
       <t:else>
         <h1><a pl:href="'/g/'.$group->{group_id}.'/'">
-          <t:text value="$group->{title}">
+          <t:text value="$group->{data}->{title}">
         </a></h1>
       </t:if>
     </header>

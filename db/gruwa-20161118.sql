@@ -1,13 +1,3 @@
-create table if not exists `group` (
-  group_id bigint unsigned not null,
-  title varbinary(1023) not null,
-  created double not null,
-  updated double not null,
-  primary key (group_id),
-  key (created),
-  key (updated)
-) default charset=binary engine=innodb;
-
 create table if not exists `index` (
   group_id bigint unsigned not null,
   index_id bigint unsigned not null,

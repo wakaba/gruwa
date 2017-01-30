@@ -179,7 +179,7 @@ sub create_index ($$$) {
   my ($self, $name, $opts) = @_;
   return $self->post_json (['i', 'create.json'], {
     title => $opts->{title} // rand,
-    index_type => $opts->{index_type},
+    index_type => $opts->{index_type} // 1,
   },
     account => ($opts->{account} // die "No |account|"),
     group => ($opts->{group} // die "No |group|"),
