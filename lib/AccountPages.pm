@@ -158,6 +158,12 @@ sub mygroups ($$$) {
 
 sub dashboard ($$$) {
   my ($class, $app, $account_data) = @_;
+  unless (defined $account_data->{account_id}) {
+    my $this_url = Web::URL->parse_string ($app->http->url->stringify);
+    my $url = Web::URL->parse_string (q</account/login>, $this_url);
+    $url->set_query_params ({next => $this_url->stringify});
+    return $app->send_redirect ($url->stringify);
+  }
   return temma $app, 'dashboard.html.tm', {account => $account_data};
 } # dashboard
 

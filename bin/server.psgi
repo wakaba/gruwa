@@ -15,6 +15,7 @@ use StaticFiles;
 use CommonPages;
 use AccountPages;
 use GroupPages;
+use JumpPages;
 
 my $config_path = path ($ENV{CONFIG_FILE} // die "No |CONFIG_FILE|");
 my $Config = json_bytes2perl $config_path->slurp;
@@ -117,27 +118,36 @@ return sub {
           return GroupPages->create ($app, $acall);
         }
 
-        if ($path->[0] eq 'dashboard') {
+        if (@$path == 1 and $path->[0] eq 'dashboard') {
           # /dashboard
           return $acall->(['info'], {
             sk_context => $app->config->{accounts}->{context},
             sk => $app->http->request_cookies->{sk},
           })->(sub {
             my $account_data = $_[0];
-            $account_data->{has_account} = defined $account_data->{account_id};
-            unless ($account_data->{has_account}) {
-              if ($app->http->request_method eq 'GET' and
-                  not $path->[-1] =~ /\.json\z/) {
+            return AccountPages->dashboard ($app, $account_data);
+          });
+        }
+
+        if ($path->[0] eq 'jump') {
+          # /jump
+          return $acall->(['info'], {
+            sk_context => $app->config->{accounts}->{context},
+            sk => $app->http->request_cookies->{sk},
+          })->(sub {
+            my $account_data = $_[0];
+            unless (defined $account_data->{account_id}) {
+              if ($app->http->request_method eq 'POST') {
+                return $app->send_error (403, reason_phrase => 'No user account');
+              } else {
                 my $this_url = Web::URL->parse_string ($app->http->url->stringify);
                 my $url = Web::URL->parse_string (q</account/login>, $this_url);
                 $url->set_query_params ({next => $this_url->stringify});
                 return $app->send_redirect ($url->stringify);
-              } else {
-                return $app->throw_error (403, reason_phrase => 'No user account');
               }
             }
-            return $app->throw_error (404) unless @$path == 1;
-            return AccountPages->dashboard ($app, $account_data);
+
+            return JumpPages->main ($app, $path, $db, $account_data);
           });
         }
 
@@ -154,7 +164,6 @@ return sub {
             sk => $app->http->request_cookies->{sk},
           })->(sub {
             my $account_data = $_[0];
-            $account_data->{has_account} = defined $account_data->{account_id};
             return AccountPages->mymain ($app, $path, $account_data);
           });
         }
