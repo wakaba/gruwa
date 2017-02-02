@@ -33,6 +33,11 @@
         <a pl:href="'/g/'.$group->{group_id}.'/'">
           トップ
         </a>
+      <li><copy-button>
+        <a pl:href="'/g/'.$group->{group_id}.'/'">
+          URLをコピー
+        </a>
+      </copy-button>
       <li>
         <a pl:href="'/g/'.$group->{group_id}.'/members'">
           メンバー
@@ -53,6 +58,11 @@
         <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
           トップ
         </a>
+      <li><copy-button>
+        <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
+          URLをコピー
+        </a>
+      </copy-button>
       <li>
         <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/config'">
           設定
@@ -69,6 +79,11 @@
         <a href>
           Wikiページ
         </a>
+      <li><copy-button>
+        <a href>
+          URLをコピー
+        </a>
+      </>
     </menu>
   </popup-menu>
 </t:macro>

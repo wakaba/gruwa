@@ -117,6 +117,9 @@
               <button type=button>⋁</button>
               <menu hidden>
                 <li><a data-href-template={GROUP}/o/{object_id}/>記事</a>
+                <li><copy-button>
+                  <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                </>
                 <li><button type=button class=edit-button>編集</button>
               </menu>
             </popup-menu>

@@ -133,7 +133,7 @@ section > header.section > h1 {
   margin: 0;
 }
 
-section > header.section a[rel~=help] {
+section > header.section popup-menu {
   position: absolute;
   top: 0;
   right: 0;
@@ -563,7 +563,12 @@ popup-menu > menu > li:not([hidden]) {
   font-size: 100%;
 }
 
-popup-menu > menu > li > a:only-child {
+popup-menu > menu > li > copy-button:not([hidden]) {
+  display: block;
+}
+
+popup-menu > menu > li > a:only-child,
+popup-menu > menu > li > copy-button > a:only-child {
   display: block;
   padding: .5em;
   font-size: 100%;
@@ -573,7 +578,10 @@ popup-menu > menu > li > a:only-child {
 
 popup-menu > menu > li > a:only-child:hover,
 popup-menu > menu > li > a:only-child:active,
-popup-menu > menu > li > a:only-child:focus {
+popup-menu > menu > li > a:only-child:focus,
+popup-menu > menu > li > copy-button > a:only-child:hover,
+popup-menu > menu > li > copy-button > a:only-child:active,
+popup-menu > menu > li > copy-button > a:only-child:focus {
   text-decoration: underline;
 }
 

@@ -1458,6 +1458,27 @@ function upgradePopupMenu (e) {
   };
 } // upgradePopupMenu
 
+function upgradeCopyButton (e) {
+  $$ (e, 'a').forEach (function (f) {
+    f.onclick = function () {
+      copyText (f.href);
+      return false;
+    };
+  });
+} // upgradeCopyButton
+
+function copyText (s) {
+  var e = document.createElement ('temp-text');
+  e.textContent = s;
+  document.body.appendChild (e);
+  var range = document.createRange ();
+  range.selectNode (e);
+  getSelection ().empty ();
+  getSelection ().addRange (range);
+  document.execCommand ('copy')
+  e.parentNode.removeChild (e);
+} // copyText
+
 (function () {
   var accountData = {};
   var waiting = {};
@@ -1530,6 +1551,11 @@ function upgradeAccountName (e) {
       } else if (x.localName) {
         $$ (x, 'popup-menu').forEach (upgradePopupMenu);
       }
+      if (x.localName === 'copy-button') {
+        upgradeCopyButton (x);
+      } else if (x.localName) {
+        $$ (x, 'copy-button').forEach (upgradeCopyButton);
+      }
     });
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
@@ -1537,6 +1563,7 @@ $$ (document, 'list-container').forEach (upgradeList);
 $$ (document, 'form[action="javascript:"][data-action]').forEach (upgradeForm);
 $$ (document, 'account-name[account_id]').forEach (upgradeAccountName);
 $$ (document, 'popup-menu').forEach (upgradePopupMenu);
+$$ (document, 'copy-button').forEach (upgradeCopyButton);
 
 /*
 

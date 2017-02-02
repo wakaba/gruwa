@@ -18,7 +18,15 @@
     <section>
       <header class=section>
         <h1>検索</>
-        <a href=/help#search rel=help>ヘルプ</a>
+        <popup-menu>
+          <button type=button>⋁</>
+          <menu hidden>
+            <li><copy-button>
+              <a href>URLをコピー</a>
+            </copy-button>
+            <li><a href=/help#search>ヘルプ</a>
+          </menu>
+        </popup-menu>
       </header>
 
       <list-container src=o/search.json key=objects pl:param-q="$app->text_param ('q')" class=object-search>
