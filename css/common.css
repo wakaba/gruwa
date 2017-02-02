@@ -423,61 +423,6 @@ article-comments .actions form textarea {
   line-height: 1.5;
 }
 
-list-container[key=members] table,
-list-container[key=groups] table {
-  border-collapse: collapse;
-  margin-bottom: 1em;
-}
-
-list-container[key=members] thead,
-list-container[key=groups] thead {
-  border-bottom: 3px solid;
-  border-color: var(--accented-border-color);
-}
-
-list-container[key=members] thead th,
-list-container[key=groups] thead th {
-  color: var(--accented-color);
-  background-color: var(--accented-background-color);
-  font-weight: bolder;
-}
-
-list-container[key=members] th,
-list-container[key=members] td,
-list-container[key=groups] thead th,
-list-container[key=groups] td {
-  padding: .5em;
-}
-
-list-container[key=members] tbody tr,
-list-container[key=groups] tbody tr {
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-}
-
-list-container[key=members] tbody tr:nth-child(2n+1),
-list-container[key=groups] tbody tr:nth-child(2n+1) {
-  background-color: var(--light-2-background-color);
-  color: var(--light-2-color);
-}
-
-list-container[key=groups] tbody th {
-  padding: 0;
-}
-
-list-container[key=members] tbody th,
-list-container[key=groups] tbody th {
-  font-weight: normal;
-  min-width: 20em;
-  text-align: left;
-}
-
-list-container[key=members] tbody th a,
-list-container[key=groups] tbody th a {
-  display: block;
-  padding: .5em;
-}
-
 list-container[key=members] td.user_status,
 list-container[key=members] td.owner_status,
 list-container[key=members] td.member_type,

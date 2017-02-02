@@ -152,6 +152,46 @@ function createBodyHTML (value, opts) {
   return doc.documentElement.outerHTML;
 } // createBodyHTML
 
+var FieldCommands = {};
+
+FieldCommands.editJumpLabel = function () {
+  var item = this.parentNode.parentNode;
+  var label = item.querySelector ('[data-field=label]').textContent;
+  var newLabel = prompt (this.getAttribute ('data-prompt'), label);
+  if (newLabel == null || newLabel === label) return;
+  var as = getActionStatus (item);
+  as.start ({stages: ["fetch"]});
+  as.stageStart ('fetch');
+  var fd = new FormData;
+  fd.append ('url', item.querySelector ('a[data-href-template]').href);
+  fd.append ('label', newLabel);
+  gFetch ('/jump/add.json', {post: true, formData: fd}).then (function () {
+    $$ (item, '[data-field=label]').forEach (function (e) {
+      e.textContent = newLabel;
+    });
+    as.stageEnd ('fetch');
+    as.end ({ok: true});
+  }, function (error) {
+    as.end ({error: error});
+  });
+}; // editJumpLabel
+
+FieldCommands.deleteJump = function () {
+  var item = this.parentNode.parentNode;
+  var as = getActionStatus (item);
+  as.start ({stages: ["fetch"]});
+  as.stageStart ('fetch');
+  var fd = new FormData;
+  fd.append ('url', item.querySelector ('a[data-href-template]').href);
+  gFetch ('/jump/delete.json', {post: true, formData: fd}).then (function () {
+    item.parentNode.removeChild (item);
+    as.stageEnd ('fetch');
+    as.end ({ok: true});
+  }, function (error) {
+    as.end ({error: error});
+  });
+}; // deleteJump
+
 function fillFields (contextEl, rootEl, el, object) {
   if (object.account_id &&
       object.account_id === document.documentElement.getAttribute ('data-account')) {
@@ -366,6 +406,9 @@ function fillFields (contextEl, rootEl, el, object) {
   });
   $$c (el, '[data-title-data-field]').forEach (function (field) {
     field.title = object && object.data ? object.data[field.getAttribute ('data-title-data-field')] : null;
+  });
+  $$c (el, 'button[data-command]').forEach (function (e) {
+    e.onclick = FieldCommands[e.getAttribute ('data-command')]
   });
   if (rootEl.startEdit) {
     $$c (el, '.edit-button').forEach (function (button) {

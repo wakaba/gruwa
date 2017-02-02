@@ -630,6 +630,69 @@ popup-menu > menu > list-container {
   overflow: auto;
 }
 
+
+list-container.main-table table {
+  border-collapse: collapse;
+  margin-bottom: 1em;
+  width: 100%;
+}
+
+list-container.main-table thead {
+  border-bottom: 3px solid;
+  border-color: var(--accented-border-color);
+}
+
+list-container.main-table thead th {
+  color: var(--accented-color);
+  background-color: var(--accented-background-color);
+  font-weight: bolder;
+}
+
+list-container.main-table thead th,
+list-container.main-table td {
+  padding: .5em;
+}
+
+list-container.main-table tbody tr {
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+}
+
+list-container.main-table tbody tr:nth-child(2n+1) {
+  background-color: var(--light-2-background-color);
+  color: var(--light-2-color);
+}
+
+list-container.main-table tbody th {
+  padding: 0;
+}
+
+list-container.main-table tbody th {
+  font-weight: normal;
+  min-width: 20em;
+  text-align: left;
+}
+
+list-container.main-table tbody th a:only-child {
+  display: block;
+  padding: .5em;
+}
+
+list-container.main-table td.operations {
+  text-align: right;
+  font-size: 80%;
+}
+
+list-container.main-table td.operations button {
+  margin: 0;
+  font-size: 80%;
+}
+
+list-container.main-table td.operations action-status {
+  display: block;
+  margin-top: .5em;
+}
+
 /*
 
 Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.

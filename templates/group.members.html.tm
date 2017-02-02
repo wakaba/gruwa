@@ -20,7 +20,7 @@
     <section>
       <h1>メンバー一覧</>
 
-    <list-container type=table src=members.json key=members>
+    <list-container type=table src=members.json key=members class=main-table>
       <template>
         <th>
           <account-name data-field=account_id />

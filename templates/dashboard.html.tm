@@ -1,5 +1,5 @@
 <html t:params="$account $app">
-<title>Gruwa</title>
+<title>ダッシュボード - Gruwa</title>
 <t:if x="not $app->config->{is_production}">
   <meta name=referrer content=no-referrer>
 <t:else>
@@ -18,17 +18,25 @@
     <popup-menu>
       <button><account-name><t:text value="$account->{name}"></account-name></button>
       <menu hidden>
-        <li><a href=/dashboard>ダッシュボード</>
+        <li><a href=/dashboard>ダッシュボード</></li>
+        <hr>
+        <list-container src=/jump/list.json key=items type=list>
+          <template>
+            <a href data-href-template={URL} data-ping-template=/jump/ping.json?url={HREF} data-field=label></a>
+          </template>
+          <list-main/>
+        </list-container>
+        <li><a href=/jump>ジャンプリストの編集</></li>
       </menu>
     </popup-menu>
-    <a href=/help rel=help>ヘルプ</a>
+    <a href=/help>ヘルプ</a>
   </header-area>
 </header>
 
   <section>
     <h1>参加グループ</>
 
-    <list-container type=table src=my/groups.json key=groups sortkey=updated>
+    <list-container type=table src=my/groups.json key=groups sortkey=updated class=main-table>
       <template>
         <th>
           <a href data-href-template="/g/{group_id}/">
@@ -80,11 +88,15 @@
               stage-next=グループに移動します... />
       </form>
     </details>
+
+    <ul>
+      <li><a href=jump>ジャンプリスト</a>
+    </ul>
   </section>
 
 <!--
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

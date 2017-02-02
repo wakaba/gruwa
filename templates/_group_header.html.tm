@@ -26,9 +26,10 @@
           </template>
           <list-main/>
         </list-container>
+        <li><a href=/jump>ジャンプリストの編集</></li>
       </menu>
     </popup-menu>
-    <a href=/help rel=help>ヘルプ</a>
+    <a href=/help>ヘルプ</a>
   </header-area>
 </header>
 
