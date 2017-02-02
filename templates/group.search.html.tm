@@ -24,6 +24,9 @@
             <li><copy-button>
               <a href>URLをコピー</a>
             </copy-button>
+            <li><copy-button type=jump>
+              <a href>ジャンプリストに追加</a>
+            </copy-button>
             <li><a href=/help#search>ヘルプ</a>
           </menu>
         </popup-menu>

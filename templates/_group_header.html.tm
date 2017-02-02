@@ -15,10 +15,17 @@
     <popup-menu>
       <button><account-name><t:text value="$account->{name}"></account-name></button>
       <menu hidden>
-        <li><a href=/dashboard>ダッシュボード</>
+        <li><a href=/dashboard>ダッシュボード</></li>
         <t:if x="$group_member->{data}->{default_index_id}">
           <li><a pl:href="'/g/'.$group->{group_id}.'/i/'.$group_member->{data}->{default_index_id}.'/'">グループ日記</a>
         </t:if>
+        <hr>
+        <list-container src=/jump/list.json key=items type=list>
+          <template>
+            <a href data-href-template={URL} data-ping-template=/jump/ping.json?url={HREF} data-field=label></a>
+          </template>
+          <list-main/>
+        </list-container>
       </menu>
     </popup-menu>
     <a href=/help rel=help>ヘルプ</a>
@@ -36,6 +43,11 @@
       <li><copy-button>
         <a pl:href="'/g/'.$group->{group_id}.'/'">
           URLをコピー
+        </a>
+      </copy-button>
+      <li><copy-button type=jump>
+        <a pl:href="'/g/'.$group->{group_id}.'/'" pl:title="$group->{data}->{title}">
+          ジャンプリストに追加
         </a>
       </copy-button>
       <li>
@@ -63,6 +75,11 @@
           URLをコピー
         </a>
       </copy-button>
+      <li><copy-button type=jump>
+        <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'" pl:title="$index->{title}">
+          ジャンプリストに追加
+        </a>
+      </copy-button>
       <li>
         <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/config'">
           設定
@@ -82,6 +99,11 @@
       <li><copy-button>
         <a href>
           URLをコピー
+        </a>
+      </>
+      <li><copy-button type=jump>
+        <a href pl:title=$wiki_name>
+          ジャンプリストに追加
         </a>
       </>
     </menu>

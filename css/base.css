@@ -22,10 +22,10 @@ html { /* [data-thema=green] */
   --accented-border-color: green;
   --accented-background-color: transparent;
 
-  --menu-background-color: white;
-  --menu-color: black;
+  --menu-background-color: var(--main-background-color);
+  --menu-color: var(--main-color);
   --menu-border-color: var(--accented-border-color);
-  --menu-shadow-color: gray;
+  --menu-shadow-color: var(--main-shadow-color);
 
   --error-color: red;
   --error-background-color: transparent;
@@ -556,7 +556,8 @@ popup-menu > menu:not([hidden]) {
   font-size: 100%;
 }
 
-popup-menu > menu > li:not([hidden]) {
+popup-menu > menu > li:not([hidden]),
+popup-menu > menu > list-container > list-main > li:not([hidden]) {
   display: block;
   margin: 0;
   padding: 0;
@@ -568,7 +569,8 @@ popup-menu > menu > li > copy-button:not([hidden]) {
 }
 
 popup-menu > menu > li > a:only-child,
-popup-menu > menu > li > copy-button > a:only-child {
+popup-menu > menu > li > copy-button > a:only-child,
+popup-menu > menu > list-container > list-main > li > a:only-child {
   display: block;
   padding: .5em;
   font-size: 100%;
@@ -581,7 +583,10 @@ popup-menu > menu > li > a:only-child:active,
 popup-menu > menu > li > a:only-child:focus,
 popup-menu > menu > li > copy-button > a:only-child:hover,
 popup-menu > menu > li > copy-button > a:only-child:active,
-popup-menu > menu > li > copy-button > a:only-child:focus {
+popup-menu > menu > li > copy-button > a:only-child:focus,
+popup-menu > menu > list-container > list-main > li > a:only-child:hover,
+popup-menu > menu > list-container > list-main > li > a:only-child:active,
+popup-menu > menu > list-container > list-main > li > a:only-child:focus {
   text-decoration: underline;
 }
 
@@ -613,6 +618,17 @@ popup-menu > menu > li > button:only-child:not([hidden]):active {
   background-color: var(--hover-background-color);
 }
 
+popup-menu > menu > hr {
+  visibility: visible;
+  border-size: 1px;
+  border-style: solid none none none;
+  border-color: var(--menu-border-color);
+}
+
+popup-menu > menu > list-container {
+  max-height: 15rem;
+  overflow: auto;
+}
 
 /*
 

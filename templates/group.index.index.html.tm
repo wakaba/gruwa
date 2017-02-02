@@ -120,6 +120,9 @@
                 <li><copy-button>
                   <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
                 </>
+                <li><copy-button type=jump>
+                  <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                </>
                 <li><button type=button class=edit-button>編集</button>
               </menu>
             </popup-menu>

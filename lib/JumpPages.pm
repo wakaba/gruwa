@@ -4,13 +4,13 @@ use warnings;
 use Digest::SHA qw(sha1_hex);
 use Web::URL;
 use Dongry::Type;
+use Time::HiRes qw(time);
 
 use Results;
 
 sub main ($$$$) {
   my ($class, $app, $path, $db, $account_data) = @_;
 
-  # XXX
   if (@$path == 1) {
     # /jump
     return temma $app, 'jump.html.tm', {account => $account_data};
@@ -18,9 +18,9 @@ sub main ($$$$) {
 
   if (@$path == 2 and $path->[1] eq 'list.json') {
     # /jump/list.json
-    return $db->select ('jump', {
+    return $db->execute ('select `url`, `label`, `score` / greatest(unix_timestamp(now()) - `timestamp`, 1) as `s`, `score` from `jump` where `account_id` = :account_id order by `s` desc, `url` asc limit 100', {
       account_id => Dongry::Type->serialize ('text', $account_data->{account_id}),
-    }, limit => 100, fields => ['url', 'label', 'score'], order => ['score', 'desc', 'url', 'asc'])->then (sub {
+    })->then (sub {
       my $jumps = $_[0]->all->to_a;
       for (@$jumps) {
         $_->{url} = Dongry::Type->parse ('text', $_->{url});
@@ -83,6 +83,7 @@ sub main ($$$$) {
       url => Dongry::Type->serialize ('text', $v),
       label => Dongry::Type->serialize ('text', $label),
       score => 0,
+      timestamp => time,
     }], duplicate => {
       label => $db->bare_sql_fragment ('values(`label`)'),
     })->then (sub {

@@ -67,7 +67,11 @@ function gFetch (pathquery, opts) {
     body = new FormData (opts.form);
   }
   return withFormDisabled (opts.form /* or null */, function () {
-    return fetch ((document.documentElement.getAttribute ('data-group-url') || '') + '/' + pathquery, {
+    return fetch ((
+      /^\//.test (pathquery)
+        ? pathquery
+        : (document.documentElement.getAttribute ('data-group-url') || '') + '/' + pathquery
+    ), {
       credentials: "same-origin",
       method: opts.post ? 'POST' : 'GET',
       body: body,
@@ -211,20 +215,31 @@ function fillFields (contextEl, rootEl, el, object) {
       return document.documentElement.getAttribute ('data-index');
     }).replace (/\{PARENT\}/, function () {
       return contextEl.getAttribute ('data-parent');
+    }).replace (/\{URL\}/, function () {
+      return object.url;
     }).replace (/\{([^{}]+)\}/g, function (_, k) {
       return encodeURIComponent (object[k]);
     });
+
+    var pingTemplate = field.getAttribute ('data-ping-template');
+    if (pingTemplate) {
+      field.ping = pingTemplate.replace (/\{HREF\}/g, function () {
+        return encodeURIComponent (field.href);
+      }).replace (/\{([^{}]+)\}/g, function (_, k) {
+        return encodeURIComponent (object[k]);
+      });
+    }
   });
   $$c (el, '[data-src-template]').forEach (function (field) {
     field.setAttribute ('src', field.getAttribute ('data-src-template').replace (/\{GROUP\}/g, function () {
       return document.documentElement.getAttribute ('data-group-url');
     }).replace (/\{([^{}]+)\}/g, function (_, k) {
-      return object[k];
+      return encodeURIComponent (object[k]);
     }));
   });
   $$c (el, '[data-data-action-template]').forEach (function (field) {
     field.setAttribute ('data-action', field.getAttribute ('data-data-action-template').replace (/\{([^{}]+)\}/g, function (_, k) {
-      return object[k];
+      return encodeURIComponent (object[k]);
     }));
     field.parentObject = object;
   });
@@ -348,6 +363,9 @@ function fillFields (contextEl, rootEl, el, object) {
   });
   $$c (el, '[data-data-account-field]').forEach (function (field) {
     field.textContent = object && object.data && object.data.account ? object.data.account[field.getAttribute ('data-data-account-field')] : null;
+  });
+  $$c (el, '[data-title-data-field]').forEach (function (field) {
+    field.title = object && object.data ? object.data[field.getAttribute ('data-title-data-field')] : null;
   });
   if (rootEl.startEdit) {
     $$c (el, '.edit-button').forEach (function (button) {
@@ -546,6 +564,7 @@ function upgradeList (el) {
       object: 'article',
     }[itemType] || {
       table: 'tr',
+      list: 'li',
       $with: '$with',
     }[el.getAttribute ('type')] || 'list-item';
 
@@ -1461,7 +1480,19 @@ function upgradePopupMenu (e) {
 function upgradeCopyButton (e) {
   $$ (e, 'a').forEach (function (f) {
     f.onclick = function () {
-      copyText (f.href);
+      if (e.getAttribute ('type') === 'jump') {
+        var fd = new FormData;
+        if (f.title) fd.append ('label', f.title);
+        fd.append ('url', f.href);
+        gFetch ('/jump/add.json', {post: true, formData: fd}).then (function () {
+          $$ (document, 'list-container[src="/jump/list.json"]').forEach (function (e) {
+            e.clearObjects ();
+            e.load ();
+          });
+        });
+      } else {
+        copyText (f.href);
+      }
       return false;
     };
   });
