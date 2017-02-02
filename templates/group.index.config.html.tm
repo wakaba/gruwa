@@ -15,10 +15,7 @@
   <section class=page>
     <header>
       <h1><a href=./><t:text value="$index->{title}"></a></h1>
-      <nav>
-        <a href=./>トップ</a>
-        / <a href=config class=active>設定</a>
-      </nav>
+      <m:index-menu m:group=$group m:index=$index />
     </header>
 
     <section>

@@ -22,6 +22,11 @@ html { /* [data-thema=green] */
   --accented-border-color: green;
   --accented-background-color: transparent;
 
+  --menu-background-color: white;
+  --menu-color: black;
+  --menu-border-color: var(--accented-border-color);
+  --menu-shadow-color: gray;
+
   --error-color: red;
   --error-background-color: transparent;
 
@@ -506,6 +511,100 @@ todo-state[value="2"] {
   background: green;
   color: white;
 }
+
+popup-menu:not([hidden]) {
+  position: relative;
+  display: inline-block;
+}
+
+popup-menu > button:not([hidden]) {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  border: solid 1px transparent;
+  padding: 0 .5em;
+  min-width: 1em;
+  line-height: 1.5;
+  color: inherit;
+  background: transparent;
+  font-size: 100%;
+}
+
+popup-menu > button:not([hidden]):hover,
+popup-menu > button:not([hidden]):active,
+popup-menu > button:not([hidden]):focus {
+  border-color: var(--accented-border-color);
+  color: var(--accented-color);
+  background-color: var(--accented-background-color);
+}
+
+popup-menu > menu:not([hidden]) {
+  position: absolute;
+  z-index: 10;
+  right: 0;
+  display: block;
+  margin: 0;
+  border: 1px solid;
+  border-color: var(--menu-border-color);
+  border-radius: 5px;
+  padding: .5rem;
+  background-color: var(--menu-background-color);
+  color: var(--menu-color);
+  min-width: 10rem;
+  text-align: left;
+  box-shadow: 3px 3px var(--menu-shadow-color);
+  font-size: 100%;
+}
+
+popup-menu > menu > li:not([hidden]) {
+  display: block;
+  margin: 0;
+  padding: 0;
+  font-size: 100%;
+}
+
+popup-menu > menu > li > a:only-child {
+  display: block;
+  padding: .5em;
+  font-size: 100%;
+  text-decoration: none;
+  line-height: 1.0;
+}
+
+popup-menu > menu > li > a:only-child:hover,
+popup-menu > menu > li > a:only-child:active,
+popup-menu > menu > li > a:only-child:focus {
+  text-decoration: underline;
+}
+
+popup-menu > menu > li > button:only-child:not([hidden]) {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  display: block;
+  margin: 0;
+  border: none;
+  padding: .5em;
+  width: 100%;
+  line-height: 1.0;
+  color: inherit;
+  background: transparent;
+  font-size: 100%;
+  text-align: left;
+}
+
+popup-menu > menu > li > button:only-child:not([hidden]):hover,
+popup-menu > menu > li > button:only-child:not([hidden]):focus,
+popup-menu > menu > li > button:only-child:not([hidden]):active {
+  text-decoration: underline;
+}
+
+popup-menu > menu > li > button:only-child:not([hidden]):hover,
+popup-menu > menu > li > button:only-child:not([hidden]):active {
+  color: var(--hover-color);
+  background-color: var(--hover-background-color);
+}
+
 
 /*
 

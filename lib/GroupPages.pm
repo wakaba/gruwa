@@ -95,7 +95,7 @@ sub main ($$$$$) {
     admin_status => 1,
     owner_status => 1,
     with_group_data => ['title', 'theme', 'default_wiki_index_id'],
-    with_group_membership_data => ['default_index_id'],
+    with_group_member_data => ['default_index_id'],
   })->(sub {
     my $account_data = $_[0];
     unless (defined $account_data->{account_id}) {

@@ -15,8 +15,12 @@
     </>
   </header-area>
   <header-area>
-    <account-name><t:text value="$account->{name}"></account-name>
-    <a href=/dashboard>ダッシュボード</>
+    <popup-menu>
+      <button><account-name><t:text value="$account->{name}"></account-name></button>
+      <menu hidden>
+        <li><a href=/dashboard>ダッシュボード</>
+      </menu>
+    </popup-menu>
     <a href=/help rel=help>ヘルプ</a>
   </header-area>
 </header>

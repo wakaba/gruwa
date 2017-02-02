@@ -21,7 +21,7 @@
 </header>
 
   <section class=help>
-    <h1>ヘルプ</>
+    <h1>Gruwa のヘルプ</>
 
     <p><dfn id=gruwa>Gruwa</> (ぐるわ) は、グループウェアのようなものです。
     <a href=#groups>グループ</a>に参加して、その中で色々なことができます。

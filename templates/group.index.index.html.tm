@@ -29,27 +29,18 @@
   <section class=page>
     <header>
       <t:if x="defined $wiki_name">
-        <h1><t:text value=$wiki_name></h1>
+        <h1><a href><t:text value=$wiki_name></a></h1>
+        <m:wiki-menu m:group=$group m:wiki_name=$wiki_name />
       <t:elsif x="defined $index">
         <h1><a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
           <t:text value="$index->{title}">
         </a></h1>
-        <nav>
-          <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
-            <t:if x="not defined $object">
-              <t:class name="'active'">
-            </t:if>
-            トップ
-          </a>
-          /
-          <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/config'">
-            設定
-          </a>
-        </nav>
+        <m:index-menu m:group=$group m:index=$index />
       <t:else>
         <h1><a pl:href="'/g/'.$group->{group_id}.'/'">
           <t:text value="$group->{data}->{title}">
         </a></h1>
+        <m:group-menu m:group=$group />
       </t:if>
     </header>
 
@@ -122,6 +113,13 @@
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
             <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+            <popup-menu>
+              <button type=button>⋁</button>
+              <menu hidden>
+                <li><a data-href-template={GROUP}/o/{object_id}/>記事</a>
+                <li><button type=button class=edit-button>編集</button>
+              </menu>
+            </popup-menu>
           </header>
           <main><iframe data-data-field=body /></main>
           <footer>
@@ -136,7 +134,6 @@
               <index-list data-data-field=index_ids />
               <time data-field=created class=ambtime />
               (<time data-field=updated class=ambtime /> 編集)
-              <button type=button class=edit-button>編集</button>
           </footer>
 
           <article-comments>

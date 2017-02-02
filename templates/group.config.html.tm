@@ -11,11 +11,7 @@
   <section class=page>
     <header>
       <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
-      <nav>
-        <a href=./>トップ</a>
-        / <a href=members>メンバー</a>
-        / <a href=config class=active>設定</a>
-      </nav>
+      <m:group-menu m:group=$group />
     </header>
 
     <section>

@@ -63,6 +63,27 @@ header.group > header-area > a:active {
   text-decoration: underline;
 }
 
+header.common > header-area > popup-menu > button:not([hidden]):hover,
+header.group > header-area > popup-menu > button:not([hidden]):hover,
+header.common > header-area > popup-menu > button:not([hidden]):active,
+header.group > header-area > popup-menu > button:not([hidden]):active,
+header.common > header-area > popup-menu > button:not([hidden]):focus,
+header.group > header-area > popup-menu > button:not([hidden]):focus {
+  border-color: transparent;
+  color: inherit;
+  background-color: transparent;
+  text-decoration: underline;
+}
+
+header.common > header-area > popup-menu > button::after,
+header.group > header-area > popup-menu > button::after {
+  display: inline-block;
+  content: "⋁";
+  margin-left: .5em;
+  font-size: 60%;
+  text-decoration: none;
+}
+
 header.common > header-area > hgroup,
 header.group > header-area > hgroup {
   display: inline-block;
@@ -105,11 +126,6 @@ header.group .search-form {
   color: inherit;
 }
 
-header.common > header-area account-name::after,
-header.group > header-area account-name::after {
-  content: " ▶ ";
-}
-
 section.page {
   margin: 0;
 }
@@ -123,6 +139,7 @@ section.page::after {
 section.page > header {
   display: block;
   margin: 0 0 1em 0;
+  border-bottom: 1px solid var(--accented-border-color);
   padding: 4em 2em 4em 2em;
   background-color: var(--light-1-background-color);
   color: var(--light-1-color);
@@ -134,32 +151,13 @@ section.page > header h1 {
   text-shadow: 2px 2px var(--light-1-shadow-color);
 }
 
-section.page nav {
+section.page > header > popup-menu {
   display: block;
   float: right;
   margin: 2.5em 0 0 0;
   padding: .2em .5em;
   text-align: right;
   font-size: 90%;
-}
-
-section.page nav a {
-  display: inline-block;
-  padding: .2em;
-  min-width: 5em;
-  text-align: center;
-  text-decoration: none;
-}
-
-section.page nav a:hover,
-section.page nav a:active {
-  text-decoration: underline;
-}
-
-section.page nav a.active {
-  font-weight: bolder;
-  color: inherit;
-  background: transparent;
 }
 
 section.page > footer {
@@ -261,6 +259,7 @@ article.object.editing > edit-container header > p + p {
 }
 
 article.object > header {
+  position: relative;
   border-left: .3em solid;
   border-color: var(--accented-border-color);
   padding: .3em .5em;
@@ -279,6 +278,13 @@ article.object > header h1 {
 article.object > header h1 a {
   display: inline-block;
   min-width: 5em;
+}
+
+article.object > header popup-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 90%;
 }
 
 edit-container {

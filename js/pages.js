@@ -1421,7 +1421,7 @@ function upgradeListControl (control) {
 
 function upgradePopupMenu (e) {
   var listeners = [];
-  var toggle = function (b) {
+  var toggle = function () {
     e.classList.toggle ('active');
     var isActive = e.classList.contains ('active');
     $$c (e, 'menu').forEach (function (m) {
@@ -1429,6 +1429,7 @@ function upgradePopupMenu (e) {
     });
     if (isActive) {
       var f = function (ev) {
+        if (ev.targetPopupMenu === e) return;
         toggle ();
       };
       window.addEventListener ('click', f);
@@ -1440,14 +1441,20 @@ function upgradePopupMenu (e) {
       listeners = [];
     }
   }; // toggle
-  $$c (e, 'button').forEach (function (b) {
-    b.onclick = function () { toggle (this) };
+  Array.prototype.forEach.call (e.children, function (f) {
+    if (f.localName === 'button') {
+      f.onclick = function (ev) { ev.targetIsInteractive = true; toggle () };
+    }
+  });
+  $$ (e, 'menu button, menu a, menu input').forEach (function (b) {
+    b.addEventListener ('click', function (ev) { toggle () });
   });
   e.onclick = function (ev) {
-    if (ev.target.localName === 'input') {
-      toggle ();
+    if (ev.targetIsInteractive) {
+      ev.targetPopupMenu = e;
+    } else {
+      ev.stopPropagation ();
     }
-    ev.stopPropagation ();
   };
 } // upgradePopupMenu
 
