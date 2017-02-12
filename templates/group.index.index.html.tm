@@ -105,6 +105,25 @@
             <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "4"}]' title=ラベル />
             <account-list data-data-field=assigned_account_ids title=担当者 />
         </template>
+      <t:elsif x="not defined $wiki_name and
+                  defined $index and
+                  $index->{index_type} == 6 # fileset">
+        <t:attr name="'src-limit'" value=100>
+        <t:class name="'file-list'">
+        <template>
+          <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+          <p class=main-line>
+            <a data-href-template={GROUP}/o/{object_id}/file download>
+              <span data-data-field=title data-empty=■ />
+              <code data-data-field=file_name></code>
+            </a>
+          <p class=info-line>
+            <unit-number data-data-field=file_size type=bytes />
+            <code data-data-field=mime_type />
+            <a data-href-template={GROUP}/o/{object_id}/>
+              <time data-field=created class=ambtime />
+            </a>
+        </template>
       <t:else><!-- index_type == 1 (blog), wiki page, object permalink -->
         <t:attr name="'listitemtype'" value="'object'">
         <template class=object>
@@ -238,6 +257,32 @@
             <p class=operations>
               <button type=button class=edit-button data-focus-title>新しい TODO</button>
           </article>
+        <t:elsif x="$index->{index_type} == 6 # fileset">
+          <form action=javascript: method=post data-form-type=uploader pl:data-index-id="$index->{index_id}">
+            <list-container type=table>
+              <template>
+                <td><code data-field=file_name />
+                <td><unit-number data-field=file_size type=bytes />
+                <td><action-status hidden
+                        stage-create=作成中...
+                        stage-upload=アップロード中...
+                        stage-close=保存中...
+                        stage-show=読み込み中...
+                        ok=アップロード完了 />
+              </template>
+              <table>
+                <thead>
+                  <tr>
+                    <th>ファイル名
+                    <th>サイズ
+                    <th>進捗
+                <tbody>
+              </table>
+            </list-container>
+            <p class=operations>
+              <input type=file name=file multiple hidden>
+              <button type=button name=upload-button class=edit-button>ファイルをアップロード...</button>
+          </form>
         </t:if>
       </t:if>
 

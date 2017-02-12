@@ -445,6 +445,7 @@ sub group_index ($$$$) {
             ## 3 todo list
             ## 4 label
             ## 5 milestone
+            ## 6 fileset
           theme => $index->{options}->{theme},
           color => $index->{options}->{color},
           deadline => $index->{options}->{deadline},

@@ -158,7 +158,7 @@ sub web ($$$$%) {
   ])->then (sub {
     my ($adata, $sdata) = @{$_[0]};
     $config->{accounts} = $adata if defined $adata;
-    if (defined $adata) {
+    if (defined $sdata) {
       $config->{storage}->{aws4} = $sdata->{aws4};
       $config->{storage}->{url} = $sdata->{url};
     }

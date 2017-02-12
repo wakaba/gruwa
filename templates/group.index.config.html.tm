@@ -31,6 +31,7 @@
                 <t:elsif x="$index->{index_type} == 3"> TODO リスト
                 <t:elsif x="$index->{index_type} == 4"> ラベル
                 <t:elsif x="$index->{index_type} == 5"> 里程標
+                <t:elsif x="$index->{index_type} == 6"> ファイルアップローダー
                 <t:else><t:text value="$index->{index_type}"></t:if>
             <tr>
               <th><label for=edit-title>名前</>

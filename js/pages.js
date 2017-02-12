@@ -60,26 +60,60 @@ function $$c2 (n, s) {
 }) ();
 
 function gFetch (pathquery, opts) {
+  if (opts.asStage) opts.as.stageStart (opts.asStage);
   var body;
   if (opts.formData) {
     body = opts.formData;
   } else if (opts.form) {
     body = new FormData (opts.form);
+  } else {
+    body = opts.body;
   }
   return withFormDisabled (opts.form /* or null */, function () {
-    return fetch ((
+    var url = (
       /^\//.test (pathquery)
         ? pathquery
         : (document.documentElement.getAttribute ('data-group-url') || '') + '/' + pathquery
-    ), {
-      credentials: "same-origin",
-      method: opts.post ? 'POST' : 'GET',
-      body: body,
-      referrerPolicy: 'origin',
-    }).then (function (res) {
-      if (res.status !== 200) throw res;
-      return res.json ();
-    });
+    );
+    var method = opts.post ? 'POST' : 'GET';
+    if (opts.asStage) {
+      return new Promise (function (ok, ng) {
+        var xhr = new XMLHttpRequest;
+        xhr.open (method, url, true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+              if (opts.asStage) opts.as.stageEnd (opts.asStage);
+              ok (JSON.parse (xhr.responseText));
+            } else {
+              ng (xhr.status + ' ' + xhr.statusText);
+            }
+          }
+        };
+        if (opts.asStage) {
+          xhr.upload.onprogress = function (ev) {
+            opts.as.stageProgress (opts.asStage, ev.loaded, ev.total);
+          };
+        }
+        var meta = document.createElement ('meta');
+        meta.name = 'referrer';
+        meta.content = 'origin';
+        document.head.appendChild (meta);
+        xhr.send (body || undefined);
+        document.head.removeChild (meta);
+      });
+    } else {
+      return fetch (url, {
+        credentials: "same-origin",
+        method: method,
+        body: body,
+        referrerPolicy: 'origin',
+      }).then (function (res) {
+        if (res.status !== 200) throw res;
+        if (opts.asStage) opts.as.stageEnd (opts.asStage);
+        return res.json ();
+      });
+    }
   });
 } // gFetch
 
@@ -575,8 +609,8 @@ function upgradeList (el) {
       }
     });
     var main = el.getListMain ();
-    if (!main) return Promise.resolve (null);
-    if (main.localName && !templates._) return Promise.resolve (null);
+    if (!main) return Promise.resolve ({items: []});
+    if (main.localName && !templates._) return Promise.resolve ({items: []});
     if (!templates._) templates._ = document.createElement ('template');
 
     var listObjects = Object.values (objects);
@@ -650,6 +684,7 @@ function upgradeList (el) {
     }; // fill
 
     var getTemplate = TemplateSelectors[el.getAttribute ('template-selector')] || function () { return null };
+    var result = {main: main, items: []};
 
     if (el.hasAttribute ('grouped')) {
       var grouped = {};
@@ -688,6 +723,7 @@ function upgradeList (el) {
           item.appendChild (template.content.cloneNode (true));
           fill (item, object);
           section.appendChild (item);
+          result.items.push (item);
         });
         if (opts.prepend) {
           main.insertBefore (section, main.firstChild);
@@ -737,6 +773,7 @@ function upgradeList (el) {
           } else {
             main.appendChild (item);
           }
+          result.items.push (item);
           appended = true;
         });
       }
@@ -754,7 +791,7 @@ function upgradeList (el) {
       button.hidden = ! (opts.hasNext && appended);
     });
 
-    return Promise.all (wait).then (function () { return main });
+    return Promise.all (wait).then (function () { return result });
   }; // showObjects
 
   var nextRef = null;
@@ -794,13 +831,13 @@ function upgradeList (el) {
     return el.showObjects (json[key], {
       hasNext: hasNext,
       prepend: el.hasAttribute ('prepend'),
-    }).then (function (main) {
+    }).then (function (result) {
       if (hasNext) {
         nextRef = json.next_ref;
       } else {
         nextRef = null;
       }
-      return main; // or null
+      return result.main; // or null
     });
   }; // show
 
@@ -1109,6 +1146,62 @@ function saveObject (article, form, object, opts) {
   });
 } // saveObject
 
+function initUploader (form) {
+  var uploadFile = function (file) {
+    var list = form.querySelector ('list-container');
+    var data = {
+      file_name: file.name,
+      file_size: file.size,
+      mime_type: file.type,
+    };
+    var as;
+    return list.showObjects ([data], {}).then (function (r) {
+      var item = r.items[0];
+      as = getActionStatus (item);
+      as.start ({stages: ["create", "upload", "upload", "upload", "close", "show"]});
+      as.stageStart ("create");
+      var fd1 = new FormData;
+      fd1.append ('is_file', 1);
+      return gFetch ('o/create.json', {post: true, formData: fd1});
+    }).then (function (json) {
+      data.object_id = json.object_id;
+      as.stageEnd ("create");
+      return gFetch ('o/' + data.object_id + '/upload.json?token=' + encodeURIComponent (json.upload_token), {post: true, body: file, as: as, asStage: "upload"});
+    }).then (function () {
+      var fd2 = new FormData;
+      fd2.append ('edit_index_id', 1);
+      fd2.append ('index_id', form.getAttribute ('data-index-id'));
+      fd2.append ('file_name', data.file_name);
+      fd2.append ('file_size', data.file_size);
+      fd2.append ('mime_type', data.mime_type);
+      fd2.append ('file_closed', 1);
+      as.stageStart ("close");
+      return gFetch ('o/' + data.object_id + '/edit.json', {post: true, formData: fd2});
+    }).then (function () {
+      as.stageEnd ("close");
+      as.stageStart ("show");
+      return gFetch ('o/get.json?with_data=1&object_id=' + data.object_id, {});
+    }).then (function (json) {
+      return document.querySelector ('list-container[src-index_id]')
+          .showObjects (json.objects, {prepend: true});
+    }).then (function () {
+      as.end ({ok: true});
+    }, function (error) {
+      as.end ({ok: false, error: error});
+    });
+  }; // uploadFile
+
+  form.elements["upload-button"].onclick = function () {
+    form.elements.file.click ();
+  };
+  form.elements.file.onchange = function () {
+    Array.prototype.forEach.call (form.elements.file.files, function (file) {
+      uploadFile (file);
+    });
+    form.reset ();
+  };
+} // initUploader
+
 function applyFilters (objects, filtersText) {
   if (filtersText) {
     var filters = JSON.parse (filtersText);
@@ -1156,7 +1249,7 @@ ActionStatus.prototype.start = function (opts) {
   var self = this;
   if (opts.stages) {
     opts.stages.forEach (function (s) {
-      self.stages[s] = false;
+      self.stages[s] = 0;
     });
   }
   this.elements.forEach (function (e) {
@@ -1193,14 +1286,26 @@ ActionStatus.prototype.stageStart = function (stage) {
   });
 };
 
+ActionStatus.prototype.stageProgress = function (stage, value, max) {
+  if (Number.isFinite (value) && Number.isFinite (max)) {
+    this.stages[stage] = value / (max || 1);
+  } else {
+    this.stages[stage] = 0;
+  }
+}; // stageProgress
+
 ActionStatus.prototype.stageEnd = function (stage) {
   var self = this;
-  this.stages[stage] = true;
+  this.stages[stage] = 1;
   this.elements.forEach (function (e) {
     $$ (e, 'progress').forEach (function (f) {
       var stages = Object.keys (self.stages);
       f.max = stages.length;
-      f.value = stages.filter (function (n) { return self.stages[n] }).length;
+      var v = 0;
+      stages.forEach (function (s) {
+        v += self.stages[s];
+      });
+      f.value = v;
     });
   });
 }; // stageEnd
@@ -1323,6 +1428,16 @@ stageActions.showCreatedObjectInCommentList = function (args) {
 stageActions.showCreatedObjectInCommentList.stages = ['showcreatedobjectincommentlist'];
 
 function upgradeForm (form) {
+  var formType = form.getAttribute ('data-form-type');
+  if (formType === 'uploader') {
+    return initUploader (form);
+  } else if (form.getAttribute ('action') === 'javascript' &&
+             form.hasAttribute ('data-action')) {
+    //
+  } else {
+    return;
+  }
+
   var submitButton = null;
   $$ (form, '[type=submit]').forEach (function (e) {
     e.onclick = function () { submitButton = this };
@@ -1613,12 +1728,9 @@ function upgradeAccountName (e) {
         $$ (x, 'account-name[account_id]').forEach (upgradeAccountName);
       }
       if (x.localName === 'form') {
-        if (x.getAttribute ('action') === 'javascript' &&
-            x.hasAttribute ('data-action')) {
-          upgradeForm (x);
-        }
+        upgradeForm (x);
       } else if (x.localName) {
-        $$ (x, 'form[action="javascript:"][data-action]').forEach (upgradeForm);
+        $$ (x, 'form').forEach (upgradeForm);
       }
       if (x.localName === 'popup-menu') {
         upgradePopupMenu (x);
@@ -1634,7 +1746,7 @@ function upgradeAccountName (e) {
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
 $$ (document, 'list-container').forEach (upgradeList);
-$$ (document, 'form[action="javascript:"][data-action]').forEach (upgradeForm);
+$$ (document, 'form').forEach (upgradeForm);
 $$ (document, 'account-name[account_id]').forEach (upgradeAccountName);
 $$ (document, 'popup-menu').forEach (upgradePopupMenu);
 $$ (document, 'copy-button').forEach (upgradeCopyButton);
