@@ -28,6 +28,8 @@ my $stop = TestServers->servers (
   db_dir => $RootPath->child ('local/local/mysqld'),
   migration_status_file => $RootPath->child ('local/local/migration.json'),
   dumped_file => $RootPath->child ('local/local/dumped.sql'),
+  storage_data_path => $RootPath->child ('local/local/minic/data'),
+  storage_config_path => $RootPath->child ('local/local/minic/config'),
   config => $Config,
 )->to_cv->recv->[1];
 

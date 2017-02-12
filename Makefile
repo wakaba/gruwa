@@ -38,11 +38,17 @@ PROVE = ./prove
 
 test: test-deps test-main
 
-test-deps: deps deps-accounts
+test-deps: deps deps-accounts deps-minio
 
 deps-accounts:
 	perl local/bin/pmbp.pl $(PMBP_OPTIONS) \
 	    --install-perl-app https://github.com/wakaba/accounts
+
+deps-minio: local/bin/minio
+
+local/bin/minio:
+	$(WGET) -O $@ https://dl.minio.io/server/minio/release/linux-amd64/minio
+	chmod u+x $@
 
 test-main:
 	$(PROVE) t/http/*.t

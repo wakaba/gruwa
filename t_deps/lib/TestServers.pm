@@ -112,15 +112,56 @@ sub mysqld ($$$$$$) {
   });
 } # mysqld
 
-sub web ($$$$) {
-  my ($port, $config, $adata_got, $dsn_got) = @_;
+sub storage (%) {
+  my %args = @_;
+
+  my $data_path = $args{data_path} // $args{work_path}->child ('minio-data');
+  my $config_path = $args{config_path} // $args{work_path}->child ('minio-config');
+  my $host = '127.0.0.1';
+  my $port = find_listenable_port;
+
+  my $cmd = Promised::Command->new
+      ([$RootPath->child ('local/bin/minio'), 'server',
+        '--address', $host . ':' . $port,
+        '--config-dir', $config_path,
+        $data_path]);
+  my $data = {aws4 => [undef, undef, undef, 's3'],
+              url => "http://$host:$port"};
+  return $cmd->run->then (sub {
+    return promised_wait_until {
+      return Promised::File->new_from_path ($config_path->child ('config.json'))->read_byte_string->then (sub {
+        my $config = json_bytes2perl $_[0];
+        $data->{aws4}->[0] = $config->{credential}->{accessKey};
+        $data->{aws4}->[1] = $config->{credential}->{secretKey};
+        $data->{aws4}->[2] = $config->{region};
+        return $data->{aws4}->[0] && $data->{aws4}->[1] && $data->{aws4}->[2];
+      })->catch (sub { return 0 });
+    } timeout => 60*3;
+  })->then (sub {
+    $args{send_data}->($data);
+    return [sub {
+      $cmd->send_signal ('TERM');
+      return $cmd->wait;
+    }, $cmd->wait];
+  });
+} # storage
+
+sub web ($$$$%) {
+  my ($port, $config, $adata_got, $dsn_got, %args) = @_;
   my $command = Promised::Command->new
       ([$RootPath->child ('perl'), $RootPath->child ('bin/server.pl'), $port]);
   my $temp = File::Temp->new;
   $command->envs->{CONFIG_FILE} = $temp;
-  my $wait = Promise->resolve ($adata_got)->then (sub {
-    my $adata = $_[0];
+  my $wait = Promise->all ([
+    $adata_got,
+    $args{receive_storage_data},
+  ])->then (sub {
+    my ($adata, $sdata) = @{$_[0]};
     $config->{accounts} = $adata if defined $adata;
+    if (defined $adata) {
+      $config->{storage}->{aws4} = $sdata->{aws4};
+      $config->{storage}->{url} = $sdata->{url};
+    }
     return Promised::File->new_from_path ($temp)->write_byte_string
         (perl2json_bytes $config);
   });
@@ -253,6 +294,7 @@ sub servers ($%) {
   $adata_got->then ($args{onaccounts}) if defined $args{onaccounts};
   my $set_ext_url;
   my $ext_url_got = Promise->new (sub { $set_ext_url = $_[0] });
+  my ($r_storage, $s_storage) = promised_cv;
   my $port = $args{port} ? $args{port} : find_listenable_port;
   my $url = Web::URL->parse_string ("http://localhost:$port");
   if (not defined $args{port}) {
@@ -261,7 +303,15 @@ sub servers ($%) {
 
   return Promise->all ([
     mysqld ($args{db_dir}, $args{db_name}, $args{migration_status_file}, $args{dumped_file}, $set_dsn, $set_mysqld),
-    web ($port, $args{config}, $adata_got, $dsn_got),
+    storage (
+      work_path => $args{work_path},
+      data_path => $args{storage_data_path},
+      config_path => $args{storage_config_path},
+      send_data => $s_storage,
+    ),
+    web ($port, $args{config}, $adata_got, $dsn_got,
+      receive_storage_data => $r_storage,
+    ),
     defined $args{onaccounts} ? accounts ($set_adata, $mysqld_got, $ext_url_got) : $set_adata->(undef),
     ext_server ($set_ext_url),
     Promise->resolve ($url)->then ($args{onurl})->then (sub { [] }),
@@ -271,11 +321,13 @@ sub servers ($%) {
     my @signal;
 
     my $stop = sub {
+      my $cancel = $_[0] || sub { };
+      $cancel->();
       @signal = ();
       return Promise->all ([map {
         my ($stop) = @$_;
         Promise->resolve->then ($stop)->catch (sub {
-          warn "ERROR: $_[0]";
+          warn "$$: ERROR: $_[0]";
         });
       } grep { defined } @$stops]);
     }; # $stop
@@ -288,7 +340,7 @@ sub servers ($%) {
       @signal = ();
       return Promise->all ([map {
         $_->catch (sub {
-          warn "ERROR: $_[0]";
+          warn "$$: ERROR: $_[0]";
         });
       } @stopped])
     }];
@@ -299,7 +351,7 @@ sub servers ($%) {
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

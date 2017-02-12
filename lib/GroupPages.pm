@@ -8,6 +8,7 @@ use Dongry::Type::JSONPS;
 use Dongry::SQL qw(where);
 use Digest::SHA qw(sha1_hex);
 use Web::DateTime::Parser;
+use Web::MIME::Type;
 use Web::DOM::Document;
 
 use Results;
@@ -577,6 +578,14 @@ sub group_index ($$$$) {
   return $app->throw_error (404);
 } # group_index
 
+## body_type
+##   1 html
+##   2 plain text
+##   3 data
+##   4 file
+
+my @TokenAlpha = ('0'..'9','A'..'Z','a'..'z');
+
 sub create_object ($%) {
   my ($db, %args) = @_;
   my $time = time;
@@ -592,11 +601,16 @@ sub create_object ($%) {
     my $rev_data = {changes => {action => 'new'}};
     ## This does not touch `group`.
 
-    if (defined $args{body_type} and $args{body_type} == 3) {
+    if (defined $args{body_type}) {
       $data->{body_type} = $args{body_type};
-      $data->{body_data} = $args{body_data};
+      $data->{body_data} = $args{body_data} if defined $args{body_data};
+      if ($data->{body_type} == 4) { # file
+        my $token = '';
+        $token .= $TokenAlpha[rand @TokenAlpha] for 1..10;
+        $data->{upload_token} = $token;
+      }
     } else {
-      $data->{body_type} = 2;
+      $data->{body_type} = 2; # plain text
       $data->{body} = '';
     }
 
@@ -637,7 +651,8 @@ sub create_object ($%) {
       }]);
     })->then (sub {
       return {object_id => $object_id,
-              object_revision_id => $data->{object_revision_id}};
+              object_revision_id => $data->{object_revision_id},
+              upload_token => $data->{upload_token}};
     });
   });
 } # create_object
@@ -698,7 +713,7 @@ sub group_object ($$$$) {
 
         my $changes = {};
         my $reactions = {};
-        for my $key (qw(title body)) {
+        for my $key (qw(title body file_name)) {
           my $value = $app->text_param ($key);
           if (defined $value) {
             $object->{data}->{$key} = $value;
@@ -706,7 +721,7 @@ sub group_object ($$$$) {
           }
         }
         for my $key (qw(timestamp body_type user_status owner_status
-                        todo_state)) {
+                        todo_state file_size file_closed)) {
           my $value = $app->bare_param ($key);
           if (defined $value) {
             my $old = $object->{data}->{$key} || 0;
@@ -720,13 +735,26 @@ sub group_object ($$$$) {
             }
           }
         }
+        for my $key (qw(mime_type)) {
+          my $value = $app->text_param ($key);
+          if (defined $value) {
+            my $type = Web::MIME::Type->parse_web_mime_type ($value);
+            if (defined $type) {
+              $object->{data}->{$key} = $type->as_valid_mime_type;
+              $changes->{fields}->{$key} = 1;
+            }
+          }
+        }
+        if ($object->{data}->{file_closed}) {
+          delete $object->{data}->{upload_token};
+        }
         # XXX owner_status only can be changed by group owners
 
         my $search_data;
         if ($changes->{fields}->{title} or
             $changes->{fields}->{body} or
             $changes->{fields}->{body_type}) {
-          my $body;
+          my $body = '';
           if ($object->{data}->{body_type} == 1) { # html
             my $doc = new Web::DOM::Document;
             $doc->manakai_is_html (1);
@@ -967,6 +995,84 @@ sub group_object ($$$$) {
           return json $app, {
             object_revision_id => ''.$object->{data}->{object_revision_id},
           } if keys %{$changes->{fields}};
+          return json $app, {};
+        });
+      } elsif (@$path == 5 and $path->[4] eq 'file') {
+        # /g/{group_id}/o/{object_id}/file
+        if ($object->{data}->{body_type} != 4) { # file
+          return $app->throw_error (404, reason_phrase => 'Not a file');
+        }
+
+        my $aws4 = $app->config->{storage}->{aws4};
+        my $bucket = $app->config->{storage}->{bucket};
+        my $url = Web::URL->parse_string ($app->config->{storage}->{url});
+        my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+        # XXX body streaming
+        return $client->request (
+          method => 'GET',
+          path => [$bucket, $path->[3]],
+          aws4 => $aws4,
+        )->then (sub {
+          if ($_[0]->status == 200) {
+            $app->http->set_response_header
+                ('content-type', $object->{data}->{mime_type} // 'application/octet-stream');
+            $app->http->set_response_disposition
+                (disposition => 'attachment',
+                 filename => $object->{data}->{file_name} // '');
+            $app->http->set_response_header ('content-security-policy', 'sandbox');
+            $app->http->send_response_body_as_ref (\($_[0]->body_bytes));
+            $app->http->close_response_body;
+          } elsif ($_[0]->status == 404) {
+            return $app->throw_error (404, reason_phrase => 'No file content');
+          } else {
+            die $_[0];
+          }
+        });
+      } elsif (@$path == 5 and $path->[4] eq 'upload.json') {
+        # /g/{group_id}/o/{object_id}/upload.json
+        $app->requires_request_method ({POST => 1});
+        $app->requires_same_origin;
+
+        my $token = $app->bare_param ('token') // '';
+        unless (defined $object->{data}->{upload_token} and
+                $object->{data}->{upload_token} eq $token) {
+          return $app->throw_error (403, reason_phrase => 'Bad |token|');
+        }
+
+        my $aws4 = $app->config->{storage}->{aws4};
+        my $bucket = $app->config->{storage}->{bucket};
+        my $url = Web::URL->parse_string ($app->config->{storage}->{url});
+        my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+
+        my $file = $path->[3];
+        return $client->request (
+          method => 'HEAD',
+          path => [$bucket],
+          aws4 => $aws4,
+        )->then (sub {
+          my $res = $_[0];
+          if ($res->status == 404) {
+            ## <Error><Code>NoSuchBucket</Code><Message>The specified bucket does not exist</Message><Key></Key><BucketName></BucketName><Resource>{path}</Resource><RequestId>...</RequestId><HostId>...</HostId></Error>
+            return $client->request (
+              method => 'PUT',
+              path => [$bucket],
+              aws4 => $aws4,
+            )->then (sub {
+              die $_[0] unless $_[0]->status == 200;
+            });
+          }
+          die $_[0] unless $_[0]->status == 200;
+        })->then (sub {
+          return $client->request (
+            method => 'PUT',
+            path => [$bucket, $file],
+            aws4 => $aws4,
+
+            # XXX streaming request body reading
+            body => ${$app->http->request_body_as_ref},
+          );
+        })->then (sub {
+          die $_[0] unless $_[0]->status == 200;
           return json $app, {};
         });
       } else {
@@ -1227,12 +1333,16 @@ sub group_object ($$$$) {
     return create_object ($db,
       group_id => $path->[1],
       author_account_id => $opts->{account}->{account_id},
+      ($app->bare_param ('is_file') ? (
+        body_type => 4, # file
+      ) : ())
     )->then (sub {
       my $result = $_[0];
       return json $app, {
         group_id => $path->[1],
         object_id => $result->{object_id},
         object_revision_id => $result->{object_revision_id},
+        upload_token => $result->{upload_token},
       };
     });
   }

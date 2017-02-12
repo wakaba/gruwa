@@ -40,6 +40,8 @@ sub get_html ($$;$%) {
       path => $path,
       params => $params,
       cookies => $cookies,
+      headers => $args{headers},
+      body => $args{body},
     );
   })->then (sub {
     my $res = $_[0];
@@ -69,6 +71,8 @@ sub get_json ($$;$%) {
       path => $path,
       params => $params,
       cookies => $cookies,
+      headers => $args{headers},
+      body => $args{body},
     );
   })->then (sub {
     my $res = $_[0];
@@ -81,6 +85,34 @@ sub get_json ($$;$%) {
             res => $res};
   });
 } # get_json
+
+sub get_file ($$;$%) {
+  my ($self, $path, $params, %args) = @_;
+  $path = [
+    (
+      defined $args{group}
+        ? ('g', $self->_get_o ($args{group})->{group_id})
+        : ()
+    ),
+    @$path,
+  ];
+  my $cookies = {%{$args{cookies} or {}}};
+  return $self->_account ($args{account})->then (sub {
+    $cookies->{sk} = $_[0]->{cookies}->{sk}; # or undef
+    return $self->client->request (
+      path => $path,
+      params => $params,
+      cookies => $cookies,
+      headers => $args{headers},
+      body => $args{body},
+    );
+  })->then (sub {
+    my $res = $_[0];
+    die $res unless $res->status == 200;
+    return {status => $res->status,
+            res => $res};
+  });
+} # get_file
 
 sub post_json ($$$;%) {
   my ($self, $path, $params, %args) = @_;
@@ -100,9 +132,11 @@ sub post_json ($$$;%) {
       method => 'POST',
       params => $params,
       headers => {
+        %{$args{headers} or {}},
         origin => $self->client->origin->to_ascii,
       },
       cookies => $cookies,
+      body => $args{body},
     );
   })->then (sub {
     my $res = $_[0];
@@ -342,9 +376,9 @@ sub are_errors ($$$) {
       path => $base_path,
       params => $base_params,
       basic_auth => [key => 'test'],
+      origin => $self->client->origin->to_ascii,
       %base_args,
       %$test,
-      headers => {Origin => $self->client->origin->to_ascii},
     );
     $opt{path} = [
       (
@@ -354,8 +388,9 @@ sub are_errors ($$$) {
       ),
       @{$opt{path} or []},
     ];
-    $opt{cookies} = {%{$opt{cookies} or {}}};
+    $opt{headers} = {%{$opt{headers} or {}}};
     $opt{headers}->{Origin} = $opt{origin} if exists $opt{origin};
+    $opt{cookies} = {%{$opt{cookies} or {}}};
     push @p, $self->_account ($opt{account})->then (sub {
       $opt{cookies}->{sk} = $_[0]->{cookies}->{sk}; # or undef
     })->then (sub {
@@ -363,6 +398,7 @@ sub are_errors ($$$) {
         method => $opt{method}, path => $opt{path}, params => $opt{params},
         basic_auth => $opt{basic_auth},
         headers => $opt{headers}, cookies => $opt{cookies},
+        body => $opt{body},
       );
     })->then (sub {
       my $res = $_[0];

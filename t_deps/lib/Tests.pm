@@ -6,6 +6,7 @@ use lib glob path (__FILE__)->parent->parent->parent->child
     ('t_deps/modules/*/lib');
 use Test::More;
 use Test::X1;
+use File::Temp qw(tempdir);
 use JSON::PS;
 use Promise;
 use Promised::Flow;
@@ -51,8 +52,17 @@ sub Test (&;%) {
 
 push @EXPORT, qw(RUN);
 sub RUN () {
+  my $tempdir = tempdir (CLEANUP => 1);
+  my $work_path = path ($tempdir);
   my $stop = TestServers->servers (
-    config => {},
+    work_path => $work_path,
+    config => {
+      storage => {
+        #aws4
+        #url
+        bucket => rand,
+      },
+    },
     onaccounts => sub {
       $AccountsData = shift;
     },

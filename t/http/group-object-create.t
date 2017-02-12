@@ -30,6 +30,7 @@ Test {
       is $result->{json}->{group_id}, $current->o ('g1')->{group_id};
       ok $result->{json}->{object_id};
       ok $result->{json}->{object_revision_id};
+      is $result->{json}->{upload_token}, undef;
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
       like $result->{res}->body_bytes, qr{"object_id"\s*:\s*"};
       like $result->{res}->body_bytes, qr{"object_revision_id"\s*:\s*"};
@@ -63,13 +64,13 @@ Test {
       is $obj->{revision_author_account_id}, $current->o ('a1')->{account_id};
     } $current->c;
   });
-} n => 24, name => 'create object';
+} n => 25, name => 'create object';
 
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
