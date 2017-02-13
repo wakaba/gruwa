@@ -693,6 +693,10 @@ list-container.main-table td.operations action-status {
   margin-top: .5em;
 }
 
+number-unit {
+  margin-left: .2em;
+}
+
 /*
 
 Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.

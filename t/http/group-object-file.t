@@ -34,6 +34,7 @@ Test {
       is $result->{res}->header ('content-type'), 'application/octet-stream';
       is $result->{res}->header ('content-disposition'), 'attachment; filename=""';
       is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
+      is $result->{res}->header ('x-content-type-options'), 'nosniff';
       is $result->{res}->body_bytes, $body;
     } $current->c;
     return $current->object ($current->o ('o1'), account => 'a1');
@@ -98,7 +99,7 @@ Test {
       is $result->{res}->body_bytes, $body;
     } $current->c, name => 'unchanged';
   });
-} n => 26, name => 'file upload';
+} n => 27, name => 'file upload';
 
 Test {
   my $current = shift;

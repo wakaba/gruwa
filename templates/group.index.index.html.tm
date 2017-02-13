@@ -111,7 +111,14 @@
         <t:attr name="'src-limit'" value=100>
         <t:class name="'file-list'">
         <template>
-          <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+          <popup-menu>
+            <button type=button>⋁</button>
+              <menu hidden>
+                <li><copy-button>
+                  <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
+                </>
+            </menu>
+          </popup-menu>
           <p class=main-line>
             <a data-href-template={GROUP}/o/{object_id}/file download>
               <span data-data-field=title data-empty=■ />
@@ -261,9 +268,9 @@
           <form action=javascript: method=post data-form-type=uploader pl:data-index-id="$index->{index_id}">
             <list-container type=table>
               <template>
-                <td><code data-field=file_name />
-                <td><unit-number data-field=file_size type=bytes />
-                <td><action-status hidden
+                <td class=file-name><code data-data-field=file_name />
+                <td class=file-size><unit-number data-data-field=file_size type=bytes />
+                <td class=progress><action-status hidden
                         stage-create=作成中...
                         stage-upload=アップロード中...
                         stage-close=保存中...
@@ -273,9 +280,9 @@
               <table>
                 <thead>
                   <tr>
-                    <th>ファイル名
-                    <th>サイズ
-                    <th>進捗
+                    <th class=file-name>ファイル名
+                    <th class=file-size>サイズ
+                    <th class=progress>進捗
                 <tbody>
               </table>
             </list-container>

@@ -1021,6 +1021,8 @@ sub group_object ($$$$) {
                 (disposition => 'attachment',
                  filename => $object->{data}->{file_name} // '');
             $app->http->set_response_header ('content-security-policy', 'sandbox');
+            $app->http->set_response_header
+                ('x-content-type-options', 'nosniff');
             $app->http->send_response_body_as_ref (\($_[0]->body_bytes));
             $app->http->close_response_body;
           } elsif ($_[0]->status == 404) {

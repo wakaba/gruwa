@@ -431,6 +431,30 @@ function fillFields (contextEl, rootEl, el, object) {
         var max = object.data ? object.data[maxKey] : null;
         if (max) field.setAttribute ('max', max);
       }
+    } else if (field.localName === 'unit-number') {
+      var unitType = field.getAttribute ('type');
+      if (unitType === 'bytes') {
+        var v = parseFloat (value);
+        var u = 'B';
+        field.title = v + u;
+        if (v > 1000) {
+          v = Math.round (v / 1024 * 10) / 10;
+          u = 'KB';
+          if (v > 1000) {
+            v = Math.round (v / 1024 * 10) / 10;
+            u = 'MB';
+            if (v > 1000) {
+              v = Math.round (v / 1024 * 10) / 10;
+              u = 'GB';
+            }
+          }
+        }
+        field.innerHTML = '<number-value></number-value><number-unit></number-unit>';
+        field.firstChild.textContent = v.toLocaleString ();
+        field.lastChild.textContent = u;
+      } else {
+        field.textContent = parseFloat (value).toLocaleString ();
+      }
     } else {
       field.textContent = value || field.getAttribute ('data-empty') || '';
     }
@@ -1155,10 +1179,10 @@ function initUploader (form) {
       mime_type: file.type,
     };
     var as;
-    return list.showObjects ([data], {}).then (function (r) {
+    return list.showObjects ([{data: data}], {}).then (function (r) {
       var item = r.items[0];
       as = getActionStatus (item);
-      as.start ({stages: ["create", "upload", "upload", "upload", "close", "show"]});
+      as.start ({stages: ["create", "upload", "close", "show"]});
       as.stageStart ("create");
       var fd1 = new FormData;
       fd1.append ('is_file', 1);
