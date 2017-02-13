@@ -632,6 +632,11 @@ list-container.object-search search-snippet {
   font-size: 80%;
 }
 
+form[data-form-type=uploader].drop-target {
+  background-color: var(--hover-background-color);
+  color: var(--hover-color);
+}
+
 form[data-form-type=uploader] table {
   width: 100%;
   margin-bottom: 1em;

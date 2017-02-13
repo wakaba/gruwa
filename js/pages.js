@@ -1224,6 +1224,48 @@ function initUploader (form) {
     });
     form.reset ();
   };
+  var setDropEffect = function (dt) {
+    var hasFile = false;
+    var items = dt.items;
+    for (var i = 0; i < items.length; i++) {
+      if (items[i].kind === "file") {
+        hasFile = true;
+        break;
+      }
+    }
+    if (hasFile) {
+      dt.dropEffect = "copy";
+      return false;
+    } else {
+      dt.dropEffect = "none";
+      return true;
+    }
+  }; // setDropEffect
+  var targetted = 0;
+  form.ondragenter = function (ev) {
+    targetted++;
+    if (!setDropEffect (ev.dataTransfer)) {
+      form.classList.add ('drop-target');
+      return false;
+    }
+  };
+  form.ondragover = function (ev) {
+    return setDropEffect (ev.dataTransfer);
+  };
+  form.ondragleave = function (ev) {
+    targetted--;
+    if (targetted <= 0) {
+      form.classList.remove ('drop-target');
+    }
+  };
+  form.ondrop = function (ev) {
+    form.classList.remove ('drop-target');
+    targetted = 0;
+    Array.prototype.forEach.call (ev.dataTransfer.files, function (file) {
+      uploadFile (file);
+    });
+    return false;
+  };
 } // initUploader
 
 function applyFilters (objects, filtersText) {
