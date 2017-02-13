@@ -37,6 +37,7 @@
         <li><a href=#todos>TODO リスト</a>
         <li><a href=#labels>ラベル</a>
         <li><a href=#milestones>里程標</a>
+        <li><a href=#filesets>ファイルアップローダー</a>
       </ul>
 
       <p>グループの参加者は、所有者と一般参加者に分かれます。
@@ -115,6 +116,17 @@
       <hr>
 
       <p><a href=#objects>記事</a>は里程標に登録できます。
+    </section>
+
+    <section id=filesets>
+      <h1>ファイルアップローダー</h1>
+
+      <p>グループ内に<dfn>ファイルアップローダー</dfn>を作ることができます。
+      グループ参加者は好きなファイルをアップロードできます。
+
+      <p>アップロードボタンの他に、
+      アップロード欄の枠線内にファイルをドラッグ&ドロップすることでも、
+      ファイルをアップロードできます。
     </section>
 
     <section id=objects>

@@ -85,6 +85,10 @@
         <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/config'">
           設定
         </a>
+      </li>
+      <t:if x="$index->{index_type} == 6 # fileset">
+        <li><a href=/help#filesets>ヘルプ</a>
+      </t:if>
     </menu>
   </popup-menu>
 </t:macro>
