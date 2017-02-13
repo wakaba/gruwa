@@ -311,12 +311,6 @@ function fillFields (contextEl, rootEl, el, object) {
       return encodeURIComponent (object[k]);
     }));
   });
-  $$c (el, '[data-data-action-template]').forEach (function (field) {
-    field.setAttribute ('data-action', field.getAttribute ('data-data-action-template').replace (/\{([^{}]+)\}/g, function (_, k) {
-      return encodeURIComponent (object[k]);
-    }));
-    field.parentObject = object;
-  });
   $$c (el, 'form[data-child-form]').forEach (function (field) {
     field.parentObject = object;
   });
@@ -1497,7 +1491,7 @@ function upgradeForm (form) {
   var formType = form.getAttribute ('data-form-type');
   if (formType === 'uploader') {
     return initUploader (form);
-  } else if (form.getAttribute ('action') === 'javascript' &&
+  } else if (form.getAttribute ('action') === 'javascript:' &&
              form.hasAttribute ('data-action')) {
     //
   } else {
