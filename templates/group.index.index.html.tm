@@ -109,28 +109,55 @@
                   defined $index and
                   $index->{index_type} == 6 # fileset">
         <t:attr name="'src-limit'" value=100>
-        <t:class name="'file-list'">
-        <template>
-          <popup-menu>
-            <button type=button>⋁</button>
-              <menu hidden>
-                <li><copy-button>
-                  <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
-                </>
-            </menu>
-          </popup-menu>
-          <p class=main-line>
-            <a data-href-template={GROUP}/o/{object_id}/file download>
-              <span data-data-field=title data-empty=■ />
-              <code data-data-field=file_name></code>
-            </a>
-          <p class=info-line>
-            <unit-number data-data-field=file_size type=bytes />
-            <code data-data-field=mime_type />
-            <a data-href-template={GROUP}/o/{object_id}/>
-              <time data-field=created class=ambtime />
-            </a>
-        </template>
+        <t:if x="($index->{options}->{subtype} // '') eq 'image'">
+          <t:class name="'image-list'">
+          <template>
+            <popup-menu>
+              <button type=button>⋁</button>
+                <menu hidden>
+                  <li><copy-button>
+                    <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
+                  </>
+              </menu>
+            </popup-menu>
+            <figure>
+              <a data-href-template={GROUP}/o/{object_id}/image data-title-data-field=title>
+                <img src data-src-template={GROUP}/o/{object_id}/image>
+              </a>
+              <figcaption>
+                <code data-data-field=file_name></code>
+                <unit-number data-data-field=file_size type=bytes />
+                <code data-data-field=mime_type />
+                <a data-href-template={GROUP}/o/{object_id}/>
+                  <time data-field=timestamp class=ambtime />
+                </a>
+              </figcaption>
+            </figure>
+          </template>
+        <t:else>
+          <t:class name="'file-list'">
+          <template>
+            <popup-menu>
+              <button type=button>⋁</button>
+                <menu hidden>
+                  <li><copy-button>
+                    <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
+                  </>
+              </menu>
+            </popup-menu>
+            <p class=main-line>
+              <a data-href-template={GROUP}/o/{object_id}/file download>
+                <span data-data-field=title data-empty=■ />
+                <code data-data-field=file_name></code>
+              </a>
+            <p class=info-line>
+              <unit-number data-data-field=file_size type=bytes />
+              <code data-data-field=mime_type />
+              <a data-href-template={GROUP}/o/{object_id}/>
+                <time data-field=timestamp class=ambtime />
+              </a>
+          </template>
+        </t:if>
       <t:else><!-- index_type == 1 (blog), wiki page, object permalink -->
         <t:attr name="'listitemtype'" value="'object'">
         <template class=object>
@@ -287,8 +314,13 @@
               </table>
             </list-container>
             <p class=operations>
-              <input type=file name=file multiple hidden>
-              <button type=button name=upload-button class=edit-button>ファイルをアップロード...</button>
+              <t:if x="($index->{options}->{subtype} // '') eq 'image'">
+                <input type=file name=file multiple hidden accept=image/*>
+                <button type=button name=upload-button class=edit-button>画像をアップロード...</button>
+              <t:else>
+                <input type=file name=file multiple hidden>
+                <button type=button name=upload-button class=edit-button>ファイルをアップロード...</button>
+              </t:if>
           </form>
         </t:if>
       </t:if>

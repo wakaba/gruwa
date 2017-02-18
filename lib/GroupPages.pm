@@ -449,6 +449,7 @@ sub group_index ($$$$) {
           theme => $index->{options}->{theme},
           color => $index->{options}->{color},
           deadline => $index->{options}->{deadline},
+          subtype => $index->{options}->{subtype},
         };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/i/{index_id}/edit.json
@@ -555,6 +556,8 @@ sub group_index ($$$$) {
             int rand 256,
             int rand 256;
       }
+      my $subtype = $app->bare_param ('subtype');
+      $options->{subtype} = $subtype if defined $subtype;
       return $db->insert ('index', [{
         group_id => Dongry::Type->serialize ('text', $path->[1]),
         index_id => $index_id,
@@ -998,8 +1001,10 @@ sub group_object ($$$$) {
           } if keys %{$changes->{fields}};
           return json $app, {};
         });
-      } elsif (@$path == 5 and $path->[4] eq 'file') {
+      } elsif (@$path == 5 and
+               ($path->[4] eq 'file' or $path->[4] eq 'image')) {
         # /g/{group_id}/o/{object_id}/file
+        # /g/{group_id}/o/{object_id}/image
         if ($object->{data}->{body_type} != 4) { # file
           return $app->throw_error (404, reason_phrase => 'Not a file');
         }
@@ -1015,14 +1020,22 @@ sub group_object ($$$$) {
           aws4 => $aws4,
         )->then (sub {
           if ($_[0]->status == 200) {
+            my $mime = $object->{data}->{mime_type} // 'application/octet-stream';
+            if ($path->[4] eq 'image' and not $mime =~ m{^image/}) {
+              return $app->throw_error (404, reason_phrase => 'Not an image');
+            }
+            $app->http->set_response_header ('content-type', $mime);
+            unless ($path->[4] eq 'image') {
+              $app->http->set_response_disposition
+                  (disposition => 'attachment',
+                   filename => $object->{data}->{file_name} // '');
+            }
             $app->http->set_response_header
-                ('content-type', $object->{data}->{mime_type} // 'application/octet-stream');
-            $app->http->set_response_disposition
-                (disposition => 'attachment',
-                 filename => $object->{data}->{file_name} // '');
-            $app->http->set_response_header ('content-security-policy', 'sandbox');
+                ('content-security-policy', 'sandbox');
             $app->http->set_response_header
                 ('x-content-type-options', 'nosniff');
+            $app->http->set_response_last_modified
+                ($object->{data}->{timestamp} || 0);
             $app->http->send_response_body_as_ref (\($_[0]->body_bytes));
             $app->http->close_response_body;
           } elsif ($_[0]->status == 404) {

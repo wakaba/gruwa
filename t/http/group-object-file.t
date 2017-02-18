@@ -98,8 +98,14 @@ Test {
       is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
       is $result->{res}->body_bytes, $body;
     } $current->c, name => 'unchanged';
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'image'], {}, account => 'a1', group => 'g1'],
+      [
+        {status => 404, name => 'Not an image'},
+      ],
+    );
   });
-} n => 27, name => 'file upload';
+} n => 28, name => 'file upload';
 
 Test {
   my $current = shift;
@@ -177,6 +183,93 @@ Test {
     );
   });
 } n => 4, name => 'file content can be altered until the file is closed';
+
+Test {
+  my $current = shift;
+  my $body = "\xFE\x00\x01\x81" . rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', 'create.json'], {
+      is_file => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok $result->{json}->{upload_token};
+    } $current->c;
+    $current->set_o (o1 => $result->{json});
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'upload.json'], {
+      token => $current->o ('o1')->{upload_token},
+    }, account => 'a1', group => 'g1', headers => {
+      'content-type' => 'application/octet-stream',
+    }, body => $body);
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      title => "aaae\x{5233}",
+      mime_type => "text/plain; hoge=fuga\x{222}",
+      file_size => 52523,
+      file_name => "ho\x{2244}ge.png",
+      file_closed => 1,
+      timestamp => 5253111442,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('last-modified'),
+          'Mon, 18 Jun 2136 21:37:22 GMT';
+    } $current->c;
+  });
+} n => 2, name => 'file last modified timestamp';
+
+Test {
+  my $current = shift;
+  my $body = "\xFE\x00\x01\x81" . rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', 'create.json'], {
+      is_file => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok $result->{json}->{upload_token};
+    } $current->c;
+    $current->set_o (o1 => $result->{json});
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'upload.json'], {
+      token => $current->o ('o1')->{upload_token},
+    }, account => 'a1', group => 'g1', headers => {
+      'content-type' => 'application/octet-stream',
+    }, body => $body);
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      title => "aaae\x{5233}",
+      mime_type => "Image/PnG",
+      file_size => 52523,
+      file_name => "ho\x{2244}ge.pngx",
+      file_closed => 1,
+      timestamp => 25253151333,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'image'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('content-type'), 'image/png';
+      is $result->{res}->header ('content-disposition'), undef;
+      is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
+      is $result->{res}->header ('last-modified'), 'Sun, 29 Mar 2770 20:15:33 GMT';
+      is $result->{res}->body_bytes, $body;
+    } $current->c;
+  });
+} n => 6, name => 'image file upload';
 
 RUN;
 

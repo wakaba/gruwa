@@ -1171,6 +1171,7 @@ function initUploader (form) {
       file_name: file.name,
       file_size: file.size,
       mime_type: file.type,
+      timestamp: file.lastModified / 1000,
     };
     var as;
     return list.showObjects ([{data: data}], {}).then (function (r) {
@@ -1192,6 +1193,7 @@ function initUploader (form) {
       fd2.append ('file_name', data.file_name);
       fd2.append ('file_size', data.file_size);
       fd2.append ('mime_type', data.mime_type);
+      fd2.append ('timestamp', data.timestamp);
       fd2.append ('file_closed', 1);
       as.stageStart ("close");
       return gFetch ('o/' + data.object_id + '/edit.json', {post: true, formData: fd2});

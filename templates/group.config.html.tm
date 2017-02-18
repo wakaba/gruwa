@@ -137,15 +137,20 @@
       </details>
 
       <details>
-        <summary>ファイルアップローダーの作成</summary>
+        <summary>アップローダーの作成</summary>
 
         <form method=post action=javascript: data-action=i/create.json
             data-href-template=/g/{group_id}/i/{index_id}/config>
           <table class=config>
             <tbody>
               <tr>
-                <th><label for=create-fileset-title>ディレクトリー名</>
+                <th><label for=create-fileset-title>名前</>
                 <td><input name=title id=create-fileset-title required>
+              <tr>
+                <th>種別
+                <td>
+                  <label><input type=radio name=subtype value=file checked required> ファイルアップローダー</label>
+                  <label><input type=radio name=subtype value=image required> アルバム</label>
           </table>
 
           <p class=operations>

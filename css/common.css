@@ -740,6 +740,43 @@ form[data-form-type=uploader] table progress:not([hidden]) {
   text-decoration: none;
 }
 
+.image-list list-main {
+  display: block;
+}
+
+.image-list list-main > list-item {
+  position: relative;
+  display: inline-block;
+  margin: 0 1em 1em 0;
+  width: 13em;
+}
+
+.image-list list-main > list-item > popup-menu {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+.image-list list-main > list-item > figure {
+  margin: 0;
+}
+
+.image-list list-main > list-item > figure > a {
+  display: block;
+  width: 13em;
+  height: 13em;
+  margin-bottom: .3em;
+  line-height: 13em;
+  text-align: center;
+}
+
+.image-list list-main > list-item > figure > a > img {
+  max-width: 13em;
+  max-height: 13em;
+  object-fit: cover;
+  vertical-align: middle;
+}
+
 list-is-empty:not([hidden]) {
   display: block;
   margin-top: 1em;

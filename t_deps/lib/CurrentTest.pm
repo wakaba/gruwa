@@ -214,6 +214,7 @@ sub create_index ($$$) {
   return $self->post_json (['i', 'create.json'], {
     title => $opts->{title} // rand,
     index_type => $opts->{index_type} // 1,
+    subtype => $opts->{subtype}, # or undef
   },
     account => ($opts->{account} // die "No |account|"),
     group => ($opts->{group} // die "No |group|"),

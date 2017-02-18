@@ -43,19 +43,76 @@ Test {
       is $result->{json}->{index_id}, $current->o ('i1')->{index_id};
       is $result->{json}->{title}, "\x{900}";
       is $result->{json}->{index_type}, 5;
+      is $result->{json}->{subtype}, undef;
       ok $result->{json}->{created};
       is $result->{json}->{updated}, $result->{json}->{created};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
       like $result->{res}->body_bytes, qr{"index_id"\s*:\s*"};
     } $current->c;
   });
-} n => 10, name => 'info';
+} n => 11, name => 'info';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_group (g2 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1', title => "\x{900}", index_type => 6, subtype => 'file'});
+  })->then (sub {
+    return $current->get_html (['i', $current->o ('i1')->{index_id}, ''], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->get_json (['i', $current->o ('i1')->{index_id}, 'info.json'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{json}->{group_id}, $current->o ('g1')->{group_id};
+      is $result->{json}->{index_id}, $current->o ('i1')->{index_id};
+      is $result->{json}->{title}, "\x{900}";
+      is $result->{json}->{index_type}, 6;
+      is $result->{json}->{subtype}, 'file';
+      ok $result->{json}->{created};
+      is $result->{json}->{updated}, $result->{json}->{created};
+      like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
+      like $result->{res}->body_bytes, qr{"index_id"\s*:\s*"};
+    } $current->c;
+  });
+} n => 9, name => 'file uploader';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_group (g2 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1', title => "\x{900}", index_type => 6, subtype => 'image'});
+  })->then (sub {
+    return $current->get_html (['i', $current->o ('i1')->{index_id}, ''], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->get_json (['i', $current->o ('i1')->{index_id}, 'info.json'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{json}->{group_id}, $current->o ('g1')->{group_id};
+      is $result->{json}->{index_id}, $current->o ('i1')->{index_id};
+      is $result->{json}->{title}, "\x{900}";
+      is $result->{json}->{index_type}, 6;
+      is $result->{json}->{subtype}, 'image';
+      ok $result->{json}->{created};
+      is $result->{json}->{updated}, $result->{json}->{created};
+      like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
+      like $result->{res}->body_bytes, qr{"index_id"\s*:\s*"};
+    } $current->c;
+  });
+} n => 9, name => 'image uploader';
 
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

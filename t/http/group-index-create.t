@@ -68,6 +68,29 @@ Test {
   });
 } n => 1, name => 'create with index_id';
 
+Test {
+  my $current = shift;
+  my $title = "\x{63245}" . rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->post_json (['i', 'create.json'], {
+      index_type => 6,
+      title => $title,
+      subtype => 'image',
+    }, account => 'a1', group => $current->o ('g1'));
+  })->then (sub {
+    return $current->index ($_[0]->{json}, account => 'a1');
+  })->then (sub {
+    my $index = $_[0];
+    test {
+      is $index->{index_type}, 6;
+      is $index->{title}, $title;
+      is $index->{subtype}, 'image';
+    } $current->c;
+  });
+} n => 3, name => 'create an image album';
+
 RUN;
 
 =head1 LICENSE
