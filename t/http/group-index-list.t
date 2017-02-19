@@ -55,7 +55,7 @@ Test {
       my $index = $result->{json}->{index_list}->{$current->o ('i1')->{index_id}};
       is $index->{group_id}, $current->o ('g1')->{group_id};
       is $index->{index_id}, $current->o ('i1')->{index_id};
-      is $index->{index_type}, 0;
+      is $index->{index_type}, 1;
       is $index->{title}, "ab\x{4000}";
       ok $index->{updated};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
@@ -121,6 +121,35 @@ Test {
     } $current->c;
   });
 } n => 3, name => '/g/{}/i/list.json options';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {index_type => 9, group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_index (i2 => {index_type => 9, subtype => "foo", group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_index (i3 => {index_type => 9, subtype => "bar", group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_index (i4 => {index_type => 9, subtype => "baz", group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_index (i5 => {index_type => 9, subtype => "bar", group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->get_json (['i', 'list.json'], {
+      subtype => ["foo", "bar"],
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{index_list}}, 3;
+      ok $result->{json}->{index_list}->{$current->o ('i2')->{index_id}};
+      ok $result->{json}->{index_list}->{$current->o ('i3')->{index_id}};
+      ok $result->{json}->{index_list}->{$current->o ('i5')->{index_id}};
+    } $current->c;
+  });
+} n => 4, name => '/g/{}/i/list.json subtype';
 
 RUN;
 

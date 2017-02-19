@@ -37,6 +37,16 @@ function $$c2 (n, s) {
   });
 } // $$c2
 
+function $$ancestor (e, name) {
+  while (e) {
+    e = e.parentNode;
+    if (e.localName === name) {
+      return e;
+    }
+  }
+  return null;
+} // $$ancestor
+
 (function () {
   var handlers = {};
   var promises = {};
@@ -226,6 +236,28 @@ FieldCommands.deleteJump = function () {
   });
 }; // deleteJump
 
+FieldCommands.setListIndex = function () {
+  var object = {index_id: this.getAttribute ('value')};
+  var panel = $$ancestor (this, 'section');
+  $$c (panel, 'panel-main').forEach (function (s) {
+    fillFields (s, s, s, object);
+    $$c (s, 'list-container[data-src-template]').forEach (function (list) {
+      list.removeAttribute ('disabled');
+      list.clearObjects ();
+      list.load ();
+    });
+  });
+  $$c (panel.querySelector ('list-container[key=index_list]'), 'button[data-command=setListIndex]').forEach (function (b) {
+    b.classList.toggle ('active', b.value === object.index_id);
+  });
+}; // setListIndex
+
+FieldCommands.sendBodyAction = function () {
+  var body = $$ancestor (this, 'edit-container').querySelector ('form').getBodyControl ();
+  body.sendAction (this.getAttribute ('data-action'), null, this.getAttribute ('value'));
+  body.focus ();
+}; // sendBodyAction
+
 function fillFields (contextEl, rootEl, el, object) {
   if (object.account_id &&
       object.account_id === document.documentElement.getAttribute ('data-account')) {
@@ -321,6 +353,13 @@ function fillFields (contextEl, rootEl, el, object) {
   });
   $$c (el, '[data-context-template]').forEach (function (field) {
     field.setAttribute ('data-context', field.getAttribute ('data-context-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+      return encodeURIComponent (object[k]);
+    }));
+  });
+  $$c (el, '[data-value-template]').forEach (function (field) {
+    field.setAttribute ('value', field.getAttribute ('data-value-template').replace (/\{GROUP\}/g, function () {
+      return document.documentElement.getAttribute ('data-group-url');
+    }).replace (/\{([^{}]+)\}/g, function (_, k) {
       return encodeURIComponent (object[k]);
     }));
   });
@@ -460,7 +499,7 @@ function fillFields (contextEl, rootEl, el, object) {
     field.title = object && object.data ? object.data[field.getAttribute ('data-title-data-field')] : null;
   });
   $$c (el, 'button[data-command]').forEach (function (e) {
-    e.onclick = FieldCommands[e.getAttribute ('data-command')]
+    e.onclick = FieldCommands[e.getAttribute ('data-command')];
   });
   if (rootEl.startEdit) {
     $$c (el, '.edit-button').forEach (function (button) {
@@ -475,6 +514,9 @@ function fillFields (contextEl, rootEl, el, object) {
 function fillFormControls (form, object, opts) {
   var wait = [];
 
+  form.getBodyControl = function () {
+    return this.querySelector ('iframe.control[data-name=body]');
+  }; // getBodyControl
   $$c (form, 'iframe.control[data-name]').forEach (function (control) {
     var value = object.data[control.getAttribute ('data-name')];
     var valueWaitings = [];
@@ -527,30 +569,35 @@ function fillFormControls (form, object, opts) {
   });
   $$c (form, 'button[data-action=execCommand]').forEach (function (b) {
     b.onclick = function () {
-      var ed = form.querySelector ('iframe.control[data-name=body]');
+      var ed = form.getBodyControl ();
       ed.sendExecCommand (this.getAttribute ('data-command'), this.getAttribute ('data-value'));
       ed.focus ();
     };
   });
   $$c (form, 'button[data-action=setBlock]').forEach (function (b) {
     b.onclick = function () {
-      var ed = form.querySelector ('iframe.control[data-name=body]');
+      var ed = form.getBodyControl ();
       ed.setBlock (this.getAttribute ('data-value'));
       ed.focus ();
     };
   });
   $$c (form, 'button[data-action=insertSection]').forEach (function (b) {
     b.onclick = function () {
-      var ed = form.querySelector ('iframe.control[data-name=body]');
+      var ed = form.getBodyControl ();
       ed.insertSection ();
       ed.focus ();
     };
   });
   $$c (form, 'button[data-action=indent], button[data-action=outdent], button[data-action=insertControl], button[data-action=link]').forEach (function (b) {
     b.onclick = function () {
-      var ed = form.querySelector ('iframe.control[data-name=body]');
+      var ed = form.getBodyControl ();
       ed.sendAction (b.getAttribute ('data-action'), b.getAttribute ('data-command'), b.getAttribute ('data-value'));
       ed.focus ();
+    };
+  });
+  $$c (form, 'button[data-action=panel]').forEach (function (b) {
+    b.onclick = function () {
+      togglePanel (this.getAttribute ('data-value'), opts.sidebarContainer);
     };
   });
   $$c (form, 'input[name]').forEach (function (control) {
@@ -592,6 +639,13 @@ TemplateSelectors.object = function (object, templates) {
   }
   return null;
 }; // object
+
+var LoadedActions = {};
+
+LoadedActions.clickFirstButton = function () {
+  var button = this.querySelector ('button');
+  button.click ();
+}; // clickFirstButton
 
 function upgradeList (el) {
   if (el.upgraded) return;
@@ -860,6 +914,7 @@ function upgradeList (el) {
   }; // show
 
   el.load = function () {
+    if (el.hasAttribute ('disabled')) return;
     as.start ({stages: ["prep", "load", "show"]});
     nextRef = null;
     $$ (el, '.search-wiki_name-link').forEach (function (e) {
@@ -883,6 +938,9 @@ function upgradeList (el) {
     }).then (function () {
       reloads.forEach (function (e) {
         e.hidden = false;
+      });
+      (el.getAttribute ('loaded-actions') || '').split (/\s+/).forEach (function (n) {
+        LoadedActions[n].call (el);
       });
     });
   }; // load
@@ -1038,7 +1096,10 @@ function editObject (article, object, opts) {
       };
     });
 
-    wait.push (fillFormControls (form, object, {focusTitle: opts.focusTitle}));
+    wait.push (fillFormControls (form, object, {
+      focusTitle: opts.focusTitle,
+      sidebarContainer: container.querySelector ('.sidebar-container'),
+    }));
 
   // XXX autosave
 
@@ -1163,6 +1224,32 @@ function saveObject (article, form, object, opts) {
     });
   });
 } // saveObject
+
+function togglePanel (name, container) {
+  container.panels = container.panels || {};
+  if (!container.panels[name]) {
+    var section = document.createElement ('section');
+    section.hidden = true;
+    section.className = 'panel ' + name;
+    var template = document.getElementById ('template-panel-' + name);
+    section.appendChild (template.content.cloneNode (true));
+    container.panels[name] = section;
+    container.appendChild (section);
+  }
+  var hideContainer = false;
+  for (var n in container.panels) {
+    if (n === name) {
+      if (container.panels[n].hidden) {
+        container.panels[n].hidden = false;
+      } else {
+        hideContainer = !container.hidden;
+      }
+    } else {
+      container.panels[n].hidden = true;
+    }
+  }
+  container.hidden = hideContainer;
+} // togglePanel
 
 function initUploader (form) {
   var uploadFile = function (file) {

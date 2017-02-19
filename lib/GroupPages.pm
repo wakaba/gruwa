@@ -401,18 +401,23 @@ sub group_index ($$$$) {
       user_status => 1,
       (@$i_types ? (index_type => {-in => $i_types}) : ()),
     }, fields => ['index_id', 'index_type', 'title', 'updated', 'options'])->then (sub {
+      my $subtypes = {map { $_ => 1 } @{$app->bare_param_list ('subtype')}};
       return json $app, {index_list => {map {
-        my $index_options = Dongry::Type->parse ('json', $_->{options});
         $_->{index_id} => {
           group_id => $path->[1],
           index_id => ''.$_->{index_id},
           title => Dongry::Type->parse ('text', $_->{title}),
           updated => $_->{updated},
           index_type => $_->{index_type},
-          theme => $index_options->{theme},
-          color => $index_options->{color},
-          deadline => $index_options->{deadline},
+          theme => $_->{options}->{theme},
+          color => $_->{options}->{color},
+          deadline => $_->{options}->{deadline},
         };
+      } grep {
+        keys %$subtypes ? $subtypes->{$_->{options}->{subtype}} : 1;
+      } map {
+        $_->{options} = Dongry::Type->parse ('json', $_->{options});
+        $_;
       } @{$_[0]->all}}};
     });
   }

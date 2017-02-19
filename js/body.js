@@ -34,6 +34,8 @@ function handleMessage (ev) {
     } else {
       throw "Bad |value| " + ev.data.value;
     }
+  } else if (ev.data.type === 'insertImage') {
+    insertImage (ev.data.value);
   } else if (ev.data.type === 'link') {
     if (ev.data.command === 'wiki-name') {
       insertLink ({wikiName: ev.data.value, textContent: ev.data.value,
@@ -51,6 +53,8 @@ function handleMessage (ev) {
         changeChecked (e);
       }
     });
+  } else {
+    console.log ('Unknown message', ev.data);
   }
 } // handleMessage
 
@@ -91,8 +95,13 @@ document.onpaste = function (ev) {
 
 onmouseover = function (ev) {
   if (!ev.target.isContentEditable) return;
-  if (ev.target.localName === 'a') {
-    showContextToolbar ({context: ev.target, template: 'link-edit-template'});
+  var e = ev.target;
+  while (e) {
+    if (e.localName === 'a') {
+      showContextToolbar ({context: e, template: 'link-edit-template'});
+      break;
+    }
+    e = e.parentNode;
   }
 }; // mouseover
 
@@ -518,7 +527,6 @@ function outdent () {
 } // outdent
 
 function insertLink (args) {
-  var sel = getSelection ();
   var isWikiName = false;
 
   var p;
@@ -529,7 +537,7 @@ function insertLink (args) {
     p = Promise.resolve ({result: args.url});
   } else if (args.command === 'wiki-name') {
     isWikiName = true;
-    var name = sel.toString ();
+    var name = getSelection ().toString ();
     if (name) {
       p = Promise.resolve ({result: name});
     } else {
@@ -552,13 +560,27 @@ function insertLink (args) {
       link.href = _.result;
     }
     if (!link.firstChild) link.textContent = _.result;
-    
-    sel.getRangeAt (0).deleteContents ();
-    sel.getRangeAt (0).insertNode (link);
-    sel.selectAllChildren (link);
-    if (!hasSelected) sel.collapseToEnd ();
+
+    replaceSelectionBy (link, hasSelected);    
   });
 } // insertLink
+
+function insertImage (url) {
+  var a = document.createElement ('a');
+  a.href = url;
+  var img = document.createElement ('img');
+  img.src = url + '/image';
+  a.appendChild (img);
+  replaceSelectionBy (a, false);
+} // insertImage
+
+function replaceSelectionBy (node, hasSelected) {
+  var sel = getSelection ();
+  sel.getRangeAt (0).deleteContents ();
+  sel.getRangeAt (0).insertNode (node);
+  sel.selectAllChildren (node);
+  if (!hasSelected) sel.collapseToEnd ();
+} // replaceSelectionBy
 
 function initAElement (a) {
   var wikiName = a.getAttribute ('data-wiki-name');

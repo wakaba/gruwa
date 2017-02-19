@@ -47,6 +47,9 @@ html { /* [data-thema=green] */
 
   --hover-color: black;
   --hover-background-color: #ffa;
+
+  --toolbar-hover-background-color: var(--light-1-background-color);
+  --toolbar-hover-color: var(--light-1-color);
 }
 
 html[data-theme=blue] {

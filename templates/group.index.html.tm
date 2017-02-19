@@ -18,7 +18,7 @@
     <section>
       <h1>最近の更新</>
 
-      <list-container src=i/list.json?index_type=1&index_type=2&index_type=3 key=index_list sortkey=updated>
+      <list-container src=i/list.json?index_type=1&index_type=2&index_type=3 key=index_list sortkey=updated class=index-list>
         <template>
           <p>
             <a href data-href-template="i/{index_id}/#{updated}">

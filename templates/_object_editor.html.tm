@@ -1,6 +1,6 @@
 
 <template id=edit-form-template>
-  <form method=post action=javascript:>
+  <form method=post action=javascript: class=non-sidebar-container>
     <header>
       <p><input name=title placeholder=題名>
     </header>
@@ -25,7 +25,8 @@
         <button type=button data-action=link data-command=url title="Web サイトにリンク">://</button
         ><button type=button data-action=link data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
 
-        <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button>
+        <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button
+        ><button type=button data-action=panel data-value=image-list title=画像>画</button>
       </menu>
       <iframe class=control data-name=body />
       <input type=hidden name=body_type value=1>
@@ -131,6 +132,7 @@
       </list-control>
     </details>
   </form>
+  <aside class=sidebar-container hidden />
 </template>
 
   <template id=link-edit-template class=body-edit-template>
@@ -149,3 +151,37 @@
 
   <list-container type=$with id=index-list src=i/list.json key=index_list itemkey=index_id />
   <list-container type=$with id=member-list src=members.json key=members itemkey=account_id accounts />
+
+<template id=template-panel-image-list>
+  <list-container src=i/list.json?index_type=6&subtype=image
+      key=index_list sortkey=updated
+      loaded-actions=clickFirstButton>
+    <template>
+      <button type=button data-command=setListIndex data-value-template={index_id} data-field=title />
+    </template>
+    <list-main/>
+    <list-if-empty hidden>
+      このグループには<a href=/help#fileset-image target=help>アルバム</a>がありません。
+    </list-if-empty>
+    <action-status hidden stage-load=読み込み中... />
+  </list-container>
+
+  <panel-main>
+    <list-container disabled
+        data-src-template="o/get.json?index_id={index_id}&limit=10"
+        key=objects sortkey=timestamp,created>
+      <template>
+        <button type=button data-command=sendBodyAction
+            data-action=insertImage
+            data-value-template={GROUP}/o/{object_id}>
+          <img src data-src-template={GROUP}/o/{object_id}/image>
+        </button>
+      </template>
+      <list-main/>
+      <action-status hidden stage-load=読み込み中... />
+      <p class="operations pager">
+        <button type=button class=next-page-button hidden>もっと昔</button>
+    </list-container>
+  </panel-main>
+
+</template>
