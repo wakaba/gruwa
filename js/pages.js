@@ -246,6 +246,10 @@ FieldCommands.setListIndex = function () {
       list.clearObjects ();
       list.load ();
     });
+    $$c (s, 'form[data-form-type=uploader] list-container').forEach (function (list) {
+      list.clearObjects ();
+    });
+    s.hidden = false;
   });
   $$c (panel.querySelector ('list-container[key=index_list]'), 'button[data-command=setListIndex]').forEach (function (b) {
     b.classList.toggle ('active', b.value === object.index_id);
@@ -644,7 +648,7 @@ var LoadedActions = {};
 
 LoadedActions.clickFirstButton = function () {
   var button = this.querySelector ('button');
-  button.click ();
+  if (button) button.click ();
 }; // clickFirstButton
 
 function upgradeList (el) {
@@ -939,7 +943,7 @@ function upgradeList (el) {
       reloads.forEach (function (e) {
         e.hidden = false;
       });
-      (el.getAttribute ('loaded-actions') || '').split (/\s+/).forEach (function (n) {
+      (el.getAttribute ('loaded-actions') || '').split (/\s+/).filter (function (_) { return _.length }).forEach (function (n) {
         LoadedActions[n].call (el);
       });
     });
@@ -1276,7 +1280,7 @@ function initUploader (form) {
     }).then (function () {
       var fd2 = new FormData;
       fd2.append ('edit_index_id', 1);
-      fd2.append ('index_id', form.getAttribute ('data-index-id'));
+      fd2.append ('index_id', form.getAttribute ('data-context'));
       fd2.append ('file_name', data.file_name);
       fd2.append ('file_size', data.file_size);
       fd2.append ('mime_type', data.mime_type);
@@ -1289,8 +1293,15 @@ function initUploader (form) {
       as.stageStart ("show");
       return gFetch ('o/get.json?with_data=1&object_id=' + data.object_id, {});
     }).then (function (json) {
-      return document.querySelector ('list-container[src-index_id]')
-          .showObjects (json.objects, {prepend: true});
+      var panelMain = $$ancestor (form, 'panel-main');
+      if (panelMain) {
+        return Promise.all ($$c (panelMain, 'list-container[key=objects]').map (function (e) {
+          return e.showObjects (json.objects, {prepend: true});
+        }));
+      } else {
+        return document.querySelector ('list-container[src-index_id]')
+            .showObjects (json.objects, {prepend: true});
+      }
     }).then (function () {
       as.end ({ok: true});
     }, function (error) {

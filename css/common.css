@@ -297,7 +297,7 @@ edit-container > .non-sidebar-container:not([hidden]) {
 
 edit-container > .sidebar-container:not([hidden]) {
   display: table-cell;
-  width: 15em;
+  width: 22em;
   vertical-align: top;
 }
 
@@ -309,6 +309,7 @@ edit-container > .sidebar-container > .panel:not([hidden]) {
   box-sizing: border-box;
   padding: .3rem;
   height: 100vh;
+  overflow: auto;
 }
 
 edit-container > form {
@@ -839,31 +840,79 @@ list-is-empty:not([hidden]) {
 }
 
 .panel.image-list list-container[key=index_list] list-item > button.active::before {
-  content: "\0025B6  ";
+  content: "\0025C8  ";
 }
 
-.panel.image-list panel-main {
+.panel.image-list list-container[key=index_list] list-is-empty {
+  margin: 0;
+}
+
+.panel.image-list panel-main:not([hidden]) {
+  display: block;
+  margin: 0;
+  padding: .2rem;
+  text-align: center;
+}
+
+.panel.image-list panel-main > details {
+  margin-bottom: 0.5em;
+  text-align: left;
+  font-size: 80%;
+}
+
+.panel.image-list panel-main > details > summary {
+}
+
+.panel.image-list panel-main > details > form {
+  margin: 0;
+  padding: .2em;
+  min-height: 10em;
+}
+
+.panel.image-list panel-main > details list-item {
+  display: block;
+  width: auto;
+  margin: 0 0 .2em 0;
+  padding: .4em;
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+}
+
+.panel.image-list panel-main > details list-item:nth-child(2n) {
+  background-color: var(--light-2-background-color);
+  color: var(--light-2-color);
+}
+
+.panel.image-list panel-main > details list-item action-status:not([hidden]) {
+  display: block;
+  margin: .4em 0 0 0;
+}
+
+.panel.image-list panel-main > details list-item action-status action-status-message:not([hidden]) {
   display: block;
   margin: 0;
   padding: 0;
 }
 
-.panel.image-list panel-main > list-container {
-  display: block;
+.panel.image-list panel-main > details list-item action-status progress:not([hidden]) {
+  width: 100%;
+}
+
+.panel.image-list panel-main > list-container:not([hidden]) {
+  display: inline;
   margin: 0;
 }
 
-.panel.image-list panel-main > list-container list-main {
-  display: block;
-  padding: .2rem;
-  text-align: center;
+.panel.image-list panel-main > list-container list-main:not([hidden]) {
+  display: inline;
 }
 
 .panel.image-list panel-main > list-container list-main > list-item {
   display: inline-block;
   margin: 0;
   padding: 0;
-  width: 4em;
+  width: 6em;
+  height: 6em;
 }
 
 .panel.image-list panel-main > list-container list-main > list-item button {
@@ -877,10 +926,12 @@ list-is-empty:not([hidden]) {
   color: inherit;
   background: transparent;
   width: 100%;
-  min-height: 4em;
-  line-height: 4;
+  min-height: 6em;
+  line-height: 6;
 }
 
+.panel.image-list panel-main > details > summary:active,
+.panel.image-list panel-main > details > summary:hover,
 .panel.image-list panel-main > list-container list-main > list-item button:active,
 .panel.image-list panel-main > list-container list-main > list-item button:hover {
   background-color: var(--toolbar-hover-background-color);
@@ -888,8 +939,8 @@ list-is-empty:not([hidden]) {
 }
 
 .panel.image-list panel-main > list-container list-main > list-item img {
-  max-width: 4em;
-  max-height: 4em;
+  max-width: 6em;
+  max-height: 6em;
   vertical-align: middle;
 }
 

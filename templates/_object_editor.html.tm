@@ -160,13 +160,35 @@
       <button type=button data-command=setListIndex data-value-template={index_id} data-field=title />
     </template>
     <list-main/>
-    <list-if-empty hidden>
+    <list-is-empty hidden>
       このグループには<a href=/help#fileset-image target=help>アルバム</a>がありません。
-    </list-if-empty>
+    </list-is-empty>
     <action-status hidden stage-load=読み込み中... />
   </list-container>
 
-  <panel-main>
+  <panel-main hidden>
+    <details>
+      <summary>新しい画像</summary>
+      <form action=javascript: method=post data-form-type=uploader data-context-template={index_id}>
+        <list-container>
+          <template>
+            <p><code data-data-field=file_name />
+            (<unit-number data-data-field=file_size type=bytes />)
+            <p><action-status hidden
+                    stage-create=作成中...
+                    stage-upload=アップロード中...
+                    stage-close=保存中...
+                    stage-show=読み込み中...
+                    ok=アップロード完了 />
+          </template>
+          <list-main/>
+        </list-container>
+        <p class=operations>
+          <input type=file name=file multiple hidden accept=image/*>
+          <button type=button name=upload-button class=edit-button>アップロード...</button>
+      </form>
+    </details>
+
     <list-container disabled
         data-src-template="o/get.json?index_id={index_id}&limit=10"
         key=objects sortkey=timestamp,created>

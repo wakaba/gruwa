@@ -292,7 +292,7 @@
               <button type=button class=edit-button data-focus-title>新しい TODO</button>
           </article>
         <t:elsif x="$index->{index_type} == 6 # fileset">
-          <form action=javascript: method=post data-form-type=uploader pl:data-index-id="$index->{index_id}">
+          <form action=javascript: method=post data-form-type=uploader pl:data-context="$index->{index_id}">
             <list-container type=table>
               <template>
                 <td class=file-name><code data-data-field=file_name />
