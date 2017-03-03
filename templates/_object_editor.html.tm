@@ -27,7 +27,8 @@
         ><button type=button data-action=link data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
 
         <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button
-        ><button type=button data-action=panel data-value=image-list title=画像>画</button>
+        ><button type=button data-action=panel data-value=image-list title=画像>&#x1F3A8;</button
+        ><button type=button data-action=panel data-value=file-list title=ファイル>&#x1F4C4;</button>
       </menu>
       <iframe class=control data-name=body />
       <input type=hidden name=body_type value=1>
@@ -202,6 +203,65 @@
             data-edit-command=insertImage
             data-value-template={GROUP}/o/{object_id}>
           <img src data-src-template={GROUP}/o/{object_id}/image>
+        </button>
+      </template>
+      <list-main/>
+      <action-status hidden stage-load=読み込み中... />
+      <p class="operations pager">
+        <button type=button class=next-page-button hidden>もっと昔</button>
+    </list-container>
+  </panel-main>
+
+</template>
+
+<template id=template-panel-file-list>
+  <run-action name=installPrependNewObjects />
+
+  <list-container src=i/list.json?index_type=6&subtype=file
+      key=index_list sortkey=updated
+      loaded-actions=clickFirstButton>
+    <template>
+      <button type=button data-command=setListIndex data-value-template={index_id} data-field=title />
+    </template>
+    <list-main/>
+    <list-is-empty hidden>
+      このグループには<a href=/help#fileset-file target=help>ファイルアップローダー</a>がありません。
+    </list-is-empty>
+    <action-status hidden stage-load=読み込み中... />
+  </list-container>
+
+  <panel-main hidden>
+    <details>
+      <summary>新しいファイル</summary>
+      <form action=javascript: method=post data-form-type=uploader data-context-template={index_id}>
+        <list-container>
+          <template>
+            <p><code data-data-field=file_name />
+            (<unit-number data-data-field=file_size type=bytes />)
+            <p><action-status hidden
+                    stage-create=作成中...
+                    stage-upload=アップロード中...
+                    stage-close=保存中...
+                    stage-show=読み込み中...
+                    ok=アップロード完了 />
+          </template>
+          <list-main/>
+        </list-container>
+        <p class=operations>
+          <input type=file name=file multiple hidden>
+          <button type=button name=upload-button class=edit-button>アップロード...</button>
+      </form>
+    </details>
+
+    <list-container disabled
+        data-src-template="o/get.json?index_id={index_id}&limit=10&with_data=1"
+        key=objects sortkey=timestamp,created
+        added-actions=editCommands>
+      <template>
+        <button type=button
+            data-edit-command=insertFile
+            data-value-template={GROUP}/o/{object_id}
+            data-data-field=file_name>
         </button>
       </template>
       <list-main/>

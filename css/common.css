@@ -800,12 +800,14 @@ list-is-empty:not([hidden]) {
   font-size: 90%;
 }
 
-.panel.image-list list-container[key=index_list] {
+.panel.image-list list-container[key=index_list],
+.panel.file-list list-container[key=index_list] {
   display: block;
   margin: 0;
 }
 
-.panel.image-list list-container[key=index_list] list-item {
+.panel.image-list list-container[key=index_list] list-item,
+.panel.file-list list-container[key=index_list] list-item {
   display: block;
   margin: 0;
   padding: 0;
@@ -814,12 +816,14 @@ list-is-empty:not([hidden]) {
   width: auto;
 }
 
-.panel.image-list list-container[key=index_list] list-item:nth-child(2n) {
+.panel.image-list list-container[key=index_list] list-item:nth-child(2n),
+.panel.file-list list-container[key=index_list] list-item:nth-child(2n) {
   background-color: var(--light-2-background-color);
   color: var(--light-2-color);
 }
 
-.panel.image-list list-container[key=index_list] list-item > button {
+.panel.image-list list-container[key=index_list] list-item > button,
+.panel.file-list list-container[key=index_list] list-item > button {
   display: block;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -834,42 +838,46 @@ list-is-empty:not([hidden]) {
   text-align: left;
 }
 
-.panel.image-list list-container[key=index_list] list-item > button.active {
+.panel.image-list list-container[key=index_list] list-item > button.active,
+.panel.file-list list-container[key=index_list] list-item > button.active {
   text-indent: -1em;
   font-weight: bolder;
 }
 
-.panel.image-list list-container[key=index_list] list-item > button.active::before {
+.panel.image-list list-container[key=index_list] list-item > button.active::before,
+.panel.file-list list-container[key=index_list] list-item > button.active::before {
   content: "\0025C8  ";
 }
 
-.panel.image-list list-container[key=index_list] list-is-empty {
+.panel.image-list list-container[key=index_list] list-is-empty,
+.panel.file-list list-container[key=index_list] list-is-empty {
   margin: 0;
 }
 
-.panel.image-list panel-main:not([hidden]) {
+.panel.image-list panel-main:not([hidden]),
+.panel.file-list panel-main:not([hidden]) {
   display: block;
   margin: 0;
   padding: .2rem;
   text-align: center;
 }
 
-.panel.image-list panel-main > details {
+.panel.image-list panel-main > details,
+.panel.file-list panel-main > details {
   margin-bottom: 0.5em;
   text-align: left;
   font-size: 80%;
 }
 
-.panel.image-list panel-main > details > summary {
-}
-
-.panel.image-list panel-main > details > form {
+.panel.image-list panel-main > details > form,
+.panel.file-list panel-main > details > form {
   margin: 0;
   padding: .2em;
   min-height: 10em;
 }
 
-.panel.image-list panel-main > details list-item {
+.panel.image-list panel-main > details list-item,
+.panel.file-list panel-main > details list-item {
   display: block;
   width: auto;
   margin: 0 0 .2em 0;
@@ -878,23 +886,27 @@ list-is-empty:not([hidden]) {
   color: var(--light-1-color);
 }
 
-.panel.image-list panel-main > details list-item:nth-child(2n) {
+.panel.image-list panel-main > details list-item:nth-child(2n),
+.panel.file-list panel-main > details list-item:nth-child(2n) {
   background-color: var(--light-2-background-color);
   color: var(--light-2-color);
 }
 
-.panel.image-list panel-main > details list-item action-status:not([hidden]) {
+.panel.image-list panel-main > details list-item action-status:not([hidden]),
+.panel.file-list panel-main > details list-item action-status:not([hidden]) {
   display: block;
   margin: .4em 0 0 0;
 }
 
-.panel.image-list panel-main > details list-item action-status action-status-message:not([hidden]) {
+.panel.image-list panel-main > details list-item action-status action-status-message:not([hidden]),
+.panel.file-list panel-main > details list-item action-status action-status-message:not([hidden]) {
   display: block;
   margin: 0;
   padding: 0;
 }
 
-.panel.image-list panel-main > details list-item action-status progress:not([hidden]) {
+.panel.image-list panel-main > details list-item action-status progress:not([hidden]),
+.panel.file-list panel-main > details list-item action-status progress:not([hidden]) {
   width: 100%;
 }
 
@@ -915,6 +927,17 @@ list-is-empty:not([hidden]) {
   height: 6em;
 }
 
+.panel.file-list panel-main > list-container list-main > list-item {
+  margin: 0;
+  padding: 0;
+  color: inherit;
+  background: transparent;
+}
+
+.panel.file-list panel-main > list-container list-main > list-item:last-of-type {
+  margin-bottom: .2em;
+}
+
 .panel.image-list panel-main > list-container list-main > list-item button {
   display: block;
   -webkit-appearance: none;
@@ -930,10 +953,29 @@ list-is-empty:not([hidden]) {
   line-height: 6;
 }
 
+.panel.file-list panel-main > list-container list-main > list-item button {
+  display: block;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  margin: 0;
+  border-style: none;
+  padding: 0.5em;
+  color: inherit;
+  background: transparent;
+  width: 100%;
+  line-height: 1;
+  text-align: left;
+}
+
 .panel.image-list panel-main > details > summary:active,
 .panel.image-list panel-main > details > summary:hover,
+.panel.file-list panel-main > details > summary:active,
+.panel.file-list panel-main > details > summary:hover,
 .panel.image-list panel-main > list-container list-main > list-item button:active,
-.panel.image-list panel-main > list-container list-main > list-item button:hover {
+.panel.image-list panel-main > list-container list-main > list-item button:hover,
+.panel.file-list panel-main > list-container list-main > list-item button:active,
+.panel.file-list panel-main > list-container list-main > list-item button:hover {
   background-color: var(--toolbar-hover-background-color);
   color: var(--toolbar-hover-color);
 }

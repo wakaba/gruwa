@@ -106,14 +106,14 @@ body {
   margin: 0;
 }
 
-section {
+section:not([hidden]) {
   display: block;
   margin: 0 1em 1em 1em;
   padding: 0;
 }
 
-section > h1,
-section > header.section {
+section > h1:not([hidden]),
+section > header.section:not([hidden]) {
   display: block;
   margin: 0 0 1rem 0;
   border-bottom: 1px solid;
