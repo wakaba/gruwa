@@ -195,7 +195,7 @@
     </details>
 
     <list-container disabled
-        data-src-template="o/get.json?index_id={index_id}&limit=10"
+        data-src-template="o/get.json?index_id={index_id}&limit=9"
         key=objects sortkey=timestamp,created
         added-actions=editCommands>
       <template>

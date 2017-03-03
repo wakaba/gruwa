@@ -715,6 +715,19 @@ sub group_object ($$$$) {
             index => $_[0],
           };
         });
+      } elsif (@$path == 5 and $path->[4] eq 'embed') {
+        # /g/{group_id}/o/{object_id}/embed
+        if ($object->{user_status} != 1 or # open
+            $object->{owner_status} != 1) { # open
+          return $app->throw_error (410, reason_phrase => 'Object not found');
+        }
+
+        return temma $app, 'group.object.embed.html.tm', {
+          account => $opts->{account},
+          group => $opts->{group},
+          group_member => $opts->{group_member},
+          object => $object,
+        };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/o/{object_id}/edit.json
         $app->requires_request_method ({POST => 1});

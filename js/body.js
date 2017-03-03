@@ -36,6 +36,8 @@ function handleMessage (ev) {
     }
   } else if (ev.data.type === 'insertImage') {
     insertImage (ev.data.value);
+  } else if (ev.data.type === 'insertFile') {
+    insertFile (ev.data.value);
   } else if (ev.data.type === 'link') {
     if (ev.data.command === 'wiki-name') {
       insertLink ({wikiName: ev.data.value, textContent: ev.data.value,
@@ -573,6 +575,13 @@ function insertImage (url) {
   a.appendChild (img);
   replaceSelectionBy (a, false);
 } // insertImage
+
+function insertFile (url) {
+  var iframe = document.createElement ('iframe');
+  iframe.className = 'embed';
+  iframe.src = url + '/embed';
+  replaceSelectionBy (iframe, false);
+} // insertFile
 
 function replaceSelectionBy (node, hasSelected) {
   var sel = getSelection ();

@@ -463,29 +463,7 @@ function fillFields (contextEl, rootEl, el, object) {
         if (max) field.setAttribute ('max', max);
       }
     } else if (field.localName === 'unit-number') {
-      var unitType = field.getAttribute ('type');
-      if (unitType === 'bytes') {
-        var v = parseFloat (value);
-        var u = 'B';
-        field.title = v + u;
-        if (v > 1000) {
-          v = Math.round (v / 1024 * 10) / 10;
-          u = 'KB';
-          if (v > 1000) {
-            v = Math.round (v / 1024 * 10) / 10;
-            u = 'MB';
-            if (v > 1000) {
-              v = Math.round (v / 1024 * 10) / 10;
-              u = 'GB';
-            }
-          }
-        }
-        field.innerHTML = '<number-value></number-value><number-unit></number-unit>';
-        field.firstChild.textContent = v.toLocaleString ();
-        field.lastChild.textContent = u;
-      } else {
-        field.textContent = parseFloat (value).toLocaleString ();
-      }
+      field.setAttribute ('value', value);
     } else {
       field.textContent = value || field.getAttribute ('data-empty') || '';
     }
@@ -1264,11 +1242,6 @@ function upgradeWithSidebar (e) {
   });
 } // upgradeWithSidebar
 
-var PanelInitializer = {};
-
-PanelInitializer["image-list"] = function () {
-}; // image-list
-
 function togglePanel (name, container) {
   container.panels = container.panels || {};
   if (!container.panels[name]) {
@@ -1279,7 +1252,6 @@ function togglePanel (name, container) {
     section.appendChild (template.content.cloneNode (true));
     container.panels[name] = section;
     container.appendChild (section);
-    PanelInitializer[name].apply (section);
   }
   var hideContainer = false;
   for (var n in container.panels) {
@@ -1911,6 +1883,34 @@ function upgradeAccountName (e) {
   });
 } // upgradeAccountName
 
+function upgradeUnitNumber (field) {
+  var value = field.getAttribute ('value') || field.textContent;
+  var unitType = field.getAttribute ('type');
+  if (unitType === 'bytes') {
+    var v = parseFloat (value);
+    var u = 'B';
+    field.title = v + u;
+    if (v > 1000) {
+      v = Math.round (v / 1024 * 10) / 10;
+      u = 'KB';
+      if (v > 1000) {
+        v = Math.round (v / 1024 * 10) / 10;
+        u = 'MB';
+            if (v > 1000) {
+              v = Math.round (v / 1024 * 10) / 10;
+              u = 'GB';
+            }
+          }
+        }
+        field.innerHTML = '<number-value></number-value><number-unit></number-unit>';
+        field.firstChild.textContent = v.toLocaleString ();
+        field.lastChild.textContent = u;
+      } else {
+        field.textContent = parseFloat (value).toLocaleString ();
+      }
+
+} // upgradeUnitNumber
+
 var RunAction = {};
 
 RunAction.installPrependNewObjects = function () {
@@ -1960,6 +1960,11 @@ function upgradeRunAction (e) {
       } else if (x.localName) {
         $$ (x, 'with-sidebar').forEach (upgradeWithSidebar);
       }
+      if (x.localName === 'unit-number') {
+        upgradeUnitNumber (x);
+      } else if (x.localName) {
+        $$ (x, 'unit-number').forEach (upgradeUnitNumber);
+      }
       if (x.localName === 'run-action') {
         upgradeRunAction (x);
       } else if (x.localName) {
@@ -1975,6 +1980,7 @@ $$ (document, 'popup-menu').forEach (upgradePopupMenu);
 $$ (document, 'copy-button').forEach (upgradeCopyButton);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 $$ (document, 'run-action').forEach (upgradeRunAction);
+$$ (document, 'unit-number').forEach (upgradeUnitNumber);
 
 /*
 

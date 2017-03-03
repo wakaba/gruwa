@@ -40,6 +40,10 @@ li[data-checked] {
   text-decoration: line-through;
 }
 
+img {
+  max-width: 100%;
+}
+
 /*
 
 Copyright 2016 Wakaba <wakaba@suikawiki.org>.

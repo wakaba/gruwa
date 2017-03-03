@@ -999,6 +999,22 @@ index-list-item .colored:not([hidden]) {
   text-decoration: none;
 }
 
+.embedded {
+  margin: 0;
+  padding: 0;
+}
+
+.embedded > a {
+  display: block;
+  padding: 0.5em;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.embedded .note {
+  font-size: 80%;
+}
+
 run-action { display: none !important }
 
 /*
