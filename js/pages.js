@@ -598,7 +598,9 @@ function fillFormControls (form, object, opts) {
   });
   $$c (form, 'button[data-action=panel]').forEach (function (b) {
     b.onclick = function () {
-      togglePanel (this.getAttribute ('data-value'), opts.sidebarContainer);
+      var ev = new Event ('gruwatogglepanel', {bubbles: true});
+      ev.panelName = this.getAttribute ('data-value');
+      form.dispatchEvent (ev);
     };
   });
   $$c (form, 'input[name]').forEach (function (control) {
@@ -1118,7 +1120,6 @@ function editObject (article, object, opts) {
 
     wait.push (fillFormControls (form, object, {
       focusTitle: opts.focusTitle,
-      sidebarContainer: container.querySelector ('.sidebar-container'),
     }));
 
     container.addEventListener ('gruwaeditcommand', function (ev) {
@@ -1249,6 +1250,19 @@ function saveObject (article, form, object, opts) {
     });
   });
 } // saveObject
+
+function upgradeWithSidebar (e) {
+  e.addEventListener ('gruwatogglepanel', function (ev) {
+    var sidebar = null;
+    for (var i = 0; i < e.children.length; i++) {
+      if (e.children[i].localName === 'aside') {
+        sidebar = e.children[i];
+        break;
+      }
+    }
+    togglePanel (ev.panelName, sidebar);
+  });
+} // upgradeWithSidebar
 
 var PanelInitializer = {};
 
@@ -1932,6 +1946,11 @@ function upgradeAccountName (e) {
       } else if (x.localName) {
         $$ (x, 'copy-button').forEach (upgradeCopyButton);
       }
+      if (x.localName === 'with-sidebar') {
+        upgradeWithSidebar (x);
+      } else if (x.localName) {
+        $$ (x, 'with-sidebar').forEach (upgradeWithSidebar);
+      }
     });
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
@@ -1940,6 +1959,7 @@ $$ (document, 'form').forEach (upgradeForm);
 $$ (document, 'account-name[account_id]').forEach (upgradeAccountName);
 $$ (document, 'popup-menu').forEach (upgradePopupMenu);
 $$ (document, 'copy-button').forEach (upgradeCopyButton);
+$$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 
 /*
 

@@ -1,9 +1,10 @@
 
 <template id=edit-form-template>
-  <form method=post action=javascript: class=non-sidebar-container>
-    <header>
-      <p><input name=title placeholder=題名>
-    </header>
+  <with-sidebar>
+    <form method=post action=javascript:>
+      <header>
+        <p><input name=title placeholder=題名>
+      </header>
     <main>
       <menu>
         <button type=button data-action=execCommand data-command=bold title=太字><b>B</b></button
@@ -131,8 +132,9 @@
         </table>
       </list-control>
     </details>
-  </form>
-  <aside class=sidebar-container hidden />
+    </form>
+    <aside hidden/>
+  </with-sidebar>
 </template>
 
   <template id=link-edit-template class=body-edit-template>

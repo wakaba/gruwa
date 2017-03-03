@@ -279,29 +279,29 @@ article.object > header popup-menu {
   font-size: 90%;
 }
 
-edit-container:not([hidden]) {
+with-sidebar:not([hidden]) {
   display: table;
   width: 100%;
 }
 
-edit-container::after {
+with-sidebar::after {
   display: block;
   content: "";
   clear: both;
 }
 
-edit-container > .non-sidebar-container:not([hidden]) {
+with-sidebar > :not([hidden]):not(aside) {
   display: table-cell;
   vertical-align: top;
 }
 
-edit-container > .sidebar-container:not([hidden]) {
+with-sidebar > aside:not([hidden]) {
   display: table-cell;
   width: 22em;
   vertical-align: top;
 }
 
-edit-container > .sidebar-container > .panel:not([hidden]) {
+with-sidebar > aside > .panel:not([hidden]) {
   display: block;
   margin: 0 0 0 .5rem;
   border: 1px solid;
@@ -312,7 +312,7 @@ edit-container > .sidebar-container > .panel:not([hidden]) {
   overflow: auto;
 }
 
-edit-container > form {
+edit-container > * > form {
   margin: 0;
   border-style: none;
   padding: 0;
