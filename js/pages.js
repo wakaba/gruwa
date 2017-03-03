@@ -1267,12 +1267,6 @@ function upgradeWithSidebar (e) {
 var PanelInitializer = {};
 
 PanelInitializer["image-list"] = function () {
-  var panel = this;
-  panel.addEventListener ('gruwaobjectsadded', function (ev) {
-    return ev.wait (Promise.all ($$c (this, 'list-container[key=objects]').map (function (e) {
-      return e.showObjects (ev.objects, {prepend: true});
-    })));
-  });
 }; // image-list
 
 function togglePanel (name, container) {
@@ -1917,6 +1911,21 @@ function upgradeAccountName (e) {
   });
 } // upgradeAccountName
 
+var RunAction = {};
+
+RunAction.installPrependNewObjects = function () {
+  this.parentNode.addEventListener ('gruwaobjectsadded', function (ev) {
+    return ev.wait (Promise.all ($$c (this, 'list-container[key=objects]').map (function (e) {
+      return e.showObjects (ev.objects, {prepend: true});
+    })));
+  });
+}; // installPrependNewObjects
+
+function upgradeRunAction (e) {
+  var action = RunAction[e.getAttribute ('name')];
+  action.apply (e);
+} // upgradeRunAction
+
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {
     Array.prototype.forEach.call (m.addedNodes, function (x) {
@@ -1951,6 +1960,11 @@ function upgradeAccountName (e) {
       } else if (x.localName) {
         $$ (x, 'with-sidebar').forEach (upgradeWithSidebar);
       }
+      if (x.localName === 'run-action') {
+        upgradeRunAction (x);
+      } else if (x.localName) {
+        $$ (x, 'run-action').forEach (upgradeRunAction);
+      }
     });
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
@@ -1960,6 +1974,7 @@ $$ (document, 'account-name[account_id]').forEach (upgradeAccountName);
 $$ (document, 'popup-menu').forEach (upgradePopupMenu);
 $$ (document, 'copy-button').forEach (upgradeCopyButton);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
+$$ (document, 'run-action').forEach (upgradeRunAction);
 
 /*
 

@@ -155,6 +155,8 @@
   <list-container type=$with id=member-list src=members.json key=members itemkey=account_id accounts />
 
 <template id=template-panel-image-list>
+  <run-action name=installPrependNewObjects />
+
   <list-container src=i/list.json?index_type=6&subtype=image
       key=index_list sortkey=updated
       loaded-actions=clickFirstButton>

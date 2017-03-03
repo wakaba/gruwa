@@ -445,8 +445,8 @@
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       </t:if>
+      <run-action name=installPrependNewObjects />
     </list-container>
-
 
     <t:if x="defined $wiki_name">
       <footer>

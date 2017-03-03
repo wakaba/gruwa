@@ -957,6 +957,8 @@ index-list-item .colored:not([hidden]) {
   text-decoration: none;
 }
 
+run-action { display: none !important }
+
 /*
 
 Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
