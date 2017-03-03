@@ -191,10 +191,11 @@
 
     <list-container disabled
         data-src-template="o/get.json?index_id={index_id}&limit=10"
-        key=objects sortkey=timestamp,created>
+        key=objects sortkey=timestamp,created
+        added-actions=editCommands>
       <template>
-        <button type=button data-command=sendBodyAction
-            data-action=insertImage
+        <button type=button
+            data-edit-command=insertImage
             data-value-template={GROUP}/o/{object_id}>
           <img src data-src-template={GROUP}/o/{object_id}/image>
         </button>

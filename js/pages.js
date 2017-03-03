@@ -256,12 +256,6 @@ FieldCommands.setListIndex = function () {
   });
 }; // setListIndex
 
-FieldCommands.sendBodyAction = function () {
-  var body = $$ancestor (this, 'edit-container').querySelector ('form').getBodyControl ();
-  body.sendAction (this.getAttribute ('data-action'), null, this.getAttribute ('value'));
-  body.focus ();
-}; // sendBodyAction
-
 function fillFields (contextEl, rootEl, el, object) {
   if (object.account_id &&
       object.account_id === document.documentElement.getAttribute ('data-account')) {
@@ -551,6 +545,9 @@ function fillFormControls (form, object, opts) {
       };
       control.onload = null;
     };
+    control.sendCommand = function (data) {
+      mc.port2.postMessage (data);
+    };
     control.sendExecCommand = function (name, value) {
       mc.port2.postMessage ({type: "execCommand", command: name, value: value});
     };
@@ -650,6 +647,20 @@ LoadedActions.clickFirstButton = function () {
   var button = this.querySelector ('button');
   if (button) button.click ();
 }; // clickFirstButton
+
+var AddedActions = {};
+
+AddedActions.editCommands = function () {
+  var self = this;
+  $$ (self, '[data-edit-command]').forEach (function (e) {
+    e.onclick = function () {
+      var ev = new Event ('gruwaeditcommand', {bubbles: true});
+      ev.data = {type: this.getAttribute ('data-edit-command'),
+                 value: this.value};
+      self.dispatchEvent (ev);
+    };
+  });
+}; // editCommands
 
 function upgradeList (el) {
   if (el.upgraded) return;
@@ -867,7 +878,12 @@ function upgradeList (el) {
       button.hidden = ! (opts.hasNext && appended);
     });
 
-    return Promise.all (wait).then (function () { return result });
+    return Promise.all (wait).then (function () {
+      (el.getAttribute ('added-actions') || '').split (/\s+/).filter (function (_) { return _.length }).forEach (function (n) {
+        AddedActions[n].call (el);
+      });
+      return result;
+    });
   }; // showObjects
 
   var nextRef = null;
@@ -1105,6 +1121,11 @@ function editObject (article, object, opts) {
       sidebarContainer: container.querySelector ('.sidebar-container'),
     }));
 
+    container.addEventListener ('gruwaeditcommand', function (ev) {
+console.log(ev);
+      form.getBodyControl ().sendCommand (ev.data);
+    });
+
   // XXX autosave
 
   $$c (form, '.cancel-button').forEach (function (button) {
@@ -1229,6 +1250,17 @@ function saveObject (article, form, object, opts) {
   });
 } // saveObject
 
+var PanelInitializer = {};
+
+PanelInitializer["image-list"] = function () {
+  var panel = this;
+  panel.addEventListener ('gruwaobjectsadded', function (ev) {
+    return ev.wait (Promise.all ($$c (this, 'list-container[key=objects]').map (function (e) {
+      return e.showObjects (ev.objects, {prepend: true});
+    })));
+  });
+}; // image-list
+
 function togglePanel (name, container) {
   container.panels = container.panels || {};
   if (!container.panels[name]) {
@@ -1239,6 +1271,7 @@ function togglePanel (name, container) {
     section.appendChild (template.content.cloneNode (true));
     container.panels[name] = section;
     container.appendChild (section);
+    PanelInitializer[name].apply (section);
   }
   var hideContainer = false;
   for (var n in container.panels) {
@@ -1293,15 +1326,12 @@ function initUploader (form) {
       as.stageStart ("show");
       return gFetch ('o/get.json?with_data=1&object_id=' + data.object_id, {});
     }).then (function (json) {
-      var panelMain = $$ancestor (form, 'panel-main');
-      if (panelMain) {
-        return Promise.all ($$c (panelMain, 'list-container[key=objects]').map (function (e) {
-          return e.showObjects (json.objects, {prepend: true});
-        }));
-      } else {
-        return document.querySelector ('list-container[src-index_id]')
-            .showObjects (json.objects, {prepend: true});
-      }
+      var ev = new Event ('gruwaobjectsadded', {bubbles: true});
+      ev.objects = json.objects;
+      var promise = new Promise (function (a, b) { ev.wait = a });
+      form.dispatchEvent (ev);
+      ev.wait (null);
+      return promise;
     }).then (function () {
       as.end ({ok: true});
     }, function (error) {
