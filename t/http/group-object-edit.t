@@ -703,6 +703,41 @@ Test {
   })->then (sub {
     return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
       body_type => 1, # html
+      body => (sprintf q{<a href="" data-wiki-name="%s">abc</a>}, $wn),
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      index_id => $current->o ('i1')->{index_id},
+      parent_wiki_name => $wn,
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objects = [grep {
+        $_->{data}->{body_type} == 3 and
+        $_->{data}->{body_data}->{trackback};
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objects, 1;
+      is $objects->[0]->{data}->{body_data}->{trackback}->{object_id}, $current->o ('o1')->{object_id};
+      unlike $result->{res}->body_bytes, qr{"object_id"\s*:\s*\d};
+    } $current->c;
+  });
+} n => 3, name => 'trackback object for wiki name';
+
+Test {
+  my $current = shift;
+  my $wn = "\x{64344} " . rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1',
+                                          is_default_wiki => 1});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body_type => 1, # html
       body => (sprintf q{<a href="../../wiki/%s/">abc</a>},
                    percent_encode_c $wn),
     }, account => 'a1', group => 'g1');

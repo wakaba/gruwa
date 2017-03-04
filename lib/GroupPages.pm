@@ -817,7 +817,18 @@ sub group_object ($$$$) {
           $search_data = join "\n",
               $body,
               $object->{data}->{title};
-          # XXX @keyword
+          {
+            my $index_id = $opts->{group}->{data}->{default_wiki_index_id};
+            if (defined $index_id) {
+              for (@keyword) {
+                unless ($object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$_}) {
+                  $trackbacks->{wiki_names}->{$index_id}->{$_} = 1;
+                  $object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$_} = 1;
+                  last if 50 < $trackback_count++;
+                }
+              }
+            }
+          }
           my $self_url = Web::URL->parse_string ($app->http->url->stringify);
           for my $url (@url) {
             if ($url->get_origin->same_origin_as ($self_url->get_origin)) {

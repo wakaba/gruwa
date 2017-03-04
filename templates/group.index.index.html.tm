@@ -456,6 +456,28 @@
     </list-container>
 
     <t:if x="defined $wiki_name">
+      <article-comments>
+
+        <list-container class=comment-list
+            pl:src="'o/get.json?index_id=' . $index->{index_id} . '&parent_wiki_name=' . Web::URL::Encoding::percent_encode_c ($wiki_name) . '&limit=30&with_data=1'"
+            key=objects sortkey=timestamp,created prepend
+            template-selector=object>
+          <template />
+          <template data-name=trackback class=trackback>
+            <time data-field=created class=ambtime />にこのWikiページが参照されました。
+            <a href data-href-template={GROUP}/o/{data.body_data.trackback.object_id}/>
+              <cite data-field=data.body_data.trackback.title data-empty=■ />
+              <p data-field=data.body_data.trackback.search_data />
+            </a>
+          </template>
+          <p class="operations pager">
+            <button type=button class=next-page-button hidden>もっと昔</button>
+          </p>
+          <action-status hidden stage-load=読み込み中... />
+          <list-main/>
+        </list-container>
+      </article-comments>
+
       <footer>
         <p><a pl:href="'/g/'.$group->{group_id}.'/search?q=' . Web::URL::Encoding::percent_encode_c $wiki_name">「<t:text value=$wiki_name>」を含む記事を検索する</a></p>
       </footer>
