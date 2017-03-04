@@ -429,6 +429,31 @@ list-container[key=objects] > list-is-empty > p {
   width: 100%;
 }
 
+.comment-list > list-main > list-item.change-action:not([hidden]),
+.comment-list > list-main > list-item.trackback:not([hidden]) {
+  display: block;
+  margin: 0.5rem 3rem;
+  font-size: 80%;
+}
+
+.comment-list > list-main > list-item.trackback a:not([hidden]) {
+  display: block;
+  margin-left: 2em;
+  padding: .2em .5em;
+  text-decoration: none;
+}
+
+.comment-list > list-main > list-item.trackback cite:not([hidden]) {
+  display: block;
+  font-weight: bolder;
+  font-size: 1rem;
+}
+
+.comment-list > list-main > list-item.trackback p:not([hidden]) {
+  display: block;
+  font-size: 70%;
+}
+
 article-comments .actions form {
   margin: 0 .5rem;
 }

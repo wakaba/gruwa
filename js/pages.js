@@ -262,7 +262,13 @@ function fillFields (contextEl, rootEl, el, object) {
     rootEl.classList.add ('account-is-self');
   }
   $$c (el, '[data-field]').forEach (function (field) {
-    var value = object[field.getAttribute ('data-field')];
+    var name = field.getAttribute ('data-field').split (/\./);
+    var value = object;
+    for (var i = 0; i < name.length; i++) {
+      value = value[name[i]];
+      if (value == null) break;
+    }
+
     if (field.localName === 'input' ||
         field.localName === 'select') {
       field.value = value;
@@ -322,7 +328,13 @@ function fillFields (contextEl, rootEl, el, object) {
     }).replace (/\{URL\}/, function () {
       return object.url;
     }).replace (/\{([^{}]+)\}/g, function (_, k) {
-      return encodeURIComponent (object[k]);
+      var name = k.split (/\./);
+      var value = object;
+      for (var i = 0; i < name.length; i++) {
+        value = value[name[i]];
+        if (value == null) break;
+      }
+      return encodeURIComponent (value);
     });
 
     var pingTemplate = field.getAttribute ('data-ping-template');
@@ -609,13 +621,18 @@ function fillFormControls (form, object, opts) {
 var TemplateSelectors = {};
 TemplateSelectors.object = function (object, templates) {
   if (object.data.body_type == 3) {
-    if (object.data.body_data.new.todo_state == 2) {
-      return templates.close;
-    } else if (object.data.body_data.new.todo_state == 1 &&
-               object.data.body_data.old.todo_state == 2) {
-      return templates.reopen;
-    } else {
-      return templates.changed;
+    if (object.data.body_data.new) {
+      if (object.data.body_data.new.todo_state == 2) {
+        return templates.close;
+      } else if (object.data.body_data.new.todo_state == 1 &&
+                 object.data.body_data.old.todo_state == 2) {
+        return templates.reopen;
+      } else {
+        return templates.changed;
+      }
+    }
+    if (object.data.body_data.trackback) {
+      return templates.trackback;
     }
   }
   return null;

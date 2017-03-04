@@ -198,7 +198,7 @@
           <article-comments>
 
             <list-container class=comment-list
-                data-src-template="o/get.json?parent_object_id={object_id}&limit=5&with_data=1"
+                pl:data-src-template="'o/get.json?parent_object_id={object_id}&limit='.(defined $object ? 30 : 5).'&with_data=1'"
                 key=objects sortkey=timestamp,created prepend
                 template-selector=object>
               <template>
@@ -212,15 +212,15 @@
                   <main><iframe data-data-field=body /></main>
                 </article>
               </template>
-              <template data-name=close>
+              <template data-name=close class=change-action>
                 <p><!-- XXX が -->閉じました。
                 (<time data-field=created class=ambtime />)
               </template>
-              <template data-name=reopen>
+              <template data-name=reopen class=change-action>
                 <p><!-- XXX が -->開き直しました。
                 (<time data-field=created class=ambtime />)
               </template>
-              <template data-name=changed>
+              <template data-name=changed class=change-action>
                 <p><!-- XXX が -->
                 変更しました。
                 <!--
@@ -237,6 +237,13 @@
                 への割当を削除しました。
                 -->
                 (<time data-field=created class=ambtime />)
+              </template>
+              <template data-name=trackback class=trackback>
+                <time data-field=created class=ambtime />にこの記事が参照されました。
+                <a href data-href-template={GROUP}/o/{data.body_data.trackback.object_id}/>
+                  <cite data-field=data.body_data.trackback.title data-empty=■ />
+                  <p data-field=data.body_data.trackback.search_data />
+                </a>
               </template>
               <p class="operations pager">
                 <button type=button class=next-page-button hidden>もっと昔</button>

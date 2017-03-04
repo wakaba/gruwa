@@ -3,12 +3,15 @@ use strict;
 use warnings;
 use Time::HiRes qw(time);
 use Promise;
+use Promised::Flow;
 use Dongry::Type;
 use Dongry::Type::JSONPS;
 use Dongry::SQL qw(where);
 use Digest::SHA qw(sha1_hex);
 use Web::DateTime::Parser;
 use Web::MIME::Type;
+use Web::URL;
+use Web::URL::Encoding;
 use Web::DOM::Document;
 
 use Results;
@@ -602,8 +605,7 @@ sub create_object ($%) {
                                uuid_short() as uuid2')->then (sub {
     my $ids = $_[0]->first;
     my $object_id = ''.$ids->{uuid1};
-    my $data = {index_ids => {}, title => '',
-                timestamp => $time,
+    my $data = {timestamp => $time,
                 object_revision_id => ''.$ids->{uuid2},
                 user_status => 1, # open
                 owner_status => 1}; # open
@@ -735,6 +737,7 @@ sub group_object ($$$$) {
 
         my $changes = {};
         my $reactions = {};
+        my $trackbacks = {};
         for my $key (qw(title body file_name)) {
           my $value = $app->text_param ($key);
           if (defined $value) {
@@ -777,14 +780,27 @@ sub group_object ($$$$) {
             $changes->{fields}->{body} or
             $changes->{fields}->{body_type}) {
           my $body = '';
+          my @keyword;
+          my @url;
           if ($object->{data}->{body_type} == 1) { # html
             my $doc = new Web::DOM::Document;
             $doc->manakai_is_html (1);
+            $doc->manakai_set_url ($app->http->url->stringify);
             $doc->inner_html ($object->{data}->{body});
             $body = $doc->document_element->text_content;
             for ($doc->links->to_list) {
               my $name = $_->get_attribute ('data-wiki-name');
-              $body .= "\n" . $name if defined $name;
+              if (defined $name) { # keyword link
+                $body .= "\n" . $name;
+                push @keyword, $name;
+              } else {
+                my $url = Web::URL->parse_string ($_->href);
+                push @url, $url if defined $url;
+              }
+            }
+            for ($doc->query_selector_all ('img[src], iframe[src]')->to_list) {
+              my $url = Web::URL->parse_string ($_->src);
+              push @url, $url if defined $url;
             }
             my $x = 0;
             my $y = 0;
@@ -800,7 +816,27 @@ sub group_object ($$$$) {
           $search_data = join "\n",
               $body,
               $object->{data}->{title};
-        }
+          # XXX @keyword
+          my $self_url = Web::URL->parse_string ($app->http->url->stringify);
+          for my $url (@url) {
+            if ($url->get_origin->same_origin_as ($self_url->get_origin)) {
+              my $path = [map { percent_decode_c $_ } split m{/}, $url->path, -1];
+              if (@$path >= 5) {
+                if ($path->[1] eq 'g' and
+                    $path->[2] eq $opts->{group}->{group_id} and
+                    $path->[3] eq 'o' and
+                    $path->[4] =~ /\A[0-9]+\z/ and
+                    not $path->[4] eq $object->{object_id}) {
+                  unless ($object->{data}->{trackbacked}->{$path->[4]}) {
+                    $trackbacks->{$path->[4]} = 1;
+                    $object->{data}->{trackbacked}->{$path->[4]} = 1;
+                  }
+                }
+                # XXX wiki URLs
+              }
+            }
+          }
+        } # title/body modified
 
         if ($app->bare_param ('edit_assigned_account_id')) {
           my $ids = $app->bare_param_list ('assigned_account_id');
@@ -973,8 +1009,34 @@ sub group_object ($$$$) {
               thread_id => $object->{data}->{thread_id},
             );
           })->then (sub {
+            return unless keys %$trackbacks;
+            ## If there is no trackbacked object, no trackback object
+            ## is created for it.
+            return $db->select ('object', {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              object_id => {-in => [map { Dongry::Type->serialize ('text', $_) } keys %$trackbacks]},
+            }, fields => ['object_id', 'thread_id'])->then (sub {
+              my $parents = $_[0]->all->to_a;
+              return promised_map {
+                return create_object ($db,
+                  group_id => $path->[1],
+                  author_account_id => $opts->{account}->{account_id},
+                  body_type => 3, # data
+                  body_data => {
+                    trackback => {
+                      object_id => ''.$object->{object_id},
+                      title => $object->{data}->{title},
+                      search_data => (defined $search_data ? (substr $search_data, 0, 300) : undef),
+                    },
+                  },
+                  parent_object_id => $_[0]->{object_id},
+                  thread_id => $_[0]->{thread_id},
+                );
+              } $parents;
+            });
+          })->then (sub {
             my $update = {
-              title => Dongry::Type->serialize ('text', $object->{data}->{title}),
+              title => Dongry::Type->serialize ('text', $object->{data}->{title} // ''),
               data => $sdata,
               (defined $search_data
                 ? (search_data => Dongry::Type->serialize ('text', $search_data))

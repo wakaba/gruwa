@@ -555,6 +555,107 @@ Test {
   });
 } n => 18, name => 'thread';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o2 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o3 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o4 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body_type => 1, # html
+      body => (sprintf q{<a href="../../o/%s/">abc</a>}, $current->o ('o2')->{object_id}),
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body_type => 1, # html
+      body => (sprintf q{<iframe src="../../o/%s/embed"></iframe>}, $current->o ('o3')->{object_id}),
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body_type => 1, # html
+      body => (sprintf q{<img src="../../o/%s/image">}, $current->o ('o4')->{object_id}),
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o2')->{object_id},
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objects = [grep {
+        $_->{data}->{body_type} == 3 and
+        $_->{data}->{body_data}->{trackback};
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objects, 1;
+      is $objects->[0]->{data}->{body_data}->{trackback}->{object_id}, $current->o ('o1')->{object_id};
+      unlike $result->{res}->body_bytes, qr{"object_id"\s*:\s*\d};
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o3')->{object_id},
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objects = [grep {
+        $_->{data}->{body_type} == 3 and
+        $_->{data}->{body_data}->{trackback};
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objects, 1;
+      is $objects->[0]->{data}->{body_data}->{trackback}->{object_id}, $current->o ('o1')->{object_id};
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o4')->{object_id},
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objects = [grep {
+        $_->{data}->{body_type} == 3 and
+        $_->{data}->{body_data}->{trackback};
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objects, 1;
+      is $objects->[0]->{data}->{body_data}->{trackback}->{object_id}, $current->o ('o1')->{object_id};
+    } $current->c;
+  });
+} n => 7, name => 'trackback object created';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o2 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body_type => 1, # html
+      body => (sprintf q{<a href="../../o/%s/">abc</a>}, 63462424222),
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => 63462424222,
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objects = [values %{$result->{json}->{objects}}];
+      is 0+@$objects, 0;
+    } $current->c;
+  });
+} n => 1, name => 'trackback referenced object not found';
+
 RUN;
 
 =head1 LICENSE
