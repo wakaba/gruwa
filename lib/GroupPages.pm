@@ -738,6 +738,7 @@ sub group_object ($$$$) {
         my $changes = {};
         my $reactions = {};
         my $trackbacks = {};
+        my $trackback_count = 0;
         for my $key (qw(title body file_name)) {
           my $value = $app->text_param ($key);
           if (defined $value) {
@@ -823,16 +824,37 @@ sub group_object ($$$$) {
               my $path = [map { percent_decode_c $_ } split m{/}, $url->path, -1];
               if (@$path >= 5) {
                 if ($path->[1] eq 'g' and
-                    $path->[2] eq $opts->{group}->{group_id} and
-                    $path->[3] eq 'o' and
-                    $path->[4] =~ /\A[0-9]+\z/ and
-                    not $path->[4] eq $object->{object_id}) {
-                  unless ($object->{data}->{trackbacked}->{$path->[4]}) {
-                    $trackbacks->{$path->[4]} = 1;
-                    $object->{data}->{trackbacked}->{$path->[4]} = 1;
+                    $path->[2] eq $opts->{group}->{group_id}) {
+                  if ($path->[3] eq 'o' and
+                      $path->[4] =~ /\A[0-9]+\z/ and
+                      not $path->[4] eq $object->{object_id}) {
+                    unless ($object->{data}->{trackbacked}->{objects}->{$path->[4]}) {
+                      $trackbacks->{objects}->{$path->[4]} = 1;
+                      $object->{data}->{trackbacked}->{objects}->{$path->[4]} = 1;
+                      last if 50 < $trackback_count++;
+                    }
+                  } elsif ($path->[3] eq 'wiki' and
+                           length $path->[4]) {
+                    my $index_id = $opts->{group}->{data}->{default_wiki_index_id};
+                    if (defined $index_id and
+                        not $object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$path->[4]}) {
+                      $trackbacks->{wiki_names}->{$index_id}->{$path->[4]} = 1;
+                      $object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$path->[4]} = 1;
+                      last if 50 < $trackback_count++;
+                    }
+                  } elsif (@$path >= 7 and
+                           $path->[3] eq 'i' and
+                           $path->[4] =~ /\A[0-9]+\z/ and
+                           $path->[5] eq 'wiki' and
+                           length $path->[6]) {
+                    my $index_id = $path->[4];
+                    unless ($object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$path->[4]}) {
+                      $trackbacks->{wiki_names}->{$index_id}->{$path->[6]} = 1;
+                      $object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$path->[4]} = 1;
+                      last if 50 < $trackback_count++;
+                    }
                   }
                 }
-                # XXX wiki URLs
               }
             }
           }
@@ -1009,12 +1031,14 @@ sub group_object ($$$$) {
               thread_id => $object->{data}->{thread_id},
             );
           })->then (sub {
-            return unless keys %$trackbacks;
+            return unless keys %{$trackbacks->{objects} or {}};
             ## If there is no trackbacked object, no trackback object
             ## is created for it.
             return $db->select ('object', {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
-              object_id => {-in => [map { Dongry::Type->serialize ('text', $_) } keys %$trackbacks]},
+              object_id => {-in => [map {
+                Dongry::Type->serialize ('text', $_);
+              } keys %{$trackbacks->{objects}}]},
             }, fields => ['object_id', 'thread_id'])->then (sub {
               my $parents = $_[0]->all->to_a;
               return promised_map {
@@ -1033,6 +1057,48 @@ sub group_object ($$$$) {
                   thread_id => $_[0]->{thread_id},
                 );
               } $parents;
+            });
+          })->then (sub {
+            return unless keys %{$trackbacks->{wiki_names} or {}};
+            my $group_id = Dongry::Type->serialize ('text', $path->[1]);
+            my @x;
+            return $db->select ('index', {
+              group_id => $group_id,
+              index_id => {-in => [map {
+                Dongry::Type->serialize ('text', $_);
+              } keys %{$trackbacks->{wiki_names}}]},
+            }, fields => ['index_id'])->then (sub {
+              my $indexes = $_[0]->all->to_a;
+              return promised_map {
+                my $index_id = Dongry::Type->serialize ('text', $_[0]->{index_id});
+                return promised_map {
+                  my $wiki_name = $_[0];
+                  return create_object ($db,
+                    group_id => $path->[1],
+                    author_account_id => $opts->{account}->{account_id},
+                    body_type => 3, # data
+                    body_data => {
+                      trackback => {
+                        object_id => ''.$object->{object_id},
+                        title => $object->{data}->{title},
+                        search_data => (defined $search_data ? (substr $search_data, 0, 300) : undef),
+                      },
+                    },
+                  )->then (sub {
+                    push @x, {
+                      group_id => $group_id,
+                      index_id => $index_id,
+                      wiki_name_key => sha1_hex (Dongry::Type->serialize ('text', $wiki_name)),
+                      object_id => $_[0]->{object_id},
+                      created => $time,
+                      timestamp => $time,
+                    };
+                  });
+                } [keys %{$trackbacks->{wiki_names}->{$index_id}}];
+              } $indexes;
+            })->then (sub {
+              return unless @x;
+              return $db->insert ('wiki_trackback_object', \@x);
             });
           })->then (sub {
             my $update = {
@@ -1221,12 +1287,17 @@ sub group_object ($$$$) {
         } else {
           $index_id = $app->bare_param ('index_id');
           if (defined $index_id) {
-            $table = 'index_object';
-            $cond{index_id} = $index_id;
-            my $wiki_name = $app->text_param ('wiki_name');
-            if (defined $wiki_name) {
-              my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $wiki_name);
-              $cond{wiki_name_key} = $wiki_name_key;
+            my $pwn = $app->text_param ('parent_wiki_name');
+            if (defined $pwn) {
+              $table = 'wiki_trackback_object';
+              $cond{index_id} = $index_id;
+              $cond{wiki_name_key} = sha1_hex +Dongry::Type->serialize ('text', $pwn);
+            } else {
+              $table = 'index_object';
+              $cond{index_id} = $index_id;
+              my $wiki_name = $app->text_param ('wiki_name');
+              $cond{wiki_name_key} = sha1_hex +Dongry::Type->serialize ('text', $wiki_name)
+                  if defined $wiki_name;
             }
           }
         }
@@ -1314,7 +1385,7 @@ sub group_object ($$$$) {
           my $title;
           if (defined $_->{data}) {
             $data = Dongry::Type->parse ('json', $_->{data});
-            $title = $data->{title};
+            $title = $data->{title} // '';
           } else {
             $title = Dongry::Type->parse ('text', $_->{title});
           }

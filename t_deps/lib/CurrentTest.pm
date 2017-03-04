@@ -219,7 +219,7 @@ sub create_index ($$$) {
     account => ($opts->{account} // die "No |account|"),
     group => ($opts->{group} // die "No |group|"),
   )->then (sub {
-    $self->{objects}->{$name // 'X'} = $_[0]->{json};
+    $self->{objects}->{$name} = $_[0]->{json};
     my %edit;
     for (qw(theme color deadline)) {
       $edit{$_} = $opts->{$_} if defined $opts->{$_};
@@ -227,6 +227,11 @@ sub create_index ($$$) {
     return unless keys %edit;
     return $self->post_json (['i', $_[0]->{json}->{index_id}, 'edit.json'], {
       %edit,
+    }, account => $opts->{account}, group => $opts->{group});
+  })->then (sub {
+    return unless $opts->{is_default_wiki};
+    return $self->post_json (['edit.json'], {
+      default_wiki_index_id => $self->{objects}->{$name}->{index_id},
     }, account => $opts->{account}, group => $opts->{group});
   });
 } # create_index
