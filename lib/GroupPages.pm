@@ -739,14 +739,15 @@ sub group_object ($$$$) {
         my $reactions = {};
         my $trackbacks = {};
         my $trackback_count = 0;
-        for my $key (qw(title body file_name)) {
+        for my $key (qw(title body body_source file_name)) {
           my $value = $app->text_param ($key);
           if (defined $value) {
             $object->{data}->{$key} = $value;
             $changes->{fields}->{$key} = 1;
           }
         }
-        for my $key (qw(timestamp body_type user_status owner_status
+        for my $key (qw(timestamp body_type body_source_type
+                        user_status owner_status
                         todo_state file_size file_closed)) {
           my $value = $app->bare_param ($key);
           if (defined $value) {

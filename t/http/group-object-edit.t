@@ -135,6 +135,34 @@ Test {
 
 Test {
   my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => "\x{400} ",
+      body_source => "abc def",
+      body_source_type => 42523,
+      body_type => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      isnt $object->{data}->{object_revision_id},
+          $current->o ('o1')->{object_revision_id};
+      is $object->{data}->{body}, "\x{400} ";
+      is $object->{data}->{body_source}, "abc def";
+      is $object->{data}->{body_source_type}, 42523;
+      is $object->{data}->{body_type}, 1;
+    } $current->c;
+  });
+} n => 5, name => 'body fields';
+
+Test {
+  my $current = shift;
   my $rev1;
   my $rev2;
   my $rev3;
