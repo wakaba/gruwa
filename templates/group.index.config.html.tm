@@ -30,7 +30,7 @@
                 <t:elsif x="$index->{index_type} == 2"> Wiki
                 <t:elsif x="$index->{index_type} == 3"> TODO リスト
                 <t:elsif x="$index->{index_type} == 4"> ラベル
-                <t:elsif x="$index->{index_type} == 5"> 里程標
+                <t:elsif x="$index->{index_type} == 5"> マイルストーン
                 <t:elsif x="$index->{index_type} == 6">
                   <t:if x="($index->{options}->{subtype} // '') eq 'image'">
                     アルバム
@@ -121,7 +121,7 @@
       </t:if>
 
       <t:if x="$index->{index_type} == 3 # todo">
-        <p>ラベルや里程標は、<a href=../../config>グループ設定</a>から作成できます。
+        <p>ラベルやマイルストーンは、<a href=../../config>グループ設定</a>から作成できます。
       </t:if>
     </section>
   </section>

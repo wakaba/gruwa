@@ -101,7 +101,7 @@
         <table class=config>
           <tbody>
             <tr>
-              <th>里程標
+              <th>マイルストーン
               <td>
                 <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' data-empty=(なし) />
                 <popup-menu>

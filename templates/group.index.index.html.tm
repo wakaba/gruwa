@@ -101,7 +101,7 @@
             </checkbox-count>
             <time data-field=created class=ambtime />
             (<time data-field=updated class=ambtime /> 編集)
-            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=里程標 />
+            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=マイルストーン />
             <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "4"}]' title=ラベル />
             <account-list data-data-field=assigned_account_ids title=担当者 />
         </template>
@@ -366,7 +366,7 @@
                 </label>
               </template>
 
-              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' data-empty=(里程標制約なし) />
+              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' data-empty=(マイルストーン制約なし) />
               <popup-menu>
                 <button type=button title=選択>...</button>
                 <menu hidden>

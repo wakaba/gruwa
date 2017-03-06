@@ -36,7 +36,7 @@
         <li><a href=#wiki>Wiki</a>
         <li><a href=#todos>TODO リスト</a>
         <li><a href=#labels>ラベル</a>
-        <li><a href=#milestones>里程標</a>
+        <li><a href=#milestones>マイルストーン</a>
         <li><a href=#filesets>アップローダー</a>
       </ul>
 
@@ -91,7 +91,7 @@
 
       <p>グループ内に TODO リストを作ることができます。
 
-      <p>TODO リストは<a href=#labels>ラベル</a>や<a href=#milestones>里程標</a>で整理できます。
+      <p>TODO リストは<a href=#labels>ラベル</a>や<a href=#milestones>マイルストーン</a>で整理できます。
     </section>
 
     <section id=labels>
@@ -107,16 +107,16 @@
     </section>
 
     <section id=milestones>
-      <h1><ruby>里程標<rt>マイルストーン</ruby></h1>
+      <h1>マイルストーン</h1>
 
-      <p>グループ内に里程標を置くことができます。
-      里程標は、計画の各段階や期限を切った予定をまとめるために使えます。
+      <p>グループ内にマイルストーン (里程標) を置くことができます。
+      マイルストーンは、計画の各段階や期限を切った予定をまとめるために使えます。
 
-      <p>里程標には締切日を設定できます。
+      <p>マイルストーンには締切日を設定できます。
 
       <hr>
 
-      <p><a href=#objects>記事</a>は里程標に登録できます。
+      <p><a href=#objects>記事</a>ごとにマイルストーンを設定できます。
     </section>
 
     <section id=filesets>
