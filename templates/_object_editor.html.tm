@@ -5,10 +5,15 @@
       <header>
         <p><input name=title placeholder=題名>
       </header>
-    <main>
-      <body-control>
-        <menu>
-          <button type=button data-action=execCommand data-command=bold title=太字><b>B</b></button
+      <main>
+        <body-control>
+          <menu class=tab-buttons>
+            <a href=javascript: class=active data-name=iframe>見たまま</a>
+            <a href=javascript: data-name=textarea>ソース</a>
+          </menu>
+          <body-control-tab name=iframe>
+            <menu>
+              <button type=button data-action=execCommand data-command=bold title=太字><b>B</b></button
           ><button type=button data-action=execCommand data-command=italic title=斜体><i>I</i></button
           ><button type=button data-action=execCommand data-command=underline title=下線><u>U</u></button
           ><button type=button data-action=execCommand data-command=strikethrough title=取り消し線><s>S</s></button>
@@ -27,14 +32,18 @@
           <button type=button data-action=link data-command=url title="Web サイトにリンク">://</button
           ><button type=button data-action=link data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
 
-          <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button
-          ><button type=button data-action=panel data-value=image-list title=画像>&#x1F3A8;</button
-          ><button type=button data-action=panel data-value=file-list title=ファイル>&#x1F4C4;</button>
-        </menu>
-        <iframe />
-      </body-control>
-    </main>
-    <footer>
+              <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button
+              ><button type=button data-action=panel data-value=image-list title=画像>&#x1F3A8;</button
+              ><button type=button data-action=panel data-value=file-list title=ファイル>&#x1F4C4;</button>
+            </menu>
+            <iframe />
+          </body-control-tab>
+          <body-control-tab name=textarea hidden>
+            <textarea />
+          </body-control-tab>
+        </body-control>
+      </main>
+      <footer>
       <p class=operations>
         <button type=submit class=save-button>保存する</button>
         <button type=button class=cancel-button>取り消し</button>

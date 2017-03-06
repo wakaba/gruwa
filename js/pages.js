@@ -134,17 +134,17 @@ function withFormDisabled (form, code) {
   if (form) {
     disabledControls = $$ (form, 'input:enabled, select:enabled, textarea:enabled, button:enabled, body-control:not([disabled])');
     disabledControls.forEach (function (control) {
-      control.setAttribute ('disabled', '');
+      control.disabled = true;
     });
   }
   return Promise.resolve ().then (code).then (function (result) {
     disabledControls.forEach (function (control) {
-      control.removeAttribute ('disabled');
+      control.disabled = false;
     });
     return result;
   }, function (error) {
     disabledControls.forEach (function (control) {
-      control.removeAttribute ('disabled');
+      control.disabled = false;
     });
     throw error;
   });
@@ -533,36 +533,109 @@ function fillFormControls (form, object, opts) {
 } // fillFormControls
 
 function upgradeBodyControl (e, object, opts) {
-  $$c (e, 'iframe').forEach (function (iframe) {
-    var value = object.data.body;
-    var valueWaitings = [];
-    iframe.setAttribute ('sandbox', 'allow-scripts allow-popups');
-    iframe.setAttribute ('srcdoc', createBodyHTML (value, {edit: true, focusBody: opts.focusBody}));
-    var mc = new MessageChannel;
-    iframe.onload = function () {
-      this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
-      mc.port2.onmessage = function (ev) {
-        if (ev.data.type === 'focus') {
-          iframe.dispatchEvent (new Event ("focus", {bubbles: true}));
-        } else if (ev.data.type === 'currentValue') {
-          valueWaitings.forEach (function (f) {
-            f (ev.data.value);
+  var data = {
+    body: object.data.body,
+    body_type: object.data.body_type,
+    body_source: object.data.body_source,
+    body_source_type: object.data.body_source_type,
+  };
+  var currentMode = null;
+  var loader = {};
+  var saver = {};
+  var changeMode = function (newMode) {
+    if (currentMode === newMode) return Promise.resolve ();
+    var oldDisabled = e.disabled;
+    if (!oldDisabled) e.disabled = true;
+    return Promise.resolve ().then (function () {
+      if (currentMode) return saver[currentMode] ();
+    }).then (function () {
+      if (newMode) return loader[newMode] ();
+    }).then (function () {
+      if (newMode) currentMode = newMode;
+      if (!oldDisabled) e.disabled = false;
+    });
+  }; // changeMode
+
+  var showTab = function (name) {
+    $$c (e, '.tab-buttons a').forEach (function (b) {
+      b.classList.toggle ('active', b.getAttribute ('data-name') === name);
+    });
+    $$c (e, 'body-control-tab').forEach (function (f) {
+      f.hidden = f.getAttribute ('name') !== name;
+    });
+    changeMode (name);
+  }; // showTab
+  $$c (e, '.tab-buttons a').forEach (function (b) {
+    b.onclick = function () {
+      if (!e.disabled) showTab (this.getAttribute ('data-name'));
+    };
+  });
+
+  Object.defineProperty (e, 'disabled', {
+    get: function () {
+      return this.hasAttribute ('disabled');
+    },
+    set: function (v) {
+      var current = this.hasAttribute ('disabled');
+      if (v) {
+        if (!current) {
+          this.setAttribute ('disabled', '');
+          $$c (this, 'textarea, button').forEach (function (b) {
+            b.disabled = true;
           });
-          valueWaitings = [];
-        } else if (ev.data.type === 'currentState') {
-          $$ (e, 'button[data-action=execCommand]').forEach (function (b) {
-            var value = ev.data.value[b.getAttribute ('data-command')];
-            if (value === undefined) return;
-            b.classList.toggle ('active', value);
-          });
-        } else if (ev.data.type === 'prompt') {
-          var args = ev.data.value;
-          var result = prompt (args.prompt, args.default);
-          ev.ports[0].postMessage ({result: result});
         }
-      };
-      e.onload = null;
-    }; // onload
+      } else {
+        if (current) {
+          this.removeAttribute ('disabled');
+          $$c (this, 'textarea, button').forEach (function (b) {
+            b.disabled = false;
+          });
+        }
+      }
+    },
+  });
+
+  e.setHeight = function (h) {
+    $$c (e, 'body-control-tab').forEach (function (f) {
+      var h2 = h;
+      $$c (f, 'menu').forEach (function (g) {
+        h2 -= g.offsetHeight;
+      });
+      $$c (f, 'iframe, textarea').forEach (function (g) {
+        g.style.height = h2 + 'px';
+      });
+    });
+  };
+
+  var iframe = e.querySelector ('body-control-tab[name=iframe] iframe');
+  iframe.setAttribute ('sandbox', 'allow-scripts allow-popups');
+  iframe.setAttribute ('srcdoc', createBodyHTML ('', {edit: true, focusBody: opts.focusBody}));
+  var valueWaitings = [];
+  var mc = new MessageChannel;
+  iframe.onload = function () {
+    this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
+    mc.port2.onmessage = function (ev) {
+      if (ev.data.type === 'focus') {
+        iframe.dispatchEvent (new Event ("focus", {bubbles: true}));
+      } else if (ev.data.type === 'currentValue') {
+        valueWaitings.forEach (function (f) {
+          f (ev.data.value);
+        });
+        valueWaitings = [];
+      } else if (ev.data.type === 'currentState') {
+        $$ (e, 'button[data-action=execCommand]').forEach (function (b) {
+          var value = ev.data.value[b.getAttribute ('data-command')];
+          if (value === undefined) return;
+          b.classList.toggle ('active', value);
+        });
+      } else if (ev.data.type === 'prompt') {
+        var args = ev.data.value;
+        var result = prompt (args.prompt, args.default);
+        ev.ports[0].postMessage ({result: result});
+      }
+    }; // onmessage
+    e.onload = null;
+  }; // onload
     e.sendCommand = function (data) {
       mc.port2.postMessage (data);
     };
@@ -578,15 +651,6 @@ function upgradeBodyControl (e, object, opts) {
     e.sendAction = function (type, command, value) {
       mc.port2.postMessage ({type: type, command: command, value: value});
     };
-    e.getCurrentValues = function () {
-      mc.port2.postMessage ({type: "getCurrentValue"});
-      return new Promise (function (ok) { valueWaitings.push (ok) }).then (function (v) {
-        return [
-          ['body_type', object.data.body_type],
-          ['body', v],
-        ];
-      });
-    };
     e.sendChange = function (data) {
       mc.port2.postMessage ({type: "change", value: data});
     };
@@ -595,13 +659,35 @@ function upgradeBodyControl (e, object, opts) {
       var ev = new UIEvent ('focus', {});
       e.dispatchEvent (ev);
     };
-    e.setHeight = function (h) {
-      $$c (e, 'menu').forEach (function (f) {
-        h -= f.offsetHeight;
-      });
-      iframe.style.height = h + 'px';
-    };
-  });
+  saver.iframe = function () {
+    mc.port2.postMessage ({type: "getCurrentValue"});
+    return new Promise (function (ok) { valueWaitings.push (ok) }).then (function (_) {
+      data.body = _;
+    });
+  }; // saver.iframe
+  loader.iframe = function () {
+    mc.port2.postMessage ({type: "setCurrentValue", value: data.body});
+  }; // loader.iframe
+
+  var textarea = e.querySelector ('body-control-tab[name=textarea] textarea');
+  loader.textarea = function () {
+    textarea.value = data.body;
+  }; // loader.textarea
+  saver.textarea = function () {
+    data.body = textarea.value;
+  }; // saver.textarea
+
+  changeMode ('iframe');
+
+  e.getCurrentValues = function () {
+    return changeMode (null).then (function () {
+      return [
+        ['body_type', data.body_type],
+        ['body', data.body],
+      ];
+    });
+  }; // getCurrentValues
+
   $$c (e, 'button[data-action=execCommand]').forEach (function (b) {
     b.onclick = function () {
       e.sendExecCommand (this.getAttribute ('data-command'), this.getAttribute ('data-value'));
@@ -1126,7 +1212,6 @@ function editObject (article, object, opts) {
 
     $$c (form, 'body-control, header input').forEach (function (control) {
       control.onfocus = function () {
-console.log("onfocus");
         container.scrollIntoView ();
       };
     });
@@ -1181,11 +1266,11 @@ console.log("onfocus");
 
     var resize = function () {
       var h1 = 0;
-      $$c (container, 'form > header, form > footer').forEach (function (e) {
+      $$c (container, 'form header, form footer').forEach (function (e) {
         h1 += e.offsetHeight;
       });
       var h = document.documentElement.clientHeight - h1;
-      container.querySelector ('form > main > body-control').setHeight (h);
+      container.querySelector ('form body-control').setHeight (h);
     }; // resize
     addEventListener ('resize', resize);
     wait.push (Promise.resolve ().then (resize));

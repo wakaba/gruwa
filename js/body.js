@@ -15,6 +15,8 @@ function handleMessage (ev) {
       e.removeAttribute ('contenteditable');
     });
     sendToParent ({type: "currentValue", value: div.innerHTML});
+  } else if (ev.data.type === 'setCurrentValue') {
+    document.body.innerHTML = ev.data.value;
   } else if (ev.data.type === 'getHeight') {
     sendHeight ();
   } else if (ev.data.type === 'execCommand') {
