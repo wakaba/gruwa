@@ -340,7 +340,7 @@ edit-container main {
   padding: 0;
 }
 
-edit-container body-control {
+edit-container body-control:not([hidden]) {
   display: table;
   width: 100%;
 }
@@ -361,8 +361,9 @@ edit-container body-control .tab-buttons a:not([hidden]) {
   display: inline-block;
   writing-mode: vertical-rl;
   padding: 1em .3em;
-  font-size: 70%;
   min-height: 3em;
+  white-space: nowrap;
+  font-size: 70%;
   text-decoration: none;
   text-align: center;
   line-height: 1;
@@ -380,7 +381,7 @@ edit-container body-control:not([disabled]) .tab-buttons a:active {
   color: var(--toolbar-hover-color);
 }
 
-edit-container body-control .tab-buttons a.active {
+edit-container body-control [class].tab-buttons a.active {
   background: var(--dark-background-color);
   color: var(--dark-color);
 }

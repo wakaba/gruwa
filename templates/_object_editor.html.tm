@@ -10,6 +10,7 @@
           <menu class=tab-buttons>
             <a href=javascript: class=active data-name=iframe>見たまま</a>
             <a href=javascript: data-name=textarea>ソース</a>
+            <a href=javascript: data-name=config>設定</a>
           </menu>
           <body-control-tab name=iframe>
             <menu>
@@ -40,6 +41,21 @@
           </body-control-tab>
           <body-control-tab name=textarea hidden>
             <textarea />
+          </body-control-tab>
+          <body-control-tab name=config hidden>
+            <table class=config>
+              <tbody>
+                <tr>
+                  <th><label data-bc-for=body_source_type>編集形式</label>
+                  <td>
+                    <select data-bc-name=body_source_type>
+                      <option value=0>見たまま
+                      <option value=3>はてな記法
+                    </select>
+                    <p><strong>注意</strong>: 
+                    編集形式ごとに表現できる内容には違いがあります。
+                    後から編集形式を変更すると、情報が失われることがあります。
+            </table>
           </body-control-tab>
         </body-control>
       </main>

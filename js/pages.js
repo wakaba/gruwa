@@ -537,8 +537,16 @@ function upgradeBodyControl (e, object, opts) {
     body: object.data.body,
     body_type: object.data.body_type,
     body_source: object.data.body_source,
-    body_source_type: object.data.body_source_type,
+    body_source_type: object.data.body_source_type || 0,
+    hasSource: object.data.body_source != null,
   };
+  if (data.body_type == 2) { // compat
+    data.body_type = 1;
+    var div = document.createElement ('div');
+    div.textContent = data.body;
+    data.body = div.innerHTML;
+  }
+
   var currentMode = null;
   var loader = {};
   var saver = {};
@@ -570,6 +578,30 @@ function upgradeBodyControl (e, object, opts) {
       if (!e.disabled) showTab (this.getAttribute ('data-name'));
     };
   });
+
+  var changeSourceType = function (newType, opts) {
+    if (data.body_source_type == newType && ! opts.force) return;
+    data.body_source_type = newType;
+    if (data.body_source_type == 0) { // WYSIWYG
+      $$c (e, '.tab-buttons a').forEach (function (b) {
+        var name = b.getAttribute ('data-name');
+        b.hidden = (name !== 'textarea' && name !== 'iframe' && name !== 'config');
+      });
+      if (opts.show) showTab ('iframe');
+    } else if (data.body_source_type == 3) { // hatena
+      $$c (e, '.tab-buttons a').forEach (function (b) {
+        var name = b.getAttribute ('data-name');
+        b.hidden = (name !== 'textarea' && name !== 'config');
+      });
+      if (opts.show) showTab ('textarea');
+    } else {
+      $$c (e, '.tab-buttons a').forEach (function (b) {
+        var name = b.getAttribute ('data-name');
+        b.hidden = (name !== 'textarea' && name !== 'config');
+      });
+      if (opts.show) showTab ('textarea');
+    }
+  }; // changeSourceType
 
   Object.defineProperty (e, 'disabled', {
     get: function () {
@@ -669,25 +701,6 @@ function upgradeBodyControl (e, object, opts) {
     mc.port2.postMessage ({type: "setCurrentValue", value: data.body});
   }; // loader.iframe
 
-  var textarea = e.querySelector ('body-control-tab[name=textarea] textarea');
-  loader.textarea = function () {
-    textarea.value = data.body;
-  }; // loader.textarea
-  saver.textarea = function () {
-    data.body = textarea.value;
-  }; // saver.textarea
-
-  changeMode ('iframe');
-
-  e.getCurrentValues = function () {
-    return changeMode (null).then (function () {
-      return [
-        ['body_type', data.body_type],
-        ['body', data.body],
-      ];
-    });
-  }; // getCurrentValues
-
   $$c (e, 'button[data-action=execCommand]').forEach (function (b) {
     b.onclick = function () {
       e.sendExecCommand (this.getAttribute ('data-command'), this.getAttribute ('data-value'));
@@ -719,6 +732,69 @@ function upgradeBodyControl (e, object, opts) {
       e.dispatchEvent (ev);
     };
   });
+
+  var textarea = e.querySelector ('body-control-tab[name=textarea] textarea');
+  loader.textarea = function () {
+    if (data.body_source_type == 0) { // WYSIWYG
+      textarea.value = data.body;
+    } else {
+      textarea.value = data.body_source != null ? data.body_source : data.body;
+    }
+  }; // loader.textarea
+  saver.textarea = function () {
+    if (data.body_source_type == 0) { // WYSIWYG
+      data.body = textarea.value;
+    } else {
+      data.body_source = textarea.value;
+      data.body = data.body_source; // XXX
+    }
+  }; // saver.textarea
+
+  var config = e.querySelector ('body-control-tab[name=config]');
+  var prefix = Math.random () + '-';
+  $$c (config, '[data-bc-name]').forEach (function (f) {
+    var name = f.getAttribute ('data-bc-name');
+    f.id = prefix + name;
+    if (name === 'body_source_type') {
+      f.value = data.body_source_type;
+      f.onchange = function () {
+        changeSourceType (this.value, {});
+      };
+    }
+  });
+  $$c (config, '[data-bc-for]').forEach (function (f) {
+    f.for = prefix + f.getAttribute ('data-bc-for');
+  });
+  loader.config = saver.config = function () { };
+
+  e.getCurrentValues = function () {
+    return changeMode (null).then (function () {
+      if (data.body_type == 1) {
+        if (data.hasSource || data.body_source_type != 0) {
+          return [
+            ['body_type', data.body_type],
+            ['body', data.body],
+            ['body_source_type', data.body_source_type],
+            ['body_source', data.body_source],
+          ];
+        } else {
+          return [
+            ['body_type', data.body_type],
+            ['body', data.body],
+          ];
+        }
+      } else {
+        return [];
+      }
+    });
+  }; // getCurrentValues
+
+  if (data.body_type == 1) {
+    changeSourceType (data.body_source_type, {show: true, force: true});
+  } else {
+    e.disabled = true;
+    e.hidden = true;
+  }
 } // upgradeBodyControl
 
 var TemplateSelectors = {};
@@ -1299,8 +1375,10 @@ function saveObject (article, form, object, opts) {
   $$c (form, 'body-control').forEach (function (control) {
     ps.push (control.getCurrentValues ().then (function (nvs) {
       nvs.forEach (function (_) {
-        fd.append (_[0], _[1]);
-        c.push (function () { object.data[_[0]] = _[1] });
+        if (_[1] != null) {
+          fd.append (_[0], _[1]);
+          c.push (function () { object.data[_[0]] = _[1] });
+        }
       });
     }));
   });
