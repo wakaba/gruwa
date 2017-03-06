@@ -10,7 +10,8 @@ function $$c (n, s) {
       if (f.localName === 'list-container' ||
           f.localName === 'edit-container' ||
           f.localName === 'list-query' ||
-          f.localName === 'list-control') {
+          f.localName === 'list-control' ||
+          f.localName === 'body-control') {
         return false;
       }
       f = f.parentNode;
@@ -28,6 +29,7 @@ function $$c2 (n, s) {
           f.localName === 'edit-container' ||
           f.localName === 'list-query' ||
           f.localName === 'list-control' ||
+          f.localName === 'body-control' ||
           f.localName === 'form') {
         return false;
       }
@@ -130,22 +132,19 @@ function gFetch (pathquery, opts) {
 function withFormDisabled (form, code) {
   var disabledControls = [];
   if (form) {
-    disabledControls = $$ (form, 'input:enabled, select:enabled, textarea:enabled, button:enabled, iframe.control:not([data-disabled])');
+    disabledControls = $$ (form, 'input:enabled, select:enabled, textarea:enabled, button:enabled, body-control:not([disabled])');
     disabledControls.forEach (function (control) {
-      control.disabled = true;
-      control.setAttribute ('data-disabled', '');
+      control.setAttribute ('disabled', '');
     });
   }
   return Promise.resolve ().then (code).then (function (result) {
     disabledControls.forEach (function (control) {
-      control.disabled = false;
-      control.removeAttribute ('data-disabled');
+      control.removeAttribute ('disabled');
     });
     return result;
   }, function (error) {
     disabledControls.forEach (function (control) {
-      control.disabled = false;
-      control.removeAttribute ('data-disabled');
+      control.removeAttribute ('disabled');
     });
     throw error;
   });
@@ -178,7 +177,7 @@ function createBodyHTML (value, opts) {
 
   if (opts.edit) {
     doc.body.setAttribute ('contenteditable', '');
-    if (!opts.focusTitle) {
+    if (opts.focusBody) {
       doc.body.setAttribute ('onload', 'document.body.focus ()');
     }
   }
@@ -503,95 +502,10 @@ function fillFormControls (form, object, opts) {
   var wait = [];
 
   form.getBodyControl = function () {
-    return this.querySelector ('iframe.control[data-name=body]');
+    return $$c (this, 'body-control')[0]; // or null
   }; // getBodyControl
-  $$c (form, 'iframe.control[data-name]').forEach (function (control) {
-    var value = object.data[control.getAttribute ('data-name')];
-    var valueWaitings = [];
-    control.setAttribute ('sandbox', 'allow-scripts allow-popups');
-    control.setAttribute ('srcdoc', createBodyHTML (value, {edit: true, focusTitle: opts.focusTitle}));
-    var mc = new MessageChannel;
-    control.onload = function () {
-      this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
-      mc.port2.onmessage = function (ev) {
-        if (ev.data.type === 'focus') {
-          control.dispatchEvent (new Event ("focus", {bubbles: true}));
-        } else if (ev.data.type === 'currentValue') {
-          valueWaitings.forEach (function (f) {
-            f (ev.data.value);
-          });
-          valueWaitings = [];
-        } else if (ev.data.type === 'currentState') {
-          $$ (form, 'button[data-action=execCommand]').forEach (function (b) {
-            var value = ev.data.value[b.getAttribute ('data-command')];
-            if (value === undefined) return;
-            b.classList.toggle ('active', value);
-          });
-        } else if (ev.data.type === 'prompt') {
-          var args = ev.data.value;
-          var result = prompt (args.prompt, args.default);
-          ev.ports[0].postMessage ({result: result});
-        }
-      };
-      control.onload = null;
-    };
-    control.sendCommand = function (data) {
-      mc.port2.postMessage (data);
-    };
-    control.sendExecCommand = function (name, value) {
-      mc.port2.postMessage ({type: "execCommand", command: name, value: value});
-    };
-    control.setBlock = function (value) {
-      mc.port2.postMessage ({type: "setBlock", value: value});
-    };
-    control.insertSection = function () {
-      mc.port2.postMessage ({type: "insertSection"});
-    };
-    control.sendAction = function (type, command, value) {
-      mc.port2.postMessage ({type: type, command: command, value: value});
-    };
-    control.getCurrentValue = function () {
-      mc.port2.postMessage ({type: "getCurrentValue"});
-      return new Promise (function (ok) { valueWaitings.push (ok) });
-    };
-    control.sendChange = function (data) {
-      mc.port2.postMessage ({type: "change", value: data});
-    };
-  });
-  $$c (form, 'button[data-action=execCommand]').forEach (function (b) {
-    b.onclick = function () {
-      var ed = form.getBodyControl ();
-      ed.sendExecCommand (this.getAttribute ('data-command'), this.getAttribute ('data-value'));
-      ed.focus ();
-    };
-  });
-  $$c (form, 'button[data-action=setBlock]').forEach (function (b) {
-    b.onclick = function () {
-      var ed = form.getBodyControl ();
-      ed.setBlock (this.getAttribute ('data-value'));
-      ed.focus ();
-    };
-  });
-  $$c (form, 'button[data-action=insertSection]').forEach (function (b) {
-    b.onclick = function () {
-      var ed = form.getBodyControl ();
-      ed.insertSection ();
-      ed.focus ();
-    };
-  });
-  $$c (form, 'button[data-action=indent], button[data-action=outdent], button[data-action=insertControl], button[data-action=link]').forEach (function (b) {
-    b.onclick = function () {
-      var ed = form.getBodyControl ();
-      ed.sendAction (b.getAttribute ('data-action'), b.getAttribute ('data-command'), b.getAttribute ('data-value'));
-      ed.focus ();
-    };
-  });
-  $$c (form, 'button[data-action=panel]').forEach (function (b) {
-    b.onclick = function () {
-      var ev = new Event ('gruwatogglepanel', {bubbles: true});
-      ev.panelName = this.getAttribute ('data-value');
-      form.dispatchEvent (ev);
-    };
+  $$c (form, 'body-control').forEach (function (e) {
+    upgradeBodyControl (e, object, {focusBody: !opts.focusTitle});
   });
   $$c (form, 'input[name]').forEach (function (control) {
     var value = object.data[control.name];
@@ -617,6 +531,109 @@ function fillFormControls (form, object, opts) {
 
   return Promise.all (wait);
 } // fillFormControls
+
+function upgradeBodyControl (e, object, opts) {
+  $$c (e, 'iframe').forEach (function (iframe) {
+    var value = object.data.body;
+    var valueWaitings = [];
+    iframe.setAttribute ('sandbox', 'allow-scripts allow-popups');
+    iframe.setAttribute ('srcdoc', createBodyHTML (value, {edit: true, focusBody: opts.focusBody}));
+    var mc = new MessageChannel;
+    iframe.onload = function () {
+      this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
+      mc.port2.onmessage = function (ev) {
+        if (ev.data.type === 'focus') {
+          iframe.dispatchEvent (new Event ("focus", {bubbles: true}));
+        } else if (ev.data.type === 'currentValue') {
+          valueWaitings.forEach (function (f) {
+            f (ev.data.value);
+          });
+          valueWaitings = [];
+        } else if (ev.data.type === 'currentState') {
+          $$ (e, 'button[data-action=execCommand]').forEach (function (b) {
+            var value = ev.data.value[b.getAttribute ('data-command')];
+            if (value === undefined) return;
+            b.classList.toggle ('active', value);
+          });
+        } else if (ev.data.type === 'prompt') {
+          var args = ev.data.value;
+          var result = prompt (args.prompt, args.default);
+          ev.ports[0].postMessage ({result: result});
+        }
+      };
+      e.onload = null;
+    }; // onload
+    e.sendCommand = function (data) {
+      mc.port2.postMessage (data);
+    };
+    e.sendExecCommand = function (name, value) {
+      mc.port2.postMessage ({type: "execCommand", command: name, value: value});
+    };
+    e.setBlock = function (value) {
+      mc.port2.postMessage ({type: "setBlock", value: value});
+    };
+    e.insertSection = function () {
+      mc.port2.postMessage ({type: "insertSection"});
+    };
+    e.sendAction = function (type, command, value) {
+      mc.port2.postMessage ({type: type, command: command, value: value});
+    };
+    e.getCurrentValues = function () {
+      mc.port2.postMessage ({type: "getCurrentValue"});
+      return new Promise (function (ok) { valueWaitings.push (ok) }).then (function (v) {
+        return [
+          ['body_type', object.data.body_type],
+          ['body', v],
+        ];
+      });
+    };
+    e.sendChange = function (data) {
+      mc.port2.postMessage ({type: "change", value: data});
+    };
+    e.focus = function () {
+      iframe.focus ();
+      var ev = new UIEvent ('focus', {});
+      e.dispatchEvent (ev);
+    };
+    e.setHeight = function (h) {
+      $$c (e, 'menu').forEach (function (f) {
+        h -= f.offsetHeight;
+      });
+      iframe.style.height = h + 'px';
+    };
+  });
+  $$c (e, 'button[data-action=execCommand]').forEach (function (b) {
+    b.onclick = function () {
+      e.sendExecCommand (this.getAttribute ('data-command'), this.getAttribute ('data-value'));
+      e.focus ();
+    };
+  });
+  $$c (e, 'button[data-action=setBlock]').forEach (function (b) {
+    b.onclick = function () {
+      e.setBlock (this.getAttribute ('data-value'));
+      e.focus ();
+    };
+  });
+  $$c (e, 'button[data-action=insertSection]').forEach (function (b) {
+    b.onclick = function () {
+      e.insertSection ();
+      e.focus ();
+    };
+  });
+  $$c (e, 'button[data-action=indent], button[data-action=outdent], button[data-action=insertControl], button[data-action=link]').forEach (function (b) {
+    b.onclick = function () {
+      e.sendAction (b.getAttribute ('data-action'), b.getAttribute ('data-command'), b.getAttribute ('data-value'));
+      e.focus ();
+    };
+  });
+  $$c (e, 'button[data-action=panel]').forEach (function (b) {
+    b.onclick = function () {
+      var ev = new Event ('gruwatogglepanel', {bubbles: true});
+      ev.panelName = this.getAttribute ('data-value');
+      e.dispatchEvent (ev);
+    };
+  });
+} // upgradeBodyControl
 
 var TemplateSelectors = {};
 TemplateSelectors.object = function (object, templates) {
@@ -750,7 +767,7 @@ function upgradeList (el) {
               as.start ({stages: ["formdata", "create", "edit", "update"]});
               var open = false; // XXX true if edit-container is modified but not saved
               editObject (item, object, {open: open}).then (function () {
-                $$ /* not $$c*/ (item, 'edit-container iframe.control[data-name=body]').forEach (function (e) {
+                $$ /* not $$c*/ (item, 'edit-container body-control').forEach (function (e) {
                   e.sendChange (ev.data);
                 });
                 return item.save ({actionStatus: as});
@@ -1107,8 +1124,9 @@ function editObject (article, object, opts) {
       });
     }; // save
 
-    $$c (form, 'main .control, header input').forEach (function (control) {
+    $$c (form, 'body-control, header input').forEach (function (control) {
       control.onfocus = function () {
+console.log("onfocus");
         container.scrollIntoView ();
       };
     });
@@ -1118,7 +1136,6 @@ function editObject (article, object, opts) {
     }));
 
     container.addEventListener ('gruwaeditcommand', function (ev) {
-console.log(ev);
       form.getBodyControl ().sendCommand (ev.data);
     });
 
@@ -1162,17 +1179,16 @@ console.log(ev);
     });;
   }; // onsubmit
 
-  var resize = function () {
-    var h1 = 0;
-    $$c (container, 'form > header, form > main > menu, form > footer').forEach (function (e) {
-      h1 += e.offsetHeight;
-    });
-    var h = document.documentElement.clientHeight - h1;
-    container.querySelector ('main > iframe.control').style.height = h + 'px';
-  }; // resize
-  addEventListener ('resize', resize);
-  wait.push (Promise.resolve ().then (resize));
-
+    var resize = function () {
+      var h1 = 0;
+      $$c (container, 'form > header, form > footer').forEach (function (e) {
+        h1 += e.offsetHeight;
+      });
+      var h = document.documentElement.clientHeight - h1;
+      container.querySelector ('form > main > body-control').setHeight (h);
+    }; // resize
+    addEventListener ('resize', resize);
+    wait.push (Promise.resolve ().then (resize));
   } // !container
 
   if (opts.open) {
@@ -1182,7 +1198,7 @@ console.log(ev);
       var title = container.querySelector ('input[name=title]');
       if (title) title.focus ();
     } else {
-      var body = container.querySelector ('.control[data-name=body]');
+      var body = container.querySelector ('body-control');
       if (body) body.focus ();
     }
   }
@@ -1195,11 +1211,12 @@ function saveObject (article, form, object, opts) {
   var fd = new FormData;
   var c = [];
   var ps = [];
-  $$ (form, '.control[data-name]').forEach (function (control) {
-    var name = control.getAttribute ('data-name');
-    ps.push (control.getCurrentValue ().then (function (value) {
-      fd.append (name, value);
-      c.push (function () { object.data[name] = value });
+  $$c (form, 'body-control').forEach (function (control) {
+    ps.push (control.getCurrentValues ().then (function (nvs) {
+      nvs.forEach (function (_) {
+        fd.append (_[0], _[1]);
+        c.push (function () { object.data[_[0]] = _[1] });
+      });
     }));
   });
   $$ (form, 'input[name]:not([type]), input[name][type=hidden]').forEach (function (control) {

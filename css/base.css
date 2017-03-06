@@ -430,7 +430,7 @@ h1 a:visited {
   text-decoration: none;
 }
 
-iframe.control[data-disabled] {
+body-control[disabled] iframe {
   pointer-events: none;
 }
 

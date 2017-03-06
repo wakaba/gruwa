@@ -6,32 +6,33 @@
         <p><input name=title placeholder=題名>
       </header>
     <main>
-      <menu>
-        <button type=button data-action=execCommand data-command=bold title=太字><b>B</b></button
-        ><button type=button data-action=execCommand data-command=italic title=斜体><i>I</i></button
-        ><button type=button data-action=execCommand data-command=underline title=下線><u>U</u></button
-        ><button type=button data-action=execCommand data-command=strikethrough title=取り消し線><s>S</s></button>
-        <button type=button data-action=execCommand data-command=superscript title=上付き><var>x</var><sup>2</sup></button
-        ><button type=button data-action=execCommand data-command=subscript title=下付き><var>x</var><sub>2</sub></button>
+      <body-control>
+        <menu>
+          <button type=button data-action=execCommand data-command=bold title=太字><b>B</b></button
+          ><button type=button data-action=execCommand data-command=italic title=斜体><i>I</i></button
+          ><button type=button data-action=execCommand data-command=underline title=下線><u>U</u></button
+          ><button type=button data-action=execCommand data-command=strikethrough title=取り消し線><s>S</s></button>
+          <button type=button data-action=execCommand data-command=superscript title=上付き><var>x</var><sup>2</sup></button
+          ><button type=button data-action=execCommand data-command=subscript title=下付き><var>x</var><sub>2</sub></button>
 
-        <button type=button data-action=setBlock data-value=div title=段落>¶</button
-        ><button type=button data-action=setBlock data-value=ol title=順序>1.</button
-        ><button type=button data-action=setBlock data-value=ul title=箇条書き>◦</button>
+          <button type=button data-action=setBlock data-value=div title=段落>¶</button
+          ><button type=button data-action=setBlock data-value=ol title=順序>1.</button
+          ><button type=button data-action=setBlock data-value=ul title=箇条書き>◦</button>
 
-        <!--<button type=button data-action=insertSection title=章節>§</button>-->
+          <!--<button type=button data-action=insertSection title=章節>§</button>-->
 
-        <button type=button data-action=outdent title=浅く>←</button
-        ><button type=button data-action=indent title=深く>→</button>
+          <button type=button data-action=outdent title=浅く>←</button
+          ><button type=button data-action=indent title=深く>→</button>
 
-        <button type=button data-action=link data-command=url title="Web サイトにリンク">://</button
-        ><button type=button data-action=link data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
+          <button type=button data-action=link data-command=url title="Web サイトにリンク">://</button
+          ><button type=button data-action=link data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
 
-        <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button
-        ><button type=button data-action=panel data-value=image-list title=画像>&#x1F3A8;</button
-        ><button type=button data-action=panel data-value=file-list title=ファイル>&#x1F4C4;</button>
-      </menu>
-      <iframe class=control data-name=body />
-      <input type=hidden name=body_type value=1>
+          <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button
+          ><button type=button data-action=panel data-value=image-list title=画像>&#x1F3A8;</button
+          ><button type=button data-action=panel data-value=file-list title=ファイル>&#x1F4C4;</button>
+        </menu>
+        <iframe />
+      </body-control>
     </main>
     <footer>
       <p class=operations>

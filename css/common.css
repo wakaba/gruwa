@@ -318,7 +318,7 @@ edit-container > * > form {
   padding: 0;
 }
 
-edit-container iframe.control {
+edit-container body-control iframe {
   border: 1px dotted;
   border-color: var(--main-border-color);
   box-sizing: border-box;
@@ -341,12 +341,12 @@ edit-container main {
   padding: 0;
 }
 
-edit-container main > menu {
+edit-container body-control menu {
   margin: 0;
   padding: 0.2em 0 0 0;
 }
 
-edit-container main > menu button {
+edit-container body-control button {
   border-style: none;
   background: transparent;
   color: inherit;
@@ -356,13 +356,13 @@ edit-container main > menu button {
   vertical-align: middle;
 }
 
-edit-container main > menu button.active {
+edit-container body-control button.active {
   background: var(--dark-background-color);
   color: var(--dark-color);
 }
 
-edit-container main > menu button:not(.active):hover,
-edit-container main > menu button:not(.active):active {
+edit-container body-control button:not(.active):hover,
+edit-container body-control button:not(.active):active {
   background: var(--toolbar-hover-background-color);
   color: var(--toolbar-hover-color);
 }
