@@ -1160,7 +1160,8 @@ function upgradeList (el) {
   $$c (el, 'article.object.new').forEach (function (article) {
     $$c (article, '.edit-button').forEach (function (button) {
       button.onclick = function () {
-        var data = {index_ids: {}, timestamp: (new Date).valueOf () / 1000};
+        var data = {index_ids: {}, timestamp: (new Date).valueOf () / 1000,
+                    body_type: 1, body: ""};
         data.index_ids[el.getAttribute ('src-index_id')] = 1;
         var wikiName = el.getAttribute ('src-wiki_name');
         if (wikiName) data.title = wikiName;
