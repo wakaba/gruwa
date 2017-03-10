@@ -163,6 +163,17 @@
       見たままモードでは、記事が表示されるままの形で編集できます。
       ソースモードでは、記事の HTML タグを編集できます。
 
+      <p id=syntaxes>編集画面の「設定」から、標準の<dfn id=syntax-wysiwyg>見たまま</dfn>の他に、
+      はてな記法を編集形式として選ぶことができます。
+      「見たまま」以外の編集形式を選ぶと、
+      「ソース」モードと「プレビュー」モードを切り替えて編集できるようになります。
+
+      <p><a href=https://wiki.suikawiki.org/n/%E3%81%AF%E3%81%A6%E3%81%AA%E8%A8%98%E6%B3%95><dfn id=syntax-hatena>はてな記法</dfn></a>は、
+      <a href=http://hatenablog.com/>はてなブログ</a>で用いられている構文です。
+      ただし、 Gruwa では一部の記法の扱いが異なっています。
+      はてなキーワードへのリンクは、<a href=#default-wiki-index>グループの
+      Wiki</a> へのリンクと解釈します。
+
       <hr>
 
       <p>各記事には<dfn id=object-comments>コメント欄</dfn>があり、

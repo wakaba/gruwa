@@ -10,6 +10,7 @@
           <menu class=tab-buttons>
             <a href=javascript: class=active data-name=iframe>見たまま</a>
             <a href=javascript: data-name=textarea>ソース</a>
+            <a href=javascript: data-name=preview>プレビュー</a>
             <a href=javascript: data-name=config>設定</a>
           </menu>
           <body-control-tab name=iframe>
@@ -42,6 +43,9 @@
           <body-control-tab name=textarea hidden>
             <textarea />
           </body-control-tab>
+          <body-control-tab name=preview hidden>
+            <iframe/>
+          </body-control-tab>
           <body-control-tab name=config hidden>
             <table class=config>
               <tbody>
@@ -49,9 +53,10 @@
                   <th><label data-bc-for=body_source_type>編集形式</label>
                   <td>
                     <select data-bc-name=body_source_type>
-                      <option value=0>見たまま
+                      <option value=0>見たまま (推奨)
                       <option value=3>はてな記法
                     </select>
+                    (<a href=/help#syntaxes target=help>ヘルプ</a>)
                     <p><strong>注意</strong>: 
                     編集形式ごとに表現できる内容には違いがあります。
                     後から編集形式を変更すると、情報が失われることがあります。
@@ -64,6 +69,8 @@
         <button type=submit class=save-button>保存する</button>
         <button type=button class=cancel-button>取り消し</button>
         <action-status hidden
+            stage-loader=読込中...
+            stage-saver=変換中...
             stage-create=作成中...
             stage-edit=保存中...
             stage-update=更新中... />

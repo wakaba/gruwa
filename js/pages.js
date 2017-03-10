@@ -440,9 +440,9 @@ function fillFields (contextEl, rootEl, el, object) {
       });
     } else if (field.localName === 'iframe') {
       field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
-      field.setAttribute ('srcdoc', createBodyHTML (value, {}));
+      field.setAttribute ('srcdoc', createBodyHTML ('', {}));
+      var mc = new MessageChannel;
       field.onload = function () {
-        var mc = new MessageChannel;
         this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
         mc.port2.onmessage = function (ev) {
           if (ev.data.type === 'height') {
@@ -455,6 +455,9 @@ function fillFields (contextEl, rootEl, el, object) {
         };
         field.onload = null;
       };
+      mc.port2.postMessage ({type: "setCurrentValue",
+                             valueSourceType: (object.data ? object.data.body_source_type : null),
+                             value: value});
     } else if (field.localName === 'todo-state') {
       if (value) {
         field.setAttribute ('value', value);
@@ -505,7 +508,7 @@ function fillFormControls (form, object, opts) {
     return $$c (this, 'body-control')[0]; // or null
   }; // getBodyControl
   $$c (form, 'body-control').forEach (function (e) {
-    upgradeBodyControl (e, object, {focusBody: !opts.focusTitle});
+    upgradeBodyControl (e, object, {focusBody: !opts.focusTitle, form: form});
   });
   $$c (form, 'input[name]').forEach (function (control) {
     var value = object.data[control.name];
@@ -550,15 +553,19 @@ function upgradeBodyControl (e, object, opts) {
   var currentMode = null;
   var loader = {};
   var saver = {};
-  var changeMode = function (newMode) {
+  var changeMode = function (newMode, as) {
     if (currentMode === newMode) return Promise.resolve ();
     var oldDisabled = e.disabled;
     if (!oldDisabled) e.disabled = true;
     return Promise.resolve ().then (function () {
+      as.stageStart ("saver");
       if (currentMode) return saver[currentMode] ();
     }).then (function () {
+      as.stageEnd ("saver");
+      as.stageStart ("loader");
       if (newMode) return loader[newMode] ();
     }).then (function () {
+      as.stageEnd ("loader");
       if (newMode) currentMode = newMode;
       if (!oldDisabled) e.disabled = false;
     });
@@ -571,7 +578,13 @@ function upgradeBodyControl (e, object, opts) {
     $$c (e, 'body-control-tab').forEach (function (f) {
       f.hidden = f.getAttribute ('name') !== name;
     });
-    changeMode (name);
+    var as = getActionStatus (opts.form);
+    as.start ({stages: ["saver", "loader"]});
+    changeMode (name, as).then (function () {
+      as.end ({ok: true});
+    }, function (error) {
+      as.end ({error: error});
+    });
   }; // showTab
   $$c (e, '.tab-buttons a').forEach (function (b) {
     b.onclick = function () {
@@ -591,7 +604,7 @@ function upgradeBodyControl (e, object, opts) {
     } else if (data.body_source_type == 3) { // hatena
       $$c (e, '.tab-buttons a').forEach (function (b) {
         var name = b.getAttribute ('data-name');
-        b.hidden = (name !== 'textarea' && name !== 'config');
+        b.hidden = (name !== 'textarea' && name !== 'preview' && name !== 'config');
       });
       if (opts.show) showTab ('textarea');
     } else {
@@ -698,7 +711,9 @@ function upgradeBodyControl (e, object, opts) {
     });
   }; // saver.iframe
   loader.iframe = function () {
-    mc.port2.postMessage ({type: "setCurrentValue", value: data.body});
+    mc.port2.postMessage ({type: "setCurrentValue",
+                           value: data.body,
+                           valueSourceType: data.body_source_type});
   }; // loader.iframe
 
   $$c (e, 'button[data-action=execCommand]').forEach (function (b) {
@@ -745,10 +760,50 @@ function upgradeBodyControl (e, object, opts) {
     if (data.body_source_type == 0) { // WYSIWYG
       data.body = textarea.value;
     } else {
-      data.body_source = textarea.value;
-      data.body = data.body_source; // XXX
+      if (data.body_source !== textarea.value) {
+        data.body_source = textarea.value;
+        if (data.body_source_type == 3) {
+          return fetch ("https://textformatter.herokuapp.com/hatena?urlbase=https://profile.hatena.ne.jp/", {
+            method: "post",
+            body: data.body_source,
+          }).then (function (r) {
+            return r.text ();
+          }).then (function (x) {
+            var div = document.createElement ('div');
+            div.innerHTML = x;
+            $$ (div, 'a[href^="http://d.hatena.ne.jp/keyword/"]').forEach (function (link) {
+              var url = link.getAttribute ('href');
+              if (url === "http://d.hatena.ne.jp/keyword/" + encodeURIComponent (link.textContent)) {
+                link.classList.add ('hatena-keyword');
+                link.href = document.documentElement.getAttribute ('data-group-url') + '/wiki/' + encodeURIComponent (link.textContent);
+              }
+            });
+            data.body = div.innerHTML;
+          });
+        } else {
+          data.body = data.body_source;
+        }
+      }
     }
   }; // saver.textarea
+
+  loader.preview = function () {
+    var field = e.querySelector ('body-control-tab[name=preview] iframe');
+    field.setAttribute ('sandbox', 'allow-scripts');
+    field.setAttribute ('srcdoc', createBodyHTML ('', {}));
+    var mc = new MessageChannel;
+    field.onload = function () {
+      this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
+      field.onload = null;
+    };
+    mc.port2.postMessage ({type: "setCurrentValue",
+                           valueSourceType: data.body_source_type,
+                           value: data.body});
+    mc.port2.close ();
+  }; // loader.preview
+  saver.preview = function () {
+    //
+  }; // saver.preview
 
   var config = e.querySelector ('body-control-tab[name=config]');
   var prefix = Math.random () + '-';
@@ -767,8 +822,8 @@ function upgradeBodyControl (e, object, opts) {
   });
   loader.config = saver.config = function () { };
 
-  e.getCurrentValues = function () {
-    return changeMode (null).then (function () {
+  e.getCurrentValues = function (opts) {
+    return changeMode (null, opts.actionStatus).then (function () {
       if (data.body_type == 1) {
         if (data.hasSource || data.body_source_type != 0) {
           return [
@@ -1312,7 +1367,7 @@ function editObject (article, object, opts) {
 
   form.onsubmit = function () {
     var as = getActionStatus (form);
-    as.start ({stages: ["dataset", "create", "edit", "update"]});
+    as.start ({stages: ["saver", "dataset", "create", "edit", "update"]});
     article.save ({actionStatus: as}).then (function (objectId) {
       as.stageStart ("update");
       if (object.object_id) {
@@ -1374,7 +1429,7 @@ function saveObject (article, form, object, opts) {
   var c = [];
   var ps = [];
   $$c (form, 'body-control').forEach (function (control) {
-    ps.push (control.getCurrentValues ().then (function (nvs) {
+    ps.push (control.getCurrentValues ({actionStatus: opts.actionStatus}).then (function (nvs) {
       nvs.forEach (function (_) {
         if (_[1] != null) {
           fd.append (_[0], _[1]);

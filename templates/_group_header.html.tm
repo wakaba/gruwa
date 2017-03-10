@@ -17,7 +17,7 @@
       <menu hidden>
         <li><a href=/dashboard>ダッシュボード</></li>
         <t:if x="$group_member->{data}->{default_index_id}">
-          <li><a pl:href="'/g/'.$group->{group_id}.'/i/'.$group_member->{data}->{default_index_id}.'/'">グループ日記</a>
+          <li><a pl:href="'/g/'.$group->{group_id}.'/i/'.$group_member->{data}->{default_index_id}.'/'">グループの自分の日記</a>
         </t:if>
         <hr>
         <list-container src=/jump/list.json key=items type=list>

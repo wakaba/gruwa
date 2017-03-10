@@ -9,6 +9,10 @@ body {
   white-space: pre-wrap;
 }
 
+body[data-source-type="3"] {
+  white-space: normal;
+}
+
 menu.context {
   position: absolute;
   margin: 0;

@@ -16,7 +16,9 @@ function handleMessage (ev) {
     });
     sendToParent ({type: "currentValue", value: div.innerHTML});
   } else if (ev.data.type === 'setCurrentValue') {
+    document.body.setAttribute ('data-source-type', ev.data.valueSourceType || 0);
     document.body.innerHTML = ev.data.value;
+    sendHeight ();
   } else if (ev.data.type === 'getHeight') {
     sendHeight ();
   } else if (ev.data.type === 'execCommand') {

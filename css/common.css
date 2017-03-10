@@ -425,6 +425,11 @@ edit-container body-control textarea {
   width: 100%;
 }
 
+edit-container body-control textarea {
+  font-size: 100%;
+  line-height: 1.8;
+}
+
 edit-container footer {
   float: right;
 }
