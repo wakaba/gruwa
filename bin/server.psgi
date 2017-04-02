@@ -16,6 +16,7 @@ use CommonPages;
 use AccountPages;
 use GroupPages;
 use JumpPages;
+use ImportPages;
 
 my $config_path = path ($ENV{CONFIG_FILE} // die "No |CONFIG_FILE|");
 my $Config = json_bytes2perl $config_path->slurp;
@@ -175,6 +176,11 @@ return sub {
         if ($path->[0] eq 'u') {
           # /u
           return AccountPages->user ($app, $path, $acall);
+        }
+
+        if ($path->[0] eq 'import') {
+          # /import
+          return ImportPages->main ($app, $path);
         }
 
         if (@$path == 1) {

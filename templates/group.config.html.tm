@@ -162,6 +162,45 @@
     </section>
   </section>
 
+  <!-- XXX experimental -->
+  <section>
+    <h1>他のサービスからインポート</h1>
+
+    <list-container type=table id=import-list>
+      <template>
+        <td><code data-field=origin></code>
+        <td>
+          <input type=hidden name=sourceId data-field=sourceId>
+          <button type=button class=start-button onclick="
+            Importer.createClient (previousElementSibling.value).then (function (client) {
+              var group = new Importer.HatenaGroup (client);
+              group.diarylist ().then (function (x) { console.log (x) });
+            });
+          ">インポート開始</button>
+      </template>
+      <table>
+        <thead>
+          <tr>
+            <th>サイト
+            <th>操作
+        <tbody>
+      </table>
+      <list-is-empty>
+        現在インポートできるサイトはありません。
+      </list-is-empty>
+    </list-container>
+
+    <script src=/js/import.js />
+    <button onclick="
+      Importer.getImportSources ().then (function (results) {
+        var list = document.querySelector ('#import-list');
+        list.clearObjects ();
+        list.showObjects (results, {});
+      });
+    ">Reload
+    </button>
+  </section>
+
 <!--
 
 Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
