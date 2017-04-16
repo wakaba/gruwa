@@ -12,7 +12,7 @@ updatenightly: local/bin/pmbp.pl
 
 ## ------ Setup ------
 
-deps: git-submodules pmbp-install
+deps: git-submodules pmbp-install js/sha1.js
 
 git-submodules:
 	$(GIT) submodule update --init
@@ -31,6 +31,9 @@ pmbp-install: pmbp-upgrade
             --create-perl-command-shortcut @perl \
             --create-perl-command-shortcut @prove \
             --create-perl-command-shortcut @lserver=perl\ bin/local.pl
+
+js/sha1.js:
+	$(WGET) -O $@ https://raw.githubusercontent.com/emn178/js-sha1/master/src/sha1.js
 
 ## ------ Tests ------
 

@@ -22,7 +22,10 @@
           port.close ();
         }, function (error) {
           if (error instanceof global.Response) {
-            port.postMessage ({error: true, message: "Response error " + error.status});
+            port.postMessage ({error: true,
+                               message: "Response error " + error.status,
+                               response: {status: error.status,
+                                          statusText: error.statusText}});
             port.close ();
           } else {
             port.postMessage ({error: true, message: "" + error});

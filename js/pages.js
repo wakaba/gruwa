@@ -49,6 +49,17 @@ function $$ancestor (e, name) {
   return null;
 } // $$ancestor
 
+function $promised () { }
+
+$promised.forEach = function (code, items) {
+  var list = Array.prototype.slice.call (items);
+  var run; run = function () {
+    if (!list.length) return Promise.resolve ();
+    return Promise.resolve (list.shift ()).then (code).then (run);
+  };
+  return run ();
+}; // forEach
+
 (function () {
   var handlers = {};
   var promises = {};

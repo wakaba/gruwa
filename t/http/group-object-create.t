@@ -142,6 +142,41 @@ Test {
   });
 } n => 15, name => 'create with source';
 
+Test {
+  my $current = shift;
+  my $site = 'https://' . rand . '.test/foo/';
+  my $page = $site . rand;
+  my $sha = rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->post_json (['o', 'create.json'], {
+      source_page => $page,
+      source_site => $site,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    $current->set_o (o1 => $_[0]->{json});
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => $current->generate_text,
+      source_sha => $sha,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['imported', $site, 'list.json'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 1;
+      my $item = $result->{json}->{items}->[0];
+      is $item->{source_page}, $page;
+      ok $item->{created} < $item->{updated};
+      is $item->{type}, 2;
+      is $item->{dest_id}, $current->o ('o1')->{object_id};
+      is $item->{sync_info}->{timestamp}, undef;
+      is $item->{sync_info}->{sha}, $sha;
+    } $current->c;
+  });
+} n => 7, name => 'create with source sha';
+
 RUN;
 
 =head1 LICENSE

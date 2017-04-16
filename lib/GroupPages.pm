@@ -1236,11 +1236,13 @@ sub group_object ($$$$) {
           });
         })->then (sub {
           my $ts = $app->bare_param ('source_timestamp');
-          return unless $ts;
+          my $sha = $app->bare_param ('source_sha');
+          return unless $ts or $sha;
+          my $info = {};
+          $info->{timestamp} = $ts if $ts;
+          $info->{sha} = $sha if defined $sha;
           return $db->update ('imported', {
-            sync_info => Dongry::Type->serialize ('json', {
-              timestamp => 0+$ts,
-            }),
+            sync_info => Dongry::Type->serialize ('json', $info),
             updated => $time,
           }, where => {
             group_id => Dongry::Type->serialize ('text', $path->[1]),

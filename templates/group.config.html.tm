@@ -189,6 +189,7 @@
       </list-is-empty>
     </list-container>
 
+    <script src=/js/sha1.js />
     <script src=/js/import.js />
     <button onclick="
       Importer.getImportSources ().then (function (results) {
@@ -205,17 +206,26 @@
           stage-getkeywordlist=キーワード一覧を取得中...
           stage-createkeywordwiki=キーワード用Wikiを作成中...
           stage-createkeywordobjects=キーワードをインポート中...
-          ok=完了しました ng=失敗しました />
-      <table class=mapping-table hidden>
-        <thead>
-          <tr>
-            <th>元サイト
-            <th>このグループ
-        <tbody>
-          <tr class=keywords-info hidden>
-            <td>キーワード (<data data-field=count />)
-            <td><a data-href-template=i/{index_id}/ data-field=title data-empty=Wiki />
-      </table>
+          ok=完了しました />
+      <list-container type=table class=mapping-table>
+        <template>
+          <td><cite data-field=originalTitle>
+          <td><a data-href-template=i/{index_id}/ data-field=title data-empty=(トップページ) />
+          <td><data data-field=itemCount />
+          <td><action-status
+                  stage-objects=変換中...
+                  ok=完了 />
+        </template>
+        <table hidden>
+          <thead>
+            <tr>
+              <th>元サイト
+              <th>インポート先
+              <th>件数
+              <th>進捗
+          <tbody>
+        </table>
+      </list-container>
     </div>
 
     <p><a href id=bookmarklet-link data-confirm=ブックマークレットとしてお使いください>Gruwa インポート用ブックマークレット</a>
