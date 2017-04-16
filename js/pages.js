@@ -1715,6 +1715,18 @@ ActionStatus.prototype.stageProgress = function (stage, value, max) {
   } else {
     this.stages[stage] = 0;
   }
+  var self = this;
+  this.elements.forEach (function (e) {
+    $$ (e, 'progress').forEach (function (f) {
+      var stages = Object.keys (self.stages);
+      f.max = stages.length;
+      var v = 0;
+      stages.forEach (function (s) {
+        v += self.stages[s];
+      });
+      f.value = v;
+    });
+  });
 }; // stageProgress
 
 ActionStatus.prototype.stageEnd = function (stage) {
@@ -2237,6 +2249,8 @@ $$ (document, 'unit-number').forEach (upgradeUnitNumber);
 
 /*
 
+License:
+
 Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
@@ -2250,6 +2264,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 */

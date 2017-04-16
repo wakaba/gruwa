@@ -172,10 +172,9 @@
         <td>
           <input type=hidden name=sourceId data-field=sourceId>
           <button type=button class=start-button onclick="
-            Importer.createClient (previousElementSibling.value).then (function (client) {
-              var group = new Importer.HatenaGroup (client);
-              group.diarylist ().then (function (x) { console.log (x) });
-            });
+            Importer.run (previousElementSibling.value,
+                          document.querySelector ('#import-status'),
+                          {forceUpdate: hasAttribute ('data-force')});
           ">インポート開始</button>
       </template>
       <table>
@@ -199,6 +198,36 @@
       });
     ">Reload
     </button>
+
+    <div id=import-status>
+      <action-status
+          stage-getimported=インポート済みデータを確認中...
+          stage-getkeywordlist=キーワード一覧を取得中...
+          stage-createkeywordwiki=キーワード用Wikiを作成中...
+          stage-createkeywordobjects=キーワードをインポート中...
+          ok=完了しました ng=失敗しました />
+      <table class=mapping-table hidden>
+        <thead>
+          <tr>
+            <th>元サイト
+            <th>このグループ
+        <tbody>
+          <tr class=keywords-info hidden>
+            <td>キーワード (<data data-field=count />)
+            <td><a data-href-template=i/{index_id}/ data-field=title data-empty=Wiki />
+      </table>
+    </div>
+
+    <p><a href id=bookmarklet-link data-confirm=ブックマークレットとしてお使いください>Gruwa インポート用ブックマークレット</a>
+    <script>
+      var url = "javascript:var script=document.createElement('script');script.src='"+location.origin+"/js/embedded.js';document.body.appendChild(script)";
+      var a = document.querySelector ("#bookmarklet-link");
+      a.href = url;
+      a.onclick = function () {
+        alert (this.getAttribute ('data-confirm'));
+        return false;
+      };
+    </script>
   </section>
 
 <!--

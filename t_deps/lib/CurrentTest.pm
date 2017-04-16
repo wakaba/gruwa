@@ -4,6 +4,7 @@ use warnings;
 use Promise;
 use Promised::Flow;
 use JSON::PS;
+use Web::Encoding;
 use Web::URL;
 use Web::Transport::ConnectionClient;
 use Test::More;
@@ -149,6 +150,12 @@ sub post_json ($$$;%) {
             res => $res};
   });
 } # post_json
+
+sub generate_text ($;$) {
+  my $v = rand;
+  $v .= chr int rand 0x10FFFF for 1..rand 10;
+  return $_[0]->{objects}->{$_[1] // ''} = decode_web_utf8 encode_web_utf8 $v;
+} # generate_text
 
 sub create_group ($$$) {
   my ($self, $name, $opts) = @_;

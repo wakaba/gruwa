@@ -91,11 +91,84 @@ Test {
   });
 } n => 3, name => 'create an image album';
 
+Test {
+  my $current = shift;
+  my $site = 'https://' . rand . '.test/foo/';
+  my $page = $site . rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->are_errors (
+      ['POST', ['i', 'create.json'], {
+        index_type => 6,
+        title => $current->generate_text,
+        source_page => $page,
+        source_site => $site,
+      }, account => 'a1', group => 'g1'],
+      [
+        {params => {
+          index_type => 6,
+          title => $current->generate_text,
+          #source_page => $page,
+          source_site => $site,
+        }, status => 400},
+        {params => {
+          index_type => 6,
+          title => $current->generate_text,
+          source_page => $page,
+          #source_site => $site,
+        }, status => 400},
+        {params => {
+          index_type => 6,
+          title => $current->generate_text,
+          source_page => rand,
+          source_site => $site,
+        }, status => 400},
+        {params => {
+          index_type => 6,
+          title => $current->generate_text,
+          source_page => $page,
+          source_site => rand,
+        }, status => 400},
+        {params => {
+          index_type => 6,
+          title => $current->generate_text,
+          source_page => $page,
+          source_site => 'https://test',
+        }, status => 400},
+      ],
+    );
+  })->then (sub {
+    return $current->post_json (['i', 'create.json'], {
+      index_type => 6,
+      title => $current->generate_text,
+      source_page => $page,
+      source_site => $site,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    $current->set_o (i1 => $_[0]->{json});
+    return $current->get_json (['imported', $site, 'list.json'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 1;
+      my $item = $result->{json}->{items}->[0];
+      is $item->{source_page}, $page;
+      ok $item->{created};
+      ok $item->{updated};
+      is $item->{type}, 1;
+      is $item->{dest_id}, $current->o ('i1')->{index_id};
+      like $result->{res}->body_bytes, qr{"dest_id"\s*:\s*"};
+      is ref $item->{sync_info}, 'HASH';
+    } $current->c;
+  });
+} n => 9, name => 'create with source';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

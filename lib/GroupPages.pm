@@ -14,6 +14,7 @@ use Web::URL;
 use Web::URL::Encoding;
 use Web::DOM::Document;
 
+use Pager;
 use Results;
 
 sub get_index ($$$) {
@@ -251,6 +252,32 @@ sub group ($$$$) {
     });
   }
 
+  if (@$path == 5 and $path->[2] eq 'imported' and $path->[4] eq 'list.json') {
+    # /g/{group_id}/imported/{site}/list.json
+    my $site = Web::URL->parse_string ($path->[3]);
+    return $app->throw_error (404, reason_phrase => 'Bad site URL')
+        unless defined $site;
+    my $page = Pager::this_page ($app, limit => 100, max_limit => 100);
+    my $where = {
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+      source_site_sha => sha1_hex (Dongry::Type->serialize ('text', $site->stringify)),
+    };
+    $where->{created} = $page->{value} if defined $page->{value};
+    return $db->select ('imported', $where,
+      fields => ['source_page', 'created', 'updated', 'type', 'dest_id', 'sync_info'],
+      offset => $page->{offset}, limit => $page->{limit},
+      order => ['created', $page->{order_direction}],
+    )->then (sub {
+      my $items = $_[0]->all->to_a;
+      for (@$items) {
+        $_->{sync_info} = Dongry::Type->parse ('json', $_->{sync_info});
+        $_->{dest_id} .= '';
+      }
+      my $next_page = Pager::next_page $page, $items, 'created';
+      return json $app, {items => $items, %$next_page};
+    });
+  }
+
   return $app->throw_error (404);
 } # group
 
@@ -390,6 +417,33 @@ sub group_members_json ($$$$) {
     });
   } # GET
 } # group_members_json
+
+sub source_urls ($) {
+  my $app = $_[0];
+
+  my $source_url = $app->text_param ('source_page');
+  if (defined $source_url) {
+    $source_url = Web::URL->parse_string ($source_url);
+    return $app->throw_error (400, reason_phrase => 'Bad |source_page|')
+        if not defined $source_url or
+           not $source_url->is_http_s;
+  }
+
+  my $source_site_url = $app->text_param ('source_site');
+  if (defined $source_site_url) {
+    $source_site_url = Web::URL->parse_string ($source_site_url);
+    return $app->throw_error (400, reason_phrase => 'Bad |source_site|')
+        if not defined $source_site_url or
+           not $source_site_url->is_http_s;
+  }
+  return $app->throw_error (400, reason_phrase => 'Bad |source_site|')
+      if (defined $source_url and not defined $source_site_url) or
+         (not defined $source_url and defined $source_site_url) or
+         (defined $source_url and defined $source_site_url and
+          not $source_url->get_origin->same_origin_as ($source_site_url->get_origin));
+
+  return ($source_site_url, $source_url);
+} # source_urls
 
 sub group_index ($$$$) {
   my ($class, $app, $path, $opts) = @_;
@@ -548,9 +602,13 @@ sub group_index ($$$$) {
     # /g/{group_id}/i/create.json
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
+
     my $title = $app->text_param ('title') // '';
     return $app->throw_error (400, reason_phrase => 'Bad |title|')
         unless length $title;
+
+    my ($source_site_url, $source_page_url) = source_urls $app;
+
     my $time = time;
     return $db->execute ('select uuid_short() as uuid')->then (sub {
       my $index_id = $_[0]->first->{uuid};
@@ -577,6 +635,29 @@ sub group_index ($$$$) {
         index_type => $index_type,
         options => Dongry::Type->serialize ('json', $options),
       }])->then (sub {
+        return unless defined $source_site_url;
+        my $page = Dongry::Type->serialize ('text', $source_page_url->stringify);
+        my $site = Dongry::Type->serialize ('text', $source_site_url->stringify);
+        return $db->insert ('imported', [{
+          group_id => Dongry::Type->serialize ('text', $path->[1]),
+          source_page_sha => sha1_hex ($page),
+          source_page => $page,
+          source_site_sha => sha1_hex ($site),
+          source_site => $site,
+          created => $time,
+          updated => $time,
+          type => 1, # index
+          dest_id => $index_id,
+          sync_info => Dongry::Type->serialize ('json', {}),
+        }], duplicate => {
+          source_site => $db->bare_sql_fragment ('values(`source_site`)'),
+          source_site_sha => $db->bare_sql_fragment ('values(`source_site_sha`)'),
+          updated => $db->bare_sql_fragment ('values(`updated`)'),
+          type => $db->bare_sql_fragment ('values(`type`)'),
+          dest_id => $db->bare_sql_fragment ('values(`dest_id`)'),
+          sync_info => $db->bare_sql_fragment ('values(`sync_info`)'),
+        });
+      })->then (sub {
         return json $app, {
           group_id => $path->[1],
           index_id => ''.$index_id,
@@ -1154,6 +1235,19 @@ sub group_object ($$$$) {
             });
           });
         })->then (sub {
+          my $ts = $app->bare_param ('source_timestamp');
+          return unless $ts;
+          return $db->update ('imported', {
+            sync_info => Dongry::Type->serialize ('json', {
+              timestamp => 0+$ts,
+            }),
+            updated => $time,
+          }, where => {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            type => 2, # object
+            dest_id => Dongry::Type->serialize ('text', $path->[3]),
+          });
+        })->then (sub {
           return json $app, {
             object_revision_id => ''.$object->{data}->{object_revision_id},
           } if keys %{$changes->{fields}};
@@ -1509,6 +1603,9 @@ sub group_object ($$$$) {
     # /g/{group_id}/o/create.json
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
+
+    my ($source_site_url, $source_page_url) = source_urls $app;
+
     return create_object ($db,
       group_id => $path->[1],
       author_account_id => $opts->{account}->{account_id},
@@ -1517,12 +1614,38 @@ sub group_object ($$$$) {
       ) : ())
     )->then (sub {
       my $result = $_[0];
-      return json $app, {
-        group_id => $path->[1],
-        object_id => $result->{object_id},
-        object_revision_id => $result->{object_revision_id},
-        upload_token => $result->{upload_token},
-      };
+      return Promise->resolve->then (sub {
+        return unless defined $source_page_url;
+        my $page = Dongry::Type->serialize ('text', $source_page_url->stringify);
+        my $site = Dongry::Type->serialize ('text', $source_site_url->stringify);
+        my $time = time;
+        return $db->insert ('imported', [{
+          group_id => Dongry::Type->serialize ('text', $path->[1]),
+          source_page_sha => sha1_hex ($page),
+          source_page => $page,
+          source_site_sha => sha1_hex ($site),
+          source_site => $site,
+          created => $time,
+          updated => $time,
+          type => 2, # object
+          dest_id => $result->{object_id},
+          sync_info => Dongry::Type->serialize ('json', {}),
+        }], duplicate => {
+          source_site => $db->bare_sql_fragment ('values(`source_site`)'),
+          source_site_sha => $db->bare_sql_fragment ('values(`source_site_sha`)'),
+          updated => $db->bare_sql_fragment ('values(`updated`)'),
+          type => $db->bare_sql_fragment ('values(`type`)'),
+          dest_id => $db->bare_sql_fragment ('values(`dest_id`)'),
+          sync_info => $db->bare_sql_fragment ('values(`sync_info`)'),
+        });
+      })->then (sub {
+        return json $app, {
+          group_id => $path->[1],
+          object_id => $result->{object_id},
+          object_revision_id => $result->{object_revision_id},
+          upload_token => $result->{upload_token},
+        };
+      });
     });
   }
 
