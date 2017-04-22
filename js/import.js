@@ -55,7 +55,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
     var sha = sha1 ([data.title, data.body].join ("\n"));
     if (imported[page] && imported[page].type == 2 /* object */ &&
         imported[page].sync_info.sha === sha) {
-      return Promise.resolve ();
+      return Promise.resolve ({objectId: imported[page].dest_id});
     }
 
     return Promise.resolve ().then (function () {
@@ -83,9 +83,33 @@ Importer.run = function (sourceId, statusContainer, opts) {
       fd.append ('body_type', 1); // html
       fd.append ('body', '<hatena-html>' + data.body + '</hatena-html>');
       fd.append ('source_sha', sha);
-      return gFetch ('o/' + info.objectId + '/edit.json', {post: true, formData: fd});
+      return gFetch ('o/' + info.objectId + '/edit.json', {post: true, formData: fd}).then (function () {
+        return {objectId: info.objectId};
+      });
     });
   }; // importDay
+
+  var importDayComments = function (group, imported, site, parentObjectId, r) {
+    r.comments.forEach (function (c) {
+      if (imported[c.url]) return Promise.resolve ();
+
+      var fd = new FormData;
+      fd.append ('source_site', site);
+      fd.append ('source_page', c.url);
+      return gFetch ('o/create.json', {post: true, formData: fd}).then (function (json) {
+        var fd = new FormData;
+        fd.append ('parent_object_id', parentObjectId);
+        fd.append ('timestamp', c.timestamp);
+        fd.append ('body_type', 2); // text
+        fd.append ('body', c.body);
+        fd.append ('author_name', c.author.name);
+        if (c.author.url_name) {
+          fd.append ('author_hatena_id', c.author.url_name);
+        }
+        return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
+      });
+    });
+  }; // importDayComments
 
         var getImported = function (site) {
           var pageToItem = {};
@@ -176,7 +200,9 @@ Importer.run = function (sourceId, statusContainer, opts) {
                   return $promised.forEach (function (dayURL) {
                     subAs.stageProgress ('object', v++, index.itemCount);
                     return group.diaryDay (dayURL).then (function (r) {
-                      return importDay (group, index.index_id, imported, site, dayURL.replace (/^http:/, 'https:'), r);
+                      return importDay (group, index.index_id, imported, site, dayURL.replace (/^http:/, 'https:'), r).then (function (d) {
+                        return importDayComments (group, imported, site, d.objectId, r);
+                      });
                     });
                   }, days);
                 }).then (function () {
@@ -439,9 +465,8 @@ Importer.HatenaGroup.prototype.diaryDay = function (url) {
   var client = this.client;
   return client.fetchHTML (url).then (function (div) {
     var title = div.querySelector ('.day h2 .title');
-    var body = div.querySelector ('.day .body');
-    // XXX comments
 
+    var body = div.querySelector ('.day .body');
     $$ (body, 'a[href]:not([href^="http:"]):not([href^="https:"])').forEach (function (e) {
       e.href = e.href;
     });
@@ -449,7 +474,27 @@ Importer.HatenaGroup.prototype.diaryDay = function (url) {
       e.src = e.src;
     });
 
-    return {title: title ? title.textContent : null, body: body.innerHTML};
+    var comments = $$ (div, '.comment .commentshort').map (function (e) {
+      var comment = {author: {}};
+
+      var user = e.querySelector ('.commentator');
+      comment.author.name = user.textContent;
+      var userLink = user.querySelector ('a.hatena-id-icon');
+      if (userLink) {
+        var m = userLink.pathname.match (/^\/([^\/]+)\//);
+        comment.author.url_name = m[1];
+      }
+
+      var ts = e.querySelector ('.timestamp a');
+      comment.url = ts.href.replace (/^http:/, 'https:');
+      comment.timestamp = ts.name.replace (/^c/, '');
+      comment.body = e.querySelector ('.commentbody').textContent;
+
+      return comment;
+    });
+
+    return {title: title ? title.textContent : null, body: body.innerHTML,
+            comments: comments};
   });
 }; // diaryDay
 
