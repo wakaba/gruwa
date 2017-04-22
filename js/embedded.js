@@ -65,7 +65,7 @@
   var m = url.match (/^(https?:\/\/[^\/]+)/);
   if (!m) throw "Bad script URL: " + url;
   var origin = m[1];
-  iframe.src = origin + '/import/embedded?' + Math.random (); // XXX
+  iframe.src = origin + '/import/embedded';
   iframe.onload = function () {
     var channel = new global.MessageChannel;
     this.contentWindow.postMessage ({}, origin, [channel.port2]);
