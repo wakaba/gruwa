@@ -481,6 +481,11 @@ list-container[key=objects] > list-is-empty > p {
   background-color: var(--light-1-background-color);
 }
 
+.comment-list article > header user-name {
+  margin-right: 0.5em;
+  font-size: 150%;
+}
+
 .comment-list article > header .timestamp {
   color: var(--small-color);
   background-color: var(--small-background-color);

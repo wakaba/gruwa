@@ -820,7 +820,8 @@ sub group_object ($$$$) {
         my $reactions = {};
         my $trackbacks = {};
         my $trackback_count = 0;
-        for my $key (qw(title body body_source file_name)) {
+        for my $key (qw(title body body_source file_name
+                        author_name author_hatena_id)) {
           my $value = $app->text_param ($key);
           if (defined $value) {
             $object->{data}->{$key} = $value;

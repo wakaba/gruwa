@@ -204,8 +204,20 @@
               <template>
                 <article itemscope itemtype=http://schema.org/Comment>
                   <header>
+                    <if-defined data-if-data-field=author_name hidden>
+                      <user-name>
+                        <span data-data-field=author_name />
+                        <if-defined data-if-data-field=author_hatena_id hidden>
+                          <hatena-user>
+                            <img data-src-template=https://cdn.www.st-hatena.com/users/{data.author_hatena_id:2}/{data.author_hatena_id}/profile.gif referrerpolicy=no-referrer alt>
+                            <span data-data-field=author_hatena_id />
+                          </hatena-user>
+                        </if-defined>
+                      </user-name>
+                    </if-defined>
+
                     <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
-                      <time data-field=created class=ambtime />
+                      <time data-field=timestamp class=ambtime />
                       (<time data-field=updated class=ambtime />)
                     </a>
                   </header>

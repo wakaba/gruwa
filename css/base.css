@@ -707,6 +707,32 @@ iframe.embed {
   height: 2rem;
 }
 
+user-name hatena-user {
+  font-size: 80%;
+}
+
+user-name hatena-user::before {
+  content: " (";
+}
+
+user-name hatena-user span {
+  font-style: italic;
+}
+
+user-name hatena-user span::before {
+  content: "id:";
+}
+
+user-name hatena-user::after {
+  content: ") ";
+}
+
+hatena-user img {
+  width: 1em;
+  height: 1em;
+  vertical-align: middle;
+}
+
 /*
 
 Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.

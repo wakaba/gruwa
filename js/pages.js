@@ -359,8 +359,20 @@ function fillFields (contextEl, rootEl, el, object) {
   $$c (el, '[data-src-template]').forEach (function (field) {
     field.setAttribute ('src', field.getAttribute ('data-src-template').replace (/\{GROUP\}/g, function () {
       return document.documentElement.getAttribute ('data-group-url');
-    }).replace (/\{([^{}]+)\}/g, function (_, k) {
-      return encodeURIComponent (object[k]);
+    }).replace (/\{(?:(data)\.|)([^{}.:]+)(?:|:([0-9]+))\}/g, function (_, p, k, n) {
+      if (p) {
+        if (n) {
+          return encodeURIComponent ((object[p][k] || "").substring (0, parseFloat (n)));
+        } else {
+          return encodeURIComponent (object[p][k]);
+        }
+      } else {
+        if (n) {
+          return encodeURIComponent ((object[k] || "").substring (0, parseFloat (n)));
+        } else {
+          return encodeURIComponent (object[k]);
+        }
+      }
     }));
   });
   $$c (el, 'form[data-child-form]').forEach (function (field) {
