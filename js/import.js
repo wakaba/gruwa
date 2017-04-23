@@ -24,36 +24,102 @@ Importer.run = function (sourceId, statusContainer, opts) {
 
   var importKeyword = function (group, keyword, indexId, imported, site) {
     var page = group.getKeywordPageURL (keyword.title);
-    if (imported[page] && imported[page].type == 2 /* object */) {
-      var currentTimestamp = imported[page].sync_info.timestamp;
-      if (currentTimestamp &&
-          parseFloat (currentTimestamp) >= keyword.updated.valueOf () / 1000) {
+    var current = imported[page];
+    if (current && current.type == 2 /* object */) {
+      var currentTimestamp = parseFloat (current.sync_info.timestamp);
+      current.hasLatestData = (
+        Number.isFinite (currentTimestamp) &&
+        currentTimestamp >= keyword.updated.valueOf () / 1000
+      );
+      if (current.hasLatestData &&
+          current.sync_info.source_type === 'keywordlog') {
         return Promise.resolve ();
       }
     }
 
-    return group.keywordhtml (keyword.title).then (function (html) {
-      var objectId;
+    var createObject = function () {
+      if (current && current.type == 2 /* object */) {
+        return Promise.resolve (current.dest_id);
+      }
+
       var fd = new FormData;
       fd.append ('source_site', site);
       fd.append ('source_page', page);
       return gFetch ('o/create.json', {post: true, formData: fd}).then (function (json) {
-        objectId = json.object_id;
-        var fd = new FormData;
-        fd.append ('edit_index_id', 1);
-        fd.append ('index_id', indexId);
-        fd.append ('title', keyword.title);
-        fd.append ('body_type', 1); // html
-        fd.append ('body', '<hatena-html>' + html + '</hatena-html>');
-        fd.append ('source_timestamp', keyword.updated.valueOf () / 1000);
-        return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
+        return json.object_id;
+      });
+    }; // createObject
+
+    return group.keywordHistory (keyword.title).then (function (historys) {
+      return createObject ().then (function (objectId) {
+        var currentRevTS = parseFloat (current && current.sync_info.rev_timestamp);
+        return $promised.forEach (function (history) {
+          if (history.date &&
+              Number.isFinite (currentRevTS) &&
+              history.date.valueOf () / 1000 <= currentRevTS) return;
+
+          return group.keywordlog (history.url.replace (/^https?:/, '')).then (function (r) {
+            var fd = new FormData;
+            fd.append ('source_type', 'keywordlog');
+            fd.append ('revision_author_hatena_id', history.author.url_name);
+            if (history.date) {
+              var ts = history.date.valueOf () / 1000;
+              fd.append ('revision_timestamp', ts);
+              fd.append ('source_timestamp', ts);
+              fd.append ('source_rev_timestamp', ts);
+            }
+            fd.append ('revision_imported_url', history.url);
+            fd.append ('edit_index_id', 1);
+            fd.append ('index_id', indexId);
+            fd.append ('title', keyword.title);
+            fd.append ('body_type', 1); // html
+            fd.append ('body_source_type', 3); // hatena
+            fd.append ('body_source', r.bodyHatena);
+            return Formatter.hatena (r.bodyHatena).then (function (body) {
+              fd.append ('body', '<hatena-html>' + body + '</hatena-html>');
+            }).then (function () {
+              return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
+            });
+          });
+        }, historys.reverse ());
+      });
+    }).catch (function (e) {
+      if (e && e.isResponse && e.status === 0) {
+        // network error (redirect cancelled) = not exportable
+      } else {
+        throw e;
+      }
+
+      if (current.hasLatestData) {
+        return Promise.resolve ();
+      }
+      
+      var cO = createObject ();
+      return group.keywordhtml (keyword.title).then (function (html) {
+        return cO.then (function (objectId) {
+          var fd = new FormData;
+          fd.append ('edit_index_id', 1);
+          fd.append ('index_id', indexId);
+          fd.append ('title', keyword.title);
+          fd.append ('body_type', 1); // html
+          fd.append ('body', '<hatena-html imported>' + html + '</hatena-html>');
+          var ts = keyword.updated.valueOf () / 1000;
+          fd.append ('revision_timestamp', ts);
+          fd.append ('source_timestamp', ts);
+          if (current && current.sync_info.rev_timestamp) {
+            fd.append ('source_rev_timestamp', current.sync_info.rev_timestamp);
+          }
+          fd.append ('source_type', 'html');
+          fd.append ('revision_imported_url', page);
+          return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
+        });
       });
     });
   }; // importKeyword
 
   var importDay = function (group, indexId, imported, site, page, data) {
     var sha = data.source_type === 'html' ? sha1 ([data.title, data.body].join ("\n")) : null;
-    var sourceSha = data.source_type === 'xml' ? sha1 ([data.title, data.body].join ("\n")) : null;
+    var sourceSha = data.source_type === 'export' ? sha1 ([data.title, data.body].join ("\n")) : null;
     var current = imported[page];
     if (current && current.type == 2 /* object */) {
       if (sourceSha && current.sync_info.source_sha === sourceSha) {
@@ -92,6 +158,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         if (sha) fd.append ('source_sha', sha);
         if (sourceSha) fd.append ('source_source_sha', sourceSha);
         fd.append ('source_type', data.source_type);
+        fd.append ('revision_imported_url', page);
         fd.append ('body_type', 1); // html
         if (data.bodyHatena) {
           fd.append ('body_source_type', 3); // hatena
@@ -116,7 +183,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
       var current = imported[c.url];
       if (current && current.type == 2 /* object */) {
         if (current.sync_info.source_type === 'html' ||
-            (current.sync_info.source_type === 'xml' && c.source === 'xml')) {
+            (current.sync_info.source_type === 'export' && c.source === 'export')) {
           return Promise.resolve ();
         }
       }
@@ -128,11 +195,15 @@ Importer.run = function (sourceId, statusContainer, opts) {
         var fd = new FormData;
         fd.append ('parent_object_id', parentObjectId);
         fd.append ('timestamp', c.timestamp);
+        fd.append ('revision_timestamp', c.timestamp);
         fd.append ('body_type', 2); // text
         fd.append ('body', c.body);
+        fd.append ('revision_imported_url', c.url);
         fd.append ('author_name', c.author.name);
+        fd.append ('revision_author_name', c.author.name);
         if (c.author.url_name) {
           fd.append ('author_hatena_id', c.author.url_name);
+          fd.append ('revision_author_hatena_id', c.author.url_name);
         }
         fd.append ('source_type', c.source);
         return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
@@ -189,14 +260,11 @@ Importer.run = function (sourceId, statusContainer, opts) {
             var subAs = getActionStatus (re.items[0]);
             subAs.start ({stages: ['objects']});
             subAs.stageStart ('objects');
-            var nextItem; nextItem = function () {
-              if (keywords.length === 0) return;
+            return $promised.forEach (function (keyword) {
               as.stageProgress ('createkeywordobjects', keywordCount - keywords.length, keywordCount);
               subAs.stageProgress ('objects', keywordCount - keywords.length, keywordCount);
-              var keyword = keywords.shift ();
-              return importKeyword (group, keyword, index.index_id, imported, site).then (nextItem);
-            }; // nextItem
-            return nextItem ().then (function () {
+              return importKeyword (group, keyword, index.index_id, imported, site);
+            }, keywords).then (function () {
               subAs.stageEnd ('objects');
               subAs.end ({ok: true});
             });
@@ -480,6 +548,36 @@ Importer.HatenaGroup.prototype.keywordhtml = function (keyword) {
   });
 }; // keywordhtml
 
+Importer.HatenaGroup.prototype.keywordHistory = function (keyword) {
+  var client = this.client;
+  return client.fetchHTML ('/keyword/' + encodeURIComponent (keyword) + '?mode=edit').then (function (div) {
+    return $$ (div, '.day .refererlist li').map (function (li) {
+      var history = {author: {}};
+      var link = li.querySelector ('a');
+      history.url = link.href.replace (/^http:/, 'https:');
+      var m = ((link.nextSibling || {}).data || '').match
+          (/([0-9]+\/[0-9]+\/[0-9]+\s+[0-9]+:[0-9]+:[0-9]+)/);
+      if (m) history.date = new Date (m[1].replace (/\s+/, 'T').replace (/\//g, '-') + '+09:00');
+
+      var userLink = li.querySelector ('a.hatena-id-icon');
+      if (userLink) {
+        var m = userLink.pathname.match (/^\/([^\/]+)\//);
+        if (m) history.author.url_name = m[1];
+      }
+
+     return history;
+    });
+  });
+}; // keywordHistory
+
+Importer.HatenaGroup.prototype.keywordlog = function (url) {
+  var client = this.client;
+  return client.fetchHTML (url).then (function (div) {
+    var body = div.querySelector ('.day .body textarea[name=body]');
+    return {bodyHatena: body.value};
+  });
+}; // keywordlog
+
 Importer.HatenaGroup.prototype.diarylist = function () {
   var client = this.client;
   var result = [];
@@ -572,14 +670,14 @@ Importer.HatenaGroup.prototype.diaryExport = function (urlName) {
           date: e.getAttribute ('date') || '',
           title: e.getAttribute ('title') || '',
           comments: [],
-          source_type: 'xml',
+          source_type: 'export',
         };
 
         var body = e.querySelector ('body');
         day.bodyHatena = body ? body.textContent : '';
 
         $$ (e, 'comment').forEach (function (f) {
-          var comment = {author: {}, source: 'xml'};
+          var comment = {author: {}, source: 'export'};
           var g = f.querySelector ('username');
           if (g) comment.author.name = g.textContent;
           var h = f.querySelector ('body');

@@ -238,6 +238,9 @@
         return false;
       };
     </script>
+    <!--
+      Chrome のシークレットウィンドウでは動作しません。
+    -->
   </section>
 
 <!--

@@ -1097,6 +1097,14 @@ sub group_object ($$$$) {
 
           my $sdata;
           my $rev_data = {changes => $changes};
+          for my $key (qw(timestamp)) {
+            my $v = $app->bare_param ('revision_' . $key);
+            $rev_data->{$key} = 0+$v if defined $v;
+          }
+          for my $key (qw(author_name author_hatena_id imported_url)) {
+            my $v = $app->text_param ('revision_' . $key);
+            $rev_data->{$key} = $v if defined $v;
+          }
           return $db->execute ('select uuid_short() as uuid')->then (sub {
             $object->{data}->{object_revision_id} = ''.$_[0]->first->{uuid};
             $sdata = Dongry::Type->serialize ('json', $object->{data});
@@ -1237,12 +1245,14 @@ sub group_object ($$$$) {
           });
         })->then (sub {
           my $ts = $app->bare_param ('source_timestamp');
+          my $rev_ts = $app->bare_param ('source_rev_timestamp');
           my $sha = $app->bare_param ('source_sha');
           my $s_sha = $app->bare_param ('source_source_sha');
           my $type = $app->bare_param ('source_type');
-          return unless $ts or defined $sha or defined $s_sha or defined $type;
+          return unless $ts or $rev_ts or defined $sha or defined $s_sha or defined $type;
           my $info = {};
-          $info->{timestamp} = $ts if $ts;
+          $info->{timestamp} = 0+$ts if $ts;
+          $info->{rev_timestamp} = 0+$rev_ts if $rev_ts;
           $info->{sha} = $sha if defined $sha;
           $info->{source_sha} = $s_sha if defined $s_sha;
           $info->{source_type} = $type if defined $type;
