@@ -785,23 +785,9 @@ function upgradeBodyControl (e, object, opts) {
     } else {
       if (data.body_source !== textarea.value) {
         data.body_source = textarea.value;
-        if (data.body_source_type == 3) {
-          return fetch ("https://textformatter.herokuapp.com/hatena?urlbase=https://profile.hatena.ne.jp/", {
-            method: "post",
-            body: data.body_source,
-          }).then (function (r) {
-            return r.text ();
-          }).then (function (x) {
-            var div = document.createElement ('div');
-            div.innerHTML = x;
-            $$ (div, 'a[href^="http://d.hatena.ne.jp/keyword/"]').forEach (function (link) {
-              var url = link.getAttribute ('href');
-              if (url === "http://d.hatena.ne.jp/keyword/" + encodeURIComponent (link.textContent)) {
-                link.classList.add ('hatena-keyword');
-                link.href = document.documentElement.getAttribute ('data-group-url') + '/wiki/' + encodeURIComponent (link.textContent);
-              }
-            });
-            data.body = div.innerHTML;
+        if (data.body_source_type == 3) { // hatena
+          return Formatter.hatena (data.body_source).then (function (body) {
+            data.body = '<hatena-html>' + body + '</hatena-html>';
           });
         } else {
           data.body = data.body_source;
@@ -2213,6 +2199,29 @@ function upgradeRunAction (e) {
   var action = RunAction[e.getAttribute ('name')];
   action.apply (e);
 } // upgradeRunAction
+
+function Formatter () { }
+
+Formatter.hatena = function (source) {
+  return fetch ("https://textformatter.herokuapp.com/hatena?urlbase=https://profile.hatena.ne.jp/", { // XXX
+    method: "post",
+    body: source,
+  }).then (function (r) {
+    return r.text ();
+  }).then (function (x) {
+    var doc = document.implementation.createHTMLDocument ();
+    var div = doc.createElement ('div');
+    div.innerHTML = x;
+    $$ (div, 'a[href^="http://d.hatena.ne.jp/keyword/"]').forEach (function (link) {
+      var url = link.getAttribute ('href');
+      if (url === "http://d.hatena.ne.jp/keyword/" + encodeURIComponent (link.textContent)) {
+        link.classList.add ('hatena-keyword');
+        link.href = document.documentElement.getAttribute ('data-group-url') + '/wiki/' + encodeURIComponent (link.textContent);
+      }
+    });
+    return div.innerHTML;
+  });
+}; // hatena
 
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {

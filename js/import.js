@@ -52,10 +52,18 @@ Importer.run = function (sourceId, statusContainer, opts) {
   }; // importKeyword
 
   var importDay = function (group, indexId, imported, site, page, data) {
-    var sha = sha1 ([data.title, data.body].join ("\n"));
-    if (imported[page] && imported[page].type == 2 /* object */ &&
-        imported[page].sync_info.sha === sha) {
-      return Promise.resolve ({objectId: imported[page].dest_id});
+    var sha = data.source_type === 'html' ? sha1 ([data.title, data.body].join ("\n")) : null;
+    var sourceSha = data.source_type === 'xml' ? sha1 ([data.title, data.body].join ("\n")) : null;
+    var current = imported[page];
+    if (current && current.type == 2 /* object */) {
+      if (sourceSha && current.sync_info.source_sha === sourceSha) {
+        return Promise.resolve ({objectId: imported[page].dest_id});
+      }
+      if (sha && current.sync_info.sha === sha) {
+        return Promise.resolve ({objectId: imported[page].dest_id});
+      }
+      sha = sha || current.sync_info.sha || null;
+      sourceSha = sourceSha || current.sync_info.source_sha || null;
     }
 
     return Promise.resolve ().then (function () {
@@ -80,18 +88,38 @@ Importer.run = function (sourceId, statusContainer, opts) {
         if (Number.isFinite (ts)) fd.append ('timestamp', ts);
       }
       if (data.title) fd.append ('title', data.title);
-      fd.append ('body_type', 1); // html
-      fd.append ('body', '<hatena-html>' + data.body + '</hatena-html>');
-      fd.append ('source_sha', sha);
-      return gFetch ('o/' + info.objectId + '/edit.json', {post: true, formData: fd}).then (function () {
+      return Promise.resolve ().then (function () {
+        if (sha) fd.append ('source_sha', sha);
+        if (sourceSha) fd.append ('source_source_sha', sourceSha);
+        fd.append ('source_type', data.source_type);
+        fd.append ('body_type', 1); // html
+        if (data.bodyHatena) {
+          fd.append ('body_source_type', 3); // hatena
+          fd.append ('body_source', data.bodyHatena);
+          return Formatter.hatena (data.bodyHatena).then (function (body) {
+            fd.append ('body', '<hatena-html>' + body + '</hatena-html>');
+          });
+        } else {
+          fd.append ('body', '<hatena-html imported>' + data.body + '</hatena-html>');
+          return;
+        }
+      }).then (function () {
+        return gFetch ('o/' + info.objectId + '/edit.json', {post: true, formData: fd});
+      }).then (function () {
         return {objectId: info.objectId};
       });
     });
   }; // importDay
 
-  var importDayComments = function (group, imported, site, parentObjectId, r) {
-    r.comments.forEach (function (c) {
-      if (imported[c.url]) return Promise.resolve ();
+  var importDayComments = function (group, imported, site, parentObjectId, comments) {
+    return $promised.forEach (function (c) {
+      var current = imported[c.url];
+      if (current && current.type == 2 /* object */) {
+        if (current.sync_info.source_type === 'html' ||
+            (current.sync_info.source_type === 'xml' && c.source === 'xml')) {
+          return Promise.resolve ();
+        }
+      }
 
       var fd = new FormData;
       fd.append ('source_site', site);
@@ -106,9 +134,10 @@ Importer.run = function (sourceId, statusContainer, opts) {
         if (c.author.url_name) {
           fd.append ('author_hatena_id', c.author.url_name);
         }
+        fd.append ('source_type', c.source);
         return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
       });
-    });
+    }, comments);
   }; // importDayComments
 
         var getImported = function (site) {
@@ -193,18 +222,39 @@ Importer.run = function (sourceId, statusContainer, opts) {
                 var subAs = getActionStatus (re.items[0]);
                 subAs.start ({stages: ['object']});
                 subAs.stageStart ('object');
-                return group.diaryDayList (diary.url_name).then (function (days) {
+                return group.diaryExport (diary.url_name).then (function (days) {
                   index.itemCount = days.length;
                   fillFields (re.items[0], re.items[0], re.items[0], index);
                   var v = 0;
-                  return $promised.forEach (function (dayURL) {
+                  return $promised.forEach (function (day) {
                     subAs.stageProgress ('object', v++, index.itemCount);
-                    return group.diaryDay (dayURL).then (function (r) {
-                      return importDay (group, index.index_id, imported, site, dayURL.replace (/^http:/, 'https:'), r).then (function (d) {
-                        return importDayComments (group, imported, site, d.objectId, r);
+                    var page = group.getDiaryDayURLByDate (diary.url_name, day.date);
+                    return importDay (group, index.index_id, imported, site, page, day).then (function (d) {
+                      day.comments.forEach (function (c) {
+                        c.url = page + '#c' + c.timestamp;
                       });
+                      return importDayComments (group, imported, site, d.objectId, day.comments);
                     });
                   }, days);
+                }).catch (function (e) {
+                  if (e && e.isResponse && e.status === 0) {
+                    // network error (redirect cancelled) = not exportable
+                  } else {
+                    throw e;
+                  }
+                  return group.diaryDayList (diary.url_name).then (function (days) {
+                    index.itemCount = days.length;
+                    fillFields (re.items[0], re.items[0], re.items[0], index);
+                    var v = 0;
+                    return $promised.forEach (function (dayURL) {
+                      subAs.stageProgress ('object', v++, index.itemCount);
+                      return group.diaryDay (dayURL).then (function (r) {
+                        return importDay (group, index.index_id, imported, site, dayURL.replace (/^http:/, 'https:'), r).then (function (d) {
+                          return importDayComments (group, imported, site, d.objectId, r.comments);
+                        });
+                      });
+                    }, days);
+                  });
                 }).then (function () {
                   subAs.stageEnd ('object');
                   subAs.end ({ok: true});
@@ -350,6 +400,16 @@ Importer.Client.prototype.fetchHTML = function (url) {
   });
 }; // fetchHTML
 
+Importer.Client.prototype.fetchXML = function (url) {
+  var client = this;
+  return client.sendCommand ({type: "fetch", url: url, resultType: "text"}).then (function (xml) {
+    var parser = new DOMParser;
+    var doc = parser.parseFromString (xml, "text/xml");
+    // if (doc.querySelector ('parseerror') not well-formed
+    return doc;
+  });
+}; // fetchXML
+
 Importer.HatenaGroup = function (client) {
   this.client = client;
 }; // HatenaGroup
@@ -369,6 +429,10 @@ Importer.HatenaGroup.prototype.getKeywordPageURL = function (k) {
 Importer.HatenaGroup.prototype.getDiaryTopPageURL = function (u) {
   return this.getSiteURL () + '/' + u + '/';
 }; // getDiaryTopPageURL
+
+Importer.HatenaGroup.prototype.getDiaryDayURLByDate = function (u, d) {
+  return this.getSiteURL () + '/' + u + '/' + d.replace (/-/g, '');
+}; // getDiaryDayURLByDate
 
 Importer.HatenaGroup.prototype.keywordlist = function () {
   var client = this.client;
@@ -475,7 +539,7 @@ Importer.HatenaGroup.prototype.diaryDay = function (url) {
     });
 
     var comments = $$ (div, '.comment .commentshort').map (function (e) {
-      var comment = {author: {}};
+      var comment = {author: {}, source: 'html'};
 
       var user = e.querySelector ('.commentator');
       comment.author.name = user.textContent;
@@ -494,10 +558,43 @@ Importer.HatenaGroup.prototype.diaryDay = function (url) {
     });
 
     return {title: title ? title.textContent : null, body: body.innerHTML,
-            comments: comments};
+            comments: comments, source_type: 'html'};
   });
 }; // diaryDay
 
+Importer.HatenaGroup.prototype.diaryExport = function (urlName) {
+  var client = this.client;
+  return client.fetchXML ('/' + urlName + '/export').then (function (doc) {
+    var days = [];
+    Array.prototype.forEach.call ((doc.documentElement || {children: []}).children, function (e) {
+      if (e.localName === 'day') {
+        var day = {
+          date: e.getAttribute ('date') || '',
+          title: e.getAttribute ('title') || '',
+          comments: [],
+          source_type: 'xml',
+        };
+
+        var body = e.querySelector ('body');
+        day.bodyHatena = body ? body.textContent : '';
+
+        $$ (e, 'comment').forEach (function (f) {
+          var comment = {author: {}, source: 'xml'};
+          var g = f.querySelector ('username');
+          if (g) comment.author.name = g.textContent;
+          var h = f.querySelector ('body');
+          comment.body = h ? h.textContent : '';
+          var i = f.querySelector ('timestamp');
+          comment.timestamp = i.textContent;
+          day.comments.push (comment);
+        });
+
+        days.push (day);
+      }
+    });
+    return days;
+  });
+}; // diaryExport
 
 /*
 
