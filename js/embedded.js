@@ -51,6 +51,8 @@
       if (res.status !== 200) throw res;
       if (args.resultType === 'json') {
         return res.json ();
+      } else if (args.resultType === 'blob') {
+        return res.blob ();
       } else {
         return res.text ();
       }

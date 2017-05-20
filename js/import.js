@@ -211,6 +211,47 @@ Importer.run = function (sourceId, statusContainer, opts) {
     }, comments);
   }; // importDayComments
 
+  var importFile = function (group, client, file, indexId, imported, site, as) {
+    file.canonURL = file.url.replace (/^http:/, 'https:')
+        /*
+          URL here contains an extension ("." followed by three
+          characters).  The "file syntax" used to link to the file in
+          a Hatena syntax text, such as "[file:9a5f8b9717bb1281]" does
+          not contain the extension but is expanded to a link to a URL
+          with the extension (by looking up the database in Hatena
+          Group).  To decouple Hatena syntax - HTML convertion from
+          the database, we strip the extension here.  The URL can then
+          be looked up later by exact match without extension.  The
+          extension part of the URL can be restored from the file name
+          later, if necessary.
+        */
+        .replace (/\.[^\.]+$/, '');
+    var current = imported[file.canonURL];
+    if (current && current.type == 2 /* object */) {
+      var currentTimestamp = parseFloat (current.sync_info.timestamp);
+      current.hasLatestData = (
+        Number.isFinite (currentTimestamp) &&
+        currentTimestamp >= (file.date ? file.date.valueOf () / 1000 : 0)
+      );
+      if (current.hasLatestData) {
+        return Promise.resolve ();
+      }
+    }
+
+    return client.fetchBlob (file.url).then (function (blob) {
+      return uploadFile (blob, {
+        file_name: file.name,
+        file_size: file.size,
+        mime_type: file.type, // or null
+        timestamp: file.date ? file.date.valueOf () / 1000 : null,
+        index_id: indexId,
+        sourceSite: site,
+        sourcePage: file.canonURL,
+        sourceTimestamp: file.date ? file.date.valueOf () / 1000 : null,
+      }, as);
+    });
+  }; // importFile
+
         var getImported = function (site) {
           var pageToItem = {};
           var get; get = function (ref) {
@@ -229,7 +270,10 @@ Importer.run = function (sourceId, statusContainer, opts) {
                         'createkeywordwiki',
                         'createkeywordobjects',
                         'getdiarylist',
-                        'creatediary']});
+                        'creatediary',
+                        'getfilelist',
+                        'createfileuploader',
+                        'getfiles']});
     return Importer.createClient (sourceId).then (function (client) {
       var group = new Importer.HatenaGroup (client);
       var site = group.getSiteURL ();
@@ -241,9 +285,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
       as.stageStart ('getkeywordlist');
       return group.keywordlist ().then (function (keywords) {
         as.stageEnd ('getkeywordlist');
-        var keywordCount = keywords.length;
-        if (keywordCount === 0) return;
-
+        if (keywords.length === 0) return;
         as.stageStart ('createkeywordwiki');
         keywords = keywords.reverse ();
         var page = group.getKeywordTopPageURL ();
@@ -252,7 +294,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           indexType: 2, // wiki
           title: title,
         }).then (function (index) {
-          index.itemCount = keywordCount;
+          index.itemCount = keywords.length;
           index.originalTitle = title;
           return mapTable.showObjects ([index], {}).then (function (re) {
             as.stageEnd ('createkeywordwiki');
@@ -260,9 +302,11 @@ Importer.run = function (sourceId, statusContainer, opts) {
             var subAs = getActionStatus (re.items[0]);
             subAs.start ({stages: ['objects']});
             subAs.stageStart ('objects');
+            var c = 0;
             return $promised.forEach (function (keyword) {
-              as.stageProgress ('createkeywordobjects', keywordCount - keywords.length, keywordCount);
-              subAs.stageProgress ('objects', keywordCount - keywords.length, keywordCount);
+              as.stageProgress ('createkeywordobjects', c, keywords.length);
+              subAs.stageProgress ('objects', c, keywords.length);
+              c++;
               return importKeyword (group, keyword, index.index_id, imported, site);
             }, keywords).then (function () {
               subAs.stageEnd ('objects');
@@ -340,6 +384,40 @@ Importer.run = function (sourceId, statusContainer, opts) {
             });
           }, diarys).then (function () {
             as.stageEnd ('creatediary');
+          });
+        });
+      }).then (function () {
+        as.stageStart ('getfilelist');
+        return group.filelist ().then (function (files) {
+          as.stageEnd ('getfilelist');
+          as.stageStart ('createfileuploader');
+          var page = group.getFileTopPageURL ();
+          return createIndex (site, page, imported, {
+            indexType: 6, // uploader
+            title: files.title,
+          }).then (function (index) {
+            index.itemCount = files.length;
+            index.originalTitle = files.title;
+            return mapTable.showObjects ([index], {}).then (function (re) {
+              var subAs = getActionStatus (re.items[0]);
+              subAs.start ({stages: ['objects']});
+              subAs.stageStart ('objects');
+              as.stageEnd ('createfileuploader');
+              as.stageStart ('getfiles');
+              var c = 0;
+              return $promised.forEach (function (file) {
+                as.stageProgress ('getfiles', c, files.length);
+                subAs.stageProgress ('objects', c, files.length);
+                c++;
+                var nullAs = getActionStatus (null);
+                nullAs.start ({stages: []});
+                return importFile (group, client, file, index.index_id, imported, site, nullAs);
+              }, files.reverse ()).then (function () {
+                subAs.stageEnd ('objects');
+                subAs.end ({ok: true});
+                as.stageEnd ('getfiles');
+              });
+            });
           });
         });
       });
@@ -478,6 +556,11 @@ Importer.Client.prototype.fetchXML = function (url) {
   });
 }; // fetchXML
 
+Importer.Client.prototype.fetchBlob = function (url) {
+  var client = this;
+  return client.sendCommand ({type: "fetch", url: url, resultType: "blob"});
+}; // fetchBlob
+
 Importer.HatenaGroup = function (client) {
   this.client = client;
 }; // HatenaGroup
@@ -501,6 +584,10 @@ Importer.HatenaGroup.prototype.getDiaryTopPageURL = function (u) {
 Importer.HatenaGroup.prototype.getDiaryDayURLByDate = function (u, d) {
   return this.getSiteURL () + '/' + u + '/' + d.replace (/-/g, '');
 }; // getDiaryDayURLByDate
+
+Importer.HatenaGroup.prototype.getFileTopPageURL = function () {
+  return this.getSiteURL () + '/filelist';
+}; // getFileTopPageURL
 
 Importer.HatenaGroup.prototype.keywordlist = function () {
   var client = this.client;
@@ -693,6 +780,44 @@ Importer.HatenaGroup.prototype.diaryExport = function (urlName) {
     return days;
   });
 }; // diaryExport
+
+Importer.HatenaGroup.prototype.filelist = function () {
+  var client = this.client;
+  var files = [];
+  var getPage = function (url, page) {
+    return client.fetchXML (url + '&page=' + page).then (function (doc) {
+      files.title = ($$ (doc, 'rss > channel > title')[0] || {}).textContent;
+
+      var items = $$ (doc, 'item');
+      if (!items.length) return;
+
+      items.forEach (function (item) {
+        var file = {};
+        Array.prototype.forEach.call (item.children, function (e) {
+          if (e.localName === 'title') {
+            file.name = e.textContent;
+          } else if (e.localName === 'pubDate') {
+            var date = new Date (e.textContent);
+            if (Number.isFinite (date.valueOf ())) {
+              file.date = date;
+            }
+          } else if (e.localName === 'enclosure') {
+            file.size = parseInt (e.getAttribute ('length'));
+            file.type = e.getAttribute ('type') || '';
+            file.url = e.getAttribute ('url');
+            if (file.type === '') delete file.type;
+          }
+        });
+        files.push (file);
+      });
+
+      return getPage (url, page + 1);
+    });
+  }; // getPage
+  return getPage ('/filelist?mode=rss', 1).then (function () {
+    return files;
+  });
+}; // filelist
 
 /*
 

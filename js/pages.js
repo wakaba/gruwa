@@ -1530,41 +1530,50 @@ function togglePanel (name, container) {
   container.hidden = hideContainer;
 } // togglePanel
 
+function uploadFile (file, data, as) {
+  as.stageStart ("create");
+  var fd1 = new FormData;
+  fd1.append ('is_file', 1);
+  if (data.sourceSite) fd1.append ('source_site', data.sourceSite);
+  if (data.sourcePage) fd1.append ('source_page', data.sourcePage);
+  return gFetch ('o/create.json', {post: true, formData: fd1}).then (function (json) {
+    data.object_id = json.object_id;
+    as.stageEnd ("create");
+    return gFetch ('o/' + data.object_id + '/upload.json?token=' + encodeURIComponent (json.upload_token), {post: true, body: file, as: as, asStage: "upload"});
+  }).then (function () {
+    var fd2 = new FormData;
+    fd2.append ('edit_index_id', 1);
+    fd2.append ('index_id', data.index_id);
+    fd2.append ('file_name', data.file_name);
+    fd2.append ('file_size', data.file_size);
+    if (data.mime_type) fd2.append ('mime_type', data.mime_type);
+    if (data.timestamp) fd2.append ('timestamp', data.timestamp);
+    if (data.sourceTimestamp) fd2.append ('source_timestamp', data.sourceTimestamp);
+    fd2.append ('file_closed', 1);
+    as.stageStart ("close");
+    return gFetch ('o/' + data.object_id + '/edit.json', {post: true, formData: fd2});
+  }).then (function () {
+    as.stageEnd ("close");
+  });
+} // uploadFile
+
 function initUploader (form) {
-  var uploadFile = function (file) {
+  var upload = function (file) {
     var list = form.querySelector ('list-container');
     var data = {
       file_name: file.name,
       file_size: file.size,
       mime_type: file.type,
       timestamp: file.lastModified / 1000,
+      index_id: form.getAttribute ('data-context'),
     };
     var as;
     return list.showObjects ([{data: data}], {}).then (function (r) {
       var item = r.items[0];
       as = getActionStatus (item);
       as.start ({stages: ["create", "upload", "close", "show"]});
-      as.stageStart ("create");
-      var fd1 = new FormData;
-      fd1.append ('is_file', 1);
-      return gFetch ('o/create.json', {post: true, formData: fd1});
-    }).then (function (json) {
-      data.object_id = json.object_id;
-      as.stageEnd ("create");
-      return gFetch ('o/' + data.object_id + '/upload.json?token=' + encodeURIComponent (json.upload_token), {post: true, body: file, as: as, asStage: "upload"});
+      return uploadFile (file, data, as);
     }).then (function () {
-      var fd2 = new FormData;
-      fd2.append ('edit_index_id', 1);
-      fd2.append ('index_id', form.getAttribute ('data-context'));
-      fd2.append ('file_name', data.file_name);
-      fd2.append ('file_size', data.file_size);
-      fd2.append ('mime_type', data.mime_type);
-      fd2.append ('timestamp', data.timestamp);
-      fd2.append ('file_closed', 1);
-      as.stageStart ("close");
-      return gFetch ('o/' + data.object_id + '/edit.json', {post: true, formData: fd2});
-    }).then (function () {
-      as.stageEnd ("close");
       as.stageStart ("show");
       return gFetch ('o/get.json?with_data=1&object_id=' + data.object_id, {});
     }).then (function (json) {
@@ -1579,14 +1588,14 @@ function initUploader (form) {
     }, function (error) {
       as.end ({ok: false, error: error});
     });
-  }; // uploadFile
+  }; // upload
 
   form.elements["upload-button"].onclick = function () {
     form.elements.file.click ();
   };
   form.elements.file.onchange = function () {
     Array.prototype.forEach.call (form.elements.file.files, function (file) {
-      uploadFile (file);
+      upload (file);
     });
     form.reset ();
   };
@@ -1628,7 +1637,7 @@ function initUploader (form) {
     form.classList.remove ('drop-target');
     targetted = 0;
     Array.prototype.forEach.call (ev.dataTransfer.files, function (file) {
-      uploadFile (file);
+      upload (file);
     });
     return false;
   };
@@ -1664,12 +1673,16 @@ function applyFilters (objects, filtersText) {
 
 function getActionStatus (container) {
   var as = new ActionStatus;
-  as.elements = $$c2 (container, 'action-status');
-  as.elements.forEach (function (e) {
-    if (e.hasChildNodes ()) return;
-    e.hidden = true;
-    e.innerHTML = '<action-status-message></action-status-message> <progress></progress>';
-  });
+  if (container) {
+    as.elements = $$c2 (container, 'action-status');
+    as.elements.forEach (function (e) {
+      if (e.hasChildNodes ()) return;
+      e.hidden = true;
+      e.innerHTML = '<action-status-message></action-status-message> <progress></progress>';
+    });
+  } else {
+    as.elements = [];
+  }
   return as;
 } // getActionStatus
 

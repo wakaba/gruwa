@@ -8,11 +8,12 @@ my $port = shift or die "No port";
 Sarze->run (
   hostports => [['0', $port]],
   psgi_file_name => path (__FILE__)->parent->child ('server.psgi'),
+  max_request_body_length => 100*1024*1024,
 )->to_cv->recv;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
