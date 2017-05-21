@@ -16,6 +16,7 @@ function handleMessage (ev) {
     });
     sendToParent ({type: "currentValue", value: div.innerHTML});
   } else if (ev.data.type === 'setCurrentValue') {
+    document.body.textContent = '';
     document.body.setAttribute ('data-source-type', ev.data.valueSourceType || 0);
     var fragment = document.createElement ('div');
     fragment.innerHTML = ev.data.value;
@@ -36,7 +37,7 @@ function handleMessage (ev) {
         });
       });
     }
-    Array.prototype.forEach.call (fragment.childNodes, function (_) {
+    Array.prototype.slice.call (fragment.childNodes).forEach (function (_) {
       document.body.appendChild (_);
     });
     sendHeight ();
