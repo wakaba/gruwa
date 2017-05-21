@@ -336,7 +336,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
                 subAs.stageStart ('object');
                 return group.diaryExport (diary.url_name).then (function (days) {
                   index.itemCount = days.length;
-                  fillFields (re.items[0], re.items[0], re.items[0], index);
+                  fillFields (re.items[0], re.items[0], re.items[0], index, {});
                   var v = 0;
                   return $promised.forEach (function (day) {
                     subAs.stageProgress ('object', v++, index.itemCount);
@@ -356,7 +356,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
                   }
                   return group.diaryDayList (diary.url_name).then (function (days) {
                     index.itemCount = days.length;
-                    fillFields (re.items[0], re.items[0], re.items[0], index);
+                    fillFields (re.items[0], re.items[0], re.items[0], index, {});
                     var v = 0;
                     return $promised.forEach (function (dayURL) {
                       subAs.stageProgress ('object', v++, index.itemCount);

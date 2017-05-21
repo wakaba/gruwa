@@ -4,6 +4,7 @@ use warnings;
 use Time::HiRes qw(time);
 use Promise;
 use Promised::Flow;
+use Dongry::SQL qw(like);
 use Dongry::Type;
 use Dongry::Type::JSONPS;
 use Dongry::SQL qw(where);
@@ -249,6 +250,73 @@ sub group ($$$$) {
       });
     })->then (sub {
       return json $app, {};
+    });
+  }
+
+  if (@$path == 5 and $path->[2] eq 'imported' and $path->[4] eq 'go') {
+    # /g/{group_id}/imported/{page}/go
+    my $page = Web::URL->parse_string ($path->[3]);
+    return $app->throw_error (404, reason_phrase => 'Bad page URL')
+        if not defined $page or not $page->is_http_s;
+
+    my $url = $page->stringify_without_fragment;
+    my $suffix = $page->fragment;
+    $suffix = defined $suffix ? '#' . $suffix : '';
+
+    if ($page->host->to_ascii =~ /\.g\.hatena\.ne\.jp$/) {
+      $url =~ s/^http:/https:/;
+
+      if ($url =~ m{^(https://[^/]+/files/[^/]+/[^/]+)\.([A-Za-z0-9_-]+)$}) {
+        $url = $1;
+        my $is_image = {
+          png => 1, gif => 1, jpg => 1, # jpeg jpe
+          bmp => 1, ico => 1, cur => 1,
+        }->{lc $2};
+        $suffix = $is_image ? 'image' : 'file';
+      } elsif ($url =~ m{^https://[^/]+/files/[^/]+/[^/]+$}) {
+        $suffix = 'file';
+      } elsif ($url =~ m{^(https://[^/]+/[^/]+/[0-9]+)/([^/]+)$}) {
+        $url = $1;
+        $suffix = '#' . $2;
+      }
+    }
+
+    return $db->select ('imported', {
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+      source_page => Dongry::Type->serialize ('text', $url),
+    }, fields => ['type', 'dest_id'])->then (sub {
+      my $selected = $_[0]->first;
+      if (not defined $selected) {
+        #
+      } elsif ($selected->{type} == 1) {
+        return $app->send_redirect
+            ('../../i/' . $selected->{dest_id} . '/' . $suffix);
+      } elsif ($selected->{type} == 2) {
+        return $app->send_redirect
+            ('../../o/' . $selected->{dest_id} . '/' . $suffix);
+      }
+
+      my $origin1 = $page->get_origin->to_ascii;
+      my $origin2 = $origin1;
+      $origin1 =~ s/^http:/https:/g;
+      $origin2 =~ s/^https:/http:/g;
+      return $db->execute (q{
+        select `group_id` from `imported`
+        where `group_id` = :group_id and
+              (`source_site` like :ss1 or
+               `source_site` like :ss2)
+        limit 1
+      }, {
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
+        ss1 => like (Dongry::Type->serialize ('text', $origin1)) . '%',
+        ss2 => like (Dongry::Type->serialize ('text', $origin2)) . '%',
+      })->then (sub {
+        if ($_[0]->first) {
+          return $app->send_redirect ($page->stringify);
+        } else {
+          return $app->throw_error (404, reason_phrase => 'Bad page origin')
+        }
+      });
     });
   }
 
@@ -1502,31 +1570,39 @@ sub group_object ($$$$) {
       });
     })->then (sub {
       my $objects = $_[0];
-      return json $app, {
-        objects => {map {
-          my $data;
-          my $title;
-          if (defined $_->{data}) {
-            $data = Dongry::Type->parse ('json', $_->{data});
-            $title = $data->{title} // '';
-          } else {
-            $title = Dongry::Type->parse ('text', $_->{title});
-          }
-          ($_->{object_id} => {
-            group_id => $path->[1],
-            object_id => ''.$_->{object_id},
-            title => $title,
-            created => $_->{created},
-            updated => $_->{updated},
-            timestamp => $_->{timestamp},
-            (defined $_->{data} ? (data => $data) : ()),
-            (defined $_->{revision_data} ?
-                 (revision_data => $_->{revision_data},
-                  revision_author_account_id => $_->{revision_author_account_id}) : ()),
-          });
-        } @$objects},
-        next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
-      };
+      return $db->select ('imported', {
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
+      }, fields => ['source_site'], distinct => 1)->then (sub {
+        my $sites = [map {
+          Dongry::Type->serialize ('text', $_->{source_site})
+        } @{$_[0]->all}];
+        return json $app, {
+          imported_sites => $sites,
+          objects => {map {
+            my $data;
+            my $title;
+            if (defined $_->{data}) {
+              $data = Dongry::Type->parse ('json', $_->{data});
+              $title = $data->{title} // '';
+            } else {
+              $title = Dongry::Type->parse ('text', $_->{title});
+            }
+            ($_->{object_id} => {
+              group_id => $path->[1],
+              object_id => ''.$_->{object_id},
+              title => $title,
+              created => $_->{created},
+              updated => $_->{updated},
+              timestamp => $_->{timestamp},
+              (defined $_->{data} ? (data => $data) : ()),
+              (defined $_->{revision_data} ?
+                   (revision_data => $_->{revision_data},
+                    revision_author_account_id => $_->{revision_author_account_id}) : ()),
+            });
+          } @$objects},
+          next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
+        };
+      });
     });
   } elsif (@$path >= 4 and $path->[3] eq 'search.json') {
     # /g/{group_id}/o/search.json

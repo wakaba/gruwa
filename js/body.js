@@ -17,7 +17,28 @@ function handleMessage (ev) {
     sendToParent ({type: "currentValue", value: div.innerHTML});
   } else if (ev.data.type === 'setCurrentValue') {
     document.body.setAttribute ('data-source-type', ev.data.valueSourceType || 0);
-    document.body.innerHTML = ev.data.value;
+    var fragment = document.createElement ('div');
+    fragment.innerHTML = ev.data.value;
+    var imported = ev.data.importedSites || [];
+    if (imported.length) {
+      Array.prototype.forEach.call (fragment.querySelectorAll ('a[href], link[href], img[src], iframe[src]'), function (e) {
+        ["href", "src"].forEach (function (a) {
+          var value = e[a]; // canonicalized URL
+          if (!value) return;
+          var matchedValue = value.replace (/^https?:/, '');
+          for (var i = 0; i < imported.length; i++) {
+            var importedPrefix = imported[i].replace (/^https?:/, '');
+            if (matchedValue.substring (0, importedPrefix.length) === importedPrefix) {
+              e.setAttribute (a, document.documentElement.getAttribute ('data-group-url') + '/imported/' + encodeURIComponent (value) + '/go');
+              return;
+            }
+          }
+        });
+      });
+    }
+    Array.prototype.forEach.call (fragment.childNodes, function (_) {
+      document.body.appendChild (_);
+    });
     sendHeight ();
   } else if (ev.data.type === 'getHeight') {
     sendHeight ();

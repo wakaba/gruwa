@@ -250,7 +250,7 @@ FieldCommands.setListIndex = function () {
   var object = {index_id: this.getAttribute ('value')};
   var panel = $$ancestor (this, 'section');
   $$c (panel, 'panel-main').forEach (function (s) {
-    fillFields (s, s, s, object);
+    fillFields (s, s, s, object, {});
     $$c (s, 'list-container[data-src-template]').forEach (function (list) {
       list.removeAttribute ('disabled');
       list.clearObjects ();
@@ -266,7 +266,7 @@ FieldCommands.setListIndex = function () {
   });
 }; // setListIndex
 
-function fillFields (contextEl, rootEl, el, object) {
+function fillFields (contextEl, rootEl, el, object, opts) {
   if (object.account_id &&
       object.account_id === document.documentElement.getAttribute ('data-account')) {
     rootEl.classList.add ('account-is-self');
@@ -447,7 +447,7 @@ function fillFields (contextEl, rootEl, el, object) {
         objects.forEach (function (object) {
           var item = document.createElement ('index-list-item');
           item.appendChild (template.content.cloneNode (true));
-          fillFields (item, item, item, object);
+          fillFields (item, item, item, object, {});
           item.classList.toggle ('this-index', object.index_id == document.documentElement.getAttribute ('data-index'));
           field.appendChild (item);
         });
@@ -458,7 +458,7 @@ function fillFields (contextEl, rootEl, el, object) {
       Object.keys (value || {}).forEach (function (accountId) {
         var item = document.createElement ('list-item');
         item.appendChild (template.content.cloneNode (true));
-        fillFields (item, item, item, {account_id: accountId});
+        fillFields (item, item, item, {account_id: accountId}, {});
         field.appendChild (item);
       });
     } else if (field.localName === 'iframe') {
@@ -480,6 +480,7 @@ function fillFields (contextEl, rootEl, el, object) {
       };
       mc.port2.postMessage ({type: "setCurrentValue",
                              valueSourceType: (object.data ? object.data.body_source_type : null),
+                             importedSites: opts.importedSites,
                              value: value});
     } else if (field.localName === 'todo-state') {
       if (value) {
@@ -531,7 +532,11 @@ function fillFormControls (form, object, opts) {
     return $$c (this, 'body-control')[0]; // or null
   }; // getBodyControl
   $$c (form, 'body-control').forEach (function (e) {
-    upgradeBodyControl (e, object, {focusBody: !opts.focusTitle, form: form});
+    upgradeBodyControl (e, object, {
+      focusBody: !opts.focusTitle,
+      form: form,
+      importedSites: opts.importedSites,
+    });
   });
   $$c (form, 'input[name]').forEach (function (control) {
     var value = object.data[control.name];
@@ -734,9 +739,12 @@ function upgradeBodyControl (e, object, opts) {
     });
   }; // saver.iframe
   loader.iframe = function () {
-    mc.port2.postMessage ({type: "setCurrentValue",
-                           value: data.body,
-                           valueSourceType: data.body_source_type});
+    mc.port2.postMessage ({
+      type: "setCurrentValue",
+      value: data.body,
+      valueSourceType: data.body_source_type,
+      importedSites: opts.importedSites,
+    });
   }; // loader.iframe
 
   $$c (e, 'button[data-action=execCommand]').forEach (function (b) {
@@ -805,9 +813,12 @@ function upgradeBodyControl (e, object, opts) {
       this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
       field.onload = null;
     };
-    mc.port2.postMessage ({type: "setCurrentValue",
-                           valueSourceType: data.body_source_type,
-                           value: data.body});
+    mc.port2.postMessage ({
+      type: "setCurrentValue",
+      valueSourceType: data.body_source_type,
+      value: data.body,
+      importedSites: opts.importedSites,
+    });
     mc.port2.close ();
   }; // loader.preview
   saver.preview = function () {
@@ -973,40 +984,48 @@ function upgradeList (el) {
     }[el.getAttribute ('type')] || 'list-item';
 
     var fill = function (item, object) {
-          if (itemType === 'object') {
-            item.setAttribute ('data-object', object.object_id);
-            item.startEdit = function () {
-              editObject (item, object, {open: true});
-            }; // startEdit
-            item.updateView = function () {
-              Array.prototype.forEach.call (item.children, function (f) {
-                if (f.localName !== 'edit-container') {
-                  fillFields (el, item, f, object);
-                }
+      if (itemType === 'object') {
+        item.setAttribute ('data-object', object.object_id);
+        item.startEdit = function () {
+          editObject (item, object, {
+            open: true,
+            importedSites: opts.importedSites,
+          });
+        }; // startEdit
+        item.updateView = function () {
+          Array.prototype.forEach.call (item.children, function (f) {
+            if (f.localName !== 'edit-container') {
+              fillFields (el, item, f, object, {
+                importedSites: opts.importedSites,
               });
-            }; // updateView
-            item.addEventListener ('objectdataupdate', function (ev) {
-              this.updateView ();
+            }
+          });
+        }; // updateView
+        item.addEventListener ('objectdataupdate', function (ev) {
+          this.updateView ();
+        });
+        item.addEventListener ('editablecontrolchange', function (ev) {
+          var as = getActionStatus (item);
+          as.start ({stages: ["formdata", "create", "edit", "update"]});
+          var open = false; // XXX true if edit-container is modified but not saved
+          editObject (item, object, {
+            open: open,
+            importedSites: opts.importedSites,
+          }).then (function () {
+            $$ /* not $$c*/ (item, 'edit-container body-control').forEach (function (e) {
+              e.sendChange (ev.data);
             });
-            item.addEventListener ('editablecontrolchange', function (ev) {
-              var as = getActionStatus (item);
-              as.start ({stages: ["formdata", "create", "edit", "update"]});
-              var open = false; // XXX true if edit-container is modified but not saved
-              editObject (item, object, {open: open}).then (function () {
-                $$ /* not $$c*/ (item, 'edit-container body-control').forEach (function (e) {
-                  e.sendChange (ev.data);
-                });
-                return item.save ({actionStatus: as});
-              }).then (function () {
-                as.end ({ok: true});
-              }, function (error) {
-                as.end ({error: error});
-              });
-            });
+            return item.save ({actionStatus: as});
+          }).then (function () {
+            as.end ({ok: true});
+          }, function (error) {
+            as.end ({error: error});
+          });
+        });
 
         item.updateView ();
       } else {
-        fillFields (el, item, item, object);
+        fillFields (el, item, item, object, {});
       }
     }; // fill
 
@@ -1163,6 +1182,7 @@ function upgradeList (el) {
     return el.showObjects (json[key], {
       hasNext: hasNext,
       prepend: el.hasAttribute ('prepend'),
+      importedSites: json.imported_sites,
     }).then (function (result) {
       if (hasNext) {
         nextRef = json.next_ref;
@@ -1180,7 +1200,7 @@ function upgradeList (el) {
     $$ (el, '.search-wiki_name-link').forEach (function (e) {
       var q = el.getAttribute ('param-q');
       e.hidden = ! /^\s*\S+\s*$/.test (q);
-      fillFields (el, e, e, {name: q.replace (/^\s+/, '').replace (/\s+$/, '')});
+      fillFields (el, e, e, {name: q.replace (/^\s+/, '').replace (/\s+$/, '')}, {});
     });
     var reloads = $$c (this, 'menu:not([hidden])');
     reloads.forEach (function (e) {
@@ -1359,6 +1379,7 @@ function editObject (article, object, opts) {
 
     wait.push (fillFormControls (form, object, {
       focusTitle: opts.focusTitle,
+      importedSites: opts.importedSites,
     }));
 
     container.addEventListener ('gruwaeditcommand', function (ev) {
@@ -2041,7 +2062,7 @@ function upgradeListControl (control) {
       objects.forEach (function (object) {
         var item = document.createElement ('list-item');
         item.appendChild (template.content.cloneNode (true));
-        fillFields (list, item, item, object);
+        fillFields (list, item, item, object, {});
         list.appendChild (item);
       });
     });

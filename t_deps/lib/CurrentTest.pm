@@ -115,6 +115,34 @@ sub get_file ($$;$%) {
   });
 } # get_file
 
+sub get_redirect ($$;$%) {
+  my ($self, $path, $params, %args) = @_;
+  $path = [
+    (
+      defined $args{group}
+        ? ('g', $self->_get_o ($args{group})->{group_id})
+        : ()
+    ),
+    @$path,
+  ];
+  my $cookies = {%{$args{cookies} or {}}};
+  return $self->_account ($args{account})->then (sub {
+    $cookies->{sk} = $_[0]->{cookies}->{sk}; # or undef
+    return $self->client->request (
+      path => $path,
+      params => $params,
+      cookies => $cookies,
+      headers => $args{headers},
+      body => $args{body},
+    );
+  })->then (sub {
+    my $res = $_[0];
+    die $res unless $res->status == 302;
+    return {status => $res->status,
+            res => $res};
+  });
+} # get_redirect
+
 sub post_json ($$$;%) {
   my ($self, $path, $params, %args) = @_;
   $path = [
@@ -460,7 +488,7 @@ sub close ($) {
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
