@@ -102,7 +102,7 @@ Test {
           $current->o ('o1')->{object_revision_id};
       is $object->{data}->{body}, "\x{400} ";
       is $object->{title}, "";
-      is $object->{data}->{title}, '';
+      is $object->{data}->{title}, undef;
       is $object->{data}->{user_status}, 1;
       is $object->{data}->{owner_status}, 1;
       ok $object->{created};
@@ -117,7 +117,7 @@ Test {
     test {
       is $object->{data}->{body}, "\x{400} ";
       is $object->{title}, "";
-      is $object->{data}->{title}, '';
+      is $object->{data}->{title}, undef;
       is $object->{data}->{user_status}, 1;
       is $object->{data}->{owner_status}, 1;
       ok $object->{created};
