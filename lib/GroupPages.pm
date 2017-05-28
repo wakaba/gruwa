@@ -749,12 +749,12 @@ my @TokenAlpha = ('0'..'9','A'..'Z','a'..'z');
 
 sub create_object ($%) {
   my ($db, %args) = @_;
-  my $time = time;
+  my $time = $args{now} || time;
   return $db->execute ('select uuid_short() as uuid1,
                                uuid_short() as uuid2')->then (sub {
     my $ids = $_[0]->first;
     my $object_id = ''.$ids->{uuid1};
-    my $data = {timestamp => $time,
+    my $data = {timestamp => $args{timestamp} || $time,
                 object_revision_id => ''.$ids->{uuid2},
                 user_status => 1, # open
                 owner_status => 1}; # open
@@ -790,7 +790,7 @@ sub create_object ($%) {
       search_data => '',
       created => $time,
       updated => $time,
-      timestamp => $time,
+      timestamp => 0+($data->{timestamp}),
       owner_status => $data->{owner_status},
       user_status => $data->{user_status},
       thread_id => 0+$data->{thread_id},
@@ -816,6 +816,41 @@ sub create_object ($%) {
     });
   });
 } # create_object
+
+sub _write_object_trackbacks ($$$$$$$$$) {
+  my ($db, $group_id, $parent_object_ids,
+      $author_account_id, $object_id, $title, $search_data,
+      $ts, $now) = @_;
+  return unless @$parent_object_ids;
+  ## If there is no trackbacked object, no trackback object is created
+  ## for it.
+  return $db->select ('object', {
+    group_id => Dongry::Type->serialize ('text', $group_id),
+    object_id => {-in => [map {
+      Dongry::Type->serialize ('text', $_);
+    } @$parent_object_ids]},
+  }, fields => ['object_id', 'thread_id'])->then (sub {
+    my $parents = $_[0]->all->to_a;
+    return promised_map {
+      return create_object ($db,
+        group_id => $group_id,
+        author_account_id => $author_account_id,
+        body_type => 3, # data
+        body_data => {
+          trackback => {
+            object_id => ''.$object_id,
+            title => $title,
+            search_data => (defined $search_data ? (substr $search_data, 0, 300) : undef),
+          },
+        },
+        parent_object_id => $_[0]->{object_id},
+        thread_id => $_[0]->{thread_id},
+        timestamp => $ts,
+        now => $now,
+      );
+    } $parents;
+  });
+} # _write_object_trackbacks
 
 sub group_object ($$$$) {
   my ($class, $app, $path, $opts) = @_;
@@ -968,6 +1003,8 @@ sub group_object ($$$$) {
           $search_data = join "\n",
               $body,
               $object->{data}->{title};
+
+          ## Keyword link trackbacks
           {
             my $index_id = $opts->{group}->{data}->{default_wiki_index_id};
             if (defined $index_id) {
@@ -980,6 +1017,8 @@ sub group_object ($$$$) {
               }
             }
           }
+
+          ## URL link trackbacks
           my $self_url = Web::URL->parse_string ($app->http->url->stringify);
           for my $url (@url) {
             if ($url->get_origin->same_origin_as ($self_url->get_origin)) {
@@ -1018,8 +1057,15 @@ sub group_object ($$$$) {
                   }
                 }
               }
+            } else { # not same origin
+              my $urls = $url->stringify_without_fragment;
+              unless ($object->{data}->{trackbacked}->{urls}->{$urls}) {
+                $trackbacks->{urls}->{$urls} = 1;
+                $object->{data}->{trackbacked}->{urls}->{$urls} = 1;
+                last if 50 < $trackback_count++;
+              }
             }
-          }
+          } # $url
         } # title/body modified
 
         if ($app->bare_param ('edit_assigned_account_id')) {
@@ -1175,20 +1221,6 @@ sub group_object ($$$$) {
           }
           return $db->execute ('select uuid_short() as uuid')->then (sub {
             $object->{data}->{object_revision_id} = ''.$_[0]->first->{uuid};
-            $sdata = Dongry::Type->serialize ('json', $object->{data});
-            return $db->insert ('object_revision', [{
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
-              object_id => Dongry::Type->serialize ('text', $path->[3]),
-              data => $sdata,
-
-              object_revision_id => $object->{data}->{object_revision_id},
-              revision_data => Dongry::Type->serialize ('json', $rev_data),
-              author_account_id => Dongry::Type->serialize ('text', $opts->{account}->{account_id}),
-              created => $time,
-
-              owner_status => $object->{data}->{owner_status},
-              user_status => $object->{data}->{user_status},
-            }]);
           })->then (sub {
             return unless keys %$reactions;
             $reactions->{object_revision_id} = $object->{data}->{object_revision_id};
@@ -1201,33 +1233,53 @@ sub group_object ($$$$) {
               thread_id => $object->{data}->{thread_id},
             );
           })->then (sub {
-            return unless keys %{$trackbacks->{objects} or {}};
-            ## If there is no trackbacked object, no trackback object
-            ## is created for it.
-            return $db->select ('object', {
+            return unless keys %{$trackbacks->{urls} or {}};
+            return $db->select ('imported', {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
-              object_id => {-in => [map {
-                Dongry::Type->serialize ('text', $_);
-              } keys %{$trackbacks->{objects}}]},
-            }, fields => ['object_id', 'thread_id'])->then (sub {
-              my $parents = $_[0]->all->to_a;
-              return promised_map {
-                return create_object ($db,
-                  group_id => $path->[1],
-                  author_account_id => $opts->{account}->{account_id},
-                  body_type => 3, # data
-                  body_data => {
-                    trackback => {
-                      object_id => ''.$object->{object_id},
-                      title => $object->{data}->{title},
-                      search_data => (defined $search_data ? (substr $search_data, 0, 300) : undef),
-                    },
-                  },
-                  parent_object_id => $_[0]->{object_id},
-                  thread_id => $_[0]->{thread_id},
-                );
-              } $parents;
+              source_page_sha => {-in => [map {
+                sha1_hex (Dongry::Type->serialize ('text', $_));
+              } keys %{$trackbacks->{urls}}]},
+              type => 2, # object
+            }, fields => ['dest_id', 'source_page'])->then (sub {
+              my $imports = $_[0]->all;
+              for (@$imports) {
+                $trackbacks->{objects}->{$_->{dest_id}} = 1;
+                $object->{data}->{trackbacked}->{objects}->{$_->{dest_id}} = 1;
+                delete $trackbacks->{urls}->{Dongry::Type->parse ('text', $_->{source_page})};
+              }
+            })->then (sub {
+              return unless keys %{$trackbacks->{urls} or {}};
+
+              # XXX check existing url bookmarks
+
+              ## For future imports or url bookmakrs
+              return $db->insert ('url_ref', [map {
+                +{
+                  group_id => Dongry::Type->serialize ('text', $path->[1]),
+                  source_id => ''.$object->{object_id},
+                  dest_url => Dongry::Type->serialize ('text', $_),
+                  dest_url_sha => sha1_hex (Dongry::Type->serialize ('text', $_)),
+                  created => $time,
+                  timestamp => $object->{data}->{timestamp},
+                };
+              } keys %{$trackbacks->{urls} or {}}], duplicate => 'ignore');
             });
+          })->then (sub {
+            return _write_object_trackbacks (
+              $db,
+              $path->[1],
+              [keys %{$trackbacks->{objects} or {}}],
+              $opts->{account}->{account_id},
+              $object->{object_id},
+              $object->{data}->{title},
+              $search_data,
+              ## If this is the first time the entry is edited with a
+              ## timestamp, use the timestamp (consider if an old
+              ## entry is imported).  Otherwise, use the current time
+              ## (for references added in later changes).
+              ($changes->{fields}->{timestamp} ? $object->{data}->{timestamp} : $time),
+              $time,
+            );
           })->then (sub {
             return unless keys %{$trackbacks->{wiki_names} or {}};
             my $group_id = Dongry::Type->serialize ('text', $path->[1]);
@@ -1270,6 +1322,22 @@ sub group_object ($$$$) {
               return unless @x;
               return $db->insert ('wiki_trackback_object', \@x);
             });
+
+          })->then (sub {
+            $sdata = Dongry::Type->serialize ('json', $object->{data});
+            return $db->insert ('object_revision', [{
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              object_id => Dongry::Type->serialize ('text', $path->[3]),
+              data => $sdata,
+
+              object_revision_id => $object->{data}->{object_revision_id},
+              revision_data => Dongry::Type->serialize ('json', $rev_data),
+              author_account_id => Dongry::Type->serialize ('text', $opts->{account}->{account_id}),
+              created => $time,
+
+              owner_status => $object->{data}->{owner_status},
+              user_status => $object->{data}->{user_status},
+            }]);
           })->then (sub {
             my $update = {
               title => Dongry::Type->serialize ('text', $object->{data}->{title} // ''),
@@ -1709,12 +1777,13 @@ sub group_object ($$$$) {
       my $result = $_[0];
       return Promise->resolve->then (sub {
         return unless defined $source_page_url;
-        my $page = Dongry::Type->serialize ('text', $source_page_url->stringify);
         my $site = Dongry::Type->serialize ('text', $source_site_url->stringify);
+        my $page = Dongry::Type->serialize ('text', $source_page_url->stringify);
+        my $page_sha = sha1_hex ($page);
         my $time = time;
         return $db->insert ('imported', [{
           group_id => Dongry::Type->serialize ('text', $path->[1]),
-          source_page_sha => sha1_hex ($page),
+          source_page_sha => $page_sha,
           source_page => $page,
           source_site_sha => sha1_hex ($site),
           source_site => $site,
@@ -1730,6 +1799,33 @@ sub group_object ($$$$) {
           type => $db->bare_sql_fragment ('values(`type`)'),
           dest_id => $db->bare_sql_fragment ('values(`dest_id`)'),
           sync_info => $db->bare_sql_fragment ('values(`sync_info`)'),
+        })->then (sub {
+          return $db->select ('url_ref', {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            dest_url_sha => $page_sha,
+          }, fields => ['source_id', 'timestamp'], limit => 50)->then (sub {
+            my $links = $_[0]->all;
+            return unless @$links;
+            return (promised_for {
+              return _write_object_trackbacks (
+                $db,
+                $path->[1],
+                [$result->{object_id}],
+                $opts->{account}->{account_id},
+                $_[0]->{source_id},
+                '',
+                '',
+                $_[0]->{timestamp},
+                $time,
+              );
+            } $links)->then (sub {
+              return $db->delete ('url_ref', {
+                group_id => Dongry::Type->serialize ('text', $path->[1]),
+                dest_url_sha => $page_sha,
+                source_id => {-in => [map { $_->{source_id} } @$links]},
+              });
+            });
+          });
         });
       })->then (sub {
         return json $app, {

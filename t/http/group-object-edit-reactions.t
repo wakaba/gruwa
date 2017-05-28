@@ -95,6 +95,170 @@ Test {
   });
 } n => 10, name => 'index_id';
 
+Test {
+  my $current = shift;
+  my $site = 'https://' . rand . '.test/foo/';
+  my $page = $site . rand;
+  my $timestamp = rand 10000000;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {
+      group => 'g1', account => 'a1',
+      body_type => 1,
+      body => qq{<a href="$page"></a>},
+      timestamp => $timestamp,
+    });
+  })->then (sub {
+    return $current->post_json (['o', 'create.json'], {
+      source_page => $page,
+      source_site => $site,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    $current->set_o (o2 => $_[0]->{json});
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o2')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objs = [grep {
+        $_->{data}->{body_type} == 3;
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objs, 1;
+      my $obj = $objs->[0];
+      is $obj->{timestamp}, $timestamp;
+      is $obj->{data}->{body_data}->{trackback}->{object_id}, $current->o ('o1')->{object_id};
+      like $result->{res}->body_bytes, qr{"object_id"\s*:\s*"};
+      unlike $result->{res}->body_bytes, qr{"object_id"\s*:\s*[0-9]};
+    } $current->c, name => 'trackback object created';
+    return $current->post_json (['o', 'create.json'], {
+      source_page => $page,
+      source_site => $site,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    $current->set_o (o3 => $_[0]->{json});
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o3')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = [grep {
+        $_->{data}->{body_type} == 3;
+      } values %{$result->{json}->{objects}}]->[0];
+      is $obj, undef;
+    } $current->c, name => 'trackback object not created for later updates';
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => qq{<a href="$page"></a>!!!},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o3')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objs = [grep {
+        $_->{data}->{body_type} == 3;
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objs, 0;
+    } $current->c, name => 'no duplicate trackback';
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => qq{<a href="/g/@{[$current->o ('g1')->{group_id}]}/o/@{[$current->o ('o3')->{object_id}]}/"></a>!!!},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o3')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objs = [grep {
+        $_->{data}->{body_type} == 3;
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objs, 1;
+    } $current->c, name => 'duplicate trackback allowed to avoid complexity';
+  });
+} n => 8, name => 'referenced url is then imported as an object';
+
+Test {
+  my $current = shift;
+  my $site = 'https://' . rand . '.test/foo/';
+  my $page = $site . rand;
+  my $timestamp = rand 10000000;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->post_json (['o', 'create.json'], {
+      source_page => $page,
+      source_site => $site,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    $current->set_o (o2 => $_[0]->{json});
+    return $current->create_object (o1 => {
+      group => 'g1', account => 'a1',
+      body_type => 1,
+      body => qq{<a href="$page"></a>},
+      timestamp => $timestamp,
+    });
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o2')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objs = [grep {
+        $_->{data}->{body_type} == 3;
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objs, 1;
+      my $obj = $objs->[0];
+      is $obj->{timestamp}, $timestamp;
+      is $obj->{data}->{body_data}->{trackback}->{object_id}, $current->o ('o1')->{object_id};
+      like $result->{res}->body_bytes, qr{"object_id"\s*:\s*"};
+      unlike $result->{res}->body_bytes, qr{"object_id"\s*:\s*[0-9]};
+    } $current->c, name => 'trackback object created';
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => qq{<a href="$page"></a>...},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o2')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objs = [grep {
+        $_->{data}->{body_type} == 3;
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objs, 1;
+    } $current->c, name => 'no duplicate trackback';
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => qq{<a href="/g/@{[$current->o ('g1')->{group_id}]}/o/@{[$current->o ('o2')->{object_id}]}/"></a>...},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o2')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objs = [grep {
+        $_->{data}->{body_type} == 3;
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objs, 1;
+    } $current->c, name => 'no duplicate trackback';
+  });
+} n => 7, name => 'trackback to imported url';
+
 RUN;
 
 =head1 LICENSE
