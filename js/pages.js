@@ -1,7 +1,3 @@
-function $$ (n, s) {
-  return Array.prototype.slice.call (n.querySelectorAll (s));
-} // $$
-
 function $$c (n, s) {
   return Array.prototype.filter.call (n.querySelectorAll (s), function (e) {
     var f = e.parentNode;
@@ -175,14 +171,19 @@ function createBodyHTML (value, opts) {
     link.href = e.href;
     doc.head.appendChild (link);
   });
-  $$ (document.head, 'link.body-js').forEach (function (e) {
+  $$ (document.head, 'link.body-js, script.body-js').forEach (function (e) {
     var script = document.createElement ('script');
     script.async = true;
-    script.src = e.href;
+    script.src = e.href || e.src;
     doc.head.appendChild (script);
   });
 
-  $$ (document, 'template.body-edit-template').forEach (function (e) {
+  if (opts.edit) {
+    $$ (document, 'template.body-edit-template').forEach (function (e) {
+      doc.head.appendChild (e.cloneNode (true));
+    });
+  }
+  $$ (document, 'template.body-template').forEach (function (e) {
     doc.head.appendChild (e.cloneNode (true));
   });
 
@@ -480,6 +481,10 @@ function fillFields (contextEl, rootEl, el, object, opts) {
             var v = new Event ('editablecontrolchange', {bubbles: true});
             v.data = ev.data;
             field.dispatchEvent (v);
+          } else if (ev.data.type === 'getObjectWithSearchData') {
+            getObjectWithSearchData (ev.data.value).then (function (object) {
+              ev.ports[0].postMessage (object);
+            });
           }
         };
         field.onload = null;
@@ -711,6 +716,10 @@ function upgradeBodyControl (e, object, opts) {
         var args = ev.data.value;
         var result = prompt (args.prompt, args.default);
         ev.ports[0].postMessage ({result: result});
+      } else if (ev.data.type === 'getObjectWithSearchData') {
+        getObjectWithSearchData (ev.data.value).then (function (object) {
+          ev.ports[0].postMessage (object);
+        });
       }
     }; // onmessage
     e.onload = null;
@@ -2229,13 +2238,18 @@ function upgradeObjectRef (e) {
   var objectId = e.getAttribute ('value');
   if (!objectId) return;
 
-  var fd = new FormData;
-  fd.append ('object_id', objectId);
-  return gFetch ('o/get.json?with_data=1&with_search_data=1', {post: true, formData: fd}).then (function (json) {
-    var object = json.objects[objectId] || {};
+  return getObjectWithSearchData (objectId).then (function (object) {
     fillFields (e, e, e, object, {});
   });
 } // upgradeObjectRef
+
+function getObjectWithSearchData (objectId) {
+  var fd = new FormData;
+  fd.append ('object_id', objectId);
+  return gFetch ('o/get.json?with_data=1&with_search_data=1', {post: true, formData: fd}).then (function (json) {
+    return json.objects[objectId] || {};
+  });
+} // getObjectWithSearchData
 
 var RunAction = {};
 

@@ -37,6 +37,10 @@ function handleMessage (ev) {
         });
       });
     }
+    Array.prototype.forEach.call (fragment.querySelectorAll ('object-ref'), function (e) {
+      e.setAttribute ('contenteditable', 'false');
+      upgradeObjectRef (e);
+    });
     Array.prototype.slice.call (fragment.childNodes).forEach (function (_) {
       document.body.appendChild (_);
     });
@@ -102,6 +106,18 @@ function sendPrompt (opts) {
   };
   return p;
 } // sendPrompt
+
+function sendGetObjectWithSearchData (objectId) {
+  var c = new MessageChannel;
+  parentPort.postMessage ({type: "getObjectWithSearchData", value: objectId}, [c.port1]);
+  var ok;
+  var p = new Promise (function (x) { ok = x });
+  c.port2.onmessage = function (ev) {
+    ok (ev.data);
+    c.port2.close ();
+  };
+  return p;
+} // sendGetObjectWithSearchData
 
 function sendHeight () {
   sendToParent ({type: "height", value: document.documentElement.offsetHeight});
@@ -678,5 +694,32 @@ function showContextToolbar (args) {
 
   document.body.appendChild (contextToolbar);
 } // showContextToolbar
+
+function upgradeObjectRef (e) {
+  if (e.upgraded) return;
+  e.upgraded = true;
+
+  if (document.body.isContentEditable) {
+    e.onclick = function () { return false };
+  }
+
+  if (! e.attachShadow) return; // old browsers
+
+  var objectId = e.getAttribute ('value');
+  return sendGetObjectWithSearchData (objectId).then (function (object) {
+    var f = document.createElement ('object-ref-content');
+    f.appendChild (document.querySelector ('#object-ref-template').content.cloneNode (true));
+    $fill (f, object);
+  
+    var sr = e.attachShadow ({mode: 'open'});
+
+    $$ (document.head, 'link[rel~=stylesheet]').forEach (function (g) {
+      sr.appendChild (g.cloneNode (true));
+    });
+    sr.appendChild (f);
+
+    sendHeight ();
+  });
+} // upgradeObjectRef
 
 sendHeight ();

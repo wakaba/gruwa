@@ -255,7 +255,7 @@
                 <object-ref hidden data-field=data.body_data.trackback.object_id>
                   <a href data-href-template={GROUP}/o/{object_id}/>
                     <cite data-field=data.title data-empty=■ />
-                    <p data-field=search_data />
+                    <body-snippet data-field=search_data />
                   </a>
                 </object-ref>
               </template>
@@ -479,10 +479,12 @@
           <template />
           <template data-name=trackback class=trackback>
             <time data-field=created class=ambtime />にこのWikiページが参照されました。
-            <a href data-href-template={GROUP}/o/{data.body_data.trackback.object_id}/>
-              <cite data-field=data.body_data.trackback.title data-empty=■ />
-              <p data-field=data.body_data.trackback.search_data />
-            </a>
+            <object-ref hidden data-field=data.body_data.trackback.object_id>
+              <a href data-href-template={GROUP}/o/{object_id}/>
+                <cite data-field=data.title data-empty=■ />
+                <body-snippet data-field=search_data />
+              </a>
+            </object-ref>
           </template>
           <p class="operations pager">
             <button type=button class=next-page-button hidden>もっと昔</button>
@@ -497,6 +499,13 @@
       </footer>
     </t:if>
   </section>
+
+  <template class=body-template id=object-ref-template>
+    <a href pl:data-href-template="'/g/'.$group->{group_id}.'/o/{object_id}/'">
+      <cite data-field=data.title data-empty=■ />
+      <body-snippet data-field=search_data />
+    </a>
+  </template>
 
   <t:include path=_object_editor.html.tm />
 
