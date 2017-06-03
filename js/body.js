@@ -178,7 +178,15 @@ onchange = function (ev) {
 (function () {
   var over = false;
   onmouseover = function (ev) {
-    if (ev.target.localName === 'a') {
+    var parent = ev.target;
+    while (parent) {
+      if (parent.localName === 'a') {
+        break;
+      } else {
+        parent = parent.parentNode;
+      }
+    }
+    if (parent && parent.localName === 'a') {
       sendToParent ({
         type: "linkSelected", url: ev.target.href,
         top: ev.target.offsetTop, left: ev.target.offsetLeft,

@@ -6,7 +6,7 @@ use Tests;
 
 Test {
   my $current = shift;
-  my $site = 'https://' . rand . '.test/foo/';
+  my $site = 'https://' . rand . '.test.g.hatena.ne.jp/foo/';
   my $site2 = $site;
   $site2 =~ s/^https:/http:/;
   my $page = $site . rand;
@@ -38,6 +38,20 @@ Test {
       ],
     );
   })->then (sub {
+    return $current->are_errors (
+      ['GET', ['imported', $page, 'go.json'], {}, group => 'g1', account => 'a1'],
+      [
+        {account => undef, status => 403, name => 'No account'},
+        {account => '', status => 403, name => 'Other account'},
+        {group => 'g2', status => 403, name => 'Bad group'},
+        {path => ['imported', rand, 'go.json'], status => 404, name => 'relative'},
+        {path => ['imported', 'null', 'go.json'], status => 404, name => 'relative'},
+        {path => ['imported', 'http://foo:bar', 'go.json'], status => 404, name => 'unparsable'},
+        {path => ['imported', 'javascript:alert(1)', 'go.json'], status => 404, name => 'non http'},
+        {path => ['imported', 'https://example.com/', 'go.json'], status => 404, name => 'non imported'},
+      ],
+    );
+  })->then (sub {
     return $current->get_redirect
         (['imported', $page, 'go'], {}, group => 'g1', account => 'a1');
   })->then (sub {
@@ -45,6 +59,14 @@ Test {
     test {
       is $result->{res}->header ('Location'),
           $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/')->stringify;
+    } $current->c;
+    return $current->get_json
+        (['imported', $page, 'go.json'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{json}->{url},
+         $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/')->stringify;
     } $current->c;
     return $current->get_redirect
         (['imported', $page2, 'go'], {}, group => 'g1', account => 'a1');
@@ -91,7 +113,7 @@ Test {
           $current->resolve ($site2 . '/' . $current->o ('p1'))->stringify;
     } $current->c;
   });
-} n => 7, name => 'redirecting non-fragment object URL';
+} n => 9, name => 'redirecting non-fragment object URL';
 
 Test {
   my $current = shift;
@@ -268,8 +290,16 @@ Test {
       is $result->{res}->header ('Location'),
           $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/file')->stringify;
     } $current->c;
+    return $current->get_json
+        (['imported', $page, 'go.json'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{json}->{url},
+         $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/file')->stringify;
+    } $current->c;
   });
-} n => 4, name => 'hatena group file URL';
+} n => 5, name => 'hatena group file URL';
 
 RUN;
 

@@ -487,19 +487,10 @@ function fillFields (contextEl, rootEl, el, object, opts) {
             });
           } else if (ev.data.type === 'linkSelected') {
             if (ev.data.url) {
-              var url = new URL (ev.data.url);
-              if (url.origin === location.origin) {
-                var m = url.pathname.match (/^\/g\/[^\/]+\/o\/([0-9]+)\//);
-                if (m[1]) {
-                  var ref = document.createElement ('object-ref');
-                  ref.setAttribute ('value', m[1]);
-                  ref.setAttribute ('template', '#object-ref-template');
-                  showTooltip (ref, {
-                    top: field.offsetTop + ev.data.top + ev.data.height,
-                    left: field.offsetLeft + ev.data.left,
-                  });
-                }
-              }
+              showURLTooltip (ev.data.url, {
+                top: field.offsetTop + ev.data.top + ev.data.height,
+                left: field.offsetLeft + ev.data.left,
+              });
             } else {
               showTooltip (null, {});
             }
@@ -2294,6 +2285,36 @@ function showTooltip (e, opts) {
   container.appendChild (e);
   document.body.appendChild (container);
 } // showTooltip
+
+(function () {
+  var urlToImportedURL = {};
+
+  this.showURLTooltip = function (url, opts) {
+    var url = new URL (url);
+    if (url.origin === location.origin) {
+      var m = url.pathname.match (/^\/g\/[^\/]+\/o\/([0-9]+)\//);
+      if (m) {
+        var ref = document.createElement ('object-ref');
+        ref.setAttribute ('value', m[1]);
+        ref.setAttribute ('template', '#object-ref-template');
+        showTooltip (ref, opts);
+        return;
+      }
+
+      if (url.pathname.match (/imported.+go$/)) {
+        if (urlToImportedURL[url.pathname]) {
+          return showURLTooltip (urlToImportedURL[url.pathname], opts);
+        }
+        return gFetch (url.pathname + '.json', {}).then (function (json) {
+          urlToImportedURL[url.pathname] = json.url;
+          return showURLTooltip (json.url, opts);
+        });
+      }
+    }
+
+    return showTooltip (null, {});
+  } // showURLTooltip
+}) ();
 
 var RunAction = {};
 

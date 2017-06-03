@@ -14,6 +14,14 @@ function $fill (e, o) {
     if (f.localName === 'input' ||
         f.localName === 'select') {
       f.value = value;
+    } else if (f.localName === 'time') {
+      var date = new Date (parseFloat (value) * 1000);
+      try {
+        f.setAttribute ('datetime', date.toISOString ());
+        f.textContent = date.toLocaleString ();
+      } catch (e) {
+        console.log (e); // XXX
+      }
     } else {
       f.textContent = value || f.getAttribute ('data-empty');
     }

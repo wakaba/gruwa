@@ -253,8 +253,10 @@ sub group ($$$$) {
     });
   }
 
-  if (@$path == 5 and $path->[2] eq 'imported' and $path->[4] eq 'go') {
+  if (@$path == 5 and $path->[2] eq 'imported' and
+      ($path->[4] eq 'go' or $path->[4] eq 'go.json')) {
     # /g/{group_id}/imported/{page}/go
+    # /g/{group_id}/imported/{page}/go.json
     my $page = Web::URL->parse_string ($path->[3]);
     return $app->throw_error (404, reason_phrase => 'Bad page URL')
         if not defined $page or not $page->is_http_s;
@@ -289,11 +291,9 @@ sub group ($$$$) {
       if (not defined $selected) {
         #
       } elsif ($selected->{type} == 1) {
-        return $app->send_redirect
-            ('../../i/' . $selected->{dest_id} . '/' . $suffix);
+        return '../../i/' . $selected->{dest_id} . '/' . $suffix;
       } elsif ($selected->{type} == 2) {
-        return $app->send_redirect
-            ('../../o/' . $selected->{dest_id} . '/' . $suffix);
+        return '../../o/' . $selected->{dest_id} . '/' . $suffix;
       }
 
       my $origin1 = $page->get_origin->to_ascii;
@@ -312,11 +312,18 @@ sub group ($$$$) {
         ss2 => like (Dongry::Type->serialize ('text', $origin2)) . '%',
       })->then (sub {
         if ($_[0]->first) {
-          return $app->send_redirect ($page->stringify);
+          return $page->stringify;
         } else {
           return $app->throw_error (404, reason_phrase => 'Bad page origin')
         }
       });
+    })->then (sub {
+      my $url = $_[0];
+      if ($path->[4] eq 'go') {
+        return $app->send_redirect ($url);
+      } else {
+        return json $app, {url => $app->http->url->resolve_string ($url)->stringify};
+      }
     });
   }
 
