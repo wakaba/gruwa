@@ -255,7 +255,7 @@
                 <object-ref hidden data-field=data.body_data.trackback.object_id>
                   <a href data-href-template={GROUP}/o/{object_id}/>
                     <cite data-field=data.title data-empty=■ />
-                    <body-snippet data-field=search_data />
+                    <body-snippet data-field=snippet />
                   </a>
                 </object-ref>
               </template>
@@ -482,7 +482,7 @@
             <object-ref hidden data-field=data.body_data.trackback.object_id>
               <a href data-href-template={GROUP}/o/{object_id}/>
                 <cite data-field=data.title data-empty=■ />
-                <body-snippet data-field=search_data />
+                <body-snippet data-field=snippet />
               </a>
             </object-ref>
           </template>
@@ -503,7 +503,7 @@
   <template class=body-template id=object-ref-template>
     <a href pl:data-href-template="'/g/'.$group->{group_id}.'/o/{object_id}/'">
       <cite data-field=data.title data-empty=■ />
-      <body-snippet data-field=search_data />
+      <body-snippet data-field=snippet />
     </a>
   </template>
 

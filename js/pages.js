@@ -2246,7 +2246,7 @@ function upgradeObjectRef (e) {
 function getObjectWithSearchData (objectId) {
   var fd = new FormData;
   fd.append ('object_id', objectId);
-  return gFetch ('o/get.json?with_data=1&with_search_data=1', {post: true, formData: fd}).then (function (json) {
+  return gFetch ('o/get.json?with_data=1&with_snippet=1', {post: true, formData: fd}).then (function (json) {
     return json.objects[objectId] || {};
   });
 } // getObjectWithSearchData

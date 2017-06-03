@@ -907,16 +907,16 @@ Test {
   })->then (sub {
     return $current->get_json (['o', 'get.json'], {
       object_id => $current->o ('o1')->{object_id},
-      with_search_data => 1,
+      with_snippet => 1,
     }, group => 'g1', account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
       my $o = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
-      ok $o->{search_data};
+      ok $o->{snippet};
     } $current->c;
   });
-} n => 1, name => 'with_search_data';
+} n => 1, name => 'with_snippet';
 
 RUN;
 

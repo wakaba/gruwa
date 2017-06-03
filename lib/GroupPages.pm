@@ -1297,8 +1297,6 @@ sub group_object ($$$$) {
                     body_data => {
                       trackback => {
                         object_id => ''.$object->{object_id},
-                        title => $object->{data}->{title},
-                        search_data => (defined $search_data ? (substr $search_data, 0, 300) : undef),
                       },
                     },
                   )->then (sub {
@@ -1594,7 +1592,7 @@ sub group_object ($$$$) {
         user_status => 1,
       }, fields => ['object_id', 'title', 'timestamp', 'created', 'updated',
                     ($app->bare_param ('with_data') ? 'data' : ()),
-                    ($app->bare_param ('with_search_data') ? 'search_data' : ())],
+                    ($app->bare_param ('with_snippet') ? $db->bare_sql_fragment (q{ substring(`search_data`, 1, 600) as `snippet` }) : ())],
         order => $order, # or undef
         offset => $offset, # or undef
         limit => $limit, # or undef
@@ -1659,7 +1657,7 @@ sub group_object ($$$$) {
               updated => $_->{updated},
               timestamp => $_->{timestamp},
               (defined $_->{data} ? (data => $data) : ()),
-              (defined $_->{search_data} ? (search_data => Dongry::Type->parse ('text', $_->{search_data})) : ()),
+              (defined $_->{snippet} ? (snippet => Dongry::Type->parse ('text', $_->{snippet})) : ()),
               (defined $_->{revision_data} ?
                    (revision_data => $_->{revision_data},
                     revision_author_account_id => $_->{revision_author_account_id}) : ()),
