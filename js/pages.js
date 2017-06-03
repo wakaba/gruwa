@@ -11,6 +11,7 @@ function $$c (n, s) {
           f.localName === 'edit-container' ||
           f.localName === 'list-query' ||
           f.localName === 'list-control' ||
+          f.localName === 'object-ref' ||
           f.localName === 'body-control') {
         return false;
       }
@@ -29,6 +30,7 @@ function $$c2 (n, s) {
           f.localName === 'edit-container' ||
           f.localName === 'list-query' ||
           f.localName === 'list-control' ||
+          f.localName === 'object-ref' ||
           f.localName === 'body-control' ||
           f.localName === 'form') {
         return false;
@@ -304,6 +306,10 @@ function fillFields (contextEl, rootEl, el, object, opts) {
     } else if (field.localName === 'account-name') {
       field.setAttribute ('account_id', value);
       field.textContent = value;
+    } else if (field.localName === 'object-ref') {
+      field.setAttribute ('value', value);
+      field.hidden = false;
+      upgradeObjectRef (field);
     } else {
       field.textContent = value || field.getAttribute ('data-empty');
     }
@@ -2219,6 +2225,18 @@ function upgradeUnitNumber (field) {
 
 } // upgradeUnitNumber
 
+function upgradeObjectRef (e) {
+  var objectId = e.getAttribute ('value');
+  if (!objectId) return;
+
+  var fd = new FormData;
+  fd.append ('object_id', objectId);
+  return gFetch ('o/get.json?with_data=1&with_search_data=1', {post: true, formData: fd}).then (function (json) {
+    var object = json.objects[objectId] || {};
+    fillFields (e, e, e, object, {});
+  });
+} // upgradeObjectRef
+
 var RunAction = {};
 
 RunAction.installPrependNewObjects = function () {
@@ -2236,6 +2254,13 @@ function upgradeRunAction (e) {
 
 function Formatter () { }
 
+Formatter.html = function (source) {
+  var doc = document.implementation.createHTMLDocument ();
+  var div = doc.createElement ('div');
+  div.innerHTML = source;
+  return div;
+}; // html
+
 Formatter.hatena = function (source) {
   return fetch ("https://textformatter.herokuapp.com/hatena?urlbase=https://profile.hatena.ne.jp/", { // XXX
     method: "post",
@@ -2243,9 +2268,7 @@ Formatter.hatena = function (source) {
   }).then (function (r) {
     return r.text ();
   }).then (function (x) {
-    var doc = document.implementation.createHTMLDocument ();
-    var div = doc.createElement ('div');
-    div.innerHTML = x;
+    var div = Formatter.html (x);
     $$ (div, 'a[href^="http://d.hatena.ne.jp/keyword/"]').forEach (function (link) {
       var url = link.getAttribute ('href');
       if (url === "http://d.hatena.ne.jp/keyword/" + encodeURIComponent (link.textContent)) {
@@ -2301,6 +2324,11 @@ Formatter.hatena = function (source) {
       } else if (x.localName) {
         $$ (x, 'run-action').forEach (upgradeRunAction);
       }
+      if (x.localName === 'object-ref') {
+        upgradeObjectRef (x);
+      } else if (x.localName) {
+        $$ (x, 'object-ref').forEach (upgradeObjectRef);
+      }
     });
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
@@ -2312,6 +2340,7 @@ $$ (document, 'copy-button').forEach (upgradeCopyButton);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 $$ (document, 'run-action').forEach (upgradeRunAction);
 $$ (document, 'unit-number').forEach (upgradeUnitNumber);
+$$ (document, 'object-ref').forEach (upgradeObjectRef);
 
 /*
 

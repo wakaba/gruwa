@@ -1598,7 +1598,8 @@ sub group_object ($$$$) {
         owner_status => 1,
         user_status => 1,
       }, fields => ['object_id', 'title', 'timestamp', 'created', 'updated',
-                    ($app->bare_param ('with_data') ? 'data' : ())],
+                    ($app->bare_param ('with_data') ? 'data' : ()),
+                    ($app->bare_param ('with_search_data') ? 'search_data' : ())],
         order => $order, # or undef
         offset => $offset, # or undef
         limit => $limit, # or undef
@@ -1663,6 +1664,7 @@ sub group_object ($$$$) {
               updated => $_->{updated},
               timestamp => $_->{timestamp},
               (defined $_->{data} ? (data => $data) : ()),
+              (defined $_->{search_data} ? (search_data => Dongry::Type->parse ('text', $_->{search_data})) : ()),
               (defined $_->{revision_data} ?
                    (revision_data => $_->{revision_data},
                     revision_author_account_id => $_->{revision_author_account_id}) : ()),

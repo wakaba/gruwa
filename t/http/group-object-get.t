@@ -895,6 +895,29 @@ Test {
   });
 } n => 3, name => 'imported source sites';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {
+      group => 'g1', account => 'a1',
+      body => $current->generate_text ('n1'),
+    });
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      with_search_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $o = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      ok $o->{search_data};
+    } $current->c;
+  });
+} n => 1, name => 'with_search_data';
+
 RUN;
 
 =head1 LICENSE
