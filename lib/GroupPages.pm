@@ -817,10 +817,9 @@ sub create_object ($%) {
   });
 } # create_object
 
-sub _write_object_trackbacks ($$$$$$$$$) {
+sub _write_object_trackbacks ($$$$$$$) {
   my ($db, $group_id, $parent_object_ids,
-      $author_account_id, $object_id, $title, $search_data,
-      $ts, $now) = @_;
+      $author_account_id, $object_id, $ts, $now) = @_;
   return unless @$parent_object_ids;
   ## If there is no trackbacked object, no trackback object is created
   ## for it.
@@ -839,8 +838,6 @@ sub _write_object_trackbacks ($$$$$$$$$) {
         body_data => {
           trackback => {
             object_id => ''.$object_id,
-            title => $title,
-            search_data => (defined $search_data ? (substr $search_data, 0, 300) : undef),
           },
         },
         parent_object_id => $_[0]->{object_id},
@@ -1271,8 +1268,6 @@ sub group_object ($$$$) {
               [keys %{$trackbacks->{objects} or {}}],
               $opts->{account}->{account_id},
               $object->{object_id},
-              $object->{data}->{title},
-              $search_data,
               ## If this is the first time the entry is edited with a
               ## timestamp, use the timestamp (consider if an old
               ## entry is imported).  Otherwise, use the current time
@@ -1815,8 +1810,6 @@ sub group_object ($$$$) {
                 [$result->{object_id}],
                 $opts->{account}->{account_id},
                 $_[0]->{source_id},
-                '',
-                '',
                 $_[0]->{timestamp},
                 $time,
               );
