@@ -22,6 +22,22 @@ function $fill (e, o) {
       } catch (e) {
         console.log (e); // XXX
       }
+    } else if (f.localName === 'enum-value') {
+      if (value == null) {
+        f.hidden = true;
+      } else {
+        f.hidden = false;
+        var v = f.getAttribute ('text-' + value);
+        f.setAttribute ('value', value);
+        if (v) {
+          f.textContent = v;
+        } else {
+          f.textContent = value;
+        }
+        if (f.parentNode.localName === 'td') {
+          f.parentNode.setAttribute ('data-value', value);
+        }
+      }
     } else {
       f.textContent = value || f.getAttribute ('data-empty');
     }

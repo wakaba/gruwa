@@ -294,15 +294,20 @@ function fillFields (contextEl, rootEl, el, object, opts) {
         console.log (e); // XXX
       }
     } else if (field.localName === 'enum-value') {
-      var v = field.getAttribute ('text-' + value);
-      field.setAttribute ('value', value);
-      if (v) {
-        field.textContent = v;
+      if (v == null) {
+        field.hidden = true;
       } else {
-        field.textContent = value;
-      }
-      if (field.parentNode.localName === 'td') {
-        field.parentNode.setAttribute ('data-value', value);
+        field.hidden = false;
+        var v = field.getAttribute ('text-' + value);
+        field.setAttribute ('value', value);
+        if (v) {
+          field.textContent = v;
+        } else {
+          field.textContent = value;
+        }
+        if (field.parentNode.localName === 'td') {
+          field.parentNode.setAttribute ('data-value', value);
+        }
       }
     } else if (field.localName === 'account-name') {
       field.setAttribute ('account_id', value);

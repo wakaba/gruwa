@@ -497,6 +497,7 @@ account-name[loading] {
   background-color: var(--disabled-background-color);
 }
 
+enum-value[data-field="data.todo_state"]:not([hidden]),
 todo-state:not([hidden]) {
   display: inline-block;
   margin: .3em 0;
@@ -505,11 +506,13 @@ todo-state:not([hidden]) {
   text-align: center;
 }
 
+enum-value[data-field="data.todo_state"][value="1"],
 todo-state[value="1"] {
   background: red;
   color: white;
 }
 
+enum-value[data-field="data.todo_state"][value="2"],
 todo-state[value="2"] {
   background: green;
   color: white;
@@ -751,6 +754,12 @@ object-ref a:not([hidden]) {
 
 ref-header:not([hidden]) {
   display: block;
+}
+
+ref-header enum-value {
+  line-height: 1.0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 ref-header cite {

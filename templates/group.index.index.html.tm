@@ -493,6 +493,7 @@
   <template class=body-template id=object-ref-template>
     <a href pl:data-href-template="'/g/'.$group->{group_id}.'/o/{object_id}/'">
       <ref-header>
+        <enum-value data-field=data.todo_state text-1=未完了 text-2=完了済 />
         <cite data-field=data.title data-empty=■ />
         <time data-field=created />
       </ref-header>
