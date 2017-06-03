@@ -749,19 +749,41 @@ object-ref a:not([hidden]) {
   text-decoration: none;
 }
 
-object-ref-content cite:not([hidden]),
-object-ref cite:not([hidden]) {
+ref-header:not([hidden]) {
   display: block;
+}
+
+ref-header cite {
   font-weight: bolder;
-  font-size: 1rem;
+  font-size: 1em;
+}
+
+ref-header time {
+  font-size: 90%;
 }
 
 object-ref-content body-snippet:not([hidden]),
 object-ref body-snippet:not([hidden]) {
   display: block;
   font-size: 70%;
+  color: var(--small-color);
+  background-color: var(--small-background-color);
 }
 
+tooltip-box:not([hidden]) {
+  position: absolute;
+  display: block;
+  margin: 0 !important;
+  max-width: 60em;
+  font-size: 90%;
+  color: var(--light-1-color);
+  background-color: var(--light-1-background-color);
+  box-shadow: .3em .3em var(--light-1-shadow-color);
+}
+
+tooltip-box > object-ref a:not([hidden]) {
+  margin-left: 0;
+}
 
 /*
 

@@ -485,6 +485,24 @@ function fillFields (contextEl, rootEl, el, object, opts) {
             getObjectWithSearchData (ev.data.value).then (function (object) {
               ev.ports[0].postMessage (object);
             });
+          } else if (ev.data.type === 'linkSelected') {
+            if (ev.data.url) {
+              var url = new URL (ev.data.url);
+              if (url.origin === location.origin) {
+                var m = url.pathname.match (/^\/g\/[^\/]+\/o\/([0-9]+)\//);
+                if (m[1]) {
+                  var ref = document.createElement ('object-ref');
+                  ref.setAttribute ('value', m[1]);
+                  ref.setAttribute ('template', '#object-ref-template');
+                  showTooltip (ref, {
+                    top: field.offsetTop + ev.data.top + ev.data.height,
+                    left: field.offsetLeft + ev.data.left,
+                  });
+                }
+              }
+            } else {
+              showTooltip (null, {});
+            }
           }
         };
         field.onload = null;
@@ -2238,18 +2256,44 @@ function upgradeObjectRef (e) {
   var objectId = e.getAttribute ('value');
   if (!objectId) return;
 
+  if (e.hasAttribute ('template')) {
+    e.appendChild (document.querySelector (e.getAttribute ('template')).content.cloneNode (true));
+    e.removeAttribute ('template');
+  }
+
   return getObjectWithSearchData (objectId).then (function (object) {
     fillFields (e, e, e, object, {});
   });
 } // upgradeObjectRef
 
-function getObjectWithSearchData (objectId) {
-  var fd = new FormData;
-  fd.append ('object_id', objectId);
-  return gFetch ('o/get.json?with_data=1&with_snippet=1', {post: true, formData: fd}).then (function (json) {
-    return json.objects[objectId] || {};
-  });
-} // getObjectWithSearchData
+(function () {
+  var objects = {};
+  this.getObjectWithSearchData = function (objectId) {
+    if (objects[objectId]) return Promise.resolve (objects[objectId]);
+
+    var fd = new FormData;
+    fd.append ('object_id', objectId);
+    return gFetch ('o/get.json?with_data=1&with_snippet=1', {post: true, formData: fd}).then (function (json) {
+      return objects[objectId] = json.objects[objectId] || {};
+    });
+  } // getObjectWithSearchData
+}) ();
+
+function showTooltip (e, opts) {
+  if (! e) {
+    var container = document.querySelector ('tooltip-box');
+    if (container) container.hidden = true;
+    return;
+  }
+
+  var container = document.querySelector ('tooltip-box') || document.createElement ('tooltip-box');
+  container.textContent = '';
+  container.style.top = opts.top + 'px';
+  container.style.left = opts.left + 'px';
+  container.hidden = false;
+  container.appendChild (e);
+  document.body.appendChild (container);
+} // showTooltip
 
 var RunAction = {};
 

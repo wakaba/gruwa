@@ -252,12 +252,7 @@
               </template>
               <template data-name=trackback class=trackback>
                 <time data-field=created class=ambtime />にこの記事が参照されました。
-                <object-ref hidden data-field=data.body_data.trackback.object_id>
-                  <a href data-href-template={GROUP}/o/{object_id}/>
-                    <cite data-field=data.title data-empty=■ />
-                    <body-snippet data-field=snippet />
-                  </a>
-                </object-ref>
+                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
               </template>
               <p class="operations pager">
                 <button type=button class=next-page-button hidden>もっと昔</button>
@@ -479,12 +474,7 @@
           <template />
           <template data-name=trackback class=trackback>
             <time data-field=created class=ambtime />にこのWikiページが参照されました。
-            <object-ref hidden data-field=data.body_data.trackback.object_id>
-              <a href data-href-template={GROUP}/o/{object_id}/>
-                <cite data-field=data.title data-empty=■ />
-                <body-snippet data-field=snippet />
-              </a>
-            </object-ref>
+            <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
           </template>
           <p class="operations pager">
             <button type=button class=next-page-button hidden>もっと昔</button>
@@ -502,7 +492,10 @@
 
   <template class=body-template id=object-ref-template>
     <a href pl:data-href-template="'/g/'.$group->{group_id}.'/o/{object_id}/'">
-      <cite data-field=data.title data-empty=■ />
+      <ref-header>
+        <cite data-field=data.title data-empty=■ />
+        <time data-field=created />
+      </ref-header>
       <body-snippet data-field=snippet />
     </a>
   </template>

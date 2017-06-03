@@ -175,6 +175,25 @@ onchange = function (ev) {
   }
 }; // onchange
 
+(function () {
+  var over = false;
+  onmouseover = function (ev) {
+    if (ev.target.localName === 'a') {
+      sendToParent ({
+        type: "linkSelected", url: ev.target.href,
+        top: ev.target.offsetTop, left: ev.target.offsetLeft,
+        width: ev.target.offsetWidth, height: ev.target.offsetHeight,
+      });
+      over = true;
+    } else {
+      if (over) {
+        sendToParent ({type: "linkSelected", url: null});
+        over = false;
+      }
+    }
+  }; // onmouseover
+}) ();
+
 var UsedControlNames = {
   "": true, "0": true, "null": true, "undefined": true,
 };
