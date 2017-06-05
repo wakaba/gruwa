@@ -6,6 +6,7 @@
   <meta name=referrer content=origin>
 </t:if>
 <link rel=stylesheet href=/css/common.css>
+<script src=/js/framework.js async class=body-js />
 <script src=/js/pages.js async />
 
 <header class=common>

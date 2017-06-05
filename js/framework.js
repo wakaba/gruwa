@@ -23,12 +23,12 @@ function $fill (e, o) {
         console.log (e); // XXX
       }
     } else if (f.localName === 'enum-value') {
+      f.setAttribute ('value', value);
       if (value == null) {
         f.hidden = true;
       } else {
         f.hidden = false;
         var v = f.getAttribute ('text-' + value);
-        f.setAttribute ('value', value);
         if (v) {
           f.textContent = v;
         } else {

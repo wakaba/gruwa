@@ -294,12 +294,12 @@ function fillFields (contextEl, rootEl, el, object, opts) {
         console.log (e); // XXX
       }
     } else if (field.localName === 'enum-value') {
-      if (v == null) {
+      field.setAttribute ('value', value);
+      if (value == null) {
         field.hidden = true;
       } else {
         field.hidden = false;
         var v = field.getAttribute ('text-' + value);
-        field.setAttribute ('value', value);
         if (v) {
           field.textContent = v;
         } else {
