@@ -83,7 +83,6 @@ sub mymain ($$$$$) {
   if (@$path == 2 and $path->[1] eq 'info.json') {
     # /my/info.json
     my $json = {
-      has_account => $account_data->{has_account},
       account_id => defined $account_data->{account_id} ? ''.$account_data->{account_id} : undef,
       name => $account_data->{name},
     };

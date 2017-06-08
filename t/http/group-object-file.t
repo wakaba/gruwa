@@ -42,7 +42,7 @@ Test {
     my $obj = $_[0];
     test {
       is $obj->{data}->{upload_token}, $current->o ('o1')->{upload_token};
-      is $obj->{data}->{title}, '';
+      is $obj->{data}->{title}, undef;
       is $obj->{data}->{mime_type}, undef;
       is $obj->{data}->{file_size}, undef;
       is $obj->{data}->{file_name}, undef;

@@ -11,12 +11,11 @@ Test {
     test {
       is $res->status, 200;
       my $json = json_bytes2perl $res->body_bytes;
-      ok ! $json->{has_account};
       is $json->{account_id}, undef;
       is $json->{name}, undef;
     } $current->c;
   });
-} n => 4, name => '/my/info.json';
+} n => 3, name => '/my/info.json';
 
 Test {
   my $current = shift;
@@ -28,19 +27,18 @@ Test {
   })->then (sub {
     my $result = $_[0];
     test {
-      ok $result->{json}->{has_account};
       ok $result->{json}->{account_id};
       is $result->{json}->{name}, $name;
       like $result->{res}->body_bytes, qr{"account_id"\s*:\s*"};
     } $current->c;
   });
-} n => 4, name => '/my/info.json';
+} n => 3, name => '/my/info.json';
 
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
