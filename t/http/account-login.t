@@ -46,7 +46,7 @@ Test {
     test {
       is $res->status, 302;
       like $res->header ('Set-Cookie'), qr{^sk=.+; httponly$};
-      like $res->header ('Location'), qr{^https://test1/authorize};
+      like $res->header ('Location'), qr{^https?://[^/]+/authorize\?};
     } $current->c;
   });
 } n => 3, name => '/account/login POST with server';

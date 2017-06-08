@@ -117,10 +117,10 @@ Test {
 
 Test {
   my $current = shift;
-  my $site = 'https://' . rand . '.test/foo/#foo';
+  my $site = 'https://' . rand . '.test/foo/';
   my $site2 = $site;
   $site2 =~ s/^https:/http:/;
-  my $page = $site . rand;
+  my $page = $site . rand . '#foo';
   my $page2 = $page;
   $page2 =~ s/^https:/http:/;
   return $current->create_account (a1 => {})->then (sub {
@@ -138,16 +138,16 @@ Test {
   })->then (sub {
     my $result = $_[0];
     test {
-      is $result->{res}->header ('Location'),
-          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/')->stringify;
+      is $result->{res}->header ('Location'), $page;
+          #$current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/#foo')->stringify;
     } $current->c;
     return $current->get_redirect
         (['imported', $page2, 'go'], {}, group => 'g1', account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
-      is $result->{res}->header ('Location'),
-          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/')->stringify;
+      is $result->{res}->header ('Location'), $page2;
+          #$current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/#foo')->stringify;
     } $current->c;
   });
 } n => 2, name => 'redirecting fragment object URL';
@@ -185,11 +185,49 @@ Test {
   })->then (sub {
     my $result = $_[0];
     test {
+      is $result->{res}->header ('Location'), $page2;
+    } $current->c;
+  });
+} n => 2, name => 'redirecting index URL';
+
+Test {
+  my $current = shift;
+  my $site = 'https://' . rand . '.g.hatena.ne.jp/foo/';
+  my $site2 = $site;
+  $site2 =~ s/^https:/http:/;
+  my $page = $site . rand;
+  my $page2 = $page;
+  $page2 =~ s/^https:/http:/;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->post_json (['i', 'create.json'], {
+      index_type => 6,
+      title => $current->generate_text,
+      source_page => $page,
+      source_site => $site,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->set_o (i1 => $_[0]->{json});
+  })->then (sub {
+    return $current->get_redirect
+        (['imported', $page, 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/i/' . $current->o ('i1')->{index_id} . '/')->stringify;
+    } $current->c;
+    return $current->get_redirect
+        (['imported', $page2, 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
       is $result->{res}->header ('Location'),
           $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/i/' . $current->o ('i1')->{index_id} . '/')->stringify;
     } $current->c;
   });
-} n => 2, name => 'redirecting index URL';
+} n => 2, name => 'redirecting hatena group index URL';
 
 Test {
   my $current = shift;
@@ -235,8 +273,16 @@ Test {
       is $result->{res}->header ('Location'),
           $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/#' . $current->o ('t2'))->stringify;
     } $current->c;
+    return $current->get_redirect
+        (['imported', $page . '#' . $current->o ('t2'), 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/#' . $current->o ('t2'))->stringify;
+    } $current->c;
   });
-} n => 3, name => 'hatena group day section URL';
+} n => 4, name => 'hatena group day section URL';
 
 Test {
   my $current = shift;

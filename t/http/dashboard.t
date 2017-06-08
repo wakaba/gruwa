@@ -37,7 +37,7 @@ Test {
     return $current->are_errors (
       ['GET', ['dashboard', 'abc'], {}],
       [
-        {account => undef, status => 302},
+        {account => undef, status => 404},
         {account => 'a1', status => 404},
         {account => 'a1', path => ['dashboard', ''], status => 404},
       ],
