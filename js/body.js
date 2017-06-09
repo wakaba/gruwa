@@ -37,9 +37,26 @@ function handleMessage (ev) {
         });
       });
     }
-    Array.prototype.forEach.call (fragment.querySelectorAll ('object-ref'), function (e) {
+    $$ (fragment, 'object-ref').forEach (function (e) {
       e.setAttribute ('contenteditable', 'false');
       upgradeObjectRef (e);
+    });
+    document.gruwaHatenaStarMap = {};
+    $$ (fragment, 'hatena-html[starmap]').forEach (function (e) {
+      var values = e.getAttribute ('starmap').split (/\s+/);
+      while (values.length) {
+        var id = values.shift ();
+        var objectId = values.shift ();
+        document.gruwaHatenaStarMap[id] = objectId;
+      }
+    });
+    $$ (fragment, 'hatena-html .section > h3.title > a[name], hatena-html .section > h3[id]').forEach (function (a) {
+      if (a.localName === 'a') { // Hatena group's HTML
+        var h = a.parentNode;
+        upgradeHatenaTitle (h, a.name);
+      } else { // Hatena blog's HTML
+        upgradeHatenaTitle (a, a.id);
+      }
     });
     Array.prototype.slice.call (fragment.childNodes).forEach (function (_) {
       document.body.appendChild (_);
@@ -118,6 +135,18 @@ function sendGetObjectWithSearchData (objectId) {
   };
   return p;
 } // sendGetObjectWithSearchData
+
+function sendGetHatenaStarData (id) {
+  var c = new MessageChannel;
+  parentPort.postMessage ({type: "getHatenaStarData", value: id}, [c.port1]);
+  var ok;
+  var p = new Promise (function (x) { ok = x });
+  c.port2.onmessage = function (ev) {
+    ok (ev.data);
+    c.port2.close ();
+  };
+  return p;
+} // sendGetHatenaStarData
 
 function sendHeight () {
   sendToParent ({type: "height", value: document.documentElement.offsetHeight});
@@ -748,5 +777,51 @@ function upgradeObjectRef (e) {
     sendHeight ();
   });
 } // upgradeObjectRef
+
+function upgradeHatenaTitle (e, name) {
+  if (e.upgraded) return;
+  e.upgraded = true;
+
+  if (! e.attachShadow) return; // old browsers
+
+  var sr = e.attachShadow ({mode: 'open'});
+  $$ (document.head, 'link[rel~=stylesheet]').forEach (function (g) {
+    sr.appendChild (g.cloneNode (true));
+  });
+
+  sr.appendChild (document.createElement ('slot'));
+  var f = document.createElement ('hatena-star');
+  f.setAttribute ('name', name);
+  if (document.body.isContentEditable) {
+    f.onclick = function () { return false };
+  }
+  sr.appendChild (f);
+  upgradeHatenaStar (f);
+} // upgradeHatenaTitle
+
+function upgradeHatenaStar (e) {
+  if (e.upgraded) return;
+  e.upgraded = true;
+
+  var objectId = document.gruwaHatenaStarMap[e.getAttribute ('name')];
+  if (!objectId) return;
+
+  // in fact search data is not used
+  return sendGetObjectWithSearchData (objectId).then (function (data) {
+    data.data.body_data.hatena_star.sort (function (a, b) {
+      return b[1] - a[1] || b[2] - a[2];
+    }).forEach (function (star) {
+      var item = document.createElement ('list-item');
+      item.appendChild (document.querySelector ('#hatena-star-template').content.cloneNode (true));
+      $fill (item, {name: star[0], name2: star[0].substring (0, 2),
+                    type: star[1],
+                    count: star[2],
+                    quote: star[3]});
+      e.appendChild (item);
+    });
+
+    sendHeight ();
+  });
+} // upgradeHatenaStar
 
 sendHeight ();

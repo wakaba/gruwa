@@ -90,7 +90,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         throw e;
       }
 
-      if (current.hasLatestData) {
+      if (current && current.hasLatestData) {
         return Promise.resolve ();
       }
       
@@ -117,16 +117,139 @@ Importer.run = function (sourceId, statusContainer, opts) {
     });
   }; // importKeyword
 
-  var importDay = function (group, indexId, imported, site, page, data) {
+  var importDayStars = function (group, client, imported, site, page, data, gotObjectId, setStarMap) {
+    var sectionNames = [];
+    if (data.source_type === 'html') {
+      var div = Formatter.html (data.body);
+      sectionNames = $$ (div, 'div.section h3.title a[name]').map (function (a) {
+        return a.name;
+      });
+    } else if (data.source_type === 'export') {
+      sectionNames = data.body.match (/^\*[^*]+\*/gm).map (function (_) {
+        return _.replace (/^\*/, '').replace (/\*$/, '');
+      });
+    }
+
+    var starMap = {};
+    if (!sectionNames.length) {
+      setStarMap (starMap);
+      return Promise.resolve ();
+    }
+
+    var starURLs = {};
+    var starLists = {};
+    sectionNames.forEach (function (id) {
+      var here = page + '/' + id;
+      starURLs[page + '#' + id] = here;
+      starURLs[page + '/' + id] = here;
+      starURLs[page.replace (/^https:/, 'http:') + '#' + id] = here;
+      starURLs[page.replace (/^https:/, 'http:') + '/' + id] = here;
+      starLists[here] = [];
+      starLists[here].id = id;
+    });
+
+    return client.sendCommand ({
+      type: "hatenaStar",
+      starURLs: Object.keys (starURLs),
+    }).then (function (json) {
+      // Stars
+      json.entries.forEach (function (entry) {
+        var url = starURLs[entry.uri];
+        var stars = starLists[url];
+        (entry.stars || []).forEach (function (star) {
+          stars.push ([star.name, 0, parseInt (star.count || 1), star.quote]);
+        });
+        (entry.colored_stars || []).forEach (function (_) {
+          var type = {
+            green: 1,
+            red: 2,
+            blue: 3,
+            purple: 4,
+          }[_.color];
+          (_.stars || []).forEach (function (star) {
+            stars.push ([star.name, type, parseInt (star.count || 1), star.quote]);
+          });
+        });
+      });
+
+      return $promised.forEach (function (url) {
+        var starPage = new URL (site + '#star:' + encodeURIComponent (url)).toString ();
+        var stars = {};
+        starLists[url].forEach (function (star) {
+          var key = [star[0], star[1], star[3]].join (",");
+          if (stars[key]) {
+            stars[key][2] += star[2];
+          } else {
+            stars[key] = star;
+          }
+        });
+        stars = Object.values (stars).sort (function (a, b) {
+          return ((a[0] < b[0] ? -1 : a[0] > b[0] ? +1 : 0) ||
+                  (a[1] - b[1]) ||
+                  (a[3] < b[3] ? -1 : a[3] > b[3] ? +1 : 0));
+        });
+
+        var sha = sha1 (stars.toString ());
+        var current = imported[starPage];
+        if (current && current.type == 2 /* object */) {
+          if (current.sync_info.sha === sha) {
+            starMap[starLists[url].id] = current.dest_id;
+            return;
+          }
+        }
+
+        var fd = new FormData;
+        fd.append ('source_site', site);
+        fd.append ('source_page', starPage);
+        return gFetch ('o/create.json', {
+          post: true,
+          formData: fd,
+        }).then (function (json) {
+          starMap[starLists[url].id] = json.object_id;
+          return gotObjectId.then (function (parentObjectId) {
+            var fd = new FormData;
+            fd.append ('parent_object_id', parentObjectId);
+            fd.append ('source_sha', sha);
+            fd.append ('timestamp', 0);
+            fd.append ('body_type', 3); // data
+            fd.append ('body_data', JSON.stringify ({hatena_star: stars}));
+            return gFetch ('o/' + json.object_id + '/edit.json', {
+              post: true,
+              formData: fd,
+            });
+          });
+        });
+      }, Object.keys (starLists)).then (function () {
+        setStarMap (starMap);
+      });
+
+      // Comments
+      // XXX
+    });
+  }; // importDayStars
+
+  var importDay = function (group, client, indexId, imported, site, page, data) {
+    var setObjectId;
+    var gotObjectId = new Promise (function (_) { setObjectId = _ });
+    var setStarMap;
+    var gotStarMap = new Promise (function (_) { setStarMap = _ });
+    var starPromise = importDayStars (group, client, imported, site, page, data, gotObjectId, setStarMap);
+
     var sha = data.source_type === 'html' ? sha1 ([data.title, data.body].join ("\n")) : null;
     var sourceSha = data.source_type === 'export' ? sha1 ([data.title, data.body].join ("\n")) : null;
     var current = imported[page];
     if (current && current.type == 2 /* object */) {
       if (sourceSha && current.sync_info.source_sha === sourceSha) {
-        return Promise.resolve ({objectId: imported[page].dest_id});
+        setObjectId (imported[page].dest_id);
+        return starPromise.then (function () {
+          return {objectId: imported[page].dest_id};
+        });
       }
       if (sha && current.sync_info.sha === sha) {
-        return Promise.resolve ({objectId: imported[page].dest_id});
+        setObjectId (imported[page].dest_id);
+        return starPromise.then (function () {
+          return {objectId: imported[page].dest_id};
+        });
       }
       sha = sha || current.sync_info.sha || null;
       sourceSha = sourceSha || current.sync_info.source_sha || null;
@@ -134,6 +257,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
 
     return Promise.resolve ().then (function () {
       if (imported[page] && imported[page].type == 2 /* object */) {
+        setObjectId (imported[page].dest_id);
         return {objectId: imported[page].dest_id, new: false};
       }
 
@@ -141,6 +265,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
       fd.append ('source_site', site);
       fd.append ('source_page', page);
       return gFetch ('o/create.json', {post: true, formData: fd}).then (function (json) {
+        setObjectId (json.object_id);
         return {objectId: json.object_id, new: true};
       });
     }).then (function (info) {
@@ -154,24 +279,31 @@ Importer.run = function (sourceId, statusContainer, opts) {
         if (Number.isFinite (ts)) fd.append ('timestamp', ts);
       }
       if (data.title) fd.append ('title', data.title);
-      return Promise.resolve ().then (function () {
+      return gotStarMap.then (function (starMap) {
         if (sha) fd.append ('source_sha', sha);
         if (sourceSha) fd.append ('source_source_sha', sourceSha);
         fd.append ('source_type', data.source_type);
         fd.append ('revision_imported_url', page);
         fd.append ('body_type', 1); // html
+        var startTag = document.createElement ('br');
+        startTag.setAttribute ('starmap', Object.keys (starMap).map (function (u) {
+          return u + ' ' + starMap[u];
+        }).join (' '));
         if (data.bodyHatena) {
           fd.append ('body_source_type', 3); // hatena
           fd.append ('body_source', data.bodyHatena);
           return Formatter.hatena (data.bodyHatena).then (function (body) {
-            fd.append ('body', '<hatena-html>' + body + '</hatena-html>');
+            fd.append ('body', startTag.outerHTML.replace (/^<br/, '<hatena-html') + body + '</hatena-html>');
           });
         } else {
-          fd.append ('body', '<hatena-html imported>' + data.body + '</hatena-html>');
+          startTag.setAttribute ('imported', '');
+          fd.append ('body', startTag.outerHTML.replace (/^<br/, '<hatena-html') + data.body + '</hatena-html>');
           return;
         }
       }).then (function () {
         return gFetch ('o/' + info.objectId + '/edit.json', {post: true, formData: fd});
+      }).then (function () {
+        return starPromise;
       }).then (function () {
         return {objectId: info.objectId};
       });
@@ -341,7 +473,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
                   return $promised.forEach (function (day) {
                     subAs.stageProgress ('object', v++, index.itemCount);
                     var page = group.getDiaryDayURLByDate (diary.url_name, day.date);
-                    return importDay (group, index.index_id, imported, site, page, day).then (function (d) {
+                    return importDay (group, client, index.index_id, imported, site, page, day).then (function (d) {
                       day.comments.forEach (function (c) {
                         c.url = page + '#c' + c.timestamp;
                       });
@@ -361,7 +493,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
                     return $promised.forEach (function (dayURL) {
                       subAs.stageProgress ('object', v++, index.itemCount);
                       return group.diaryDay (dayURL).then (function (r) {
-                        return importDay (group, index.index_id, imported, site, dayURL.replace (/^http:/, 'https:'), r).then (function (d) {
+                        return importDay (group, client, index.index_id, imported, site, dayURL.replace (/^http:/, 'https:'), r).then (function (d) {
                           return importDayComments (group, imported, site, d.objectId, r.comments);
                         });
                       });
@@ -398,6 +530,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           }).then (function (index) {
             index.itemCount = files.length;
             index.originalTitle = files.title;
+            if (index.itemCount === 0) return;
             return mapTable.showObjects ([index], {}).then (function (re) {
               var subAs = getActionStatus (re.items[0]);
               subAs.start ({stages: ['objects']});

@@ -43,10 +43,24 @@
   }; // Server
 
   Server.prototype.fetch = function (args) {
+    var fd;
+    if (args.params) {
+      fd = new FormData;
+      Object.keys (args.params).forEach (function (n) {
+        if (args.params[n] instanceof Array) {
+          args.params[n].forEach (function (v) {
+            fd.append (n, v);
+          });
+        } else {
+          fd.append (n, args.params[n]);
+        }
+      });
+    }
     return global.fetch (args.url, {
       method: args.method || 'GET',
       credentials: args.credentials || 'same-origin',
       redirect: args.redirect || 'manual',
+      body: fd,
     }).then (function (res) {
       if (res.status !== 200) throw res;
       if (args.resultType === 'json') {
@@ -58,6 +72,25 @@
       }
     });
   }; // fetch
+
+  window.GruwaEmbeddedJSONPCallbacks = window.GruwaEmbeddedJSONPCallbacks || {};
+  Server.prototype.hatenaStar = function (args) {
+    var methodName = ("cb" + Math.random ()).replace (/\./g, '_');
+    var url = "https://s.hatena.ne.jp/entry.json?" + args.starURLs.map (function (u) {
+      return "uri=" + encodeURIComponent (u);
+    }).join ('&') + "&callback=" + encodeURIComponent ("GruwaEmbeddedJSONPCallbacks." + methodName);
+    return new Promise (function (ok, ng) {
+      var script = document.createElement ('script');
+      script.src = url;
+      script.onerror = function (ev) {
+        ng ("Hatena Star does not return data");
+      };
+      window.GruwaEmbeddedJSONPCallbacks[methodName] = function (arg) {
+        ok (arg);
+      };
+      document.body.appendChild (script);
+    });
+  }; // hatenaStar
 
   var iframe = doc.createElement ('iframe');
   iframe.style.width = '1px';
