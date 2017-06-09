@@ -932,6 +932,13 @@ TemplateSelectors.object = function (object, templates) {
   return undefined;
 }; // object
 
+var Loaders = {};
+Loaders.import = function () {
+  return Importer.getImportSources ().then (function (results) {
+    return {sources: results};
+  });
+}; // import
+
 var LoadedActions = {};
 
 LoadedActions.clickFirstButton = function () {
@@ -1191,6 +1198,8 @@ function upgradeList (el) {
 
   var nextRef = null;
   var load = function () {
+    var loader = el.getAttribute ('loader');
+    if (loader) return Loaders[loader] ();
     var url = el.getAttribute ('src') || 'o/get.json?with_data=1';
     [
       'src-object_id', 'src-index_id', 'src-wiki_name',
@@ -1202,7 +1211,7 @@ function upgradeList (el) {
         url += attr.replace (/^src-/, '') + '=' + encodeURIComponent (value);
       }
     });
-    if (url) {
+    if (url && url !== "o/get.json?with_data=1") {
       var q = el.getAttribute ('param-q');
       if (q) {
         url += (/\?/.test (url) ? '&' : '?') + 'q=' + encodeURIComponent (q);
