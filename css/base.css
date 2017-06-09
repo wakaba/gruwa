@@ -794,6 +794,46 @@ tooltip-box > object-ref a:not([hidden]) {
   margin-left: 0;
 }
 
+hatena-star:not([hidden]) {
+  display: inline-block;
+  position: relative;
+}
+
+hatena-star list-item:not([hidden]) {
+  display: inline-block;
+}
+
+hatena-star list-item a {
+  text-decoration: none;
+  color: inherit;
+  background: transparent;
+}
+
+hatena-star .star-type-0 { color: #fecd69 }
+hatena-star .star-type-1 { color: #4de733 }
+hatena-star .star-type-2 { color: #fe5e65 }
+hatena-star .star-type-3 { color: #00b0f9 }
+hatena-star .star-type-4 { color: #cd34e3 }
+
+hatena-star star-count {
+  margin-left: -.3em;
+  vertical-align: 1em;
+  font-size: 50%;
+}
+
+hatena-star star-count.star-count-1 {
+  visibility: hidden;
+}
+
+hatena-star img.hatena-user-icon {
+  position: absolute;
+  width: .7em;
+  height: .7em;
+  top: .7em;
+  margin-left: -.5em;
+  opacity: 0.8;
+}
+
 /*
 
 Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.

@@ -42,7 +42,7 @@ function $fill (e, o) {
       f.textContent = value || f.getAttribute ('data-empty');
     }
   });
-  ['href'].forEach (function (attr) {
+  ['href', 'src', 'title', 'alt', 'class'].forEach (function (attr) {
     $$ (e, '[data-'+attr+'-template]').forEach (function (f) {
       var value = f.getAttribute ('data-'+attr+'-template').replace (/\{([^{}]+)\}/g, function (_, n) {
         var name = n.split (/\./);

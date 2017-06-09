@@ -163,6 +163,29 @@ Test {
 
 Test {
   my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body_data => '{"hatena_star": [["ab"],["cd"]]}',
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $object = $_[0];
+    test {
+      isnt $object->{data}->{object_revision_id},
+          $current->o ('o1')->{object_revision_id};
+      is $object->{data}->{body_data}->{hatena_star}->[0]->[0], "ab";
+      is $object->{data}->{body_data}->{hatena_star}->[1]->[0], "cd";
+    } $current->c;
+  });
+} n => 3, name => 'body_data field';
+
+Test {
+  my $current = shift;
   my $rev1;
   my $rev2;
   my $rev3;

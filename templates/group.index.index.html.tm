@@ -500,6 +500,13 @@
       <body-snippet data-field=snippet />
     </a>
   </template>
+  <template class=body-template id=hatena-star-template>
+    <a href data-href-template=https://profile.hatena.ne.jp/{name}/ referrerpolicy=no-referrer data-title-template=" {name} {quote}" data-class-template=star-type-{type}>
+      <span>★</span><!--
+      --><img data-src-template=https://cdn1.www.st-hatena.com/users/{name2}/{name}/profile.gif data-alt-template={name} referrerpolicy=no-referrer class=hatena-user-icon><!--
+      --><star-count data-field=count data-class-template=star-count-{count} />
+    </a>
+  </template>
 
   <t:include path=_object_editor.html.tm />
 

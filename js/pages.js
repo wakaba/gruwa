@@ -904,6 +904,9 @@ function upgradeBodyControl (e, object, opts) {
 var TemplateSelectors = {};
 TemplateSelectors.object = function (object, templates) {
   if (object.data.body_type == 3) {
+    if (object.data.body_data.hatena_star) {
+      return null;
+    }
     if (object.data.body_data.new) {
       if (object.data.body_data.new.todo_state == 2) {
         return templates.close;
@@ -918,7 +921,7 @@ TemplateSelectors.object = function (object, templates) {
       return templates.trackback;
     }
   }
-  return null;
+  return undefined;
 }; // object
 
 var LoadedActions = {};
@@ -1058,7 +1061,7 @@ function upgradeList (el) {
       }
     }; // fill
 
-    var getTemplate = TemplateSelectors[el.getAttribute ('template-selector')] || function () { return null };
+    var getTemplate = TemplateSelectors[el.getAttribute ('template-selector')] || function () { return undefined };
     var result = {main: main, items: []};
 
     if (el.hasAttribute ('grouped')) {
@@ -1092,8 +1095,10 @@ function upgradeList (el) {
         section.appendChild (h);
 
         grouped[key].forEach (function (object) {
+          var template = getTemplate (object, templates);
+          if (template === undefined) template = templates._;
+          if (template === null) return;
           var item = document.createElement (elementType);
-          var template = getTemplate (object, templates) || templates._;
           item.className = template.className;
           item.appendChild (template.content.cloneNode (true));
           fill (item, object);
@@ -1138,8 +1143,10 @@ function upgradeList (el) {
         }));
       } else {
         listObjects.forEach (function (object) {
+          var template = getTemplate (object, templates);
+          if (template === undefined) template = templates._;
+          if (template === null) return;
           var item = document.createElement (elementType);
-          var template = getTemplate (object, templates) || templates._;
           item.className = template.className;
           item.appendChild (template.content.cloneNode (true));
           fill (item, object);

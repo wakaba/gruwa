@@ -4,6 +4,7 @@ use warnings;
 use Time::HiRes qw(time);
 use Promise;
 use Promised::Flow;
+use JSON::PS;
 use Dongry::SQL qw(like);
 use Dongry::Type;
 use Dongry::Type::JSONPS;
@@ -958,6 +959,16 @@ sub group_object ($$$$) {
             if (defined $type) {
               $object->{data}->{$key} = $type->as_valid_mime_type;
               $changes->{fields}->{$key} = 1;
+            }
+          }
+        }
+        {
+          my $value = $app->bare_param ('body_data');
+          if (defined $value) {
+            $value = json_bytes2perl $value;
+            if (defined $value and ref $value eq 'HASH') {
+              $object->{data}->{body_data} = $value;
+              $changes->{fields}->{body_data} = 1;
             }
           }
         }
