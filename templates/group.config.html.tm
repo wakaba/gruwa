@@ -162,16 +162,45 @@
     </section>
   </section>
 
-  <!-- XXX experimental -->
-  <section>
-    <h1>他のサービスからインポート</h1>
+  <section class=group-config-import>
+    <h1>データのインポート</h1>
 
-    <list-container type=table id=import-list>
+    <p><strong>上級者向け</strong>:
+    他のサービスからこのグループにデータをインポートできます。
+    詳しくは<a href=/help#import target=help>ヘルプ</a>をご参照ください。</p>
+
+    <p>まずは<a href id=bookmarklet-link data-confirm=ブックマークレットとしてお使いください>Gruwa インポート用ブックマークレット</a>をお使いの
+    Web ブラウザーのブックマークに登録してください。
+    <script>
+      var url = "javascript:var script=document.createElement('script');script.src='"+location.origin+"/js/embedded.js';document.body.appendChild(script)";
+      var a = document.querySelector ("#bookmarklet-link");
+      a.href = url;
+      a.onclick = function () {
+        alert (this.getAttribute ('data-confirm'));
+        return false;
+      };
+    </script></p>
+
+    <p>次にインポートしたい Web サイトを同じ Web 
+    ブラウザーの別の窓やタブで開き、
+    ブックマークレットを実行してください。</p>
+
+    <p>その後、一覧から「インポート開始」を選んでください。
+    インポートには数分から数十分かかります。インポートしたい Web
+    サイトとこのページの両方を開いた状態でお待ちください。</p>
+
+    <script src=/js/sha1.js />
+    <script src=/js/import.js />
+    <list-container loader=import key=sources type=table id=import-list>
+      <p class=buttons>
+        <button type=button class=reload-button>再読込</button>
+      </p>
+
       <template>
         <td><code data-field=origin></code>
         <td>
           <input type=hidden name=sourceId data-field=sourceId>
-          <button type=button class=start-button onclick="
+          <button type=button class=save-button onclick="
             Importer.run (previousElementSibling.value,
                           document.querySelector ('#import-status'),
                           {forceUpdate: hasAttribute ('data-force')});
@@ -184,21 +213,11 @@
             <th>操作
         <tbody>
       </table>
+      <action-status hidden stage-load=読込中... />
       <list-is-empty>
         現在インポートできるサイトはありません。
       </list-is-empty>
     </list-container>
-
-    <script src=/js/sha1.js />
-    <script src=/js/import.js />
-    <button onclick="
-      Importer.getImportSources ().then (function (results) {
-        var list = document.querySelector ('#import-list');
-        list.clearObjects ();
-        list.showObjects (results, {});
-      });
-    ">Reload
-    </button>
 
     <div id=import-status>
       <action-status
@@ -206,6 +225,11 @@
           stage-getkeywordlist=キーワード一覧を取得中...
           stage-createkeywordwiki=キーワード用Wikiを作成中...
           stage-createkeywordobjects=キーワードをインポート中...
+          stage-getdiarylist=日記一覧を取得中...
+          stage-creatediary=日記を作成中...
+          stage-getfilelist=ファイル一覧を取得中...
+          stage-createfileuploader=ファイルアップローダーを作成中...
+          stage-getfiles=ファイルを取得中...
           ok=完了しました />
       <list-container type=table class=mapping-table>
         <template>
@@ -227,20 +251,6 @@
         </table>
       </list-container>
     </div>
-
-    <p><a href id=bookmarklet-link data-confirm=ブックマークレットとしてお使いください>Gruwa インポート用ブックマークレット</a>
-    <script>
-      var url = "javascript:var script=document.createElement('script');script.src='"+location.origin+"/js/embedded.js';document.body.appendChild(script)";
-      var a = document.querySelector ("#bookmarklet-link");
-      a.href = url;
-      a.onclick = function () {
-        alert (this.getAttribute ('data-confirm'));
-        return false;
-      };
-    </script>
-    <!--
-      Chrome のシークレットウィンドウでは動作しません。
-    -->
   </section>
 
 <!--

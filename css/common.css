@@ -1061,9 +1061,63 @@ list-is-empty:not([hidden]) {
   vertical-align: middle;
 }
 
-.help p {
+.help p,
+.group-config-import p {
   text-indent: 1em;
   line-height: 2.0;
+}
+
+.group-config-import #import-list,
+.group-config-import #import-status {
+  width: 100%;
+  max-width: 60em;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.group-config-import .buttons {
+  text-align: right;
+}
+
+.help table,
+.group-config-import table {
+  width: 100%;
+}
+
+.help table thead tr,
+.group-config-import table thead tr {
+  background-color: var(--dark-background-color);
+  color: var(--dark-color);
+}
+
+.help table tbody tr,
+.group-config-import table tbody tr {
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+}
+
+.help table tbody tr:nth-child(2n),
+.group-config-import table tbody tr:nth-child(2n) {
+  background-color: var(--light-2-background-color);
+  color: var(--light-2-color);
+}
+
+.help table th,
+.help table td,
+.group-config-import table th,
+.group-config-import table td {
+  padding: .2em .4em;
+}
+
+.group-config-import #import-status > action-status:not([hidden]) {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: .5em;
+}
+
+.group-config-import #import-status > action-status progress:not([hidden]) {
+  display: block;
+  width: 100%;
 }
 
 index-list-item .colored:not([hidden]) {
