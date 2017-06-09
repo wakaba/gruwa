@@ -848,7 +848,15 @@ function upgradeBodyControl (e, object, opts) {
       value: data.body,
       importedSites: opts.importedSites,
     });
-    mc.port2.close ();
+    mc.port2.onmessage = function (ev) {
+      if (ev.data.type === 'focus') {
+        field.dispatchEvent (new Event ("focus", {bubbles: true}));
+      } else if (ev.data.type === 'getObjectWithSearchData') {
+        getObjectWithSearchData (ev.data.value).then (function (object) {
+          ev.ports[0].postMessage (object);
+        });
+      }
+    }; // onmessage
   }; // loader.preview
   saver.preview = function () {
     //
