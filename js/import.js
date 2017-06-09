@@ -125,7 +125,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         return a.name;
       });
     } else if (data.source_type === 'export') {
-      sectionNames = data.body.match (/^\*[^*]+\*/gm).map (function (_) {
+      sectionNames = (data.bodyHatena.match (/^\*[^*]+\*/gm) || []).map (function (_) {
         return _.replace (/^\*/, '').replace (/\*$/, '');
       });
     }
@@ -147,14 +147,15 @@ Importer.run = function (sourceId, statusContainer, opts) {
       starLists[here] = [];
       starLists[here].id = id;
     });
+    var comments = [];
 
     return client.sendCommand ({
       type: "hatenaStar",
       starURLs: Object.keys (starURLs),
     }).then (function (json) {
-      // Stars
       json.entries.forEach (function (entry) {
         var url = starURLs[entry.uri];
+
         var stars = starLists[url];
         (entry.stars || []).forEach (function (star) {
           stars.push ([star.name, 0, parseInt (star.count || 1), star.quote]);
@@ -169,6 +170,11 @@ Importer.run = function (sourceId, statusContainer, opts) {
           (_.stars || []).forEach (function (star) {
             stars.push ([star.name, type, parseInt (star.count || 1), star.quote]);
           });
+        });
+
+        (entry.comments || []).forEach (function (comment) {
+          comment.section_id = stars.id;
+          comments.push (comment);
         });
       });
 
@@ -222,9 +228,37 @@ Importer.run = function (sourceId, statusContainer, opts) {
       }, Object.keys (starLists)).then (function () {
         setStarMap (starMap);
       });
+    }).then (function () {
+      return $promised.forEach (function (comment) {
+        var commentPage = new URL (site + '#starcomment:' + encodeURIComponent (comment.id)).toString ();
 
-      // Comments
-      // XXX
+        var current = imported[commentPage];
+        if (current && current.type == 2 /* object */) {
+          return;
+        }
+
+        var fd = new FormData;
+        fd.append ('source_site', site);
+        fd.append ('source_page', commentPage);
+        return gFetch ('o/create.json', {
+          post: true,
+          formData: fd,
+        }).then (function (json) {
+          return gotObjectId.then (function (parentObjectId) {
+            var fd = new FormData;
+            fd.append ('parent_object_id', parentObjectId);
+            fd.append ('body_type', 2); // plain text
+            fd.append ('author_name', comment.name);
+            fd.append ('author_hatena_id', comment.name);
+            fd.append ('body', comment.body);
+            fd.append ('parent_section_id', comment.section_id);
+            return gFetch ('o/' + json.object_id + '/edit.json', {
+              post: true,
+              formData: fd,
+            });
+          });
+        });
+      }, comments);
     });
   }; // importDayStars
 
@@ -236,7 +270,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
     var starPromise = importDayStars (group, client, imported, site, page, data, gotObjectId, setStarMap);
 
     var sha = data.source_type === 'html' ? sha1 ([data.title, data.body].join ("\n")) : null;
-    var sourceSha = data.source_type === 'export' ? sha1 ([data.title, data.body].join ("\n")) : null;
+    var sourceSha = data.source_type === 'export' ? sha1 ([data.title, data.bodyHatena].join ("\n")) : null;
     var current = imported[page];
     if (current && current.type == 2 /* object */) {
       if (sourceSha && current.sync_info.source_sha === sourceSha) {
@@ -291,11 +325,12 @@ Importer.run = function (sourceId, statusContainer, opts) {
         }).join (' '));
         if (data.bodyHatena) {
           fd.append ('body_source_type', 3); // hatena
-          fd.append ('body_source', data.bodyHatena);
-          return Formatter.hatena (data.bodyHatena).then (function (body) {
-            fd.append ('body', startTag.outerHTML.replace (/^<br/, '<hatena-html') + body + '</hatena-html>');
+          var hatena = '>' + startTag.outerHTML.replace (/^<br/, '<hatena-html') + "<\n\n" + data.bodyHatena + '\n\n></hatena-html><';
+          fd.append ('body_source', hatena);
+          return Formatter.hatena (hatena).then (function (body) {
+            fd.append ('body', body);
           });
-        } else {
+        } else { // HTML
           startTag.setAttribute ('imported', '');
           fd.append ('body', startTag.outerHTML.replace (/^<br/, '<hatena-html') + data.body + '</hatena-html>');
           return;

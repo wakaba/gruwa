@@ -145,6 +145,7 @@ Test {
       body_source => "abc def",
       body_source_type => 42523,
       body_type => 1,
+      parent_section_id => "\x{553}",
     }, account => 'a1', group => 'g1');
   })->then (sub {
     return $current->object ($current->o ('o1'), account => 'a1');
@@ -157,9 +158,10 @@ Test {
       is $object->{data}->{body_source}, "abc def";
       is $object->{data}->{body_source_type}, 42523;
       is $object->{data}->{body_type}, 1;
+      is $object->{data}->{parent_section_id}, "\x{553}";
     } $current->c;
   });
-} n => 5, name => 'body fields';
+} n => 6, name => 'body fields';
 
 Test {
   my $current = shift;
