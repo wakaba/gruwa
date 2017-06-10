@@ -125,7 +125,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         return a.name;
       });
     } else if (data.source_type === 'export') {
-      sectionNames = (data.bodyHatena.match (/^\*[^*]+\*/gm) || []).map (function (_) {
+      sectionNames = (data.bodyHatena.match (/^\*[^*\s]+\*/gm) || []).map (function (_) {
         return _.replace (/^\*/, '').replace (/\*$/, '');
       });
     }
@@ -742,8 +742,12 @@ Importer.HatenaGroup.prototype.getKeywordTopPageURL = function () {
 }; // getKeywordTopPageURL
 
 Importer.HatenaGroup.prototype.getKeywordPageURL = function (k) {
-  return this.getSiteURL () + '/keyword/' + encodeURIComponent (k);
+  return this.getSiteURL () + this.getKeywordPagePath (k);
 }; // getKeywordPageURL
+
+Importer.HatenaGroup.prototype.getKeywordPagePath = function (k) {
+  return '/keyword/' + encodeURIComponent (k).replace (/%2F/g, '/');
+}; // getKeywordPagePath
 
 Importer.HatenaGroup.prototype.getDiaryTopPageURL = function (u) {
   return this.getSiteURL () + '/' + u + '/';
@@ -787,7 +791,7 @@ Importer.HatenaGroup.prototype.keywordlist = function () {
 
 Importer.HatenaGroup.prototype.keywordhtml = function (keyword) {
   var client = this.client;
-  return client.fetchHTML ('/keyword/' + encodeURIComponent (keyword)).then (function (div) {
+  return client.fetchHTML (this.getKeywordPagePath  (keyword)).then (function (div) {
     var container = div.querySelector ('.hatena-body .body');
     if (!container) return null;
     $$ (container, 'a[href]:not([href^="http:"]):not([href^="https:"])').forEach (function (e) {
@@ -805,7 +809,7 @@ Importer.HatenaGroup.prototype.keywordhtml = function (keyword) {
 
 Importer.HatenaGroup.prototype.keywordHistory = function (keyword) {
   var client = this.client;
-  return client.fetchHTML ('/keyword/' + encodeURIComponent (keyword) + '?mode=edit').then (function (div) {
+  return client.fetchHTML (this.getKeywordPagePath (keyword) + '?mode=edit').then (function (div) {
     return $$ (div, '.day .refererlist li').map (function (li) {
       var history = {author: {}};
       var link = li.querySelector ('a');
@@ -820,7 +824,7 @@ Importer.HatenaGroup.prototype.keywordHistory = function (keyword) {
         if (m) history.author.url_name = m[1];
       }
 
-     return history;
+      return history;
     });
   });
 }; // keywordHistory
