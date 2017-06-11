@@ -13,6 +13,7 @@ updatenightly: local/bin/pmbp.pl
 ## ------ Setup ------
 
 deps: git-submodules pmbp-install js/sha1.js
+deps-docker:         pmbp-install js/sha1.js
 
 git-submodules:
 	$(GIT) submodule update --init

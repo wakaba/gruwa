@@ -262,7 +262,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
     });
   }; // importDayStars
 
-  var importDay = function (group, client, indexId, imported, site, page, data) {
+  var importDay = function (group, client, indexId, imported, site, page, urlName, data) {
     var setObjectId;
     var gotObjectId = new Promise (function (_) { setObjectId = _ });
     var setStarMap;
@@ -318,6 +318,8 @@ Importer.run = function (sourceId, statusContainer, opts) {
         if (sourceSha) fd.append ('source_source_sha', sourceSha);
         fd.append ('source_type', data.source_type);
         fd.append ('revision_imported_url', page);
+        fd.append ('author_name', urlName);
+        fd.append ('author_hatena_id', urlName);
         fd.append ('body_type', 1); // html
         var startTag = document.createElement ('br');
         startTag.setAttribute ('starmap', Object.keys (starMap).map (function (u) {
@@ -508,7 +510,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
                   return $promised.forEach (function (day) {
                     subAs.stageProgress ('object', v++, index.itemCount);
                     var page = group.getDiaryDayURLByDate (diary.url_name, day.date);
-                    return importDay (group, client, index.index_id, imported, site, page, day).then (function (d) {
+                    return importDay (group, client, index.index_id, imported, site, page, diary.url_name, day).then (function (d) {
                       day.comments.forEach (function (c) {
                         c.url = page + '#c' + c.timestamp;
                       });
@@ -528,7 +530,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
                     return $promised.forEach (function (dayURL) {
                       subAs.stageProgress ('object', v++, index.itemCount);
                       return group.diaryDay (dayURL).then (function (r) {
-                        return importDay (group, client, index.index_id, imported, site, dayURL.replace (/^http:/, 'https:'), r).then (function (d) {
+                        return importDay (group, client, index.index_id, imported, site, dayURL.replace (/^http:/, 'https:'), diary.url_name, r).then (function (d) {
                           return importDayComments (group, imported, site, d.objectId, r.comments);
                         });
                       });

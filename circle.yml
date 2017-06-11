@@ -1,12 +1,30 @@
+machine:
+  services:
+    - docker
 dependencies:
   override:
     - git config --global user.email "temp@circleci.test"
     - git config --global user.name "CircleCI"
     - make deps
+
+    - docker info
+    - docker build -t quay.io/wakaba/gruwa .
 test:
   override:
+    # XXX run tests using docker
     - make test
+
+    - echo '{"origin":"http://localhost:5511"}' > config.json
+    - docker run --name server -v `pwd`/config.json:/config.json -e CONFIG_FILE=/config.json -e DATABASE_DSN=XXX -d -p 5511:8080 quay.io/wakaba/gruwa; sleep 10
+    - curl -f http://localhost:5511/css/common.css
+    - docker logs server
+
 deployment:
+  docker:
+    branch: master
+    commands:
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS quay.io
+      - docker push quay.io/wakaba/gruwa
 
   nightly:
     branch: nightly
