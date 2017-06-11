@@ -22,7 +22,11 @@ Importer.run = function (sourceId, statusContainer, opts) {
     });
   }; // createIndex
 
+  var needKeywordlogs = false;
+
   var importKeyword = function (group, keyword, indexId, imported, site) {
+    if (needKeywordlogs) return Promise.resolve ();
+
     var page = group.getKeywordPageURL (keyword.title);
     var current = imported[page];
     if (current && current.type == 2 /* object */) {
@@ -86,6 +90,9 @@ Importer.run = function (sourceId, statusContainer, opts) {
     }).catch (function (e) {
       if (e && e.isResponse && e.status === 0) {
         // network error (redirect cancelled) = not exportable
+      } else if (/^Failed to obtain list of revisions of keyword /.test (e)) {
+        needKeywordlogs = true;
+        return Promise.resolve ();
       } else {
         throw e;
       }
@@ -116,6 +123,83 @@ Importer.run = function (sourceId, statusContainer, opts) {
       });
     });
   }; // importKeyword
+
+  var importFromKeywordlogs = function (group, indexId, imported, site) {
+    var importById = function (id) {
+      return group.keywordlog ('/keywordlog?klid=' + id).then (function (r) {
+        if (!r) return false;
+
+        var page = group.getKeywordPageURL (r.title);
+        var current = imported[page];
+        if (current && current.type == 2 /* object */) {
+          var currentTimestamp = parseFloat (current.sync_info.timestamp);
+          current.hasLatestData = (
+            Number.isFinite (currentTimestamp) &&
+            currentTimestamp >= r.date.valueOf () / 1000
+          );
+          if (current.hasLatestData &&
+              current.sync_info.source_type === 'keywordlog') {
+            return true;
+          }
+        }
+
+        var createObject = function () {
+          if (current && current.type == 2 /* object */) {
+            return Promise.resolve (current.dest_id);
+          }
+
+          var fd = new FormData;
+          fd.append ('source_site', site);
+          fd.append ('source_page', page);
+          return gFetch ('o/create.json', {post: true, formData: fd}).then (function (json) {
+            imported[page] = {type: 2, sync_info: {}, dest_id: json.object_id};
+            return json.object_id;
+          });
+        }; // createObject
+
+        return createObject ().then (function (objectId) {
+          var currentRevTS = parseFloat (current && current.sync_info.rev_timestamp);
+          if (r.date &&
+              Number.isFinite (currentRevTS) &&
+              r.date.valueOf () / 1000 <= currentRevTS) return;
+
+          var fd = new FormData;
+          fd.append ('source_type', 'keywordlog');
+          fd.append ('revision_author_hatena_id', r.author.url_name);
+          if (r.date) {
+            var ts = r.date.valueOf () / 1000;
+            fd.append ('revision_timestamp', ts);
+            fd.append ('source_timestamp', ts);
+            fd.append ('source_rev_timestamp', ts);
+          }
+          fd.append ('revision_imported_url', r.url);
+          fd.append ('edit_index_id', 1);
+          fd.append ('index_id', indexId);
+          fd.append ('title', r.title);
+          fd.append ('body_type', 1); // html
+          fd.append ('body_source_type', 3); // hatena
+          fd.append ('body_source', r.bodyHatena);
+          return Formatter.hatena (r.bodyHatena).then (function (body) {
+            fd.append ('body', '<hatena-html>' + body + '</hatena-html>');
+          }).then (function () {
+            return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
+          });
+        }).then (function () {
+          return true;
+        });
+      });
+    }; // importById
+
+    var nextId = 1;
+    var runNext = function () {
+      return importById (nextId).then (function (result) {
+        if (!result) return;
+        nextId++;
+        return runNext ();
+      });
+    }; // runNext
+    return runNext ();
+  }; // importFromKeywordlogs
 
   var importDayStars = function (group, client, imported, site, page, data, gotObjectId, setStarMap) {
     var sectionNames = [];
@@ -478,6 +562,10 @@ Importer.run = function (sourceId, statusContainer, opts) {
               c++;
               return importKeyword (group, keyword, index.index_id, imported, site);
             }, keywords).then (function () {
+              if (needKeywordlogs) {
+                return importFromKeywordlogs (group, index.index_id, imported, site);
+              }
+            }).then (function () {
               subAs.stageEnd ('objects');
               subAs.end ({ok: true});
             });
@@ -812,7 +900,7 @@ Importer.HatenaGroup.prototype.keywordhtml = function (keyword) {
 Importer.HatenaGroup.prototype.keywordHistory = function (keyword) {
   var client = this.client;
   return client.fetchHTML (this.getKeywordPagePath (keyword) + '?mode=edit').then (function (div) {
-    return $$ (div, '.day .refererlist li').map (function (li) {
+    var historys = $$ (div, '.day .refererlist li').map (function (li) {
       var history = {author: {}};
       var link = li.querySelector ('a');
       history.url = link.href.replace (/^http:/, 'https:');
@@ -828,6 +916,11 @@ Importer.HatenaGroup.prototype.keywordHistory = function (keyword) {
 
       return history;
     });
+    if (historys.length === 0) {
+      // Keyword not found or the user has no right to edit the keyword.
+      throw "Failed to obtain list of revisions of keyword " + keyword;
+    }
+    return historys;
   });
 }; // keywordHistory
 
@@ -835,7 +928,26 @@ Importer.HatenaGroup.prototype.keywordlog = function (url) {
   var client = this.client;
   return client.fetchHTML (url).then (function (div) {
     var body = div.querySelector ('.day .body textarea[name=body]');
-    return {bodyHatena: body.value};
+    if (!body) return null;
+
+    var log = {
+      url: new URL (url, client.getOrigin ()).toString ().replace (/^http:/, 'https:'),
+      title: div.querySelector ('.day h2 .title').textContent,
+      author: {},
+      bodyHatena: body.value,
+    };
+
+    var m = ((div.querySelector ('.day .body .footnote .footnote') || {}).textContent || "").match
+          (/([0-9]+\/[0-9]+\/[0-9]+\s+[0-9]+:[0-9]+:[0-9]+)/);
+    if (m) log.date = new Date (m[1].replace (/\s+/, 'T').replace (/\//g, '-') + '+09:00');
+
+    var userLink = div.querySelector ('.day .body .footnote a');
+    if (userLink) {
+      var m = userLink.pathname.match (/^\/([^\/]+)\//);
+      if (m) log.author.url_name = m[1];
+    }
+
+    return log;
   });
 }; // keywordlog
 
