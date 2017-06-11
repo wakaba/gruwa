@@ -23,6 +23,18 @@ Importer.run = function (sourceId, statusContainer, opts) {
   }; // createIndex
 
   var needKeywordlogs = false;
+  var keywordIndexId;
+
+  var hatenaHtmlStartTag = function (opts) {
+    var startTag = document.createElement ('br');
+    if (opts.starMap) {
+      startTag.setAttribute ('starmap', Object.keys (opts.starMap).map (function (u) {
+        return u + ' ' + starMap[u];
+      }).join (' '));
+    }
+    if (keywordIndexId) startTag.setAttribute ('keywordindexid', keywordIndexId);
+    return startTag.outerHTML.replace (/^<br/, '<hatena-html');
+  }; // hatenaHtmlStartTag
 
   var importKeyword = function (group, keyword, indexId, imported, site) {
     if (needKeywordlogs) return Promise.resolve ();
@@ -78,9 +90,10 @@ Importer.run = function (sourceId, statusContainer, opts) {
             fd.append ('title', keyword.title);
             fd.append ('body_type', 1); // html
             fd.append ('body_source_type', 3); // hatena
-            fd.append ('body_source', r.bodyHatena);
-            return Formatter.hatena (r.bodyHatena).then (function (body) {
-              fd.append ('body', '<hatena-html>' + body + '</hatena-html>');
+            var hatena = '>' + hatenaHtmlStartTag ({}) + "<\n\n" + r.bodyHatena + '\n\n></hatena-html><';
+            fd.append ('body_source', hatena);
+            return Formatter.hatena (hatena).then (function (body) {
+              fd.append ('body', body);
             }).then (function () {
               return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
             });
@@ -109,7 +122,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           fd.append ('index_id', indexId);
           fd.append ('title', keyword.title);
           fd.append ('body_type', 1); // html
-          fd.append ('body', '<hatena-html imported>' + html + '</hatena-html>');
+          fd.append ('body', hatanaHtmlStartTag ({imported: true}) + html + '</hatena-html>');
           var ts = keyword.updated.valueOf () / 1000;
           fd.append ('revision_timestamp', ts);
           fd.append ('source_timestamp', ts);
@@ -178,9 +191,10 @@ Importer.run = function (sourceId, statusContainer, opts) {
           fd.append ('title', r.title);
           fd.append ('body_type', 1); // html
           fd.append ('body_source_type', 3); // hatena
-          fd.append ('body_source', r.bodyHatena);
-          return Formatter.hatena (r.bodyHatena).then (function (body) {
-            fd.append ('body', '<hatena-html>' + body + '</hatena-html>');
+          var hatena = '>' + hatenaHtmlStartTag ({}) + "<\n\n" + r.bodyHatena + '\n\n></hatena-html><';
+          fd.append ('body_source', hatena);
+          return Formatter.hatena (hatena).then (function (body) {
+            fd.append ('body', body);
           }).then (function () {
             return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
           });
@@ -405,20 +419,16 @@ Importer.run = function (sourceId, statusContainer, opts) {
         fd.append ('author_name', urlName);
         fd.append ('author_hatena_id', urlName);
         fd.append ('body_type', 1); // html
-        var startTag = document.createElement ('br');
-        startTag.setAttribute ('starmap', Object.keys (starMap).map (function (u) {
-          return u + ' ' + starMap[u];
-        }).join (' '));
         if (data.bodyHatena) {
           fd.append ('body_source_type', 3); // hatena
-          var hatena = '>' + startTag.outerHTML.replace (/^<br/, '<hatena-html') + "<\n\n" + data.bodyHatena + '\n\n></hatena-html><';
+          var hatena = '>' + hatenaHtmlStartTag ({starMap: starMap}) + "<\n\n" + data.bodyHatena + '\n\n></hatena-html><';
           fd.append ('body_source', hatena);
           return Formatter.hatena (hatena).then (function (body) {
             fd.append ('body', body);
           });
         } else { // HTML
           startTag.setAttribute ('imported', '');
-          fd.append ('body', startTag.outerHTML.replace (/^<br/, '<hatena-html') + data.body + '</hatena-html>');
+          fd.append ('body', hatenaHtmlStartTag ({starMap: starMap}) + data.body + '</hatena-html>');
           return;
         }
       }).then (function () {
@@ -549,6 +559,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         }).then (function (index) {
           index.itemCount = keywords.length;
           index.originalTitle = title;
+          keywordIndexId = index.index_id;
           return mapTable.showObjects ([index], {}).then (function (re) {
             as.stageEnd ('createkeywordwiki');
             as.stageStart ('createkeywordobjects');

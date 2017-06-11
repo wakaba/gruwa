@@ -8,7 +8,7 @@ use JSON::PS;
 use Dongry::SQL qw(like);
 use Dongry::Type;
 use Dongry::Type::JSONPS;
-use Dongry::SQL qw(where);
+use Dongry::SQL qw(where like);
 use Digest::SHA qw(sha1_hex);
 use Web::DateTime::Parser;
 use Web::MIME::Type;
@@ -1814,28 +1814,37 @@ sub group_object ($$$$) {
           dest_id => $db->bare_sql_fragment ('values(`dest_id`)'),
           sync_info => $db->bare_sql_fragment ('values(`sync_info`)'),
         })->then (sub {
-          return $db->select ('url_ref', {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            dest_url_sha => $page_sha,
-          }, fields => ['source_id', 'timestamp'], limit => 50)->then (sub {
-            my $links = $_[0]->all;
-            return unless @$links;
-            return (promised_for {
-              return _write_object_trackbacks (
-                $db,
-                $path->[1],
-                [$result->{object_id}],
-                $opts->{account}->{account_id},
-                $_[0]->{source_id},
-                $_[0]->{timestamp},
-                $time,
-              );
-            } $links)->then (sub {
-              return $db->delete ('url_ref', {
-                group_id => Dongry::Type->serialize ('text', $path->[1]),
-                dest_url_sha => $page_sha,
-                source_id => {-in => [map { $_->{source_id} } @$links]},
-              });
+          if ($page =~ m{^https://([^/]+\.g\.hatena\.ne\.jp/[^/]+/[^/]+)\z}) {
+            my $page2 = "http://$1";
+            return $db->execute ('select `source_id`, `timestamp` from `url_ref` where `group_id` = :group_id and (`dest_url` like :prefix1 or `dest_url` like :prefix2) limit 50', {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              prefix1 => Dongry::Type->serialize ('text', like ($page) . '%'),
+              prefix2 => Dongry::Type->serialize ('text', like ($page2) . '%'),
+            });
+          } else {
+            return $db->select ('url_ref', {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              dest_url_sha => $page_sha,
+            }, fields => ['source_id', 'timestamp'], limit => 50);
+          }
+        })->then (sub {
+          my $links = $_[0]->all;
+          return unless @$links;
+          return (promised_for {
+            return _write_object_trackbacks (
+              $db,
+              $path->[1],
+              [$result->{object_id}],
+              $opts->{account}->{account_id},
+              $_[0]->{source_id},
+              $_[0]->{timestamp},
+              $time,
+            );
+          } $links)->then (sub {
+            return $db->delete ('url_ref', {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              dest_url_sha => $page_sha,
+              source_id => {-in => [map { $_->{source_id} } @$links]},
             });
           });
         });
