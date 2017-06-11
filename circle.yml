@@ -1,3 +1,6 @@
+machine:
+  services:
+    - docker
 dependencies:
   override:
     - git config --global user.email "temp@circleci.test"
