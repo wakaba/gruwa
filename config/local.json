@@ -1,5 +1,6 @@
 {
   "origin": "http://budou:5521",
+  "x_forwarded": false,
   "accounts": {
     "url": "https://invalid",
     "key": "...",

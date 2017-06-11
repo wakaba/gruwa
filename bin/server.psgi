@@ -21,6 +21,11 @@ use ImportPages;
 my $config_path = path ($ENV{CONFIG_FILE} // die "No |CONFIG_FILE|");
 my $Config = json_bytes2perl $config_path->slurp;
 
+if ($Config->{x_forwarded}) {
+  $Wanage::HTTP::UseXForwardedScheme = 1;
+  $Wanage::HTTP::UseXForwardedHost = 1;
+}
+
 my $dsn = $ENV{DATABASE_DSN} // die "No |DATABASE_DSN|";
 my $DBSources = {sources => {
   master => {dsn => $dsn, anyevent => 1, writable => 1},
