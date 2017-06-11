@@ -15,7 +15,7 @@ test:
     - make test
 
     - echo '{"origin":"http://localhost:5511"}' > config.json
-    - docker run --name server -e CONFIG_FILE=config.json -e DATABASE_DSN=XXX -d -p 5511:8080 quay.io/wakaba/gruwa; sleep 10
+    - docker run --name server -v `pwd`/config.json:/config.json -e CONFIG_FILE=/config.json -e DATABASE_DSN=XXX -d -p 5511:8080 quay.io/wakaba/gruwa; sleep 10
     - curl -f http://localhost:5511/robots.txt
     - docker logs server
 
