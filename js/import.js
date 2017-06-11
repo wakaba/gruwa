@@ -29,7 +29,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
     var startTag = document.createElement ('br');
     if (opts.starMap) {
       startTag.setAttribute ('starmap', Object.keys (opts.starMap).map (function (u) {
-        return u + ' ' + starMap[u];
+        return u + ' ' + opts.starMap[u];
       }).join (' '));
     }
     if (keywordIndexId) startTag.setAttribute ('keywordindexid', keywordIndexId);
