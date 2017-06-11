@@ -10,12 +10,18 @@ test:
   override:
     # XXX run tests using docker
     - make test
-deployment:
 
     - echo '{"origin":"http://localhost:5511"}' > config.json
     - docker run --name server -e CONFIG_FILE=config.json -e DATABASE_DSN=XXX -d -p 5511:8080 quay.io/wakaba/gruwa; sleep 10
     - curl -f http://localhost:5511/robots.txt
     - docker logs server
+
+deployment:
+  docker:
+    branch: master
+    commands:
+      - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS quay.io
+      - docker push quay.io/wakaba/gruwa
 
   nightly:
     branch: nightly
