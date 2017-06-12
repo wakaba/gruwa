@@ -1282,10 +1282,14 @@ sub group_object ($$$$) {
             }, fields => ['dest_id', 'source_page'])->then (sub {
               my $imports = $_[0]->all;
               for (@$imports) {
-                $trackbacks->{objects}->{$_->{dest_id}} = 1;
-                $object->{data}->{trackbacked}->{objects}->{$_->{dest_id}} = 1;
+                if (not $object->{data}->{trackbacked}->{objects}->{$_->{dest_id}} and
+                    not $_->{dest_id} == $object->{object_id}) {
+                  $trackbacks->{objects}->{$_->{dest_id}} = 1;
+                  $object->{data}->{trackbacked}->{objects}->{$_->{dest_id}} = 1;
+                }
                 for (@{$from_imported->{Dongry::Type->parse ('text', $_->{source_page})} or []}) {
                   delete $trackbacks->{urls}->{$_};
+                  $object->{data}->{trackbacked}->{urls}->{$_} = 1;
                 }
               }
             })->then (sub {
