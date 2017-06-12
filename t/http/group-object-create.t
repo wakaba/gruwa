@@ -145,7 +145,7 @@ Test {
 Test {
   my $current = shift;
   my $site = 'https://' . rand . '.test/foo/';
-  my $page = $site . rand;
+  my $page = $site . int rand 1000000;
   my $sha = rand;
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_group (g1 => {members => ['a1']});
@@ -180,7 +180,7 @@ Test {
 Test {
   my $current = shift;
   my $site = 'https://' . rand . '.g.hatena.ne.jp/foo/';
-  my $page = $site . rand;
+  my $page = $site . int rand 1000000;
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_group (g1 => {members => ['a1']});
   })->then (sub {
@@ -217,7 +217,7 @@ Test {
 Test {
   my $current = shift;
   my $site = 'https://' . rand . '.g.hatena.ne.jp/foo/';
-  my $page = $site . rand;
+  my $page = $site . int rand 1000000;
   my $link1 = $page . '#' . rand;
   my $link2 = $page . '/' . rand;
   my $link3 = $link1;
