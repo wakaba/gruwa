@@ -1044,7 +1044,8 @@ sub group_object ($$$$) {
 
           ## URL link trackbacks
           my $self_url = Web::URL->parse_string ($app->http->url->stringify);
-          for my $url (@url) {
+          while (@url) {
+            my $url = shift @url;
             if ($url->get_origin->same_origin_as ($self_url->get_origin)) {
               my $path = [map { percent_decode_c $_ } split m{/}, $url->path, -1];
               if (@$path >= 5) {
@@ -1078,6 +1079,12 @@ sub group_object ($$$$) {
                       $object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$path->[4]} = 1;
                       last if 50 < $trackback_count++;
                     }
+                  } elsif (@$path == 6 and
+                           $path->[3] eq 'imported' and
+                           $path->[5] eq 'go') {
+                    # /g/{group_id}/imported/{url}/go
+                    $url = Web::URL->parse_string ($path->[4]);
+                    unshift @url, $url;
                   }
                 }
               }

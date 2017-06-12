@@ -930,9 +930,11 @@ Test {
   my $link4 = $link2;
   $link3 =~ s/^https:/http:/;
   $link4 =~ s/^https:/http:/;
+  my $link5;
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_group (g1 => {members => ['a1']});
   })->then (sub {
+    $link5 = $current->resolve ('/g/'.$current->o ('g1')->{group_id}.'/imported/' . (percent_encode_c $link3) . '/go')->stringify;
     return $current->post_json (['o', 'create.json'], {
       source_page => $page,
       source_site => $site,
@@ -946,6 +948,8 @@ Test {
     return $current->create_object (o3 => {group => 'g1', account => 'a1'});
   })->then (sub {
     return $current->create_object (o4 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o5 => {group => 'g1', account => 'a1'});
   })->then (sub {
     return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
       body => qq{<a href="$link1">},
@@ -967,6 +971,11 @@ Test {
       body_type => 1,
     }, group => 'g1', account => 'a1');
   })->then (sub {
+    return $current->post_json (['o', $current->o ('o5')->{object_id}, 'edit.json'], {
+      body => qq{<a href="$link5">},
+      body_type => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
     return $current->get_json (['o', 'get.json'], {
       parent_object_id => $current->o ('o0')->{object_id},
       with_data => 1,
@@ -978,14 +987,15 @@ Test {
         $_->{data}->{body_type} == 3 and
         $_->{data}->{body_data}->{trackback};
       } values %{$result->{json}->{objects}}];
-      is 0+@$objects, 4;
+      is 0+@$objects, 5;
       ok grep { $_->{data}->{body_data}->{trackback}->{object_id} eq $current->o ('o1')->{object_id} } @$objects;
       ok grep { $_->{data}->{body_data}->{trackback}->{object_id} eq $current->o ('o2')->{object_id} } @$objects;
       ok grep { $_->{data}->{body_data}->{trackback}->{object_id} eq $current->o ('o3')->{object_id} } @$objects;
       ok grep { $_->{data}->{body_data}->{trackback}->{object_id} eq $current->o ('o4')->{object_id} } @$objects;
+      ok grep { $_->{data}->{body_data}->{trackback}->{object_id} eq $current->o ('o5')->{object_id} } @$objects;
     } $current->c;
   });
-} n => 5, name => 'trackback object source hatena group';
+} n => 6, name => 'trackback object source hatena group';
 
 RUN;
 
