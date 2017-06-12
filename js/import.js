@@ -34,6 +34,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
     }
     if (opts.imported) startTag.setAttribute ('imported', '');
     if (keywordIndexId) startTag.setAttribute ('keywordindexid', keywordIndexId);
+    if (opts.base) startTag.setAttribute ('base', opts.base);
     return startTag.outerHTML.replace (/^<br/, '<hatena-html');
   }; // hatenaHtmlStartTag
 
@@ -91,7 +92,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
             fd.append ('title', keyword.title);
             fd.append ('body_type', 1); // html
             fd.append ('body_source_type', 3); // hatena
-            var hatena = '>' + hatenaHtmlStartTag ({}) + "<\n\n" + r.bodyHatena + '\n\n></hatena-html><';
+            var hatena = '>' + hatenaHtmlStartTag ({base: page}) + "<\n\n" + r.bodyHatena + '\n\n></hatena-html><';
             fd.append ('body_source', hatena);
             return Formatter.hatena (hatena).then (function (body) {
               fd.append ('body', body);
@@ -192,7 +193,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           fd.append ('title', r.title);
           fd.append ('body_type', 1); // html
           fd.append ('body_source_type', 3); // hatena
-          var hatena = '>' + hatenaHtmlStartTag ({}) + "<\n\n" + r.bodyHatena + '\n\n></hatena-html><';
+          var hatena = '>' + hatenaHtmlStartTag ({base: page}) + "<\n\n" + r.bodyHatena + '\n\n></hatena-html><';
           fd.append ('body_source', hatena);
           return Formatter.hatena (hatena).then (function (body) {
             fd.append ('body', body);
@@ -422,13 +423,13 @@ Importer.run = function (sourceId, statusContainer, opts) {
         fd.append ('body_type', 1); // html
         if (data.bodyHatena) {
           fd.append ('body_source_type', 3); // hatena
-          var hatena = '>' + hatenaHtmlStartTag ({starMap: starMap}) + "<\n\n" + data.bodyHatena + '\n\n></hatena-html><';
+          var hatena = '>' + hatenaHtmlStartTag ({starMap: starMap, base: page}) + "<\n\n" + data.bodyHatena + '\n\n></hatena-html><';
           fd.append ('body_source', hatena);
           return Formatter.hatena (hatena).then (function (body) {
             fd.append ('body', body);
           });
         } else { // HTML
-          fd.append ('body', hatenaHtmlStartTag ({imported: true, starMap: starMap}) + data.body + '</hatena-html>');
+          fd.append ('body', hatenaHtmlStartTag ({imported: true, starMap: starMap, base: page}) + data.body + '</hatena-html>');
           return;
         }
       }).then (function () {
