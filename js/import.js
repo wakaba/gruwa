@@ -32,6 +32,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         return u + ' ' + opts.starMap[u];
       }).join (' '));
     }
+    if (opts.imported) startTag.setAttribute ('imported', '');
     if (keywordIndexId) startTag.setAttribute ('keywordindexid', keywordIndexId);
     return startTag.outerHTML.replace (/^<br/, '<hatena-html');
   }; // hatenaHtmlStartTag
@@ -427,8 +428,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
             fd.append ('body', body);
           });
         } else { // HTML
-          startTag.setAttribute ('imported', '');
-          fd.append ('body', hatenaHtmlStartTag ({starMap: starMap}) + data.body + '</hatena-html>');
+          fd.append ('body', hatenaHtmlStartTag ({imported: true, starMap: starMap}) + data.body + '</hatena-html>');
           return;
         }
       }).then (function () {
