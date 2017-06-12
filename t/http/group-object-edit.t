@@ -997,6 +997,69 @@ Test {
   });
 } n => 6, name => 'trackback object source hatena group';
 
+Test {
+  my $current = shift;
+  my $site = 'https://' . rand . '.g.hatena.ne.jp/foo/';
+  my $page = $site . int rand 1000000;
+  my $link1 = $page . '#' . rand;
+  my $link2 = $page . '/' . rand;
+  my $link3 = $link1;
+  my $link4 = $link2;
+  $link3 =~ s/^https:/http:/;
+  $link4 =~ s/^https:/http:/;
+  my $link5;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    $link5 = $current->resolve ('/g/'.$current->o ('g1')->{group_id}.'/imported/' . (percent_encode_c $link3) . '/go')->stringify;
+    return $current->post_json (['o', 'create.json'], {
+      source_page => $page,
+      source_site => $site,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    $current->set_o (o1 => $_[0]->{json});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => qq{<a href="$link1">},
+      body_type => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => qq{<a href="$link2">},
+      body_type => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => qq{<a href="$link3">},
+      body_type => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => qq{<a href="$link4">},
+      body_type => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => qq{<a href="$link5">},
+      body_type => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o1')->{object_id},
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objects = [grep {
+        $_->{data}->{body_type} == 3 and
+        $_->{data}->{body_data}->{trackback};
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objects, 0;
+    } $current->c;
+  });
+} n => 1, name => 'trackback object source hatena group self refs';
+
 RUN;
 
 =head1 LICENSE
