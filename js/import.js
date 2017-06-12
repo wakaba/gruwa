@@ -938,15 +938,19 @@ Importer.HatenaGroup.prototype.keywordHistory = function (keyword) {
 Importer.HatenaGroup.prototype.keywordlog = function (url) {
   var client = this.client;
   return client.fetchHTML (url).then (function (div) {
-    var body = div.querySelector ('.day .body textarea[name=body]');
-    if (!body) return null;
+    var container = div.querySelector ('.day');
+    if (!container) return null;
 
     var log = {
       url: new URL (url, client.getOrigin ()).toString ().replace (/^http:/, 'https:'),
       title: div.querySelector ('.day h2 .title').textContent,
       author: {},
-      bodyHatena: body.value,
+      bodyHatena: '',
     };
+
+    // If the body is empty, there is no textarea.
+    var body = div.querySelector ('.day .body textarea[name=body]');
+    if (body) log.bodyHatena = body.value;
 
     var m = ((div.querySelector ('.day .body .footnote .footnote') || {}).textContent || "").match
           (/([0-9]+\/[0-9]+\/[0-9]+\s+[0-9]+:[0-9]+:[0-9]+)/);
