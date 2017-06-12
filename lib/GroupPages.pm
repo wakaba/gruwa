@@ -89,6 +89,34 @@ sub create ($$$) {
   });
 } # create
 
+sub get_import_source ($) {
+  my $page = shift;
+
+  my $url = $page->stringify_without_fragment;
+  my $suffix = $page->fragment;
+  $suffix = defined $suffix ? '#' . $suffix : '';
+
+  if ($page->host->to_ascii =~ /\.g\.hatena\.ne\.jp$/) {
+    $url =~ s/^http:/https:/;
+
+    if ($url =~ m{^(https://[^/]+/files/[^/]+/[^/]+)\.([A-Za-z0-9_-]+)$}) {
+      $url = $1;
+      my $is_image = {
+        png => 1, gif => 1, jpg => 1, # jpeg jpe
+        bmp => 1, ico => 1, cur => 1,
+      }->{lc $2};
+      $suffix = $is_image ? 'image' : 'file';
+    } elsif ($url =~ m{^https://[^/]+/files/[^/]+/[^/]+$}) {
+      $suffix = 'file';
+    } elsif ($url =~ m{^(https://[^/]+/[^/]+/[0-9]+)/([^/]+)$}) {
+      $url = $1;
+      $suffix = '#' . $2;
+    }
+  }
+
+  return ($url, $suffix);
+} # get_import_source
+
 sub main ($$$$$) {
   my ($class, $app, $path, $db, $acall) = @_;
   # /g/{group_id}/...
@@ -262,27 +290,7 @@ sub group ($$$$) {
     return $app->throw_error (404, reason_phrase => 'Bad page URL')
         if not defined $page or not $page->is_http_s;
 
-    my $url = $page->stringify_without_fragment;
-    my $suffix = $page->fragment;
-    $suffix = defined $suffix ? '#' . $suffix : '';
-
-    if ($page->host->to_ascii =~ /\.g\.hatena\.ne\.jp$/) {
-      $url =~ s/^http:/https:/;
-
-      if ($url =~ m{^(https://[^/]+/files/[^/]+/[^/]+)\.([A-Za-z0-9_-]+)$}) {
-        $url = $1;
-        my $is_image = {
-          png => 1, gif => 1, jpg => 1, # jpeg jpe
-          bmp => 1, ico => 1, cur => 1,
-        }->{lc $2};
-        $suffix = $is_image ? 'image' : 'file';
-      } elsif ($url =~ m{^https://[^/]+/files/[^/]+/[^/]+$}) {
-        $suffix = 'file';
-      } elsif ($url =~ m{^(https://[^/]+/[^/]+/[0-9]+)/([^/]+)$}) {
-        $url = $1;
-        $suffix = '#' . $2;
-      }
-    }
+    my ($url, $suffix) = get_import_source $page;
 
     return $db->select ('imported', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
@@ -1074,7 +1082,7 @@ sub group_object ($$$$) {
                 }
               }
             } else { # not same origin
-              my $urls = $url->stringify_without_fragment;
+              my $urls = $url->stringify; # with fragment
               unless ($object->{data}->{trackbacked}->{urls}->{$urls}) {
                 $trackbacks->{urls}->{$urls} = 1;
                 $object->{data}->{trackbacked}->{urls}->{$urls} = 1;
@@ -1249,19 +1257,29 @@ sub group_object ($$$$) {
               thread_id => $object->{data}->{thread_id},
             );
           })->then (sub {
-            return unless keys %{$trackbacks->{urls} or {}};
+            my $from_imported = {};
+            for (keys %{$trackbacks->{urls}}) {
+              my $url = Web::URL->parse_string ($_);
+              next unless defined $url and $url->is_http_s;
+              my ($urls, undef) = get_import_source $url;
+              push @{$from_imported->{$urls} ||= []}, $_;
+            }
+            return unless keys %$from_imported;
+
             return $db->select ('imported', {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
               source_page_sha => {-in => [map {
                 sha1_hex (Dongry::Type->serialize ('text', $_));
-              } keys %{$trackbacks->{urls}}]},
+              } keys %$from_imported]},
               type => 2, # object
             }, fields => ['dest_id', 'source_page'])->then (sub {
               my $imports = $_[0]->all;
               for (@$imports) {
                 $trackbacks->{objects}->{$_->{dest_id}} = 1;
                 $object->{data}->{trackbacked}->{objects}->{$_->{dest_id}} = 1;
-                delete $trackbacks->{urls}->{Dongry::Type->parse ('text', $_->{source_page})};
+                for (@{$from_imported->{Dongry::Type->parse ('text', $_->{source_page})} or []}) {
+                  delete $trackbacks->{urls}->{$_};
+                }
               }
             })->then (sub {
               return unless keys %{$trackbacks->{urls} or {}};
