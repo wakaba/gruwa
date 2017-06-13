@@ -1060,6 +1060,26 @@ Test {
   });
 } n => 1, name => 'trackback object source hatena group self refs';
 
+Test {
+  my $current = shift;
+  my $asin = int rand 1000000;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body => qq{<hatena-asin asin="$asin"></hatena-asin>},
+      body_type => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => 'asin: url_ref';
+
 RUN;
 
 =head1 LICENSE

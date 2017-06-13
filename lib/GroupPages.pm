@@ -1013,6 +1013,10 @@ sub group_object ($$$$) {
               my $url = Web::URL->parse_string ($_->src);
               push @url, $url if defined $url;
             }
+            for ($doc->query_selector_all ('hatena-asin[asin]')->to_list) {
+              my $url = Web::URL->parse_string ('asin:' . $_->get_attribute ('asin'));
+              push @url, $url;
+            }
             my $x = 0;
             my $y = 0;
             for ($doc->query_selector_all ('input[type=checkbox /* XXX i */]:not([hidden])')->to_list) {
@@ -1292,23 +1296,23 @@ sub group_object ($$$$) {
                   $object->{data}->{trackbacked}->{urls}->{$_} = 1;
                 }
               }
-            })->then (sub {
-              return unless keys %{$trackbacks->{urls} or {}};
-
-              # XXX check existing url bookmarks
-
-              ## For future imports or url bookmakrs
-              return $db->insert ('url_ref', [map {
-                +{
-                  group_id => Dongry::Type->serialize ('text', $path->[1]),
-                  source_id => ''.$object->{object_id},
-                  dest_url => Dongry::Type->serialize ('text', $_),
-                  dest_url_sha => sha1_hex (Dongry::Type->serialize ('text', $_)),
-                  created => $time,
-                  timestamp => $object->{data}->{timestamp},
-                };
-              } keys %{$trackbacks->{urls} or {}}], duplicate => 'ignore');
             });
+          })->then (sub {
+            return unless keys %{$trackbacks->{urls} or {}};
+
+            # XXX check existing url bookmarks
+
+            ## For future imports or url bookmakrs
+            return $db->insert ('url_ref', [map {
+              +{
+                group_id => Dongry::Type->serialize ('text', $path->[1]),
+                source_id => ''.$object->{object_id},
+                dest_url => Dongry::Type->serialize ('text', $_),
+                dest_url_sha => sha1_hex (Dongry::Type->serialize ('text', $_)),
+                created => $time,
+                timestamp => $object->{data}->{timestamp},
+              };
+            } keys %{$trackbacks->{urls} or {}}], duplicate => 'ignore');
           })->then (sub {
             return _write_object_trackbacks (
               $db,
