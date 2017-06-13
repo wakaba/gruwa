@@ -2319,7 +2319,12 @@ function showTooltip (e, opts) {
   var urlToImportedURL = {};
 
   this.showURLTooltip = function (url, opts) {
-    var url = new URL (url);
+    var url;
+    try {
+      url = new URL (url);
+    } catch (e) {
+      url = {};
+    }
     if (url.origin === location.origin) {
       var m = url.pathname.match (/^\/g\/[^\/]+\/o\/([0-9]+)\//);
       if (m) {
@@ -2377,22 +2382,24 @@ Formatter.hatena = function (source) {
     return r.text ();
   }).then (function (x) {
     var div = Formatter.html (x);
-    $$ (div, 'hatena-html[keywordindexid]').forEach (function (container) {
-      var indexId = container.getAttribute ('keywordindexid');
-      $$ (div, 'a[href^="http://d.hatena.ne.jp/keyword/"]').forEach (function (link) {
-        var url = link.getAttribute ('href');
-        if (url === "http://d.hatena.ne.jp/keyword/" + encodeURIComponent (link.textContent)) {
-          link.classList.add ('hatena-keyword');
-          link.href = document.documentElement.getAttribute ('data-group-url') + '/i/' + encodeURIComponent (indexId) + '/wiki/' + encodeURIComponent (link.textContent);
-        }
+    $$ (div, 'hatena-html[base]').forEach (function (container) {
+      var base = container.getAttribute ('base');
+      $$ (container, 'a[href]:not([href^="http:"]):not([href^="https:"])').forEach (function (link) {
+        try {
+          link.href = new URL (link.getAttribute ('href'), base).toString ();
+        } catch (e) { }
       });
     });
-    $$ (div, 'a[href^="http://d.hatena.ne.jp/keyword/"]').forEach (function (link) {
-      var url = link.getAttribute ('href');
-      if (url === "http://d.hatena.ne.jp/keyword/" + encodeURIComponent (link.textContent)) {
+    $$ (div, 'hatena-html[keywordindexid]').forEach (function (container) {
+      var indexId = container.getAttribute ('keywordindexid');
+      $$ (container, 'a[data-hatena-keyword]').forEach (function (link) {
         link.classList.add ('hatena-keyword');
-        link.href = document.documentElement.getAttribute ('data-group-url') + '/wiki/' + encodeURIComponent (link.textContent);
-      }
+        link.href = document.documentElement.getAttribute ('data-group-url') + '/i/' + encodeURIComponent (indexId) + '/wiki/' + encodeURIComponent (link.getAttribute ('data-hatena-keyword'));
+      });
+    });
+    $$ (div, 'a[data-hatena-keyword]:not(.hatena-keyword)').forEach (function (link) {
+      link.classList.add ('hatena-keyword');
+      link.href = document.documentElement.getAttribute ('data-group-url') + '/wiki/' + encodeURIComponent (link.getAttribute ('data-hatena-keyword'));
     });
     return div.innerHTML;
   });
