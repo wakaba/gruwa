@@ -2375,7 +2375,7 @@ Formatter.html = function (source) {
 }; // html
 
 Formatter.hatena = function (source) {
-  return fetch ("https://textformatter.herokuapp.com/hatena?urlbase=https://profile.hatena.ne.jp/", { // XXX
+  return fetch ("https://textformatter.herokuapp.com/hatena", { // XXX
     method: "post",
     body: source,
   }).then (function (r) {
