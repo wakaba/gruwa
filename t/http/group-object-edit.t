@@ -887,6 +887,62 @@ Test {
 
 Test {
   my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body_type => 1, # html
+      body => (sprintf q{<a href="/g/%s/i/%s/wiki/%s/">abc</a>
+                         <a href="/g/%s/i/%s/wiki/%s/">abc</a>},
+                   $current->o ('g1')->{group_id},
+                   $current->o ('i1')->{index_id},
+                   percent_encode_c $current->generate_text ('n1'),
+                   $current->o ('g1')->{group_id},
+                   $current->o ('i1')->{index_id},
+                   percent_encode_c $current->generate_text ('n2')),
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      index_id => $current->o ('i1')->{index_id},
+      parent_wiki_name => $current->o ('n1'),
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objects = [grep {
+        $_->{data}->{body_type} == 3 and
+        $_->{data}->{body_data}->{trackback};
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objects, 1;
+      is $objects->[0]->{data}->{body_data}->{trackback}->{object_id}, $current->o ('o1')->{object_id};
+      unlike $result->{res}->body_bytes, qr{"object_id"\s*:\s*\d};
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      index_id => $current->o ('i1')->{index_id},
+      parent_wiki_name => $current->o ('n2'),
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $objects = [grep {
+        $_->{data}->{body_type} == 3 and
+        $_->{data}->{body_data}->{trackback};
+      } values %{$result->{json}->{objects}}];
+      is 0+@$objects, 1;
+      is $objects->[0]->{data}->{body_data}->{trackback}->{object_id}, $current->o ('o1')->{object_id};
+      unlike $result->{res}->body_bytes, qr{"object_id"\s*:\s*\d};
+    } $current->c;
+  });
+} n => 6, name => 'trackback object for wiki name, multiple';
+
+Test {
+  my $current = shift;
   my $wn = "\x{64344} " . rand;
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_group (g1 => {members => ['a1']});
