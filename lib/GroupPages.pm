@@ -1078,9 +1078,9 @@ sub group_object ($$$$) {
                            $path->[5] eq 'wiki' and
                            length $path->[6]) {
                     my $index_id = $path->[4];
-                    unless ($object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$path->[4]}) {
+                    unless ($object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$path->[6]}) {
                       $trackbacks->{wiki_names}->{$index_id}->{$path->[6]} = 1;
-                      $object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$path->[4]} = 1;
+                      $object->{data}->{trackbacked}->{wiki_names}->{$index_id}->{$path->[6]} = 1;
                       last if 50 < $trackback_count++;
                     }
                   } elsif (@$path == 6 and
