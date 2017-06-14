@@ -1849,7 +1849,7 @@ sub group_object ($$$$) {
         })->then (sub {
           if ($page =~ m{^https://([^/]+\.g\.hatena\.ne\.jp/[^/]+/[^/]+)\z}) {
             my $page2 = "http://$1";
-            return $db->execute ('select `source_id`, `timestamp` from `url_ref` where `group_id` = :group_id and (`dest_url` like :prefix1 or `dest_url` like :prefix2) limit 50', {
+            return $db->execute ('select `source_id`, `timestamp`, `dest_url_sha` from `url_ref` where `group_id` = :group_id and (`dest_url` like :prefix1 or `dest_url` like :prefix2) limit 100', {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
               prefix1 => Dongry::Type->serialize ('text', like ($page) . '%'),
               prefix2 => Dongry::Type->serialize ('text', like ($page2) . '%'),
@@ -1858,7 +1858,7 @@ sub group_object ($$$$) {
             return $db->select ('url_ref', {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
               dest_url_sha => $page_sha,
-            }, fields => ['source_id', 'timestamp'], limit => 50);
+            }, fields => ['source_id', 'timestamp', 'dest_url_sha'], limit => 100);
           }
         })->then (sub {
           my $links = $_[0]->all;
@@ -1876,7 +1876,7 @@ sub group_object ($$$$) {
           } $links)->then (sub {
             return $db->delete ('url_ref', {
               group_id => Dongry::Type->serialize ('text', $path->[1]),
-              dest_url_sha => $page_sha,
+              dest_url_sha => {-in => [map { $_->{dest_url_sha} } @$links]},
               source_id => {-in => [map { $_->{source_id} } @$links]},
             });
           });
