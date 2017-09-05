@@ -320,6 +320,15 @@ sub object ($$%) {
   });
 } # object
 
+sub create_invitation ($$) {
+  my ($self, $name, $opts) = @_;
+  return $self->post_json (['members', 'invitations', 'create.json'], {
+    member_type => $opts->{member_type},
+  }, account => $opts->{account}, group => $opts->{group})->then (sub {
+    $self->{objects}->{$name} = $_[0]->{json};
+  });
+} # create_invitation
+
 sub accounts_client ($) {
   my $self = $_[0];
   return $self->{accounts_client}

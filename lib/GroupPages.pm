@@ -215,13 +215,8 @@ sub group ($$$$) {
     };
   }
 
-  if (@$path == 3 and $path->[2] eq 'members') {
-    # /g/{}/members
-    return temma $app, 'group.members.html.tm', {
-      account => $opts->{account},
-      group => $opts->{group},
-      group_member => $opts->{group_member},
-    };
+  if ($path->[2] eq 'members') {
+    return $class->group_members ($app, $path, $opts);
   }
 
   if (@$path == 3 and $path->[2] eq 'config') {
@@ -276,7 +271,7 @@ sub group ($$$$) {
       return $opts->{acall}->(['group', 'touch'], {
         context_key => $app->config->{accounts}->{context} . ':group',
         group_id => $path->[1],
-      });
+      }); # XXX ->()
     })->then (sub {
       return json $app, {};
     });
@@ -364,6 +359,74 @@ sub group ($$$$) {
 
   return $app->throw_error (404);
 } # group
+
+sub group_members ($$$$) {
+  my ($class, $app, $path, $opts) = @_;
+
+  if (@$path == 3) {
+    # /g/{}/members
+    return temma $app, 'group.members.html.tm', {
+      account => $opts->{account},
+      group => $opts->{group},
+      group_member => $opts->{group_member},
+    };
+  }
+
+  if (@$path == 5 and
+      $path->[3] eq 'invitations' and
+      $path->[4] eq 'list.json') {
+    # /g/{}/members/invitations/list.json
+    $app->throw_error (403, reason_phrase => 'Not an owner')
+        unless $opts->{group_member}->{member_type} == 2; # owner
+    return $opts->{acall}->(['invite', 'list'], {
+      context_key => $app->config->{accounts}->{context} . ':group',
+      invitation_context_key => 'group-' . $opts->{group}->{group_id},
+      ref => $app->bare_param ('ref'),
+      limit => $app->bare_param ('limit'),
+    })->(sub {
+      for (values %{$_[0]->{invitations}}) {
+        $_->{group_id} = ''.$opts->{group}->{group_id};
+        $_->{invitation_url} = $app->http->url->resolve_string ("/invitation/$_->{group_id}/$_->{invitation_key}/")->stringify,
+      }
+      return json $app, $_[0];
+    }, sub {
+      return $app->send_error (400, reason_phrase => $_[0]->{reason});
+    });
+  } # /g/{}/members/invitations/list.json
+
+  if (@$path == 5 and
+      $path->[3] eq 'invitations' and
+      $path->[4] eq 'create.json') {
+    # /g/{}/members/invitations/create.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+    $app->throw_error (403, reason_phrase => 'Not an owner')
+        unless $opts->{group_member}->{member_type} == 2; # owner
+
+    return $opts->{acall}->(['invite', 'create'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+
+      context_key => $app->config->{accounts}->{context} . ':group',
+      invitation_context_key => 'group-' . $opts->{group}->{group_id},
+      account_id => $opts->{account}->{account_id},
+      data => (perl2json_chars {
+        member_type => $app->bare_param ('member_type') // 1, # member
+      }),
+      expires => time + 3*24*60*60,
+    })->(sub {
+      my $json = $_[0];
+      return json $app, {
+        expires => $json->{expires},
+        invitation_url => $app->http->url->resolve_string ("/invitation/$opts->{group}->{group_id}/$json->{invitation_key}/")->stringify,
+        group_id => ''.$opts->{group}->{group_id},
+        invitation_key => $json->{invitation_key},
+      };
+    });
+  } # /g/{}/members/invitations/create.json
+
+  return $app->throw_error (404);
+} # group_members
 
 sub group_members_json ($$$$) {
   my ($class, $app, $group_id, $acall) = @_;
