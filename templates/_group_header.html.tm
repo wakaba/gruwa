@@ -53,7 +53,7 @@
       </copy-button>
       <li>
         <a pl:href="'/g/'.$group->{group_id}.'/members'">
-          メンバー
+          参加者
         </a>
       <li>
         <a pl:href="'/g/'.$group->{group_id}.'/config'">

@@ -5,7 +5,7 @@
     pl:data-theme="$group->{data}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
-    メンバー一覧
+    参加者一覧
   </t:include>
 
 <body>
@@ -18,7 +18,7 @@
     </header>
 
     <section>
-      <h1>メンバー一覧</>
+      <h1>参加者一覧</>
 
     <list-container type=table src=members/list.json key=members class=main-table>
       <template>
@@ -78,7 +78,7 @@
         <table>
           <thead>
             <tr>
-              <th>メンバー
+              <th>利用者
               <th>種別
               <th>参加状態
               <th>参加承認
@@ -92,7 +92,7 @@
     </section>
 
     <section id=invite>
-      <h1>メンバーの追加</h1>
+      <h1>参加者の追加</h1>
 
       <t:if x="$group_member->{member_type} == 2 # owner">
         <form method=post action=javascript: data-action=members/invitations/create.json data-next="fill:invite-invitation reloadList:invitations-list">
@@ -126,7 +126,7 @@
         </form>
         
       <t:else>
-        <p>メンバーの追加は、グループの所有者に依頼してください。
+        <p>参加者の追加は、グループの<a href=/help#owner>所有者</a>に依頼してください。
       </t:if>
 
     </section>

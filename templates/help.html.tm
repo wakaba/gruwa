@@ -41,9 +41,35 @@
         <li><a href=#filesets>アップローダー</a>
       </ul>
 
-      <p>グループの参加者は、所有者と一般参加者に分かれます。
-      所有者は、グループの参加者を管理することができます。
-      その他のほとんどの操作は、所有者も一般参加者も行えます。
+      <section id=group-members>
+        <h1>参加者</h1>
+
+        <p>グループの参加者は、
+        <a href=#owner>所有者</a>と<dfn id=normal-member>一般参加者</dfn>にわかれます。
+        <dfn id=owner>所有者</dfn>は、グループの参加者を管理することができます。
+        その他のほとんどの操作は、
+        <a href=#owner>所有者</a>も<a href=#normal-member>一般参加者</a>も行えます。
+
+        <p>グループの参加者の管理は、グループメニューの「参加者」のページから行えます。
+        参加者一覧表には利用者本人の「参加状態」と<a href=#owner>所有者</a>が設定する「参加承認」の欄があり、
+        それぞれ「参加中」と「承認済」となっていれば、
+        現在そのグループに参加していることを表します。
+        一方または両方が違う状態のときは、グループの参加者ではありません。
+
+        <p>新しい参加者を追加するには、「参加者」
+        ページから<dfn id=invitation>招待状</dfn>を発行してください。
+        <a href=#invitation>招待状</a>を開いて参加を選ぶと、
+        招待されたグループの参加者となります。
+        1枚の<a href=#invitation>招待状</a>で参加できるのは1人だけです。
+        <a href=#invitation>招待状</a>には有効期限が設定されています。有効期限前でも、
+        グループの<a href=#owner>所有者</a>は「参加者」
+        ページから発行済<a href=#invitation>招待状</a>を無効にすることができます。
+
+        <p>グループの参加者が参加者ではなくなると、
+        グループにはアクセスできなくなります。
+        参加中に作成した<a href=#objects>記事</a>などは、
+        そのまま残ります。
+      </section>
     </section>
 
     <section id=blogs>
@@ -407,8 +433,13 @@
         Gruwa 内のものに書き換えられます。
         ただし、他のグループへのリンクやはてなフォトライフの画像へのリンクは書き換えられないので注意してください。
 
-        <p>日の最上位の見出しにタグを記入できますが、 Gruwa 
-        では記事の見出しにタグをつけることができないため、
+        <p><code>iframe</code> の URL が <code>http<strong>s</strong>:</code>
+        ではなく <code>http:</code> である場合など、
+        そのままでは正しく表示されないものもあります。
+
+        <p>はてなグループでは日の見出しにカテゴリーを記入できますが、 Gruwa 
+        には<a href=#objects>記事</a>の見出しにカテゴリーを付与する機能がないないため、
+ 
         単なる見出しの一部分として扱われます。
 
         <hr>
@@ -444,6 +475,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 -->
