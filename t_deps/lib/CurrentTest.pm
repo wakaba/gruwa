@@ -179,6 +179,37 @@ sub post_json ($$$;%) {
   });
 } # post_json
 
+sub post_redirect ($$$;%) {
+  my ($self, $path, $params, %args) = @_;
+  $path = [
+    (
+      defined $args{group}
+        ? ('g', $self->_get_o ($args{group})->{group_id})
+        : ()
+    ),
+    @$path,
+  ];
+  my $cookies = {%{$args{cookies} or {}}};
+  return $self->_account ($args{account})->then (sub {
+    $cookies->{sk} = $_[0]->{cookies}->{sk}; # or undef
+    return $self->client->request (
+      path => $path,
+      method => 'POST',
+      params => $params,
+      headers => {
+        %{$args{headers} or {}},
+        origin => $self->client->origin->to_ascii,
+      },
+      cookies => $cookies,
+      body => $args{body},
+    );
+  })->then (sub {
+    my $res = $_[0];
+    die $res unless $res->status == 302;
+    return {status => $res->status, res => $res};
+  });
+} # post_redirect
+
 sub generate_text ($;$) {
   my $v = rand;
   $v .= chr int rand 0x10FFFF for 1..rand 10;

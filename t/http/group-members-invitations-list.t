@@ -16,6 +16,7 @@ Test {
       }, account => 'a1', group => 'g1'],
       [
         {path => ['g', int rand 10000, 'members', 'invitations', 'list.json'], group => undef, status => 404},
+        {path => ['g', '000' . $current->o ('g1')->{group_id}, 'members', 'invitations', 'list.json'], group => undef, status => 404},
         {account => undef, status => 403, name => 'no account'},
         {account => '', status => 403, name => 'not a member'},
         {account => 'a2', status => 403, name => 'normal member'},

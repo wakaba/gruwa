@@ -182,7 +182,7 @@ sub group ($$$$) {
   if (@$path == 4 and $path->[2] eq 'wiki') {
     # /g/{group_id}/wiki/{wiki_name}
     return get_index ($db, $path->[1], $opts->{group}->{data}->{default_wiki_index_id})->then (sub {
-      return $class->wiki ($app, $opts, $_[0], $path->[3]);
+      return $class->group_wiki ($app, $opts, $_[0], $path->[3]);
     });
   }
 
@@ -738,7 +738,7 @@ sub group_index ($$$$) {
         };
       } elsif (@$path == 6 and $path->[4] eq 'wiki') {
         # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
-        return $class->wiki ($app, $opts, $index, $path->[5]);
+        return $class->group_wiki ($app, $opts, $index, $path->[5]);
       } else {
         return $app->throw_error (404);
       }
@@ -1958,7 +1958,7 @@ sub group_object ($$$$) {
   return $app->throw_error (404);
 } # group_object
 
-sub wiki ($$$$$) {
+sub group_wiki ($$$$$) {
   my ($class, $app, $opts, $index, $wiki_name) = @_;
   return $app->throw_error (404) unless defined $index;
 
@@ -1980,7 +1980,72 @@ sub wiki ($$$$$) {
   };
 
   #return $app->throw_error (404);
-} # wiki
+} # group_wiki
+
+sub invitation ($$$$) {
+  my ($self, $app, $path, $acall) = @_;
+
+  if (@$path == 4 and
+      $path->[1] =~ /\A[1-9][0-9]*\z/ and
+      length $path->[2] and
+      $path->[3] eq '') {
+    # /invitation/{group_id}/{invitation_key}/
+    if ($app->http->request_method eq 'POST') {
+      $app->requires_same_origin_or_referer_origin;
+      return $acall->(['info'], {
+        sk_context => $app->config->{accounts}->{context},
+        sk => $app->http->request_cookies->{sk},
+
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $path->[1],
+      })->(sub {
+        my $account_data = $_[0];
+        return $app->throw_error (403, reason_phrase => 'No user account')
+            unless defined $account_data->{account_id};
+        return $acall->(['invite', 'use'], {
+          context_key => $app->config->{accounts}->{context} . ':group',
+          invitation_context_key => 'group-' . $account_data->{group}->{group_id},
+          invitation_key => $path->[2],
+
+          account_id => $account_data->{account_id},
+          data => (perl2json_chars {
+            group_id => $account_data->{group}->{group_id},
+            old_group_membership => $account_data->{group_membership},
+          }),
+        })->(sub {
+          my $json = $_[0];
+          my $data = $json->{invitation_data};
+          my $new_type = $data->{member_type} || 0;
+          my $old_type = $account_data->{group_membership}->{member_type} || 0;
+          $new_type = $old_type if $old_type > $new_type;
+          # 1:normal, 2:owner
+          return $acall->(['group', 'member', 'status'], {
+            context_key => $app->config->{accounts}->{context} . ':group',
+            group_id => $account_data->{group}->{group_id},
+            account_id => $account_data->{account_id},
+            member_type => $new_type,
+            user_status => 1, # open
+            owner_status => $account_data->{group_membership}->{owner_status} || 1, # open
+          })->(sub {
+            return $app->send_redirect ("/g/$account_data->{group}->{group_id}/");
+          });
+        }, sub {
+          my $reason = $_[0]->{reason};
+          if ($reason eq 'Bad invitation') {
+            return $app->send_redirect ("/g/$path->[1]/");
+          } else {
+            return $app->throw_error (400, reason_phrase => $reason);
+          }
+        });
+      });
+    } else { # GET
+
+      # XXX
+    }
+  }
+
+  return $app->throw_error (404);
+} # invitation
 
 1;
 

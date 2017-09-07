@@ -113,7 +113,7 @@ return sub {
         }
 
         if (@$path >= 3 and $path->[0] eq 'g' and
-            $path->[1] =~ /\A[0-9]+\z/) { # XXX
+            $path->[1] =~ /\A[1-9][0-9]*\z/) {
           # /g/{group_id}/...
           return GroupPages->main ($app, $path, $db, $acall);
         }
@@ -186,6 +186,11 @@ return sub {
         if ($path->[0] eq 'import') {
           # /import
           return ImportPages->main ($app, $path);
+        }
+
+        if ($path->[0] eq 'invitation') {
+          # /invitation/...
+          return GroupPages->invitation ($app, $path, $acall);
         }
 
         if (@$path == 1) {
