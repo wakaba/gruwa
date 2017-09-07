@@ -425,6 +425,35 @@ sub group_members ($$$$) {
     });
   } # /g/{}/members/invitations/create.json
 
+  if (@$path == 6 and
+      $path->[3] eq 'invitations' and
+      length $path->[4] and
+      $path->[5] eq 'invalidate.json') {
+    # /g/{group_id}/members/invitations/{invitation_key}/invalidate.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+    $app->throw_error (403, reason_phrase => 'Not an owner')
+        unless $opts->{group_member}->{member_type} == 2; # owner
+    return $opts->{acall}->(['invite', 'use'], {
+      context_key => $app->config->{accounts}->{context} . ':group',
+      invitation_context_key => 'group-' . $opts->{group}->{group_id},
+      invitation_key => $path->[4],
+      ignore_target => 1,
+      data => (perl2json_chars {
+        operator_account_id => $opts->{account}->{account_id},
+        group_id => $opts->{group}->{group_id},
+      }),
+    })->(sub {
+      return json $app, {};
+    }, sub {
+      if ($_[0]->{reason} eq 'Bad invitation') {
+        return $app->throw_error (404, reason_phrase => $_[0]->{reason});
+      } else {
+        return $app->throw_error (400, reason_phrase => $_[0]->{reason});
+      }
+    });
+  } # /g/{group_id}/members/invitations/{invitation_key}/invalidate.json
+
   return $app->throw_error (404);
 } # group_members
 
@@ -1991,7 +2020,7 @@ sub invitation ($$$$) {
       $path->[3] eq '') {
     # /invitation/{group_id}/{invitation_key}/
     if ($app->http->request_method eq 'POST') {
-      $app->requires_same_origin_or_referer_origin;
+      $app->requires_same_origin;
       return $acall->(['info'], {
         sk_context => $app->config->{accounts}->{context},
         sk => $app->http->request_cookies->{sk},
