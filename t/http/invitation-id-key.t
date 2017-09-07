@@ -9,6 +9,119 @@ Test {
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_account (a2 => {});
   })->then (sub {
+    return $current->create_group (g1 => {owner => 'a1', members => ['a2']});
+  })->then (sub {
+    return $current->create_group (g2 => {owner => 'a1'});
+  })->then (sub {
+    return $current->create_invitation (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['invitation',
+        $current->o ('g1')->{group_id},
+        $current->o ('i1')->{invitation_key},
+      ''], {}, account => 'a2'],
+      [
+        {path => ['invitation', '124', 'abc', ''], status => 302,
+         response_headers => {location => $current->resolve ("/g/124/")->stringify}},
+        {path => ['invitation', '124', $current->o ('i1')->{invitation_key}, ''], status => 302,
+         response_headers => {location => $current->resolve ("/g/124/")->stringify}},
+        {path => ['invitation', '000'.$current->o ('g1')->{group_id}, $current->o ('i1')->{invitation_key}, ''], status => 404},
+        {path => ['invitation', $current->o ('g1')->{group_id}, 'baegeee', ''], status => 302,
+         response_headers => {location => $current->resolve ("/g/".$current->o ('g1')->{group_id}."/")->stringify}},
+        {path => ['invitation', $current->o ('g2')->{group_id}, $current->o ('i1')->{invitation_key}, ''], status => 302,
+         response_headers => {location => $current->resolve ("/g/".$current->o ('g2')->{group_id}."/")->stringify}},
+      ],
+    );
+  })->then (sub {
+    return $current->get_html (['invitation',
+      $current->o ('g1')->{group_id},
+      $current->o ('i1')->{invitation_key},
+    ''], {}, account => 'a2');
+  })->then (sub {
+    return $current->get_html (['invitation',
+      $current->o ('g1')->{group_id},
+      $current->o ('i1')->{invitation_key},
+    ''], {}, account => '');
+  })->then (sub {
+    return $current->get_html (['invitation',
+      $current->o ('g1')->{group_id},
+      $current->o ('i1')->{invitation_key},
+    ''], {}, account => undef);
+  })->then (sub {
+    return $current->get_json (['members', 'invitations', 'list.json'], {
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $json = $result->{json};
+      is 0+keys %{$json->{invitations}}, 1;
+      my $inv2 = $json->{invitations}->{each %{$json->{invitations}}};
+      is $inv2->{invitation_key}, $current->o ('i1')->{invitation_key};
+      is $inv2->{expires}, $current->o ('i1')->{expires};
+      is $inv2->{group_id}, $current->o ('g1')->{group_id};
+      is $inv2->{author_account_id}, $current->o ('a1')->{account_id};
+      is $inv2->{invitation_data}->{member_type}, 1; # normal
+      ok $inv2->{created};
+      is $inv2->{target_account_id}, '0';
+      is $inv2->{user_account_id}, '0';
+      is $inv2->{used_data}, undef;
+      is $inv2->{used}, 0;
+    } $current->c;
+  });
+} n => 12, name => 'GET a new invitation';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_account (a2 => {});
+  })->then (sub {
+    return $current->create_group (g1 => {owner => 'a1', members => []});
+  })->then (sub {
+    return $current->create_invitation (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_redirect (['invitation',
+      $current->o ('g1')->{group_id},
+      $current->o ('i1')->{invitation_key},
+    ''], {}, account => 'a2');
+  })->then (sub {
+    return $current->get_redirect (['invitation',
+      $current->o ('g1')->{group_id},
+      $current->o ('i1')->{invitation_key},
+    ''], {}, account => 'a2');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+         $current->resolve ("/g/".$current->o ('g1')->{group_id}."/")->stringify;
+    } $current->c;
+    return $current->get_redirect (['invitation',
+      $current->o ('g1')->{group_id},
+      $current->o ('i1')->{invitation_key},
+    ''], {}, account => '');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+         $current->resolve ("/g/".$current->o ('g1')->{group_id}."/")->stringify;
+    } $current->c;
+    return $current->get_redirect (['invitation',
+      $current->o ('g1')->{group_id},
+      $current->o ('i1')->{invitation_key},
+    ''], {}, account => undef);
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+         $current->resolve ("/g/".$current->o ('g1')->{group_id}."/")->stringify;
+    } $current->c;
+  });
+} n => 3, name => 'GET a used invitation';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_account (a2 => {});
+  })->then (sub {
     return $current->create_group (g1 => {owner => 'a1'});
   })->then (sub {
     return $current->create_group (g2 => {owner => 'a1'});
@@ -422,6 +535,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

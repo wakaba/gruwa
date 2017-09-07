@@ -2072,10 +2072,37 @@ sub invitation ($$$$) {
         });
       });
     } else { # GET
+      return $acall->(['invite', 'open'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        invitation_context_key => 'group-' . $path->[1],
+        invitation_key => $path->[2],
+        account_id => 0, # anyone
+      })->(sub {
+        my $json = $_[0];
+        if ($json->{used}) {
+          return $app->send_redirect ("/g/$path->[1]/");
+        }
 
-      # XXX
+        return $acall->(['group', 'profiles'], {
+          context_key => $app->config->{accounts}->{context} . ':group',
+          group_id => $path->[1],
+          with_data => ['title'],
+        })->(sub {
+          my $json = $_[0];
+          return temma $app, 'invitation.id.key.html.tm', {
+            group_title => $json->{groups}->{$path->[1]}->{data}->{title},
+          };
+        });
+      }, sub {
+        my $json = $_[0];
+        if ($json->{reason} eq 'Bad invitation') {
+          return $app->send_redirect ("/g/$path->[1]/");
+        } else {
+          return $app->throw_error (400, reason_phrase => $json->{reason});
+        }
+      });
     }
-  }
+  } # /invitation/{group_id}/{invitation_key}/
 
   return $app->throw_error (404);
 } # invitation
@@ -2097,6 +2124,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut
