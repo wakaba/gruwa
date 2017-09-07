@@ -20,7 +20,7 @@
     <section>
       <h1>メンバー一覧</>
 
-    <list-container type=table src=members.json key=members class=main-table>
+    <list-container type=table src=members/list.json key=members class=main-table>
       <template>
         <th>
           <account-name data-field=account_id />
@@ -62,7 +62,7 @@
             });
             as.stageEnd ('formdata');
             as.stageStart ('save');
-            gFetch ('members.json', {post: true, formData: fd}).then (function () {
+            gFetch ('members/status.json', {post: true, formData: fd}).then (function () {
               saveButton.disabled = false;
               as.end ({ok: true});
             }, function (error) {

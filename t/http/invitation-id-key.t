@@ -46,7 +46,7 @@ Test {
       is $result->{res}->header ('Location'),
          $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
     } $current->c;
-    return $current->get_json (['members.json'], {}, account => 'a2', group => 'g1');
+    return $current->get_json (['members', 'list.json'], {}, account => 'a2', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -108,7 +108,7 @@ Test {
          $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
     } $current->c, name => 'Used invitation';
   })->then (sub {
-    return $current->get_json (['members.json'], {}, account => 'a2', group => 'g1');
+    return $current->get_json (['members', 'list.json'], {}, account => 'a2', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -161,7 +161,7 @@ Test {
       is $result->{res}->header ('Location'),
          $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
     } $current->c;
-    return $current->get_json (['members.json'], {}, account => 'a2', group => 'g1');
+    return $current->get_json (['members', 'list.json'], {}, account => 'a2', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -213,7 +213,7 @@ Test {
       is $result->{res}->header ('Location'),
          $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
     } $current->c;
-    return $current->get_json (['members.json'], {}, account => 'a2', group => 'g1');
+    return $current->get_json (['members', 'list.json'], {}, account => 'a2', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -265,7 +265,7 @@ Test {
       is $result->{res}->header ('Location'),
          $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
     } $current->c;
-    return $current->get_json (['members.json'], {}, account => 'a1', group => 'g1');
+    return $current->get_json (['members', 'list.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -317,7 +317,7 @@ Test {
       is $result->{res}->header ('Location'),
          $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
     } $current->c;
-    return $current->get_json (['members.json'], {}, account => 'a1', group => 'g1');
+    return $current->get_json (['members', 'list.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -371,7 +371,7 @@ Test {
       is $result->{res}->header ('Location'),
          $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
     } $current->c;
-    return $current->get_json (['members.json'], {}, account => 'a1', group => 'g1');
+    return $current->get_json (['members', 'list.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {

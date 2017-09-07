@@ -78,7 +78,7 @@ Test {
   return $current->create_account (u1 => {})->then (sub {
     return $current->create_group (g1 => {});
   })->then (sub {
-    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('u1')->{account_id},
       user_status => 1,
     }, account => 'u1');
@@ -106,7 +106,7 @@ Test {
   })->then (sub {
     return $current->create_group (g1 => {members => ['u1'], owner => 'u2'});
   })->then (sub {
-    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('u1')->{account_id},
       owner_status => 2,
     }, account => 'u2');

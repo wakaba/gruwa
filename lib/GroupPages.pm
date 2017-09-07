@@ -457,22 +457,22 @@ sub group_members ($$$$) {
   return $app->throw_error (404);
 } # group_members
 
-sub group_members_json ($$$$) {
+sub group_members_status ($$$$) {
   my ($class, $app, $group_id, $acall) = @_;
-  # /g/{group_id}/members.json
-  if ($app->http->request_method eq 'POST') {
-    $app->requires_same_origin;
-    return $acall->(['info'], {
-      sk_context => $app->config->{accounts}->{context},
-      sk => $app->http->request_cookies->{sk},
+  # /g/{group_id}/members/status.json
+  $app->requires_request_method ({POST => 1});
+  $app->requires_same_origin;
+  return $acall->(['info'], {
+    sk_context => $app->config->{accounts}->{context},
+    sk => $app->http->request_cookies->{sk},
 
-      context_key => $app->config->{accounts}->{context} . ':group',
-      group_id => $group_id,
-      # XXX
-      group_admin_status => 1,
-      group_owner_status => 1,
-    })->(sub {
-      my $account_data = $_[0];
+    context_key => $app->config->{accounts}->{context} . ':group',
+    group_id => $group_id,
+    # XXX
+    group_admin_status => 1,
+    group_owner_status => 1,
+  })->(sub {
+    my $account_data = $_[0];
 
       return $app->throw_error (403, reason_phrase => 'No user account')
           unless defined $account_data->{account_id};
@@ -526,21 +526,26 @@ sub group_members_json ($$$$) {
           value => $desc,
         })->();
       });
-    })->then (sub {
-      return json $app, {};
-    });
-  } else { # GET
-    return $acall->(['info'], {
-      sk_context => $app->config->{accounts}->{context},
-      sk => $app->http->request_cookies->{sk},
+  })->then (sub {
+    return json $app, {};
+  });
+} # group_members_status
 
-      context_key => $app->config->{accounts}->{context} . ':group',
-      group_id => $group_id,
-      # XXX
-      group_admin_status => 1,
-      group_owner_status => 1,
-    })->(sub {
-      my $account_data = $_[0];
+sub group_members_list ($$$$) {
+  my ($class, $app, $group_id, $acall) = @_;
+  # /g/{group_id}/members/list.json
+  return $acall->(['info'], {
+    sk_context => $app->config->{accounts}->{context},
+    sk => $app->http->request_cookies->{sk},
+
+    context_key => $app->config->{accounts}->{context} . ':group',
+    group_id => $group_id,
+
+    # XXX
+    group_admin_status => 1,
+    group_owner_status => 1,
+  })->(sub {
+    my $account_data = $_[0];
 
       return $app->throw_error (403, reason_phrase => 'No user account')
           unless defined $account_data->{account_id};
@@ -590,9 +595,8 @@ sub group_members_json ($$$$) {
                            next_ref => $_[0]->{next_ref},
                            has_next => $_[0]->{has_next}};
       });
-    });
-  } # GET
-} # group_members_json
+  });
+} # group_members_list
 
 sub source_urls ($) {
   my $app = $_[0];

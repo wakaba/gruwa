@@ -236,12 +236,12 @@ sub create_group ($$$) {
     return promised_for {
       return $self->_account (shift)->then (sub {
         my $account = $_[0];
-        return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+        return $self->post_json (['g', $o->{group_id}, 'members', 'status.json'], {
           account_id => $account->{account_id},
           member_type => 1, # member
           owner_status => 1, # open
         }, account => $owner)->then (sub {
-          return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+          return $self->post_json (['g', $o->{group_id}, 'members', 'status.json'], {
             account_id => $account->{account_id},
             user_status => 1, # open
           }, account => $account);
@@ -253,12 +253,12 @@ sub create_group ($$$) {
     return promised_for {
       return $self->_account (shift)->then (sub {
         my $account = $_[0];
-        return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+        return $self->post_json (['g', $o->{group_id}, 'members', 'status.json'], {
           account_id => $account->{account_id},
           member_type => 2, # owner
           owner_status => 1, # open
         }, account => $owner)->then (sub {
-          return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+          return $self->post_json (['g', $o->{group_id}, 'members', 'status.json'], {
             account_id => $account->{account_id},
             user_status => 1, # open
           }, account => $account);

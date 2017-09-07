@@ -13,7 +13,7 @@ Test {
   })->then (sub {
     return $current->post_json (['i', $current->o ('i1')->{index_id}, 'my.json'], {}, group => 'g1', account => 'a1');
   })->then (sub {
-    return $current->get_json (['members.json'], {}, group => 'g1', account => 'a1');
+    return $current->get_json (['members', 'list.json'], {}, group => 'g1', account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -46,7 +46,7 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->get_json (['members.json'], {}, group => 'g1', account => 'a1');
+    return $current->get_json (['members','list.json'], {}, group => 'g1', account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -55,7 +55,7 @@ Test {
   })->then (sub {
     return $current->post_json (['i', $current->o ('i1')->{index_id}, 'my.json'], {is_default => 1}, group => 'g1', account => 'a1');
   })->then (sub {
-    return $current->get_json (['members.json'], {}, group => 'g1', account => 'a1');
+    return $current->get_json (['members', 'list.json'], {}, group => 'g1', account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -64,7 +64,7 @@ Test {
     } $current->c;
     return $current->post_json (['i', $current->o ('i1')->{index_id}, 'my.json'], {is_default => ''}, group => 'g1', account => 'a1');
   })->then (sub {
-    return $current->get_json (['members.json'], {}, group => 'g1', account => 'a1');
+    return $current->get_json (['members', 'list.json'], {}, group => 'g1', account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
