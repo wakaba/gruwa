@@ -45,7 +45,7 @@
         <summary>日記の作成</summary>
 
         <form method=post action=javascript: data-action=i/create.json
-            data-href-template=/g/{group_id}/i/{index_id}/config>
+            data-next=go:/g/{group_id}/i/{index_id}/config>
           <table class=config>
             <tbody>
               <tr>
@@ -64,7 +64,7 @@
         <summary>Wiki の作成</summary>
 
         <form method=post action=javascript: data-action=i/create.json
-            data-href-template=/g/{group_id}/i/{index_id}/config>
+            data-next=go:/g/{group_id}/i/{index_id}/config>
           <table class=config>
             <tbody>
               <tr>
@@ -83,7 +83,7 @@
         <summary>TODOリストの作成</summary>
 
         <form method=post action=javascript: data-action=i/create.json
-            data-href-template=/g/{group_id}/i/{index_id}/config>
+            data-next=go:/g/{group_id}/i/{index_id}/config>
           <table class=config>
             <tbody>
               <tr>
@@ -102,7 +102,7 @@
         <summary>ラベルの作成</summary>
 
         <form method=post action=javascript: data-action=i/create.json
-            data-href-template=/g/{group_id}/i/{index_id}/config>
+            data-next=go:/g/{group_id}/i/{index_id}/config>
           <table class=config>
             <tbody>
               <tr>
@@ -121,7 +121,7 @@
         <summary>マイルストーンの作成</summary>
 
         <form method=post action=javascript: data-action=i/create.json
-            data-href-template=/g/{group_id}/i/{index_id}/config>
+            data-next=go:/g/{group_id}/i/{index_id}/config>
           <table class=config>
             <tbody>
               <tr>
@@ -140,7 +140,7 @@
         <summary>アップローダーの作成</summary>
 
         <form method=post action=javascript: data-action=i/create.json
-            data-href-template=/g/{group_id}/i/{index_id}/config>
+            data-next=go:/g/{group_id}/i/{index_id}/config>
           <table class=config>
             <tbody>
               <tr>

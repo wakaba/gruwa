@@ -38,6 +38,15 @@ function $fill (e, o) {
           f.parentNode.setAttribute ('data-value', value);
         }
       }
+    } else if (f.localName === 'only-if') {
+      var matched = true;
+      var cond = f.getAttribute ('cond');
+      if (cond === '==0') {
+        if (value != 0) matched = false;
+      } else if (cond === '!=0') {
+        if (value == 0) matched = false;
+      }
+      f.hidden = ! matched;
     } else {
       f.textContent = value || f.getAttribute ('data-empty');
     }

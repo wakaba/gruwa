@@ -265,7 +265,7 @@
             <summary>コメントを書く</summary>
 
             <form action=javascript: data-action=o/create.json
-                data-additional-stages="editCreatedObject editObject resetForm showCreatedObjectInCommentList"
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
               <textarea data-edit-created-object data-name=body required></textarea>

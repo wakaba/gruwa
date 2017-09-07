@@ -316,6 +316,17 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       field.setAttribute ('value', value);
       field.hidden = false;
       upgradeObjectRef (field);
+
+    } else if (field.localName === 'only-if') {
+      var matched = true;
+      var cond = field.getAttribute ('cond');
+      if (cond === '==0') {
+        if (value != 0) matched = false;
+      } else if (cond === '!=0') {
+        if (value == 0) matched = false;
+      }
+      field.hidden = ! matched;
+
     } else {
       field.textContent = value || field.getAttribute ('data-empty');
     }
@@ -397,6 +408,11 @@ function fillFields (contextEl, rootEl, el, object, opts) {
   });
   $$c (el, '[data-context-template]').forEach (function (field) {
     field.setAttribute ('data-context', field.getAttribute ('data-context-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+      return encodeURIComponent (object[k]);
+    }));
+  });
+  $$c (el, '[data-data-action-template]').forEach (function (field) {
+    field.setAttribute ('data-action', field.getAttribute ('data-data-action-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return encodeURIComponent (object[k]);
     }));
   });
@@ -1307,10 +1323,14 @@ function upgradeList (el) {
     });
   });
 
+  el.reload = function () {
+    el.clearObjects ();
+    el.load ();
+  }; // reload
+
   $$c (el, '.reload-button').forEach (function (e) {
     e.onclick = function () {
-      el.clearObjects ();
-      el.load ();
+      el.reload ();
     };
   });
 
@@ -1958,6 +1978,39 @@ stageActions.showCreatedObjectInCommentList = function (args) {
 }; // showCreatedObjectInCommentList
 stageActions.showCreatedObjectInCommentList.stages = ['showcreatedobjectincommentlist'];
 
+stageActions.fill = function (args) {
+  var e = document.getElementById (args.arg);
+  $fill (e, args.result);
+  e.hidden = false;
+}; // fill
+
+stageActions.reloadList = function (args) {
+  var list = document.getElementById (args.arg);
+  list.reload ();
+}; // reloadList
+
+stageActions.go = function (args) {
+  args.as.stageStart ("next");
+  location.href = args.arg.replace (/\{(\w+)\}/g, function (_, key) {
+    return args.result[key];
+  });
+  return new Promise (function () { }); // keep form disabled
+}; // go
+stageActions.go.stages = ['next'];
+
+stageActions.updateParent = function (args) {
+  if (!args.form.parentObject) throw "No |parentObject|";
+
+  var updated = false;
+  $$ (args.form, '[name].data-field').forEach (function (e) {
+    args.form.parentObject.data[e.name] = e.value;
+    updated = true;
+  });
+  if (updated) {
+    args.form.dispatchEvent (new Event ('objectdataupdate', {bubbles: true}));
+  }
+}; // updateParent
+
 function upgradeForm (form) {
   var formType = form.getAttribute ('data-form-type');
   if (formType === 'uploader') {
@@ -1980,14 +2033,26 @@ function upgradeForm (form) {
     var pt = form.getAttribute ('data-prompt');
     if (pt && !confirm (pt)) return;
 
-    var addStages = (form.getAttribute ('data-additional-stages') || '').split (/\s+/).filter (function (x) { return x });
     var stages = ["prep", "fetch"];
-    addStages.forEach (function (stage) {
-      stages = stages.concat (stageActions[stage].stages);
-    });
-    stages = stages.concat (["next"]);
-    var nextURL = form.getAttribute ('data-href-template');
+
     var as = getActionStatus (form);
+    var nextActions = (form.getAttribute ('data-next') || '')
+        .split (/\s+/)
+        .filter (function (_) { return _.length })
+        .map (function (_) {
+          var v = _.split (/:/, 2);
+          return {
+            action: v[0],
+            arg: v[1], // or undefined
+            as: as, form: form, submitButton: submit,
+          };
+        });
+    nextActions.forEach (function (_) {
+      if (!stageActions[_.action]) {
+        throw "Action " + _.action + ' is not defined';
+      }
+      stages = stages.concat (stageActions[_.action].stages || []);
+    });
     as.start ({stages: stages});
     var fd = new FormData (form); // this must be done before withFormDisabled
     withFormDisabled (form, function () {
@@ -1996,31 +2061,13 @@ function upgradeForm (form) {
       return gFetch (form.getAttribute ('data-action'), {post: true, formData: fd}).then (function (json) {
         as.stageEnd ("fetch");
         var p = Promise.resolve ();
-        addStages.forEach (function (stage) {
+        nextActions.forEach (function (stage) {
           p = p.then (function () {
-            return stageActions[stage] ({result: json, fd: fd, as: as, form: form, submitButton: submit});
+            stage.result = json;
+            return stageActions[stage.action] (stage);
           });
         });
-        return p.then (function () {
-          if (nextURL) {
-            as.stageStart ("next");
-            location.href = nextURL.replace (/\{(\w+)\}/g, function (_, key) {
-              return json[key];
-            });
-            return new Promise (function () { }); // keep form disabled
-          } else {
-            if (form.parentObject) {
-              var updated = false;
-              $$ (form, '[name].data-field').forEach (function (e) {
-                form.parentObject.data[e.name] = e.value;
-                updated = true;
-              });
-              if (updated) {
-                form.dispatchEvent (new Event ('objectdataupdate', {bubbles: true}));
-              }
-            }
-          }
-        });
+        return p;
       });
     }).then (function () {
       as.end ({ok: true});
