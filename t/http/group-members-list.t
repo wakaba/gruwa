@@ -29,7 +29,7 @@ Test {
   })->then (sub {
     return $current->create_group (g1 => {owner => 'a1', members => ['a2']});
   })->then (sub {
-    return $current->post_json (['members.json'], {
+    return $current->post_json (['members', 'status.json'], {
       account_id => $current->o ('a2')->{account_id},
       owner_status => 2, # closed
     }, group => 'g1', account => 'a1');
