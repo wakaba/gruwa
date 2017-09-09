@@ -58,28 +58,6 @@ $promised.forEach = function (code, items) {
   return run ();
 }; // forEach
 
-(function () {
-  var handlers = {};
-  var promises = {};
-  var ok = {};
-
-  window.$with = function (key, opts) {
-    if (handlers[key]) {
-      return Promise.resolve ().then (function () { return handlers[key] (opts || {}) });
-    } else {
-      promises[key] = promises[key] || new Promise (function (o) { ok[key] = o });
-      return promises[key].then (function () { return handlers[key] (opts || {}) });
-    }
-  }; // $with
-
-  window.$with.register = function (key, code) {
-    handlers[key] = code;
-    if (ok[key]) ok[key] ();
-    delete ok[key];
-    delete promises[key];
-  }; // register
-}) ();
-
 function gFetch (pathquery, opts) {
   if (opts.asStage) opts.as.stageStart (opts.asStage);
   var body;
@@ -173,7 +151,7 @@ function createBodyHTML (value, opts) {
   });
   $$ (document.head, 'link.body-js, script.body-js').forEach (function (e) {
     var script = document.createElement ('script');
-    script.async = true;
+    script.async = e.async;
     script.src = e.href || e.src;
     doc.head.appendChild (script);
   });
@@ -948,12 +926,16 @@ TemplateSelectors.object = function (object, templates) {
   return undefined;
 }; // object
 
-var Loaders = {};
-Loaders.import = function () {
-  return Importer.getImportSources ().then (function (results) {
-    return {sources: results};
+(function () {
+  var loaders = {
+    define: function (name, code) {
+      $with.register ('Loaders:' + name, code);
+    }, // define
+  };
+  $with.register ('Loaders', function () {
+    return loaders;
   });
-}; // import
+}) ();
 
 var LoadedActions = {};
 
@@ -1014,7 +996,7 @@ function upgradeList (el) {
     if (main.localName && !templates._) return Promise.resolve ({items: []});
     if (!templates._) templates._ = document.createElement ('template');
 
-    var listObjects = Object.values (objects);
+    var listObjects = Object.values (objects || []);
 
     if (query) {
       listObjects = listObjects.filter (function (o) {
@@ -1214,8 +1196,19 @@ function upgradeList (el) {
 
   var nextRef = null;
   var load = function () {
+    if (el.hasAttribute ('noautoload')) {
+      el.removeAttribute ('noautoload');
+      return Promise.resolve ({});
+    }
+
     var loader = el.getAttribute ('loader');
-    if (loader) return Loaders[loader] ();
+    if (loader) {
+      as.stageStart ('load');
+      return $with ('Loaders:' + loader).then (function (_) {
+        as.stageEnd ('load');
+        return _;
+      });
+    }
     var url = el.getAttribute ('src') || 'o/get.json?with_data=1';
     [
       'src-object_id', 'src-index_id', 'src-wiki_name',
@@ -2452,6 +2445,52 @@ Formatter.hatena = function (source) {
   });
 }; // hatena
 
+function upgradeTabSet (e) {
+  var init = function () {
+    var tabMenu = null;
+    var tabSections = [];
+    Array.prototype.forEach.call (e.children, function (f) {
+      if (f.localName === 'section') {
+        tabSections.push (f);
+      } else if (f.localName === 'menu') {
+        tabMenu = f;
+      }
+    });
+    if (!tabMenu) return;
+    if (!tabSections.length) return;
+
+    var showTab = function (f) {
+      $$ (tabMenu, 'a').forEach (function (g) {
+        g.classList.toggle ('active', g.section === f);
+      });
+      tabSections.forEach (function (g) {
+        if (f === g) {
+          g.setAttribute ('active', '');
+        } else {
+          g.removeAttribute ('active');
+        }
+      });
+    }; // showTab
+
+    tabMenu.textContent = '';
+    tabSections.forEach (function (f) {
+      var header = $$ (f, 'h1')[0];
+      var a = document.createElement ('a');
+      a.href = 'javascript:';
+      a.onclick = function () { showTab (this.section) };
+      a.section = f;
+      a.textContent = header ? header.textContent : '§';
+      tabMenu.appendChild (a);
+    });
+
+    e.setAttribute ('initialized', '');
+    showTab (tabSections[0]);
+  }; // init
+
+  init ();
+  new MutationObserver (init).observe (e, {childList: true});
+} // upgradeTabSet
+
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {
     Array.prototype.forEach.call (m.addedNodes, function (x) {
@@ -2501,6 +2540,11 @@ Formatter.hatena = function (source) {
       } else if (x.localName) {
         $$ (x, 'object-ref').forEach (upgradeObjectRef);
       }
+      if (x.localName === 'tab-set') {
+        upgradeTabSet (x);
+      } else if (x.localName) {
+        $$ (x, 'tab-set').forEach (upgradeTabSet);
+      }
     });
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
@@ -2513,6 +2557,7 @@ $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 $$ (document, 'run-action').forEach (upgradeRunAction);
 $$ (document, 'unit-number').forEach (upgradeUnitNumber);
 $$ (document, 'object-ref').forEach (upgradeObjectRef);
+$$ (document, 'tab-set').forEach (upgradeTabSet);
 
 /*
 

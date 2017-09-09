@@ -1033,7 +1033,9 @@ sub group_object ($$$$) {
         my $trackbacks = {};
         my $trackback_count = 0;
         for my $key (qw(title body body_source file_name
-                        author_name author_hatena_id
+                        author_name author_hatena_id author_bb_username
+                        assignee_bb_username
+                        todo_bb_priority todo_bb_kind todo_bb_state
                         parent_section_id)) {
           my $value = $app->text_param ($key);
           if (defined $value) {

@@ -6,7 +6,7 @@
   <meta name=referrer content=origin>
 </t:if>
 <link rel=stylesheet href=/css/common.css>
-<script src=/js/framework.js async class=body-js />
+<script src=/js/framework.js class=body-js />
 <script src=/js/pages.js async />
 
 <header class=common>
@@ -268,13 +268,24 @@
     <section id=import>
       <h1>インポート</h1>
 
+      <p><strong>警告</strong>: この機能は実験的なものです。
+
+      <p>インポート機能を使うと、他の Web アプリケーションのデータを
+      Gruwa のグループにコピーすることができます。
+
+      <p>この機能は他のアプリケーションの既存のデータを Gruwa 
+      に移行するために使うことを想定しています。
+      インポートは何度でも繰り返し実行できますが、
+      インポート後に他のアプリケーションと
+      Gruwa の両方で編集していると、
+      データの整合性を維持できなくなる可能性がありますので、
+      ご注意ください。
+
       <section id=import-hatenagroup>
         <h1>はてなグループからのインポート</h1>
 
-        <p>はてなグループの特定のグループの内容を Gruwa 
-        のグループにインポートする機能です。
-
-        <p><strong>警告</strong>: この機能は実験的なものです。
+        <p><a href=http://g.hatena.ne.jp>はてなグループ</a>の特定のグループの内容を
+        Gruwa のグループにインポートする機能です。
 
         <p>はてなグループと Gruwa の機能の対応関係は、
         次の表の通りとなっています。
@@ -457,6 +468,67 @@
         は、はてなグループ側の日時を (取得可能なら) 利用します。
         
       </section>
+
+      <section id=import-bitbucket>
+        <h1>Bitbucket からのインポート</h1>
+
+        <p><a href=https://bitbucket.org/>Bitbucket</a>
+        の特定のリポジトリーの Issues を Gruwa グループの 
+        <a href=#todos>TODO リスト</a>としてインポートする機能です。
+
+        <ul>
+          <li>Issue の title と description は、<a href=#todos>TODO 
+          リスト</a>の項目の題名と本文となります。
+
+          <li>Issue の status が new, open, on hold のとき未完了、
+          それ以外のとき完了済として扱います。
+
+          <li>Issue の reporter, assignee, kind, priority, status
+          は内部情報として保持しますが、画面には表示されません。
+
+          <li>Issue の attachment, votes, watcher はインポートしません。
+
+          <li>Issue のコメントは、 <a href=#todos>TODO リスト</a>の項目へのコメントとなります。
+
+          <li>状態変更・編集の履歴は、インポートできません。
+
+          <li>Issue とコメントの本文は Markdown として扱いますが、
+          再編集できません (再編集時に他の形式に変更する必要があります)。
+
+        </ul>
+
+        <p>Issues 以外 (ソースコード、Wiki など) には<strong>対応していません</>。
+
+        <hr>
+
+        <p>インポートはグループの設定ページから実行できます。
+        ページ内でリポジトリーを選択して「インポート開始」
+        ボタンを押してください。
+
+        <p>Bitbucket からの情報の取得には OAuth を用いた Web API
+        を使っています。 OAuth によって取得したアクセス許可は、
+        インポートにのみ利用しています。情報取得のみで、
+        Bitbucket 側への書き込みは行いません。
+
+        <p>インポート完了まで、数分から数十分の時間が必要です 
+        (リポジトリーの規模により変化します)。処理中は Gruwa
+        を Web ブラウザーで表示したままお待ちください。
+
+        <hr>
+
+        <p>既にインポートしたことのあるリポジトリーを再度インポートする場合、
+        変更があった部分のみ Gruwa に保存します。
+        しかし変更を検出できない場合もあるため、
+        一旦インポートした後の差分更新は補助的なものとお考えください。
+
+        <p>インポートにより作成された<a href=#objects>記事</a>の編集<a href=#accounts>アカウント</a>は、
+        インポートを実行した<a href=#accounts>アカウント</a>となります。 
+        <a href=#objects>記事</a>の作成や変更の日時は、
+        インポートを実行した日時となります。
+        表示に使われる日時は、 Bitbucket 側の日時となります。
+
+      </section>
+
     </section>
   </section>
 

@@ -74,6 +74,12 @@ sub main ($$$$$) {
     });
   } # /account/cb
 
+  if (@$path == 2 and $path->[1] eq 'done') {
+    # /account/done
+    $app->http->set_response_header ('X-Frame-Options' => 'sameorigin');
+    return temma $app, 'account.done.html.tm', {};
+  }
+
   return $app->send_error (404);
 } # main
 

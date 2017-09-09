@@ -1,5 +1,16 @@
 <html t:params="$group $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
-    pl:data-theme="$group->{data}->{theme}">
+    pl:data-theme="$group->{data}->{theme}"
+    pl:data-bb-clientid="$app->config->{bitbucket}->{public}->{client_id}">
+<!--
+
+  The bitbucket.public.client_id value has to be the Key of a
+  BitBucket OAuth consumer, with following configurations:
+
+    Callback URL: https://{host}/account/done
+    This is a private consumer: Unchcked
+    Permissions: Account - Read, Repositories - Read, Issues - Read
+
+-->
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     設定
@@ -41,8 +52,11 @@
     <section>
       <h1>作成</h1>
 
-      <details>
-        <summary>日記の作成</summary>
+      <tab-set>
+        <menu/>
+
+        <section>
+          <h1>日記</h1>
 
         <form method=post action=javascript: data-action=i/create.json
             data-next=go:/g/{group_id}/i/{index_id}/config>
@@ -58,10 +72,10 @@
             <button type=submit class=save-button>作成する</>
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
-      </details>
+        </section>
 
-      <details>
-        <summary>Wiki の作成</summary>
+        <section>
+          <h1>Wiki</h1>
 
         <form method=post action=javascript: data-action=i/create.json
             data-next=go:/g/{group_id}/i/{index_id}/config>
@@ -77,10 +91,10 @@
             <button type=submit class=save-button>作成する</>
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
-      </details>
+        </section>
 
-      <details>
-        <summary>TODOリストの作成</summary>
+        <section>
+          <h1>TODO リスト</h1>
 
         <form method=post action=javascript: data-action=i/create.json
             data-next=go:/g/{group_id}/i/{index_id}/config>
@@ -96,7 +110,6 @@
             <button type=submit class=save-button>作成する</>
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
-      </details>
 
       <details>
         <summary>ラベルの作成</summary>
@@ -135,16 +148,17 @@
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
       </details>
+        </section>
 
-      <details>
-        <summary>アップローダーの作成</summary>
+        <section>
+          <h1>アップローダー</h1>
 
         <form method=post action=javascript: data-action=i/create.json
             data-next=go:/g/{group_id}/i/{index_id}/config>
           <table class=config>
             <tbody>
               <tr>
-                <th><label for=create-fileset-title>名前</>
+                <th><label for=create-fileset-title>フォルダー名</>
                 <td><input name=title id=create-fileset-title required>
               <tr>
                 <th>種別
@@ -158,19 +172,33 @@
             <button type=submit class=save-button>作成する</>
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
-      </details>
+        </section>
+      </tab-set>
     </section>
   </section>
 
   <section class=group-config-import>
     <h1>データのインポート</h1>
 
-    <p><strong>上級者向け</strong>:
-    他のサービスからこのグループにデータをインポートできます。
+    <p><strong>警告</strong>: この機能は実験的なものです。
+    予期せぬ結果となることがあります。
+
+    <p>他のサービスからこのグループにデータをインポートできます。
     詳しくは<a href=/help#import target=help>ヘルプ</a>をご参照ください。</p>
 
-    <p>まずは<a href id=bookmarklet-link data-confirm=ブックマークレットとしてお使いください>Gruwa インポート用ブックマークレット</a>をお使いの
-    Web ブラウザーのブックマークに登録してください。
+    <tab-set>
+      <menu />
+
+      <section>
+        <h1>はてなグループ</h1>
+
+        <p><strong>上級者向け</strong>:
+        はてなグループの日記、キーワード、
+        共有ファイルをこのグループにインポートできます。
+
+        <ol>
+          <li><a href id=bookmarklet-link data-confirm=ブックマークレットとしてお使いください>Gruwa インポート用ブックマークレット</a>をお使いの
+          Web ブラウザーのブックマークに登録してください。
     <script>
       var url = "javascript:var script=document.createElement('script');script.src='"+location.origin+"/js/embedded.js';document.body.appendChild(script)";
       var a = document.querySelector ("#bookmarklet-link");
@@ -179,18 +207,20 @@
         alert (this.getAttribute ('data-confirm'));
         return false;
       };
-    </script></p>
+    </script>
 
-    <p>次にインポートしたい Web サイトを同じ Web 
-    ブラウザーの別の窓やタブで開き、
-    ブックマークレットを実行してください。</p>
+          <li>インポートしたい Web サイトを Web 
+          ブラウザーの新しい窓 (タブ) で開き、
+          ブックマークレットを実行してください。
 
-    <p>その後、一覧から「インポート開始」を選んでください。
-    インポートには数分から数十分かかります。インポートしたい Web
-    サイトとこのページの両方を開いた状態でお待ちください。</p>
+          <li>一覧から「インポート開始」を選んでください。
+          インポートには数分から数十分かかります。インポートしたい Web
+          サイトとこのページの両方を開いた状態でお待ちください。
 
-    <script src=/js/sha1.js />
-    <script src=/js/import.js />
+        </ol>
+
+        <script src=/js/sha1.js />
+        <script src=/js/import.js />
     <list-container loader=import key=sources type=table id=import-list>
       <p class=buttons>
         <button type=button class=reload-button>再読込</button>
@@ -215,12 +245,54 @@
       </table>
       <action-status hidden stage-load=読込中... />
       <list-is-empty>
-        現在インポートできるサイトはありません。
+        現在インポートできるグループはありません。
       </list-is-empty>
     </list-container>
 
+      </section>
+
+      <section>
+        <h1>Bitbucket</h1>
+
+        <p>Bitbucket リポジトリーの Issues をこのグループにインポートできます。</p>
+
+    <list-container loader=bitbucket-repos noautoload key=repos type=table id=import-bb-list>
+      <p class=buttons>
+        <button type=button class=reload-button>再読込</button>
+      </p>
+
+      <template>
+        <td><a data-href-template="https://bitbucket.org/{full_name}" target=bitbucket><code data-field=full_name></code></a>
+        <td>
+          <input type=hidden name=username data-field=owner.username>
+          <input type=hidden name=slug data-field=slug>
+          <button type=button class=save-button onclick="
+            var bb = new Importer.BitBucket;
+            bb.run (parentNode.querySelector ('[name=username]').value,
+                    parentNode.querySelector ('[name=slug]').value,
+                    document.querySelector ('#import-status'),
+                    {forceUpdate: hasAttribute ('data-force')});
+          ">インポート開始</button>
+      </template>
+      <table>
+        <thead>
+          <tr>
+            <th>リポジトリー
+            <th>操作
+        <tbody>
+      </table>
+      <action-status hidden stage-load=読込中... />
+      <list-is-empty>
+        現在インポートできるリポジトリーはありません。
+      </list-is-empty>
+    </list-container>
+
+      </section>
+    </tab-set>
+
     <div id=import-status>
       <action-status
+          stage-auth=アクセス許可を取得中...
           stage-getimported=インポート済みデータを確認中...
           stage-getkeywordlist=キーワード一覧を取得中...
           stage-createkeywordwiki=キーワード用Wikiを作成中...
@@ -230,6 +302,9 @@
           stage-getfilelist=ファイル一覧を取得中...
           stage-createfileuploader=ファイルアップローダーを作成中...
           stage-getfiles=ファイルを取得中...
+          stage-createtodo=TODOリストを作成中...
+          stage-getissuelist=Issue一覧を取得中...
+          stage-createissueobjects=Issueをインポート中...
           ok=完了しました />
       <list-container type=table class=mapping-table>
         <template>
@@ -268,6 +343,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 -->

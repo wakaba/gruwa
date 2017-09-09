@@ -54,6 +54,8 @@
                   <td>
                     <select data-bc-name=body_source_type>
                       <option value=0>見たまま (推奨)
+                      <!-- 1 SWML -->
+                      <!-- 2 Markdown -->
                       <option value=3>はてな記法
                     </select>
                     (<a href=/help#syntaxes target=help>ヘルプ</a>)
