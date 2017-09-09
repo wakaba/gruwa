@@ -167,6 +167,50 @@ main {
   display: block;
 }
 
+tab-set:not([hidden]) {
+  display: block;
+  margin: 1em;
+  border-bottom: 1px solid;
+  border-color: var(--main-border-color);
+}
+
+tab-set > menu:not([hidden]) {
+  display: block;
+  margin: 0 0 .5em 0;
+  border-bottom: 1px solid;
+  border-color: var(--main-border-color);
+  padding: 0;
+}
+
+tab-set > menu > a:not([hidden]) {
+  display: inline-block;
+  margin: 0 1em 0 0;
+  padding: .2em .5em;
+  text-align: center;
+  color: inherit;
+  background: transparent;
+  text-decoration: none;
+}
+
+tab-set > menu > a.active {
+  font-weight: bolder;
+  border-bottom: 3px solid;
+}
+
+tab-set > section:not([active]) {
+  display: none;
+}
+
+tab-set > section[active]:not([hidden]) {
+  display: block;
+  margin: 0;
+  padding: .5em;
+}
+
+tab-set[initialized] > section > h1 {
+  display: none;
+}
+
 summary {
   padding: .5em;
   cursor: pointer;
@@ -849,6 +893,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 */

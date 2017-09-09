@@ -134,7 +134,9 @@ sub storage (%) {
         $data->{aws4}->[0] = $config->{credential}->{accessKey};
         $data->{aws4}->[1] = $config->{credential}->{secretKey};
         $data->{aws4}->[2] = $config->{region};
-        return $data->{aws4}->[0] && $data->{aws4}->[1] && $data->{aws4}->[2];
+        return defined $data->{aws4}->[0] &&
+               defined $data->{aws4}->[1] &&
+               defined $data->{aws4}->[2];
       })->catch (sub { return 0 });
     } timeout => 60*3;
   })->then (sub {
@@ -364,6 +366,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

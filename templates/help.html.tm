@@ -6,7 +6,7 @@
   <meta name=referrer content=origin>
 </t:if>
 <link rel=stylesheet href=/css/common.css>
-<script src=/js/framework.js async class=body-js />
+<script src=/js/framework.js class=body-js />
 <script src=/js/pages.js async />
 
 <header class=common>
@@ -41,9 +41,35 @@
         <li><a href=#filesets>アップローダー</a>
       </ul>
 
-      <p>グループの参加者は、所有者と一般参加者に分かれます。
-      所有者は、グループの参加者を管理することができます。
-      その他のほとんどの操作は、所有者も一般参加者も行えます。
+      <section id=group-members>
+        <h1>参加者</h1>
+
+        <p>グループの参加者は、
+        <a href=#owner>所有者</a>と<dfn id=normal-member>一般参加者</dfn>にわかれます。
+        <dfn id=owner>所有者</dfn>は、グループの参加者を管理することができます。
+        その他のほとんどの操作は、
+        <a href=#owner>所有者</a>も<a href=#normal-member>一般参加者</a>も行えます。
+
+        <p>グループの参加者の管理は、グループメニューの「参加者」のページから行えます。
+        参加者一覧表には利用者本人の「参加状態」と<a href=#owner>所有者</a>が設定する「参加承認」の欄があり、
+        それぞれ「参加中」と「承認済」となっていれば、
+        現在そのグループに参加していることを表します。
+        一方または両方が違う状態のときは、グループの参加者ではありません。
+
+        <p>新しい参加者を追加するには、「参加者」
+        ページから<dfn id=invitation>招待状</dfn>を発行してください。
+        <a href=#invitation>招待状</a>を開いて参加を選ぶと、
+        招待されたグループの参加者となります。
+        1枚の<a href=#invitation>招待状</a>で参加できるのは1人だけです。
+        <a href=#invitation>招待状</a>には有効期限が設定されています。有効期限前でも、
+        グループの<a href=#owner>所有者</a>は「参加者」
+        ページから発行済<a href=#invitation>招待状</a>を無効にすることができます。
+
+        <p>グループの参加者が参加者ではなくなると、
+        グループにはアクセスできなくなります。
+        参加中に作成した<a href=#objects>記事</a>などは、
+        そのまま残ります。
+      </section>
     </section>
 
     <section id=blogs>
@@ -242,13 +268,24 @@
     <section id=import>
       <h1>インポート</h1>
 
+      <p><strong>警告</strong>: この機能は実験的なものです。
+
+      <p>インポート機能を使うと、他の Web アプリケーションのデータを
+      Gruwa のグループにコピーすることができます。
+
+      <p>この機能は他のアプリケーションの既存のデータを Gruwa 
+      に移行するために使うことを想定しています。
+      インポートは何度でも繰り返し実行できますが、
+      インポート後に他のアプリケーションと
+      Gruwa の両方で編集していると、
+      データの整合性を維持できなくなる可能性がありますので、
+      ご注意ください。
+
       <section id=import-hatenagroup>
         <h1>はてなグループからのインポート</h1>
 
-        <p>はてなグループの特定のグループの内容を Gruwa 
-        のグループにインポートする機能です。
-
-        <p><strong>警告</strong>: この機能は実験的なものです。
+        <p><a href=http://g.hatena.ne.jp>はてなグループ</a>の特定のグループの内容を
+        Gruwa のグループにインポートする機能です。
 
         <p>はてなグループと Gruwa の機能の対応関係は、
         次の表の通りとなっています。
@@ -407,8 +444,13 @@
         Gruwa 内のものに書き換えられます。
         ただし、他のグループへのリンクやはてなフォトライフの画像へのリンクは書き換えられないので注意してください。
 
-        <p>日の最上位の見出しにタグを記入できますが、 Gruwa 
-        では記事の見出しにタグをつけることができないため、
+        <p><code>iframe</code> の URL が <code>http<strong>s</strong>:</code>
+        ではなく <code>http:</code> である場合など、
+        そのままでは正しく表示されないものもあります。
+
+        <p>はてなグループでは日の見出しにカテゴリーを記入できますが、 Gruwa 
+        には<a href=#objects>記事</a>の見出しにカテゴリーを付与する機能がないないため、
+ 
         単なる見出しの一部分として扱われます。
 
         <hr>
@@ -426,6 +468,67 @@
         は、はてなグループ側の日時を (取得可能なら) 利用します。
         
       </section>
+
+      <section id=import-bitbucket>
+        <h1>Bitbucket からのインポート</h1>
+
+        <p><a href=https://bitbucket.org/>Bitbucket</a>
+        の特定のリポジトリーの Issues を Gruwa グループの 
+        <a href=#todos>TODO リスト</a>としてインポートする機能です。
+
+        <ul>
+          <li>Issue の title と description は、<a href=#todos>TODO 
+          リスト</a>の項目の題名と本文となります。
+
+          <li>Issue の status が new, open, on hold のとき未完了、
+          それ以外のとき完了済として扱います。
+
+          <li>Issue の reporter, assignee, kind, priority, status
+          は内部情報として保持しますが、画面には表示されません。
+
+          <li>Issue の attachment, votes, watcher はインポートしません。
+
+          <li>Issue のコメントは、 <a href=#todos>TODO リスト</a>の項目へのコメントとなります。
+
+          <li>状態変更・編集の履歴は、インポートできません。
+
+          <li>Issue とコメントの本文は Markdown として扱いますが、
+          再編集できません (再編集時に他の形式に変更する必要があります)。
+
+        </ul>
+
+        <p>Issues 以外 (ソースコード、Wiki など) には<strong>対応していません</>。
+
+        <hr>
+
+        <p>インポートはグループの設定ページから実行できます。
+        ページ内でリポジトリーを選択して「インポート開始」
+        ボタンを押してください。
+
+        <p>Bitbucket からの情報の取得には OAuth を用いた Web API
+        を使っています。 OAuth によって取得したアクセス許可は、
+        インポートにのみ利用しています。情報取得のみで、
+        Bitbucket 側への書き込みは行いません。
+
+        <p>インポート完了まで、数分から数十分の時間が必要です 
+        (リポジトリーの規模により変化します)。処理中は Gruwa
+        を Web ブラウザーで表示したままお待ちください。
+
+        <hr>
+
+        <p>既にインポートしたことのあるリポジトリーを再度インポートする場合、
+        変更があった部分のみ Gruwa に保存します。
+        しかし変更を検出できない場合もあるため、
+        一旦インポートした後の差分更新は補助的なものとお考えください。
+
+        <p>インポートにより作成された<a href=#objects>記事</a>の編集<a href=#accounts>アカウント</a>は、
+        インポートを実行した<a href=#accounts>アカウント</a>となります。 
+        <a href=#objects>記事</a>の作成や変更の日時は、
+        インポートを実行した日時となります。
+        表示に使われる日時は、 Bitbucket 側の日時となります。
+
+      </section>
+
     </section>
   </section>
 
@@ -444,6 +547,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 -->

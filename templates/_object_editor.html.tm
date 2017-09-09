@@ -54,6 +54,8 @@
                   <td>
                     <select data-bc-name=body_source_type>
                       <option value=0>見たまま (推奨)
+                      <!-- 1 SWML -->
+                      <!-- 2 Markdown -->
                       <option value=3>はてな記法
                     </select>
                     (<a href=/help#syntaxes target=help>ヘルプ</a>)
@@ -186,7 +188,7 @@
       data-link-wiki-name-prompt=リンク先のWiki名を指定してください。 />
 
   <list-container type=$with id=index-list src=i/list.json key=index_list itemkey=index_id />
-  <list-container type=$with id=member-list src=members.json key=members itemkey=account_id accounts />
+  <list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />
 
 <template id=template-panel-image-list>
   <run-action name=installPrependNewObjects />

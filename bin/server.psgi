@@ -104,16 +104,26 @@ return sub {
         ]);
       } Promise->resolve->then (sub {
 
-        if (@$path == 3 and
+        if (@$path == 4 and
             $path->[0] eq 'g' and
-            $path->[1] =~ /\A[0-9]+\z/ and # XXX
-            $path->[2] eq 'members.json') {
-          # /g/{group_id}/members.json
-          return GroupPages->group_members_json ($app, $path->[1], $acall);
+            $path->[1] =~ /\A[1-9][0-9]*\z/ and
+            $path->[2] eq 'members' and
+            $path->[3] eq 'list.json') {
+          # /g/{group_id}/members/list.json
+          return GroupPages->group_members_list ($app, $path->[1], $acall);
+        }
+
+        if (@$path == 4 and
+            $path->[0] eq 'g' and
+            $path->[1] =~ /\A[1-9][0-9]+\z/ and
+            $path->[2] eq 'members' and
+            $path->[3] eq 'status.json') {
+          # /g/{group_id}/members/status.json
+          return GroupPages->group_members_status ($app, $path->[1], $acall);
         }
 
         if (@$path >= 3 and $path->[0] eq 'g' and
-            $path->[1] =~ /\A[0-9]+\z/) { # XXX
+            $path->[1] =~ /\A[1-9][0-9]*\z/) {
           # /g/{group_id}/...
           return GroupPages->main ($app, $path, $db, $acall);
         }
@@ -186,6 +196,11 @@ return sub {
         if ($path->[0] eq 'import') {
           # /import
           return ImportPages->main ($app, $path);
+        }
+
+        if ($path->[0] eq 'invitation') {
+          # /invitation/...
+          return GroupPages->invitation ($app, $path, $acall);
         }
 
         if (@$path == 1) {

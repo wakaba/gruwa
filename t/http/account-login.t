@@ -6,13 +6,14 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->client->request (path => ['account', 'login'])->then (sub {
-    my $res = $_[0];
+  return $current->get_html (['account', 'login'])->then (sub {
+    my $result = $_[0];
     test {
-      is $res->status, 200;
+      is $result->{res}->header ('X-Frame-Options'), 'sameorigin';
+      is $result->{res}->header ('Set-Cookie'), undef;
     } $current->c;
   });
-} n => 1, name => '/account/login GET';
+} n => 2, name => '/account/login GET';
 
 Test {
   my $current = shift;
@@ -68,6 +69,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

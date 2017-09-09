@@ -1,3 +1,25 @@
+(function () {
+  var handlers = {};
+  var promises = {};
+  var ok = {};
+
+  window.$with = function (key, opts) {
+    if (handlers[key]) {
+      return Promise.resolve ().then (function () { return handlers[key] (opts || {}) });
+    } else {
+      promises[key] = promises[key] || new Promise (function (o) { ok[key] = o });
+      return promises[key].then (function () { return handlers[key] (opts || {}) });
+    }
+  }; // $with
+
+  window.$with.register = function (key, code) {
+    handlers[key] = code;
+    if (ok[key]) ok[key] ();
+    delete ok[key];
+    delete promises[key];
+  }; // register
+}) ();
+
 function $$ (n, s) {
   return Array.prototype.slice.call (n.querySelectorAll (s));
 } // $$
@@ -38,6 +60,15 @@ function $fill (e, o) {
           f.parentNode.setAttribute ('data-value', value);
         }
       }
+    } else if (f.localName === 'only-if') {
+      var matched = true;
+      var cond = f.getAttribute ('cond');
+      if (cond === '==0') {
+        if (value != 0) matched = false;
+      } else if (cond === '!=0') {
+        if (value == 0) matched = false;
+      }
+      f.hidden = ! matched;
     } else {
       f.textContent = value || f.getAttribute ('data-empty');
     }
@@ -73,6 +104,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 */

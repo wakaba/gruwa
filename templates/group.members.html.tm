@@ -5,7 +5,7 @@
     pl:data-theme="$group->{data}->{theme}">
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
-    メンバー一覧
+    参加者一覧
   </t:include>
 
 <body>
@@ -18,9 +18,9 @@
     </header>
 
     <section>
-      <h1>メンバー一覧</>
+      <h1>参加者一覧</>
 
-    <list-container type=table src=members.json key=members class=main-table>
+    <list-container type=table src=members/list.json key=members class=main-table>
       <template>
         <th>
           <account-name data-field=account_id />
@@ -62,7 +62,7 @@
             });
             as.stageEnd ('formdata');
             as.stageStart ('save');
-            gFetch ('members.json', {post: true, formData: fd}).then (function () {
+            gFetch ('members/status.json', {post: true, formData: fd}).then (function () {
               saveButton.disabled = false;
               as.end ({ok: true});
             }, function (error) {
@@ -78,7 +78,7 @@
         <table>
           <thead>
             <tr>
-              <th>メンバー
+              <th>利用者
               <th>種別
               <th>参加状態
               <th>参加承認
@@ -90,6 +90,97 @@
         <action-status hidden stage-load=読み込み中... />
       </list-container>
     </section>
+
+    <section id=invite>
+      <h1>参加者の追加</h1>
+
+      <t:if x="$group_member->{member_type} == 2 # owner">
+        <form method=post action=javascript: data-action=members/invitations/create.json data-next="fill:invite-invitation reloadList:invitations-list">
+
+          <p>このグループへの招待状を発行します。 URL 
+          をメールなどで渡して、 Web ブラウザーで開いてもらってください。
+
+          <table class=config>
+            <tbody>
+              <tr>
+                <th>対象者
+                <td>誰でも利用できます。
+              <tr>
+                <th><label for=invite-member_type>種別</>
+                <td><select name=member_type id=invite-member_type>
+                  <option value=1 selected>一般
+                  <option value=2>所有者
+                </select>
+              <tr>
+                <th>有効期間
+                <td>発行から72時間
+          </table>
+  
+          <p class=operations>
+            <button type=submit class=save-button>発行する</button>
+            <action-status hidden stage-fetch=発行中... ok=発行しました />
+
+          <p id=invite-invitation hidden>招待状の URL は
+            <code data-field=invitation_url />
+          です。招待したい人に渡して、 Web ブラウザーで開いてもらってください。
+        </form>
+        
+      <t:else>
+        <p>参加者の追加は、グループの<a href=/help#owner>所有者</a>に依頼してください。
+      </t:if>
+
+    </section>
+
+    <t:if x="$group_member->{member_type} == 2 # owner">
+      <section id=invitations>
+        <h1>発行済招待状</h1>
+
+        <list-container type=table src=members/invitations/list.json key=invitations sortkey=created class=main-table id=invitations-list>
+          <template>
+            <td><a data-href-field=invitation_url><time data-field=created /></a>
+            <td><account-name data-field=author_account_id />
+            <td><enum-value data-field=invitation_data.member_type text-1=一般 text-2=所有者 />
+            <td><time data-field=expires>
+            <td>
+              <only-if data-field=used cond="!=0" hidden>
+                <time data-field=used />
+              </only-if>
+              <only-if data-field=used cond="==0" hidden>
+                <form method=post action=javascript: data-data-action-template=members/invitations/{invitation_key}/invalidate.json data-next=reloadList:invitations-list>
+                  <action-status hidden stage-fetch=変更中... />
+                  <button type=submit class=delete-button>無効にする</>
+                </form>
+              </only-if>
+            <td>
+              <only-if data-field=user_account_id cond="!=0" hidden>
+                <account-name data-field=user_account_id />
+              </only-if>
+              <only-if data-field=user_account_id cond="==0" hidden>
+                -
+              </only-if>
+          </template>
+          <table>
+            <thead>
+              <tr>
+                <th>発行日
+                <th>発行者
+                <th>種別
+                <th>有効期限
+                <th>利用日
+                <th>利用者
+            <tbody>
+          </table>
+          <list-is-empty hidden>
+            <p>招待状はありません。
+          </list-is-empty>
+          <action-status hidden stage-load=読み込み中... />
+          <p class="operations pager">
+            <button type=button class=next-page-button hidden>もっと昔</button>
+          </p>
+        </list-container>
+      </section>
+    </t:if>
+
   </section>
 
 <!--
@@ -107,6 +198,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 -->

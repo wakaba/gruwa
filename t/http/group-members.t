@@ -42,7 +42,7 @@ Test {
   })->then (sub {
     return $current->create_group (g1 => {});
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -56,11 +56,12 @@ Test {
       is $member->{desc}, '';
     } $current->c;
     return $current->are_errors (
-      ['POST', ['g', $current->o ('g1')->{group_id}, 'members.json'], {
+      ['POST', ['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
          account_id => $current->o ('a1')->{account_id},
          user_status => 6,
        }, account => 'a1'],
       [
+        {path => ['g', '00'.$current->o ('g1')->{group_id}, 'members', 'status.json'], status => 404},
         {account => undef, status => 403},
         {params => {
           account_id => 5251133333,
@@ -73,7 +74,7 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('a1')->{account_id},
       member_type => 4,
       user_status => 3,
@@ -81,7 +82,7 @@ Test {
       desc => 'abcde',
     }, account => 'a1');
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -108,7 +109,7 @@ Test {
   })->then (sub {
     return $current->create_group (g1 => {owner => 'owner', members => ['a1', 'other member']});
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -122,7 +123,7 @@ Test {
       is $member->{desc}, '';
     } $current->c;
     return $current->are_errors (
-      ['POST', ['g', $current->o ('g1')->{group_id}, 'members.json'], {
+      ['POST', ['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
          account_id => $current->o ('a1')->{account_id},
          user_status => 6,
        }, account => 'a1'],
@@ -143,7 +144,7 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('a1')->{account_id},
       member_type => 2,
       user_status => 1,
@@ -151,7 +152,7 @@ Test {
       desc => 'abcde',
     }, account => 'a1');
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -165,12 +166,12 @@ Test {
       is $member->{desc}, '', "not changed";
     } $current->c, name => 'not in fact changed';
   })->then (sub {
-    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('a1')->{account_id},
       user_status => 2, # closed
     }, account => 'a1');
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -183,7 +184,7 @@ Test {
       is $member->{group_index_id}, undef;
       is $member->{desc}, '';
     } $current->c, name => 'changed (closed)';
-    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('a1')->{account_id},
       member_type => 2,
       user_status => 3,
@@ -191,7 +192,7 @@ Test {
       desc => "abc",
     }, account => 'owner');
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -204,7 +205,7 @@ Test {
       is $member->{group_index_id}, undef;
       is $member->{desc}, '';
     } $current->c, name => 'changed by owner';
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'owner');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'owner');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -232,7 +233,7 @@ Test {
     return $current->create_group (g1 => {owners => ['a1', 'owner'],
                                           members => ['other member']});
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -246,7 +247,7 @@ Test {
       is $member->{desc}, '';
     } $current->c;
     return $current->are_errors (
-      ['POST', ['g', $current->o ('g1')->{group_id}, 'members.json'], {
+      ['POST', ['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
          account_id => $current->o ('a1')->{account_id},
          user_status => 6,
        }, account => 'a1'],
@@ -256,7 +257,7 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('a1')->{account_id},
       member_type => 1,
       user_status => 1,
@@ -264,7 +265,7 @@ Test {
       desc => 'abcde',
     }, account => 'a1');
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -278,12 +279,12 @@ Test {
       is $member->{desc}, 'abcde', "a1 is owner";
     } $current->c, name => 'not in fact changed';
   })->then (sub {
-    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('a1')->{account_id},
       user_status => 2, # closed
     }, account => 'a1');
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -297,7 +298,7 @@ Test {
       is $member->{desc}, 'abcde';
     } $current->c, name => 'cannot be downgraded';
     return $current->are_errors (
-      ['POST', ['g', $current->o ('g1')->{group_id}, 'members.json'], {
+      ['POST', ['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
          account_id => $current->o ('a1')->{account_id},
          member_type => 2,
          user_status => 3,
@@ -310,7 +311,7 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -323,7 +324,7 @@ Test {
       is $member->{group_index_id}, undef;
       is $member->{desc}, 'abcde';
     } $current->c, name => 'not changed';
-    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('a1')->{account_id},
       member_type => 2,
       user_status => 3,
@@ -331,7 +332,7 @@ Test {
       desc => "abc",
     }, account => 'owner');
   })->then (sub {
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'a1');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -344,7 +345,7 @@ Test {
       is $member->{group_index_id}, undef;
       is $member->{desc}, '';
     } $current->c, name => 'changed by owner';
-    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members.json'], {}, account => 'owner');
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'owner');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -364,7 +365,7 @@ RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -377,6 +378,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

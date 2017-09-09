@@ -1,21 +1,22 @@
-<html t:params="$group $account $app">
-<title t:parse>
-  <t:content>
-  -
-  <t:text value="$group->{data}->{title}">
-</>
-<t:if x="not $app->config->{is_production}">
-  <meta name=referrer content=no-referrer>
-<t:else>
-  <meta name=referrer content=origin>
-</t:if>
-<link rel=stylesheet href=/css/common.css>
-<script src=/js/framework.js class=body-js />
-<script src=/js/pages.js async />
-<link rel=preload as=style href=/css/body.css class=body-css>
-<link rel=preload as=script href=/js/body.js class=body-js>
+use strict;
+use warnings;
+use Path::Tiny;
+use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps/lib');
+use Tests;
 
-<!--
+Test {
+  my $current = shift;
+  return $current->get_html (['account', 'done'])->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('X-Frame-Options'), 'sameorigin';
+    } $current->c;
+  });
+} n => 1, name => '/account/done GET';
+
+RUN;
+
+=head1 LICENSE
 
 Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
 
@@ -30,6 +31,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
--->
+=cut

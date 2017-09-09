@@ -1,26 +1,40 @@
 function Importer () { }
 
+Importer.getImported = function (site) {
+  var pageToItem = {};
+  var get; get = function (ref) {
+    return gFetch ('imported/' + encodeURIComponent (site) + '/list.json?' + (ref ? 'ref=' + encodeURIComponent (ref) : null), {}).then (function (json) {
+      json.items.forEach (function (item) {
+        pageToItem[item.source_page] = item;
+      });
+      if (json.has_next) return get (json.next_ref);
+    });
+  }; // get
+  return get ().then (function () { return pageToItem });
+}; // getImported
+
+Importer.createIndex = function (site, page, imported, opts) {
+  if (imported[page] && imported[page].type == 1 /* index */) {
+    return Promise.resolve ({index_id: imported[page].dest_id});
+  }
+
+  var fd = new FormData;
+  fd.append ('index_type', opts.indexType);
+  fd.append ('title', opts.title);
+  fd.append ('source_site', site);
+  fd.append ('source_page', page);
+  return gFetch ('i/create.json', {post: true, formData: fd}).then (function (json) {
+    return {index_id: json.index_id, title: opts.title};
+  });
+}; // createIndex
+
 // XXX cancel
 Importer.run = function (sourceId, statusContainer, opts) {
   var as = getActionStatus (statusContainer);
   var mapTable = statusContainer.querySelector ('.mapping-table');
   mapTable.querySelector ('table').hidden = false;
   mapTable.clearObjects ();
-
-  var createIndex = function (site, page, imported, opts) {
-    if (imported[page] && imported[page].type == 1 /* index */) {
-      return Promise.resolve ({index_id: imported[page].dest_id});
-    }
-
-    var fd = new FormData;
-    fd.append ('index_type', opts.indexType);
-    fd.append ('title', opts.title);
-    fd.append ('source_site', site);
-    fd.append ('source_page', page);
-    return gFetch ('i/create.json', {post: true, formData: fd}).then (function (json) {
-      return {index_id: json.index_id, title: opts.title};
-    });
-  }; // createIndex
+  statusContainer.scrollIntoViewIfNeeded ();
 
   var needKeywordlogs = false;
   var keywordIndexId;
@@ -516,19 +530,6 @@ Importer.run = function (sourceId, statusContainer, opts) {
     });
   }; // importFile
 
-        var getImported = function (site) {
-          var pageToItem = {};
-          var get; get = function (ref) {
-            return gFetch ('imported/' + encodeURIComponent (site) + '/list.json?' + (ref ? 'ref=' + encodeURIComponent (ref) : null), {}).then (function (json) {
-              json.items.forEach (function (item) {
-                pageToItem[item.source_page] = item;
-              });
-              if (json.has_next) return get (json.next_ref);
-            });
-          }; // get
-          return get ().then (function () { return pageToItem });
-        }; // getImported
-
     as.start ({stages: ['getimported',
                         'getkeywordlist',
                         'createkeywordwiki',
@@ -542,7 +543,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
       var group = new Importer.HatenaGroup (client);
       var site = group.getSiteURL ();
       as.stageStart ('getimported');
-      var gI = opts.forceUpdate ? Promise.resolve ({}) : getImported (site);
+      var gI = opts.forceUpdate ? Promise.resolve ({}) : Importer.getImported (site);
       return gI.then (function (imported) {
         as.stageEnd ('getimported');
 
@@ -554,7 +555,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         keywords = keywords.reverse ();
         var page = group.getKeywordTopPageURL ();
         var title = keywords.title + 'のキーワード';
-        return createIndex (site, page, imported, {
+        return Importer.createIndex (site, page, imported, {
           indexType: 2, // wiki
           title: title,
         }).then (function (index) {
@@ -594,7 +595,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           var diaryI = 0;
           return $promised.forEach (function (diary) {
             var page = group.getDiaryTopPageURL (diary.url_name);
-            return createIndex (site, page, imported, {
+            return Importer.createIndex (site, page, imported, {
               indexType: 1, // diary
               title: diary.title,
             }).then (function (index) {
@@ -661,7 +662,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           as.stageEnd ('getfilelist');
           as.stageStart ('createfileuploader');
           var page = group.getFileTopPageURL ();
-          return createIndex (site, page, imported, {
+          return Importer.createIndex (site, page, imported, {
             indexType: 6, // uploader
             title: files.title,
           }).then (function (index) {
@@ -732,6 +733,14 @@ Importer.getImportSources = function () {
 
   return p;
 } // getImportSources
+
+$with ('Loaders').then (function (Loaders) {
+  Loaders.define ('import', function () {
+    return Importer.getImportSources ().then (function (results) {
+      return {sources: results};
+    });
+  }); // import
+});
 
 Importer.createClient = function (sourceId) {
   var found;
@@ -1120,6 +1129,296 @@ Importer.HatenaGroup.prototype.filelist = function () {
     return files;
   });
 }; // filelist
+
+Importer.BitBucket = function () {
+
+}; // Importer.BitBucket
+
+Importer.BitBucket.prototype.getAccessToken = function (opts) {
+  if (!this._accessTokenPromise) {
+    this._accessTokenPromise = new Promise (function (ok, ng) {
+      if (opts.as) opts.as.stageStart ('auth');
+      var windowName = 'gruwabboauth' + Math.random ();
+      var childWindow = window.open ('https://bitbucket.org/site/oauth2/authorize?client_id=' + encodeURIComponent (document.documentElement.getAttribute ('data-bb-clientid')) + '&response_type=token', windowName);
+      var receiveMessage = function (ev) {
+        if (ev.origin === location.origin &&
+            ev.data.name === windowName) {
+          var accessToken = null;
+          ev.data.hash.replace (/^#/, '').split (/&/).forEach (function (_) {
+            var v = _.split (/=/, 2);
+            if (v[0] === 'access_token') {
+              accessToken = decodeURIComponent (v[1]);
+            }
+          });
+          ok (accessToken); // or null
+          window.removeEventListener ('message', receiveMessage);
+          childWindow.close ();
+          if (opts.as) opts.as.stageEnd ('auth');
+        }
+      }; // receiveMessage
+      window.addEventListener ('message', receiveMessage);
+    }); // promise
+  }
+  return this._accessTokenPromise;
+}; // getAccessToken
+
+Importer.BitBucket.prototype.apiFetch = function (opts) {
+  return this.getAccessToken ({as: opts.as}).then (function (token) {
+    var url = 'https://api.bitbucket.org/2.0/' + opts.path.map (function (_) {
+      return encodeURIComponent (_);
+    }).join ('/');
+    if (opts.page) {
+      url += '?page=' + encodeURIComponent (opts.page);
+    }
+    return fetch (url, {headers: {
+      authorization: "Bearer " + token,
+    }}).then (function (res) {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    });
+  }).then (function (json) {
+    return json;
+  });
+}; // apiFetch
+
+Importer.BitBucket.prototype.apiFetchPages = function (opts) {
+  var self = this;
+  var result = [];
+  opts.page = 1;
+  var run = function () {
+    return self.apiFetch (opts).then (function (json) {
+      result = result.concat (json.values);
+      if (json.values.length && ! (opts.page > 100)) {
+        opts.page++;
+        return run ();
+      }
+      return result;
+    });
+  }; // run
+  return run ();
+}; // apiFetchPages
+
+Importer.BitBucket.prototype.currentUser = function (opts) {
+  return this.apiFetch ({path: ['user'], as: opts.as});
+  /*
+    created_on
+    display_name username uuid
+    location website
+  */
+}; // currentUser
+
+Importer.BitBucket.prototype.currentUserRepositories = function (opts) {
+  var self = this;
+  return self.currentUser ({as: opts.as}).then (function (user) {
+    return self.apiFetchPages ({path: ['repositories', user.uuid], as: opts.as});
+  });
+  /*
+    Array of
+      created_on updated_on
+      description language website
+      fork_policy has_issues has_wiki is_private
+      mainbranch.name scm
+      size
+      full_name slug uuid name
+      owner
+  */
+}; // currentUserRepositories
+
+$with ('Loaders').then (function (Loaders) {
+  Loaders.define ('bitbucket-repos', function () {
+    var bb = new Importer.BitBucket;
+    return bb.currentUserRepositories ({}).then (function (_) {
+      return {repos: _.filter (function (_) { return _.has_issues })};
+    });
+  }); // bitbucket-repos
+});
+
+Importer.BitBucket.prototype.issues = function (name, repo, opts) {
+  return this.apiFetchPages ({path: ['repositories', name, repo, 'issues'], as: opts.as});
+  /*
+    Array of:
+      assignee reporter
+      component
+      content
+      created_on edited_on updated_on
+      id
+      kind priority state
+      milestone version
+      title
+      votes watches
+  */
+}; // issues
+
+Importer.BitBucket.prototype.issueComments = function (name, repo, issueId, opts) {
+  return this.apiFetchPages ({path: ['repositories', name, repo, 'issues', issueId, 'comments'], as: opts.as});
+  /*
+    Array of:
+      content
+      created_on updated_on
+      id
+      user
+  */
+}; // issueComments
+
+Importer.BitBucket.prototype.run = function (name, repo, statusContainer, opts) {
+  var self = this;
+
+  var as = getActionStatus (statusContainer);
+  var mapTable = statusContainer.querySelector ('.mapping-table');
+  mapTable.querySelector ('table').hidden = false;
+  mapTable.clearObjects ();
+  as.start ({stages: ['auth', 'getimported', 'createtodo', 'getissuelist',
+                      'createissueobjects']});
+  statusContainer.scrollIntoViewIfNeeded ();
+
+  var getIssues = self.issues (name, repo, {as: as});
+
+  var site = "https://bitbucket.org/" + name + "/" + repo;
+
+  as.stageStart ('getimported');
+  var gI = opts.forceUpdate ? Promise.resolve ({}) : Importer.getImported (site);
+  return gI.then (function (imported) {
+    as.stageEnd ('getimported');
+
+    as.stageStart ('createtodo');
+    var page = site + "/issues";
+    var title = name + " / " + repo + " / issues"; // as in <title>
+    return Importer.createIndex (site, page, imported, {
+      indexType: 3, // TODO
+      title: title,
+    }).then (function (index) {
+      as.stageEnd ('createtodo');
+      as.stageStart ('getissuelist');
+
+      return getIssues.then (function (list) {
+        as.stageEnd ('getissuelist');
+
+        index.itemCount = list.length;
+        index.originalTitle = title;
+        if (index.itemCount === 0) return;
+        return mapTable.showObjects ([index], {}).then (function (re) {
+          var subAs = getActionStatus (re.items[0]);
+          subAs.start ({stages: ['objects']});
+          subAs.stageStart ('objects');
+          as.stageStart ('createissueobjects');
+
+          var c = 0;
+          return $promised.forEach (function (issue) {
+            as.stageProgress ('createissueobjects', c, list.length);
+            subAs.stageProgress ('objects', c, list.length);
+            c++;
+
+            var page = site + "/issues/" + issue.id;
+            var issueTimestamp = new Date (issue.updated_on || issue.created_on).valueOf () / 1000;
+
+            var current = imported[page];
+            if (current && current.type == 2 /* object */) {
+              var currentTimestamp = parseFloat (current.sync_info.timestamp);
+              if (issueTimestamp === currentTimestamp) {
+                return; // nothing to do for this issue
+              }
+            }
+
+            var createObject = function (page) {
+              var current = imported[page];
+              if (current && current.type == 2 /* object */) {
+                return Promise.resolve (current.dest_id);
+              }
+
+              var fd = new FormData;
+              fd.append ('source_site', site);
+              fd.append ('source_page', page);
+              return gFetch ('o/create.json', {post: true, formData: fd}).then (function (json) {
+                imported[page] = {type: 2, sync_info: {}, dest_id: json.object_id};
+                return json.object_id;
+              });
+            }; // createObject
+
+            var getComments = self.issueComments (name, repo, issue.id, {as: as});
+
+            var parentObjectId;
+            return createObject (page).then (function (objectId) {
+              parentObjectId = objectId;
+              var fd = new FormData;
+              fd.append ('source_type', 'api');
+              fd.append ('revision_timestamp', issueTimestamp);
+              fd.append ('source_timestamp', issueTimestamp);
+              fd.append ('source_rev_timestamp', issueTimestamp);
+              fd.append ('timestamp', new Date (issue.created_on).valueOf () / 1000);
+              fd.append ('edit_index_id', 1);
+              fd.append ('index_id', index.index_id);
+              fd.append ('title', issue.title);
+              fd.append ('body_type', 1); // html
+              fd.append ('body_source_type', 2); // markdown (issue.content.markup === "markdown")
+              fd.append ('body_source', issue.content.raw || "");
+              fd.append ('body', "<markdown-bitbucket>" + issue.content.html + "</markdown-bitbucket>");
+              fd.append ('author_bb_username', issue.reporter.username);
+              if (issue.assignee) {
+                fd.append ('assignee_bb_username', issue.assignee.username);
+              }
+              fd.append ('todo_bb_priority', issue.priority);
+              fd.append ('todo_bb_kind', issue.kind);
+              fd.append ('todo_bb_state', issue.state);
+              if (issue.state === "resolved" ||
+                  issue.state === "invalid" ||
+                  issue.state === "duplicate" ||
+                  issue.state === "wontfix" ||
+                  issue.state === "closed") {
+                fd.append ('todo_state', 2); // closed
+              } else { // "new" "open" "on hold"
+                fd.append ('todo_state', 1); // open
+              }
+              return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
+            }).then (function () {
+              return getComments;
+            }).then (function (list) {
+              return $promised.forEach (function (comment) {
+                var page = site + "/issues/" + issue.id + '#comment-' + comment.id;
+                var commentTimestamp = new Date (comment.updated_on || comment.created_on).valueOf () / 1000;
+
+                var current = imported[page];
+                if (current && current.type == 2 /* object */) {
+                  var currentTimestamp = parseFloat (current.sync_info.timestamp);
+                  if (commentTimestamp === currentTimestamp) {
+                    return; // nothing to do for this issue comment
+                  }
+                }
+
+                return createObject (page).then (function (objectId) {
+                  var fd = new FormData;
+                  fd.append ('parent_object_id', parentObjectId);
+                  fd.append ('source_type', 'api');
+                  fd.append ('revision_timestamp', commentTimestamp);
+                  fd.append ('source_timestamp', commentTimestamp);
+                  fd.append ('source_rev_timestamp', commentTimestamp);
+                  fd.append ('timestamp', new Date (comment.created_on).valueOf () / 1000);
+                  if (comment.content.raw || comment.content.html) {
+                    fd.append ('body_type', 1); // html
+                    fd.append ('body_source_type', 2); // markdown (issue.content.markup === "markdown")
+                    fd.append ('body_source', comment.content.raw || "");
+                    fd.append ('body', "<markdown-bitbucket>" + comment.content.html + "</markdown-bitbucket>");
+                  } else {
+                    fd.append ('body_type', 3); // data
+                    fd.append ('body_data', '{}');
+                  }
+                  fd.append ('author_bb_username', comment.user.username);
+                  return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
+                });
+              }, list); // forEach
+            });
+          }, list.reverse ()).then (function () { // forEach
+            subAs.end ({ok: true});
+            as.stageEnd ('createissueobjects');
+          });
+        });
+      });
+    });
+  }).then (function () {
+    as.end ({ok: true});
+  }, function (e) {
+    as.end ({error: e});
+  });
+}; // run
 
 /*
 

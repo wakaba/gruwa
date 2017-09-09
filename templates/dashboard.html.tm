@@ -6,7 +6,7 @@
   <meta name=referrer content=origin>
 </t:if>
 <link rel=stylesheet href=/css/common.css>
-<script src=/js/framework.js async class=body-js />
+<script src=/js/framework.js class=body-js />
 <script src=/js/pages.js async />
 
 <header class=common>
@@ -70,8 +70,7 @@
       <summary>グループの作成</summary>
 
       <form method=post action=javascript: data-action=g/create.json
-          data-additional-stages=createGroupWiki
-          data-href-template=/g/{group_id}/config
+          data-next="createGroupWiki go:/g/{group_id}/config"
           data-prompt="グループを作成します。この操作は取り消せません。よろしいですか。">
         <table class=config>
           <tbody>

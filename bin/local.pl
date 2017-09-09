@@ -17,9 +17,15 @@ my $Port = 5521;
 my $DBName = 'gruwa_local';
 
 my $Config = json_bytes2perl $RootPath->child ('config/local.json')->slurp;
-my $accounts = json_bytes2perl $RootPath->child ('local/local-accounts.json')->slurp;
-for (keys %$accounts) {
-  $Config->{accounts}->{$_} = $accounts->{$_};
+my $keys = json_bytes2perl $RootPath->child ('local/local-keys.json')->slurp;
+for my $name (keys %$keys) {
+  my $c = $Config;
+  my @name = split /\./, $name;
+  my $n = pop @name;
+  for (@name) {
+    $c = $c->{$_} ||= {};
+  }
+  $c->{$n} = $keys->{$name};
 }
 
 my $stop = TestServers->servers (

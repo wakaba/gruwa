@@ -58,28 +58,6 @@ $promised.forEach = function (code, items) {
   return run ();
 }; // forEach
 
-(function () {
-  var handlers = {};
-  var promises = {};
-  var ok = {};
-
-  window.$with = function (key, opts) {
-    if (handlers[key]) {
-      return Promise.resolve ().then (function () { return handlers[key] (opts || {}) });
-    } else {
-      promises[key] = promises[key] || new Promise (function (o) { ok[key] = o });
-      return promises[key].then (function () { return handlers[key] (opts || {}) });
-    }
-  }; // $with
-
-  window.$with.register = function (key, code) {
-    handlers[key] = code;
-    if (ok[key]) ok[key] ();
-    delete ok[key];
-    delete promises[key];
-  }; // register
-}) ();
-
 function gFetch (pathquery, opts) {
   if (opts.asStage) opts.as.stageStart (opts.asStage);
   var body;
@@ -173,7 +151,7 @@ function createBodyHTML (value, opts) {
   });
   $$ (document.head, 'link.body-js, script.body-js').forEach (function (e) {
     var script = document.createElement ('script');
-    script.async = true;
+    script.async = e.async;
     script.src = e.href || e.src;
     doc.head.appendChild (script);
   });
@@ -316,6 +294,17 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       field.setAttribute ('value', value);
       field.hidden = false;
       upgradeObjectRef (field);
+
+    } else if (field.localName === 'only-if') {
+      var matched = true;
+      var cond = field.getAttribute ('cond');
+      if (cond === '==0') {
+        if (value != 0) matched = false;
+      } else if (cond === '!=0') {
+        if (value == 0) matched = false;
+      }
+      field.hidden = ! matched;
+
     } else {
       field.textContent = value || field.getAttribute ('data-empty');
     }
@@ -397,6 +386,11 @@ function fillFields (contextEl, rootEl, el, object, opts) {
   });
   $$c (el, '[data-context-template]').forEach (function (field) {
     field.setAttribute ('data-context', field.getAttribute ('data-context-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+      return encodeURIComponent (object[k]);
+    }));
+  });
+  $$c (el, '[data-data-action-template]').forEach (function (field) {
+    field.setAttribute ('data-action', field.getAttribute ('data-data-action-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return encodeURIComponent (object[k]);
     }));
   });
@@ -932,12 +926,16 @@ TemplateSelectors.object = function (object, templates) {
   return undefined;
 }; // object
 
-var Loaders = {};
-Loaders.import = function () {
-  return Importer.getImportSources ().then (function (results) {
-    return {sources: results};
+(function () {
+  var loaders = {
+    define: function (name, code) {
+      $with.register ('Loaders:' + name, code);
+    }, // define
+  };
+  $with.register ('Loaders', function () {
+    return loaders;
   });
-}; // import
+}) ();
 
 var LoadedActions = {};
 
@@ -998,7 +996,7 @@ function upgradeList (el) {
     if (main.localName && !templates._) return Promise.resolve ({items: []});
     if (!templates._) templates._ = document.createElement ('template');
 
-    var listObjects = Object.values (objects);
+    var listObjects = Object.values (objects || []);
 
     if (query) {
       listObjects = listObjects.filter (function (o) {
@@ -1198,8 +1196,19 @@ function upgradeList (el) {
 
   var nextRef = null;
   var load = function () {
+    if (el.hasAttribute ('noautoload')) {
+      el.removeAttribute ('noautoload');
+      return Promise.resolve ({});
+    }
+
     var loader = el.getAttribute ('loader');
-    if (loader) return Loaders[loader] ();
+    if (loader) {
+      as.stageStart ('load');
+      return $with ('Loaders:' + loader).then (function (_) {
+        as.stageEnd ('load');
+        return _;
+      });
+    }
     var url = el.getAttribute ('src') || 'o/get.json?with_data=1';
     [
       'src-object_id', 'src-index_id', 'src-wiki_name',
@@ -1307,10 +1316,14 @@ function upgradeList (el) {
     });
   });
 
+  el.reload = function () {
+    el.clearObjects ();
+    el.load ();
+  }; // reload
+
   $$c (el, '.reload-button').forEach (function (e) {
     e.onclick = function () {
-      el.clearObjects ();
-      el.load ();
+      el.reload ();
     };
   });
 
@@ -1958,6 +1971,39 @@ stageActions.showCreatedObjectInCommentList = function (args) {
 }; // showCreatedObjectInCommentList
 stageActions.showCreatedObjectInCommentList.stages = ['showcreatedobjectincommentlist'];
 
+stageActions.fill = function (args) {
+  var e = document.getElementById (args.arg);
+  $fill (e, args.result);
+  e.hidden = false;
+}; // fill
+
+stageActions.reloadList = function (args) {
+  var list = document.getElementById (args.arg);
+  list.reload ();
+}; // reloadList
+
+stageActions.go = function (args) {
+  args.as.stageStart ("next");
+  location.href = args.arg.replace (/\{(\w+)\}/g, function (_, key) {
+    return args.result[key];
+  });
+  return new Promise (function () { }); // keep form disabled
+}; // go
+stageActions.go.stages = ['next'];
+
+stageActions.updateParent = function (args) {
+  if (!args.form.parentObject) throw "No |parentObject|";
+
+  var updated = false;
+  $$ (args.form, '[name].data-field').forEach (function (e) {
+    args.form.parentObject.data[e.name] = e.value;
+    updated = true;
+  });
+  if (updated) {
+    args.form.dispatchEvent (new Event ('objectdataupdate', {bubbles: true}));
+  }
+}; // updateParent
+
 function upgradeForm (form) {
   var formType = form.getAttribute ('data-form-type');
   if (formType === 'uploader') {
@@ -1980,14 +2026,26 @@ function upgradeForm (form) {
     var pt = form.getAttribute ('data-prompt');
     if (pt && !confirm (pt)) return;
 
-    var addStages = (form.getAttribute ('data-additional-stages') || '').split (/\s+/).filter (function (x) { return x });
     var stages = ["prep", "fetch"];
-    addStages.forEach (function (stage) {
-      stages = stages.concat (stageActions[stage].stages);
-    });
-    stages = stages.concat (["next"]);
-    var nextURL = form.getAttribute ('data-href-template');
+
     var as = getActionStatus (form);
+    var nextActions = (form.getAttribute ('data-next') || '')
+        .split (/\s+/)
+        .filter (function (_) { return _.length })
+        .map (function (_) {
+          var v = _.split (/:/, 2);
+          return {
+            action: v[0],
+            arg: v[1], // or undefined
+            as: as, form: form, submitButton: submit,
+          };
+        });
+    nextActions.forEach (function (_) {
+      if (!stageActions[_.action]) {
+        throw "Action " + _.action + ' is not defined';
+      }
+      stages = stages.concat (stageActions[_.action].stages || []);
+    });
     as.start ({stages: stages});
     var fd = new FormData (form); // this must be done before withFormDisabled
     withFormDisabled (form, function () {
@@ -1996,31 +2054,13 @@ function upgradeForm (form) {
       return gFetch (form.getAttribute ('data-action'), {post: true, formData: fd}).then (function (json) {
         as.stageEnd ("fetch");
         var p = Promise.resolve ();
-        addStages.forEach (function (stage) {
+        nextActions.forEach (function (stage) {
           p = p.then (function () {
-            return stageActions[stage] ({result: json, fd: fd, as: as, form: form, submitButton: submit});
+            stage.result = json;
+            return stageActions[stage.action] (stage);
           });
         });
-        return p.then (function () {
-          if (nextURL) {
-            as.stageStart ("next");
-            location.href = nextURL.replace (/\{(\w+)\}/g, function (_, key) {
-              return json[key];
-            });
-            return new Promise (function () { }); // keep form disabled
-          } else {
-            if (form.parentObject) {
-              var updated = false;
-              $$ (form, '[name].data-field').forEach (function (e) {
-                form.parentObject.data[e.name] = e.value;
-                updated = true;
-              });
-              if (updated) {
-                form.dispatchEvent (new Event ('objectdataupdate', {bubbles: true}));
-              }
-            }
-          }
-        });
+        return p;
       });
     }).then (function () {
       as.end ({ok: true});
@@ -2405,6 +2445,52 @@ Formatter.hatena = function (source) {
   });
 }; // hatena
 
+function upgradeTabSet (e) {
+  var init = function () {
+    var tabMenu = null;
+    var tabSections = [];
+    Array.prototype.forEach.call (e.children, function (f) {
+      if (f.localName === 'section') {
+        tabSections.push (f);
+      } else if (f.localName === 'menu') {
+        tabMenu = f;
+      }
+    });
+    if (!tabMenu) return;
+    if (!tabSections.length) return;
+
+    var showTab = function (f) {
+      $$ (tabMenu, 'a').forEach (function (g) {
+        g.classList.toggle ('active', g.section === f);
+      });
+      tabSections.forEach (function (g) {
+        if (f === g) {
+          g.setAttribute ('active', '');
+        } else {
+          g.removeAttribute ('active');
+        }
+      });
+    }; // showTab
+
+    tabMenu.textContent = '';
+    tabSections.forEach (function (f) {
+      var header = $$ (f, 'h1')[0];
+      var a = document.createElement ('a');
+      a.href = 'javascript:';
+      a.onclick = function () { showTab (this.section) };
+      a.section = f;
+      a.textContent = header ? header.textContent : '§';
+      tabMenu.appendChild (a);
+    });
+
+    e.setAttribute ('initialized', '');
+    showTab (tabSections[0]);
+  }; // init
+
+  init ();
+  new MutationObserver (init).observe (e, {childList: true});
+} // upgradeTabSet
+
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {
     Array.prototype.forEach.call (m.addedNodes, function (x) {
@@ -2454,6 +2540,11 @@ Formatter.hatena = function (source) {
       } else if (x.localName) {
         $$ (x, 'object-ref').forEach (upgradeObjectRef);
       }
+      if (x.localName === 'tab-set') {
+        upgradeTabSet (x);
+      } else if (x.localName) {
+        $$ (x, 'tab-set').forEach (upgradeTabSet);
+      }
     });
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
@@ -2466,6 +2557,7 @@ $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 $$ (document, 'run-action').forEach (upgradeRunAction);
 $$ (document, 'unit-number').forEach (upgradeUnitNumber);
 $$ (document, 'object-ref').forEach (upgradeObjectRef);
+$$ (document, 'tab-set').forEach (upgradeTabSet);
 
 /*
 

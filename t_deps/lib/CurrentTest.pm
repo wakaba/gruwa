@@ -179,6 +179,37 @@ sub post_json ($$$;%) {
   });
 } # post_json
 
+sub post_redirect ($$$;%) {
+  my ($self, $path, $params, %args) = @_;
+  $path = [
+    (
+      defined $args{group}
+        ? ('g', $self->_get_o ($args{group})->{group_id})
+        : ()
+    ),
+    @$path,
+  ];
+  my $cookies = {%{$args{cookies} or {}}};
+  return $self->_account ($args{account})->then (sub {
+    $cookies->{sk} = $_[0]->{cookies}->{sk}; # or undef
+    return $self->client->request (
+      path => $path,
+      method => 'POST',
+      params => $params,
+      headers => {
+        %{$args{headers} or {}},
+        origin => $self->client->origin->to_ascii,
+      },
+      cookies => $cookies,
+      body => $args{body},
+    );
+  })->then (sub {
+    my $res = $_[0];
+    die $res unless $res->status == 302;
+    return {status => $res->status, res => $res};
+  });
+} # post_redirect
+
 sub generate_text ($;$) {
   my $v = rand;
   $v .= chr int rand 0x10FFFF for 1..rand 10;
@@ -205,12 +236,12 @@ sub create_group ($$$) {
     return promised_for {
       return $self->_account (shift)->then (sub {
         my $account = $_[0];
-        return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+        return $self->post_json (['g', $o->{group_id}, 'members', 'status.json'], {
           account_id => $account->{account_id},
           member_type => 1, # member
           owner_status => 1, # open
         }, account => $owner)->then (sub {
-          return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+          return $self->post_json (['g', $o->{group_id}, 'members', 'status.json'], {
             account_id => $account->{account_id},
             user_status => 1, # open
           }, account => $account);
@@ -222,12 +253,12 @@ sub create_group ($$$) {
     return promised_for {
       return $self->_account (shift)->then (sub {
         my $account = $_[0];
-        return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+        return $self->post_json (['g', $o->{group_id}, 'members', 'status.json'], {
           account_id => $account->{account_id},
           member_type => 2, # owner
           owner_status => 1, # open
         }, account => $owner)->then (sub {
-          return $self->post_json (['g', $o->{group_id}, 'members.json'], {
+          return $self->post_json (['g', $o->{group_id}, 'members', 'status.json'], {
             account_id => $account->{account_id},
             user_status => 1, # open
           }, account => $account);
@@ -319,6 +350,15 @@ sub object ($$%) {
     return $_[0]->{json}->{objects}->{$obj->{object_id}};
   });
 } # object
+
+sub create_invitation ($$) {
+  my ($self, $name, $opts) = @_;
+  return $self->post_json (['members', 'invitations', 'create.json'], {
+    member_type => $opts->{member_type},
+  }, account => $opts->{account}, group => $opts->{group})->then (sub {
+    $self->{objects}->{$name} = $_[0]->{json};
+  });
+} # create_invitation
 
 sub accounts_client ($) {
   my $self = $_[0];
