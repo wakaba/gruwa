@@ -516,7 +516,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
       }
     }
 
-    return client.fetchBlob (file.url).then (function (blob) {
+    return client.fetchBlob (file.url.replace (/^https?:/, '')).then (function (blob) {
       return uploadFile (blob, {
         file_name: file.name,
         file_size: file.size,
