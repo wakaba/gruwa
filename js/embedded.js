@@ -66,13 +66,15 @@
       redirect: args.redirect || 'manual',
       body: fd,
     }).then (function (res) {
-      if (res.status === 502 || res.status === 503) {
-        args.depth++;
-        return new Promise (function (ok) {
-          setTimeout (ok, 10000);
-        }).then (function () {
-          return self.fetch (args);
-        });
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        if (args.depth < 5) {
+          args.depth++;
+          return new Promise (function (ok) {
+            setTimeout (ok, 10000);
+          }).then (function () {
+            return self.fetch (args);
+          });
+        }
       }
       if (res.status !== 200) throw res;
       if (args.resultType === 'json') {
