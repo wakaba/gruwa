@@ -21,6 +21,7 @@
           port.postMessage ({result: result});
           port.close ();
         }, function (error) {
+          console.log ("Error returned", error);
           if (error instanceof global.Response) {
             port.postMessage ({error: true,
                                message: "Response error " + error.status,

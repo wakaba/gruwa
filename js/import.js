@@ -231,6 +231,18 @@ Importer.run = function (sourceId, statusContainer, opts) {
     return runNext ();
   }; // importFromKeywordlogs
 
+  var divide = function (array, n) {
+    var list = [];
+    var i = 0;
+    var length = array.length;
+    while (i + n < length) {
+      list.push (array.slice (i, i + n));
+      i += n;
+    }
+    if (i < length) list.push (array.slice (i, length));
+    return list;
+  }; // divide
+
   var importDayStars = function (group, client, imported, site, page, data, gotObjectId, setStarMap) {
     var sectionNames = [];
     if (data.source_type === 'html') {
@@ -263,35 +275,38 @@ Importer.run = function (sourceId, statusContainer, opts) {
     });
     var comments = [];
 
-    return client.sendCommand ({
-      type: "hatenaStar",
-      starURLs: Object.keys (starURLs),
-    }).then (function (json) {
-      json.entries.forEach (function (entry) {
-        var url = starURLs[entry.uri];
+    var starURLSets = divide (Object.keys (starURLs), 20);
+    return $promised.forEach (function (starURLs) {
+      return client.sendCommand ({
+        type: "hatenaStar",
+        starURLs: starURLs,
+      }).then (function (json) {
+        json.entries.forEach (function (entry) {
+          var url = starURLs[entry.uri];
 
-        var stars = starLists[url];
-        (entry.stars || []).forEach (function (star) {
-          stars.push ([star.name, 0, parseInt (star.count || 1), star.quote]);
-        });
-        (entry.colored_stars || []).forEach (function (_) {
-          var type = {
-            green: 1,
-            red: 2,
-            blue: 3,
-            purple: 4,
-          }[_.color];
-          (_.stars || []).forEach (function (star) {
-            stars.push ([star.name, type, parseInt (star.count || 1), star.quote]);
+          var stars = starLists[url];
+          (entry.stars || []).forEach (function (star) {
+            stars.push ([star.name, 0, parseInt (star.count || 1), star.quote]);
+          });
+          (entry.colored_stars || []).forEach (function (_) {
+            var type = {
+              green: 1,
+              red: 2,
+              blue: 3,
+              purple: 4,
+            }[_.color];
+            (_.stars || []).forEach (function (star) {
+              stars.push ([star.name, type, parseInt (star.count || 1), star.quote]);
+            });
+          });
+
+          (entry.comments || []).forEach (function (comment) {
+            comment.section_id = stars.id;
+            comments.push (comment);
           });
         });
-
-        (entry.comments || []).forEach (function (comment) {
-          comment.section_id = stars.id;
-          comments.push (comment);
-        });
       });
-
+    }, starURLSets).then (function () {
       return $promised.forEach (function (url) {
         var starPage = new URL (site + '#star:' + encodeURIComponent (url)).toString ();
         var stars = {};
