@@ -45,7 +45,9 @@
   }; // Server
 
   Server.prototype.fetch = function (args) {
+    var self = this;
     var fd;
+    if (!args.depth) args.depth = 1;
     if (args.params) {
       fd = new FormData;
       Object.keys (args.params).forEach (function (n) {
@@ -64,6 +66,14 @@
       redirect: args.redirect || 'manual',
       body: fd,
     }).then (function (res) {
+      if (res.status === 502 || res.status === 503) {
+        args.depth++;
+        return new Promise (function (ok) {
+          setTimeout (ok, 10000);
+        }).then (function () {
+          return self.fetch (args);
+        });
+      }
       if (res.status !== 200) throw res;
       if (args.resultType === 'json') {
         return res.json ();
