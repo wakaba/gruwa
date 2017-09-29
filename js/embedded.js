@@ -26,7 +26,8 @@
             port.postMessage ({error: true,
                                message: "Response error " + error.status,
                                response: {status: error.status,
-                                          statusText: error.statusText}});
+                                          statusText: error.statusText,
+                                          type: error.type}});
             port.close ();
           } else {
             port.postMessage ({error: true, message: "" + error});

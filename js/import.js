@@ -809,9 +809,10 @@ Importer.Client.prototype.sendCommand = function (args) {
   var mc = new MessageChannel;
   mc.port2.onmessage = function (ev) {
     if (ev.data.error) {
+      console.log ("Error received", ev.data);
       if (ev.data.response) {
         ev.data.response.toString = function () {
-          return this.status + ' ' + this.statusText;
+          return this.type + ' ' + this.status + ' ' + this.statusText;
         };
         ev.data.response.isResponse = true;
         ng (ev.data.response);
