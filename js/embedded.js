@@ -67,7 +67,7 @@
       body: fd,
     }).then (function (res) {
       if (res.status === 502 || res.status === 503 || res.status === 504) {
-        if (args.depth < 5) {
+        if (args.depth < 10) {
           args.depth++;
           return new Promise (function (ok) {
             setTimeout (ok, 10000);
