@@ -70,7 +70,7 @@
         if (args.depth < 10) {
           args.depth++;
           return new Promise (function (ok) {
-            setTimeout (ok, 10000);
+            setTimeout (ok, 60*1000);
           }).then (function () {
             return self.fetch (args);
           });
