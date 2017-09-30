@@ -286,7 +286,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
 
           var stars = starLists[url];
           if (!stars) {
-            console.log ("Unexpected star URL " + entry.uri + ' [here=' + url + ']');
+            console.log ("Unexpected star URL " + entry.uri + ' [here=' + url + ']', starURLs, starLists);
             return;
           }
           (entry.stars || []).forEach (function (star) {
