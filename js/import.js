@@ -275,11 +275,11 @@ Importer.run = function (sourceId, statusContainer, opts) {
     });
     var comments = [];
 
-    var starURLSets = divide (Object.keys (starURLs), 20);
-    return $promised.forEach (function (starURLs) {
+    var starURLListSet = divide (Object.keys (starURLs), 20);
+    return $promised.forEach (function (starURLList) {
       return client.sendCommand ({
         type: "hatenaStar",
-        starURLs: starURLs,
+        starURLs: starURLList,
       }).then (function (json) {
         json.entries.forEach (function (entry) {
           var url = starURLs[entry.uri];
@@ -310,7 +310,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           });
         });
       });
-    }, starURLSets).then (function () {
+    }, starURLListSet).then (function () {
       return $promised.forEach (function (url) {
         var starPage = new URL (site + '#star:' + encodeURIComponent (url)).toString ();
         var stars = {};
