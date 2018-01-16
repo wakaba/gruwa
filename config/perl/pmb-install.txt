@@ -1,10 +1,10 @@
 Algorithm::Diff~1.1903
 AnyEvent~7.14
 AnyEvent::Fork~1.31
-AnyEvent::Socket
+AnyEvent::Handle
 Canary::Stability~2012
 Capture::Tiny~0.46
-Carp~1.38
+Carp::Heavy~1.38
 Cwd~3.62
 Data::Dumper~2.161
 Digest::SHA~6.01
@@ -18,7 +18,7 @@ IO::Handle~1.28
 MIME::Base64~3.15
 MRO::Compat~0.13
 Module::Runtime~0.016
-Net::SSLeay~1.82
+Net::SSLeay~1.83
 Path::Class~0.37
 Path::Tiny~0.104
 Proc::FastSpawn~1.2
