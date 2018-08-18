@@ -128,8 +128,14 @@ sub storage (%) {
   my $data = {aws4 => [undef, undef, undef, 's3'],
               url => "http://$host:$port"};
   return $cmd->run->then (sub {
+    my $config1_path = $config_path->child ('config.json');
+    my $config2_path = $data_path->child ('.minio.sys/config/config.json');
+    my $f1 = Promised::File->new_from_path ($config1_path);
+    my $f2 = Promised::File->new_from_path ($config2_path);
     return promised_wait_until {
-      return Promised::File->new_from_path ($config_path->child ('config.json'))->read_byte_string->then (sub {
+      return Promise->all ([$f1->is_file, $f2->is_file])->then (sub {
+        return (($_[0]->[1] ? $f2 : $f1)->read_byte_string);
+      })->then (sub {
         my $config = json_bytes2perl $_[0];
         $data->{aws4}->[0] = $config->{credential}->{accessKey};
         $data->{aws4}->[1] = $config->{credential}->{secretKey};
@@ -138,7 +144,7 @@ sub storage (%) {
                defined $data->{aws4}->[1] &&
                defined $data->{aws4}->[2];
       })->catch (sub { return 0 });
-    } timeout => 60*3;
+    } timeout => 60*3, name => 'minio config';
   })->then (sub {
     $args{send_data}->($data);
     return [sub {
