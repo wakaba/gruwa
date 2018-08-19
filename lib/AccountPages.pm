@@ -36,7 +36,8 @@ sub main ($$$$$) {
                  path => q</>,
                  domain => $url->host->to_ascii,
                  secure => $url->scheme eq 'https',
-                 httponly => 1);
+                 httponly => 1,
+                 samesite => 1);
           }
           return $app->send_redirect ($json2->{authorization_url});
         });

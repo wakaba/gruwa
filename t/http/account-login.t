@@ -46,7 +46,7 @@ Test {
     my $res = $_[0];
     test {
       is $res->status, 302;
-      like $res->header ('Set-Cookie'), qr{^sk=.+; httponly$};
+      like $res->header ('Set-Cookie'), qr{^sk=.+; httponly; samesite=lax$};
       like $res->header ('Location'), qr{^https?://[^/]+/authorize\?};
     } $current->c;
   });
