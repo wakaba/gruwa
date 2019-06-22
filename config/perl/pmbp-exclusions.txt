@@ -24,3 +24,4 @@
 - "../../modules/web-markup" build tests tests-json
 - "../../modules/web-encodings.2" build tests
 - "../../modules/web-url.2" build tests
+- "../../modules/streams" build tests

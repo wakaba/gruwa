@@ -74,3 +74,7 @@
 	path = modules/web-css
 	url = https://github.com/manakai/perl-web-css
 	track = master
+[submodule "modules/streams"]
+	path = modules/streams
+	url = https://github.com/manakai/perl-streams
+	track = master
