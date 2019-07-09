@@ -557,7 +557,9 @@ Importer.run = function (sourceId, statusContainer, opts) {
                         'creatediary',
                         'getfilelist',
                         'createfileuploader',
-                        'getfiles']});
+                        'getfiles',
+                        'gettaskgrouplist',
+                        'createtasktodo']});
     return Importer.createClient (sourceId).then (function (client) {
       var group = new Importer.HatenaGroup (client);
       var site = group.getSiteURL ();
@@ -706,6 +708,46 @@ Importer.run = function (sourceId, statusContainer, opts) {
                 subAs.stageEnd ('objects');
                 subAs.end ({ok: true});
                 as.stageEnd ('getfiles');
+              });
+            });
+          });
+        });
+      }).then (function () {
+        as.stageStart ('gettaskgrouplist');
+        return group.taskGroupList ().then ((taskGroups) => {
+          as.stageEnd ('gettaskgrouplist');
+          if (taskGroups.length === 0) return;
+          as.stageStart ('createtasktodo');
+          var page = group.getTaskTopPageURL ();
+          var title = taskGroups.title;
+          return Importer.createIndex (site, page, imported, {
+            indexType: 3, // todo
+            title: title,
+          }).then ((index) => {
+            index.itemCount = taskGroups.length;
+            index.originalTitle = title;
+            var todoIndexId = index.index_id;
+            return mapTable.showObjects ([index], {}).then ((re) => {
+              as.stageEnd ('createtasktodo');
+              as.stageStart ('createtaskobjects');
+              var subAs = getActionStatus (re.items[0]);
+              subAs.start ({stages: ['labels']});
+              subAs.stageStart ('labels');
+              var c = 0;
+              return $promised.forEach (function (taskGroup) {
+                subAs.stageProgress ('labels', c, taskGroups.length);
+                c++;
+                var page = group.getTaskGroupPageURL (taskGroup.taskGroupId);
+                return Importer.createIndex (site, page, imported, {
+                  indexType: 4, // label
+                  title: taskGroup.title,
+                }).then ((index) => {
+                  // XXX
+                });
+              }, taskGroups).then (() => {
+                subAs.stageEnd ('labels');
+                subAs.end ({ok: true});
+                as.stageEnd ('createtaskobjects');
               });
             });
           });
@@ -880,6 +922,14 @@ Importer.HatenaGroup.prototype.getKeywordPagePath = function (k) {
   return '/keyword/' + encodeURIComponent (k).replace (/%2F/g, '/');
 }; // getKeywordPagePath
 
+Importer.HatenaGroup.prototype.getTaskTopPageURL = function () {
+  return this.getSiteURL () + '/task/';
+}; // getTaskTopPageURL
+
+Importer.HatenaGroup.prototype.getTaskGroupPageURL = function (id) {
+  return this.getSiteURL () + '/task/' + id + '/';
+}; // getTaskGroupPageURL
+
 Importer.HatenaGroup.prototype.getDiaryTopPageURL = function (u) {
   return this.getSiteURL () + '/' + u + '/';
 }; // getDiaryTopPageURL
@@ -995,6 +1045,24 @@ Importer.HatenaGroup.prototype.keywordlog = function (url) {
     return log;
   });
 }; // keywordlog
+
+Importer.HatenaGroup.prototype.taskGroupList = function () {
+  var client = this.client;
+  var result = [];
+  return client.fetchXML ('/task/?mode=rss').then (function (doc) {
+    result.title = ($$ (doc, 'RDF > channel > title')[0] || {textContent: ''}).textContent.replace (/ - タスクグループ一覧$/, '');
+
+    $$ (doc, 'item').forEach (item => {
+      var m = (item.querySelector ('link') || {textContent: ''}).textContent.match (/\/task\/([0-9]+)\//);
+      result.push ({
+        title: ((item.querySelector ('title') || {textContent: ''}).textContent).replace (/\s*\([0-9]+\)\s*$/, ''),
+        //updated - dc:date
+        taskGroupId: parseInt (m[1]),
+      });
+    });
+    return result;
+  });
+}; // taskGroupList
 
 Importer.HatenaGroup.prototype.diarylist = function () {
   var client = this.client;
