@@ -326,9 +326,8 @@ Importer.run = function (sourceId, statusContainer, opts) {
 
   var setTaskStatus = function (group, taskGroupId, taskId, status, date, imported) {
     return Promise.resolve ().then (() => {
-      
-    var page = group.getTaskPageURL (taskGroupId, taskId);
-    var current = imported[page];
+      var page = group.getTaskPageURL (taskGroupId, taskId);
+      var current = imported[page];
     if (current && current.type == 2 /* object */) {
       var currentTimestamp = parseFloat (current.sync_info.timestamp);
       current.hasLatestData = (
@@ -371,7 +370,10 @@ Importer.run = function (sourceId, statusContainer, opts) {
     });
   }; // setTaskStatus
 
-  var importTaskComments = function (group, imported, site, taskGroupId, taskId, parentObjectId) {
+  var importTaskComments = function (group, imported, site, taskGroupId, taskId) {
+    var page = group.getTaskPageURL (taskGroupId, taskId);
+    var current = imported[page];
+    var parentObjectId = current.dest_id;
     return group.task (taskGroupId, taskId).then (comments => {
       return $promised.forEach (function (c) {
         var url = group.getTaskPageURL (taskGroupId, taskId) + '#c' + c.taskCommentId;
@@ -931,10 +933,12 @@ Importer.run = function (sourceId, statusContainer, opts) {
                   c++;
                   return group.taskList (taskGroup.taskGroupId).then (tasks => {
                     return $promised.forEach (task => {
-                      return setTaskStatus (group, taskGroup.taskGroupId, task.taskId, task.status, task.date, imported).then (objectId => {
+                      return Promise.resolve ().then (() => {
                         if (task.commentCount) {
-                          return importTaskComments (group, imported, site, taskGroup.taskGroupId, task.taskId, objectId)
+                          return importTaskComments (group, imported, site, taskGroup.taskGroupId, task.taskId);
                         }
+                      }).then (() => {
+                        return setTaskStatus (group, taskGroup.taskGroupId, task.taskId, task.status, task.date, imported);
                       });
                     }, tasks);
                   });
