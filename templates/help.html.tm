@@ -291,6 +291,9 @@
       省電力設定などのために途中で自動停止することがないよう、
       ご注意ください。
 
+      <p>長時間進行しない場合、何らかのエラーで停止している可能性があります。
+      Gruwa と Web サイトの両方を再読込してからもう一度試してみてください。
+      
       <section id=import-hatenagroup>
         <h1>はてなグループからのインポート</h1>
 
@@ -313,31 +316,32 @@
               <td>タイトル以外の表示設定等は引き継ぎません。
             <tr>
               <td>日
-              <td><a href=#objects>記事</a>
+              <td><a href=#blogs>日記</a>の<a href=#objects>記事</a>
               <td>
                 「今日の一枚」には対応していません。
             <tr>
               <td>日の最上位の見出し
-              <td><a href=#objects>記事</a>内の最上位の見出し
+              <td><a href=#blogs>日記</a>の<a href=#objects>記事</a>内の最上位の見出し
               <td>
             <tr>
               <td>日の最上位の見出しのはてなスター
-              <td><a href=#objects>記事</a>内の最上位の見出しのスター
+              <td><a href=#blogs>日記</a>の<a href=#objects>記事</a>内の最上位の見出しのスター
               <td>
                 インポートされたスターは表示のみ可能です
                 (通常の Gruwa のスターとは異なります)。
             <tr>
               <td>日の最上位の見出しのはてなスターコメント
-              <td><a href=#object-comments>記事へのコメント</a>
+              <td><a href=#blogs>日記</a>の<a href=#objects>記事</a>への<a href=#object-comments>コメント</a>
               <td>
-                投稿日時はインポート時点となります。
+                投稿日時はインポート時点となります
+                (はてなスターから取得できないため)。
             <tr>
               <td>日へのコメント
-              <td><a href=#object-comments>記事へのコメント</a>
+              <td><a href=#blogs>日記</a>の<a href=#objects>記事</a>への<a href=#object-comments>コメント</a>
               <td>
             <tr>
               <td>日へのトラックバック
-              <td><a href=#objects>記事</a>への<a href=#trackbacks>トラックバック</a>
+              <td><a href=#blogs>日記</a>の<a href=#objects>記事</a>への<a href=#trackbacks>トラックバック</a>
               <td>
                 IDコールやインポート時点で存在しない記事からのリンク、
                 グループ外からのトラックバックはインポートしません。
@@ -345,7 +349,7 @@
             <tr>
               <td>日の参照元
               <td>-
-              <td>
+              <td>対応していません。
             <tr>
               <td>キーワード
               <td><a href=#wikis>Wiki</a> の<a href=#objects>記事</a>
@@ -354,10 +358,23 @@
               <td>掲示板
               <td>-
               <td>
+                対応していません。
             <tr>
-              <td>あしか
-              <td>-
+              <td>あしかのタスクグループ
+              <td><a href=#labels>ラベル</a>
               <td>
+            <tr>
+              <td>あしかのタスク
+              <td><a href=#todos>TODO リスト</a>の<a href=#objects>項目</a>
+              <td>
+                タスクの状態と所属タスクグループは過去の変更の有無に関わらずインポート時点のものとなります
+                (はてなグループから変更履歴を取得できないため)。
+            <tr>
+              <td>あしかのタスクへのコメント
+              <td><a href=#todos>TODO リスト</a>の<a href=#objects>項目</a>への<a href=#object-comments>コメント</a>
+              <td>
+                投稿日時はインポート時点となります
+                (はてなグループから取得できないため)。
             <tr>
               <td>ファイル
               <td><a href=#fileset-file>ファイルアップローダー</a>のファイル
@@ -366,6 +383,7 @@
               <td>その他グループの設定
               <td>-
               <td>
+                対応していません。
         </table>
 
         <p>グループ日記は、「日記モード」と 「日記モード・見出し別ページ」
@@ -441,8 +459,8 @@
         <hr>
 
         <p>はてなグループのはてな記法の詳細な仕様は公表されていないため、
-        Gruwa のはてな記法の解釈と細部において異なっていることがあります
-        (Gruwa のはてな記法の解釈は、はてなブログに近いものです)。
+        Gruwa の<a href=https://github.com/wakaba/Text-Hatena>はてな記法の解釈</a>と細部において異なっていることがあります
+        (Gruwa の<a href=https://github.com/wakaba/Text-Hatena>はてな記法の解釈</a>は、はてなブログに近いものです)。
         
         <p>キーワードの自動リンクには対応していません。
         ただし、編集権限がなく (はてな記法でなく) HTML 

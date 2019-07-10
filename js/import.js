@@ -325,6 +325,8 @@ Importer.run = function (sourceId, statusContainer, opts) {
   }; // importFromTasklogs
 
   var setTaskStatus = function (group, taskGroupId, taskId, status, date, imported) {
+    return Promise.resolve ().then (() => {
+      
     var page = group.getTaskPageURL (taskGroupId, taskId);
     var current = imported[page];
     if (current && current.type == 2 /* object */) {
@@ -335,7 +337,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
       );
       if (current.hasLatestData) {
         if (current.sync_info.source_type === 'taskList') {
-          return;
+          return current.dest_id;
         } else if (current.sync_info.source_type === 'tasklog') {
           // continue importing
         } else {
@@ -362,8 +364,45 @@ Importer.run = function (sourceId, statusContainer, opts) {
       fd.append ('todo_state', 1);
     }
     fd.append ('todo_bb_state', status); // This is not BB but reused for preserving original status.
-    return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
+    return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd}).then (() => {
+      return objectId;
+    });
+
+    });
   }; // setTaskStatus
+
+  var importTaskComments = function (group, imported, site, taskGroupId, taskId, parentObjectId) {
+    return group.task (taskGroupId, taskId).then (comments => {
+      return $promised.forEach (function (c) {
+        var url = group.getTaskPageURL (taskGroupId, taskId) + '#c' + c.taskCommentId;
+
+        var current = imported[url];
+        if (current && current.type == 2 /* object */) {
+          return Promise.resolve ();
+        }
+
+        var fd = new FormData;
+        fd.append ('source_site', site);
+        fd.append ('source_page', url);
+        return gFetch ('o/create.json', {post: true, formData: fd}).then (function (json) {
+          var fd = new FormData;
+          fd.append ('parent_object_id', parentObjectId);
+          // Task comment has no timestamp :-<
+          //fd.append ('timestamp', c.timestamp);
+          //fd.append ('revision_timestamp', c.timestamp);
+          fd.append ('body_type', 2); // text
+          fd.append ('body', c.body);
+          fd.append ('revision_imported_url', url);
+          fd.append ('author_name', c.author.url_name);
+          fd.append ('revision_author_name', c.author.url_name);
+          fd.append ('author_hatena_id', c.author.url_name);
+          fd.append ('revision_author_hatena_id', c.author.url_name);
+          fd.append ('source_type', 'task');
+          return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
+        });
+      }, comments);
+    });
+  }; // importTaskComments
 
   var divide = function (array, n) {
     var list = [];
@@ -892,7 +931,11 @@ Importer.run = function (sourceId, statusContainer, opts) {
                   c++;
                   return group.taskList (taskGroup.taskGroupId).then (tasks => {
                     return $promised.forEach (task => {
-                      return setTaskStatus (group, taskGroup.taskGroupId, task.taskId, task.status, task.date, imported);
+                      return setTaskStatus (group, taskGroup.taskGroupId, task.taskId, task.status, task.date, imported).then (objectId => {
+                        if (task.commentCount) {
+                          return importTaskComments (group, imported, site, taskGroup.taskGroupId, task.taskId, objectId)
+                        }
+                      });
                     }, tasks);
                   });
                 }, taskGroups);
@@ -1284,6 +1327,32 @@ Importer.HatenaGroup.prototype.taskList = function (taskGroupId) {
     return result;
   });
 }; // taskList
+
+Importer.HatenaGroup.prototype.task = function (taskGroupId, taskId) {
+  var client = this.client;
+  var result = [];
+  return client.fetchHTML ('/task/'+taskGroupId+'/'+taskId).then (function (div) {
+    var items = $$ (div, '.comment form p:not(:first-of-type)');
+    items.forEach (item => {
+      var comment = {
+        taskCommentId: (item.querySelector ('input[name=taskcommentid]') || {value: ''}).value,
+        author: {},
+      };
+      
+      var userLink = item.querySelector ('.canchor + a');
+      if (userLink) {
+        var m = userLink.pathname.match (/^\/([^\/]+)\//);
+        if (m) comment.author.url_name = m[1];
+      }
+
+      var text = item.lastChild.data.replace (/^\s*『/, '').replace (/』\s*$/, '');
+      comment.body = text;
+      
+      result.push (comment);
+    });
+    return result;
+  });
+}; // task
 
 Importer.HatenaGroup.prototype.diarylist = function () {
   var client = this.client;
