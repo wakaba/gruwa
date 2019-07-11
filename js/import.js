@@ -456,6 +456,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         type: "hatenaStar",
         starURLs: starURLList,
       }).then (function (json) {
+        var checkDups = [];
         json.entries.forEach (function (entry) {
           var url = starURLs[entry.uri];
 
@@ -464,8 +465,11 @@ Importer.run = function (sourceId, statusContainer, opts) {
             console.log ("Unexpected star URL " + entry.uri + ' [here=' + url + ']', starURLs, starLists);
             return;
           }
+
+          var newStars = [];
           (entry.stars || []).forEach (function (star) {
-            stars.push ([star.name, 0, parseInt (star.count || 1), star.quote]);
+            newStars.push
+                ([star.name, 0, parseInt (star.count || 1), star.quote]);
           });
           (entry.colored_stars || []).forEach (function (_) {
             var type = {
@@ -475,14 +479,32 @@ Importer.run = function (sourceId, statusContainer, opts) {
               purple: 4,
             }[_.color];
             (_.stars || []).forEach (function (star) {
-              stars.push ([star.name, type, parseInt (star.count || 1), star.quote]);
+              newStars.push
+                  ([star.name, type, parseInt (star.count || 1), star.quote]);
             });
           });
 
+          var newComments = [];
+          var commentArrays = [];
           (entry.comments || []).forEach (function (comment) {
             comment.section_id = stars.id;
-            comments.push (comment);
+            newComments.push (comment);
+            commentArrays.push
+                ([comment.name, comment.body, comment.section_id]);
           });
+
+          var stringified = JSON.stringify ([newStars, commentArrays]);
+          if (!checkDups[url]) {
+            checkDups[url] = new Set ([stringified]);
+          } else if (checkDups[url].has (stringified)) {
+            // duplicate
+            return;
+          } else {
+            checkDups[url].add (stringified);
+          }
+
+          newStars.forEach (_ => stars.push (_));
+          newComments.forEach (_ => comments.push (_));
         });
       });
     }, starURLListSet).then (function () {
@@ -1806,7 +1828,7 @@ Importer.BitBucket.prototype.run = function (name, repo, statusContainer, opts) 
 
 License:
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
