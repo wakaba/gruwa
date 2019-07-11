@@ -534,14 +534,22 @@ Importer.run = function (sourceId, statusContainer, opts) {
           }
         }
 
-        var fd = new FormData;
-        fd.append ('source_site', site);
-        fd.append ('source_page', starPage);
-        return gFetch ('o/create.json', {
-          post: true,
-          formData: fd,
-        }).then (function (json) {
-          starMap[starLists[url].id] = json.object_id;
+        return Promise.resolve ().then (() => {
+          if (current) {
+            return current.dest_id;
+          } else {
+            var fd = new FormData;
+            fd.append ('source_site', site);
+            fd.append ('source_page', starPage);
+            return gFetch ('o/create.json', {
+              post: true,
+              formData: fd,
+            }).then (function (json) {
+              starMap[starLists[url].id] = json.object_id;
+              return json.object_id;
+            });
+          }
+        }).then ((starObjectId) => {
           return gotObjectId.then (function (parentObjectId) {
             var fd = new FormData;
             fd.append ('parent_object_id', parentObjectId);
@@ -549,7 +557,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
             fd.append ('timestamp', 0);
             fd.append ('body_type', 3); // data
             fd.append ('body_data', JSON.stringify ({hatena_star: stars}));
-            return gFetch ('o/' + json.object_id + '/edit.json', {
+            return gFetch ('o/' + starObjectId + '/edit.json', {
               post: true,
               formData: fd,
             });
