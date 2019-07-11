@@ -347,11 +347,127 @@ Test {
   });
 } n => 5, name => 'hatena group file URL';
 
+Test {
+  my $current = shift;
+  my $site = 'https://' . rand . '.g.hatena.ne.jp/';
+  my $site2 = $site;
+  $site2 =~ s/^https:/http:/;
+  my $page = $site . rand . '/' . int rand 10000000;
+  my $page2 = $page;
+  $page2 =~ s/^https:/http:/;
+  my $page3 = $page;
+  my $page4 = $page2;
+  s{^(https?://[^/]+/)}{$1hatena-ex-} for $page3, $page4;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_group (g2 => {});
+  })->then (sub {
+    return $current->post_json (['o', 'create.json'], {
+      source_page => $page,
+      source_site => $site,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->set_o (o1 => $_[0]->{json});
+  })->then (sub {
+    return $current->get_redirect
+        (['imported', $page3, 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/')->stringify;
+    } $current->c;
+    return $current->get_redirect
+        (['imported', $page3 . '/' . $current->generate_text ('t1'), 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/#' . $current->o ('t1'))->stringify;
+    } $current->c;
+    return $current->get_redirect
+        (['imported', $page4 . '/' . $current->generate_text ('t2'), 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/#' . $current->o ('t2'))->stringify;
+    } $current->c;
+    return $current->get_redirect
+        (['imported', $page3 . '#' . $current->o ('t2'), 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/#' . $current->o ('t2'))->stringify;
+    } $current->c;
+  });
+} n => 4, name => 'hatena group hatena-ex- URL 1';
+
+Test {
+  my $current = shift;
+  my $site = 'https://' . rand . '.g.hatena.ne.jp/';
+  my $site2 = $site;
+  $site2 =~ s/^https:/http:/;
+  my $page = $site . rand . '/' . int rand 10000000;
+  my $page2 = $page;
+  $page2 =~ s/^https:/http:/;
+  my $page3 = $page;
+  my $page4 = $page2;
+  s{^(https?://[^/]+/)}{$1hatena-ex-} for $page, $page2;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_group (g2 => {});
+  })->then (sub {
+    return $current->post_json (['o', 'create.json'], {
+      source_page => $page,
+      source_site => $site,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->set_o (o1 => $_[0]->{json});
+  })->then (sub {
+    return $current->get_redirect
+        (['imported', $page3, 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/')->stringify;
+    } $current->c;
+    return $current->get_redirect
+        (['imported', $page3 . '/' . $current->generate_text ('t1'), 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/#' . $current->o ('t1'))->stringify;
+    } $current->c;
+    return $current->get_redirect
+        (['imported', $page4 . '/' . $current->generate_text ('t2'), 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/#' . $current->o ('t2'))->stringify;
+    } $current->c;
+    return $current->get_redirect
+        (['imported', $page3 . '#' . $current->o ('t2'), 'go'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('Location'),
+          $current->resolve ('/g/' . $current->o ('g1')->{group_id} . '/o/' . $current->o ('o1')->{object_id} . '/#' . $current->o ('t2'))->stringify;
+    } $current->c;
+  });
+} n => 4, name => 'hatena group hatena-ex- URL 2';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

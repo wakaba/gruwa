@@ -96,6 +96,7 @@ sub get_import_source ($) {
   my $suffix = $page->fragment;
   $suffix = defined $suffix ? '#' . $suffix : '';
 
+  my $urls = [];
   if ($page->host->to_ascii =~ /\.g\.hatena\.ne\.jp$/) {
     $url =~ s/^http:/https:/;
 
@@ -112,9 +113,18 @@ sub get_import_source ($) {
       $url = $1;
       $suffix = '#' . $2;
     }
+    push @$urls, $url;
+    my $url2 = $url;
+    $url2 =~ s{^(https://[^/]+/)hatena-ex-}{$1};
+    my $url3 = $url2;
+    $url3 =~ s{^(https://[^/]+/)}{$1hatena-ex-};
+    push @$urls, $url2 if $url ne $url2;
+    push @$urls, $url3 if $url ne $url3;
+  } else {
+    push @$urls, $url;
   }
 
-  return ($url, $suffix);
+  return ($urls, $suffix);
 } # get_import_source
 
 sub main ($$$$$) {
@@ -285,12 +295,14 @@ sub group ($$$$) {
     return $app->throw_error (404, reason_phrase => 'Bad page URL')
         if not defined $page or not $page->is_http_s;
 
-    my ($url, $suffix) = get_import_source $page;
+    my ($urls, $suffix) = get_import_source $page;
 
     return $db->select ('imported', {
       group_id => Dongry::Type->serialize ('text', $path->[1]),
-      source_page => Dongry::Type->serialize ('text', $url),
-    }, fields => ['type', 'dest_id'])->then (sub {
+      source_page_sha => {-in => [map {
+        sha1_hex (Dongry::Type->serialize ('text', $_));
+      } @$urls]},
+    }, fields => ['type', 'dest_id'], limit => 1)->then (sub {
       my $selected = $_[0]->first;
       if (not defined $selected) {
         #
@@ -1371,7 +1383,9 @@ sub group_object ($$$$) {
               my $url = Web::URL->parse_string ($_);
               next unless defined $url and $url->is_http_s;
               my ($urls, undef) = get_import_source $url;
-              push @{$from_imported->{$urls} ||= []}, $_;
+              for my $u (@$urls) {
+                push @{$from_imported->{$u} ||= []}, $_;
+              }
             }
             return unless keys %$from_imported;
 
