@@ -50,7 +50,7 @@ function handleMessage (ev) {
         document.gruwaHatenaStarMap[id] = objectId;
       }
     });
-    $$ (fragment, 'hatena-html .section > h3.title > a[name], hatena-html .section > h3[id]').forEach (function (a) {
+    $$ (fragment, 'hatena-html .section > h3.title > a[name], hatena-html .section > h3[id], hatena-html section > h1[data-hatena-timestamp]').forEach (function (a) {
       if (a.localName === 'a') { // Hatena group's HTML
         var h = a.parentNode;
         upgradeHatenaTitle (h, a.name);
@@ -825,3 +825,24 @@ function upgradeHatenaStar (e) {
 } // upgradeHatenaStar
 
 sendHeight ();
+
+/*
+
+License:
+
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Affero General Public License for more details.
+
+You does not have received a copy of the GNU Affero General Public
+License along with this program, see <https://www.gnu.org/licenses/>.
+
+*/
