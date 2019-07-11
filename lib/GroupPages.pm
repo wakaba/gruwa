@@ -1528,6 +1528,18 @@ sub group_object ($$$$) {
           my $sha = $app->bare_param ('source_sha');
           my $s_sha = $app->bare_param ('source_source_sha');
           my $type = $app->bare_param ('source_type');
+          ## fixing mapping gr:25241595326780653 # XXX remove after R2/1/1
+          my $ss;
+          my $sp;
+          if (defined $sha) {
+            my ($source_site_url, $source_page_url) = source_urls $app;
+            if (defined $source_page_url and
+                $source_page_url->fragment =~ m{^hatenastar:}) {
+              $ss = Dongry::Type->serialize ('text', $source_site_url->stringify);
+              $sp = Dongry::Type->serialize ('text', $source_page_url->stringify);
+            }
+          }
+          # XXX
           return unless $ts or $rev_ts or defined $sha or defined $s_sha or defined $type;
           my $info = {};
           $info->{timestamp} = 0+$ts if $ts;
@@ -1535,14 +1547,39 @@ sub group_object ($$$$) {
           $info->{sha} = $sha if defined $sha;
           $info->{source_sha} = $s_sha if defined $s_sha;
           $info->{source_type} = $type if defined $type;
-          return $db->update ('imported', {
-            sync_info => Dongry::Type->serialize ('json', $info),
-            updated => $time,
-          }, where => {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            type => 2, # object
-            dest_id => Dongry::Type->serialize ('text', $path->[3]),
-          });
+          # XXX
+          if (defined $ss and defined $sp) {
+            return $db->insert ('imported', [{
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              source_site => $ss,
+              source_site_sha => (sha1_hex $ss),
+              source_page => $sp,
+              source_page_sha => (sha1_hex $sp),
+              created => $time,
+              updated => $time,
+              type => 2, # object
+              dest_id => Dongry::Type->serialize ('text', $path->[3]),
+              sync_info => Dongry::Type->serialize ('json', $info),
+            }], duplicate => {
+              source_site => $db->bare_sql_fragment ('values(`source_site`)'),
+              source_site_sha => $db->bare_sql_fragment ('values(`source_site_sha`)'),
+              source_page => $db->bare_sql_fragment ('values(`source_page`)'),
+              source_page_sha => $db->bare_sql_fragment ('values(`source_page_sha`)'),
+              updated => $db->bare_sql_fragment ('values(`updated`)'),
+              type => $db->bare_sql_fragment ('values(`type`)'),
+              dest_id => $db->bare_sql_fragment ('values(`dest_id`)'),
+              sync_info => $db->bare_sql_fragment ('values(`sync_info`)'),
+            });
+          } else {
+            return $db->update ('imported', {
+              sync_info => Dongry::Type->serialize ('json', $info),
+              updated => $time,
+            }, where => {
+              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              type => 2, # object
+              dest_id => Dongry::Type->serialize ('text', $path->[3]),
+            });
+          }
         })->then (sub {
           return json $app, {
             object_revision_id => ''.$object->{data}->{object_revision_id},
@@ -2113,7 +2150,7 @@ sub invitation ($$$$) {
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

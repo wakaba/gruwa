@@ -437,6 +437,31 @@ Importer.run = function (sourceId, statusContainer, opts) {
       return Promise.resolve ();
     }
 
+    // Current star map (of the destination object, before this importing)
+    var currentStarMapPromise;
+    var getCurrentStarMap = () => {
+      if (currentStarMapPromise) return currentStarMapPromise;
+      return currentStarMapPromise = gotObjectId.then ((parentObjectId) => {
+        return gFetch ('o/get.json?with_data=1&object_id=' + encodeURIComponent (parentObjectId), {}).then (json => {
+          var starMap = {};
+          var parentObject = json.objects[parentObjectId] || {data: {}};
+          var div = document.createElement ('div');
+          div.innerHTML = (parentObject.data.body || '')
+            .replace (/<img/g, ''); // avoid unused image loads
+          var hh = div.querySelector ('hatena-html[starmap]');
+          if (hh) {
+            var values = hh.getAttribute ('starmap').split (/\s+/);
+            while (values.length) {
+              var id = values.shift ();
+              var objectId = values.shift ();
+              starMap[id] = objectId;
+            }
+          }
+          return starMap;
+        });
+      });
+    }; // getCurrentStarMap
+
     var starURLs = {};
     var starLists = {};
     sectionNames.forEach (function (id) {
@@ -509,7 +534,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
       });
     }, starURLListSet).then (function () {
       return $promised.forEach (function (url) {
-        var starPage = new URL (site + '#star:' + encodeURIComponent (url)).toString ();
+        var starPage = new URL (site + '#hatenastar:' + encodeURIComponent (url)).toString ();
         var stars = {};
         starLists[url].forEach (function (star) {
           var key = [star[0], star[1], star[3]].join (",");
@@ -534,19 +559,34 @@ Importer.run = function (sourceId, statusContainer, opts) {
           }
         }
 
+        var updateMapping = false;
         return Promise.resolve ().then (() => {
           if (current) {
+            // A #hatenastar: URL mapping is found.
             return current.dest_id;
           } else {
-            var fd = new FormData;
-            fd.append ('source_site', site);
-            fd.append ('source_page', starPage);
-            return gFetch ('o/create.json', {
-              post: true,
-              formData: fd,
-            }).then (function (json) {
-              starMap[starLists[url].id] = json.object_id;
-              return json.object_id;
+            return getCurrentStarMap ().then (currentStarMap => {
+              var currentId = currentStarMap[starLists[url].id];
+              if (currentId) {
+                // A starmap="" ID mapping is found.  It need to be
+                // registered.  c.f. gr:25241595326780653
+                updateMapping = true;
+                return currentId;
+              } else {
+                // No existing mapping is found.  A new Hatena Star
+                // object is created and a mapping is registered.
+                var fd = new FormData;
+                fd.append ('source_site', site);
+                fd.append ('source_page', starPage);
+                return gFetch ('o/create.json', {
+                  post: true,
+                  formData: fd,
+                }).then (function (json) {
+                  starMap[starLists[url].id] = json.object_id;
+                  imported[starPage] = {type: 2, sync_info: {}, dest_id: json.object_id};
+                  return json.object_id;
+                });
+              }
             });
           }
         }).then ((starObjectId) => {
@@ -554,6 +594,11 @@ Importer.run = function (sourceId, statusContainer, opts) {
             var fd = new FormData;
             fd.append ('parent_object_id', parentObjectId);
             fd.append ('source_sha', sha);
+            if (updateMapping) { // fixing mapping gr:25241595326780653
+              fd.append ('source_site', site);
+              fd.append ('source_page', starPage);
+              imported[starPage] = {type: 2, sync_info: {}, dest_id: starObjectId};
+            }
             fd.append ('timestamp', 0);
             fd.append ('body_type', 3); // data
             fd.append ('body_data', JSON.stringify ({hatena_star: stars}));
@@ -582,6 +627,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           post: true,
           formData: fd,
         }).then (function (json) {
+          imported[commentPage] = {type: 2, sync_info: {}, dest_id: json.object_id};
           return gotObjectId.then (function (parentObjectId) {
             var fd = new FormData;
             fd.append ('parent_object_id', parentObjectId);
