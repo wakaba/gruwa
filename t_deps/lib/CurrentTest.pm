@@ -16,7 +16,7 @@ sub new ($$) {
 } # new
 
 sub c ($) {
-  return $_[0]->{c};
+  return $_[0]->{context};
 } # c
 
 sub client ($) {
@@ -521,13 +521,67 @@ sub are_errors ($$$) {
   });
 } # are_errors
 
-sub close ($) {
-  my $self = shift;
+sub create_browser ($$$) {
+  my ($self, $name, $opts) = @_;
+  die "No |browser| option for |Test|"
+      if not defined $self->{server_data}->{wd_local_url};
+  die "Duplicate browser |$name|" if defined $self->{browsers}->{$name};
+  $self->{browsers}->{$name} = '';
+  require Web::Driver::Client::Connection;
+  my $wd = Web::Driver::Client::Connection->new_from_url
+      ($self->{server_data}->{wd_local_url});
+  push @{$self->{wds} ||= []}, $wd;
+  return $wd->new_session (
+    desired => {},
+    http_proxy_url => Web::URL->parse_string ($self->{server_data}->{docker_envs}->{http_proxy}) || die,
+  )->then (sub {
+    $self->{browsers}->{$name} = $_[0];
+    return $self->b_set_account ($name, $opts->{account})
+        if defined $opts->{account};
+  })->then (sub {
+    return $self->b_go ($name, $opts->{url}, fragment => $opts->{fragment})
+        if defined $opts->{url};
+  });
+} # create_browser
+
+sub b ($$) {
+  my ($self, $name) = @_;
+  return $self->{browsers}->{$name} || die "No browser |$name|";
+} # b
+
+sub b_go ($$$;%) {
+  my ($self, $name, $url, %args) = @_;
+  if (ref $url eq 'ARRAY') {
+    $url = join '/', map { percent_encode_c $_ } '', @$url;
+  }
+  $url .= '#' . $args{fragment} if defined $args{fragment};
+  return $self->b ($name)->go ($self->resolve ($url));
+} # b_go
+
+sub b_set_account ($$$) {
+  my ($self, $name, $user) = @_;
+  return $self->b_go ($name, '/robots.txt')->then (sub {
+    return $self->_account ($user);
+  })->then (sub {
+    return $self->b ($name)->set_cookie
+        (sk => defined $_[0] ? $_[0]->{cookies}->{sk} : '', path => '/');
+  });
+} # b_set_account
+
+sub done ($) {
+  my $self = $_[0];
+  delete $self->{client};
   return Promise->all ([
-    defined $self->{client} ? $self->{client}->close : undef,
-    defined $self->{accounts_client} ? $self->{accounts_client}->close : undef,
-  ]);
-} # close
+    (map { $_->close } values %{delete $self->{client_for} or {}}),
+    (map { $_->close } values %{delete $self->{browsers} or {}}),
+  ])->then (sub {
+    return Promise->all ([
+      (map { $_->close } @{delete $self->{wds} or []}),
+    ]);
+  })->finally (sub {
+    (delete $self->{context})->done;
+  });
+} # done
 
 1;
 

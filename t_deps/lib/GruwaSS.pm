@@ -161,6 +161,9 @@ sub run ($%) {
         };
       }, # prepare
     }, # xs
+    wd => {
+      handler => 'ServerSet::WebDriverServerHandler',
+    },
     _ => {
       requires => ['app_config'],
       start => sub {
@@ -174,12 +177,15 @@ sub run ($%) {
         $data->{app_local_url} = $self->local_url ('app');
         $data->{app_client_url} = $self->client_url ('app');
         $self->set_local_envs ('proxy', $data->{local_envs} = {});
+        $self->set_docker_envs ('proxy', $data->{docker_envs} = {});
 
         if ($args{has_accounts}) {
           $data->{accounts_key} = $self->key ('accounts_key');
           $data->{accounts_context} = $self->key ('accounts_context');
           $data->{accounts_client_url} = $self->client_url ('accounts');
         }
+
+        $data->{wd_local_url} = $self->local_url ('wd');
         
         return [$data, undef];
       },
@@ -229,6 +235,10 @@ sub run ($%) {
       },
       xs => {
         disabled => $args->{dont_run_xs},
+      },
+      wd => {
+        disabled => ! $args->{need_browser},
+        browser_type => $args->{browser_type},
       },
       _ => {
         has_accounts => ! $args->{dont_run_accounts},

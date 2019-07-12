@@ -63,7 +63,74 @@
             },
             {
                "run" : {
-                  "command" : "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-circleci"
+                  "command" : "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-http-circleci"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "kill `cat $CIRCLE_ARTIFACTS/ss.pid`"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "while [ -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done"
+               }
+            },
+            {
+               "run" : {
+                  "background" : true,
+                  "command" : "IS_BROWSER_TEST=1 TEST_WD_BROWSER=chromium TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-chromium-$CIRCLE_NODE_INDEX.txt.dat 2>&1"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-browser-circleci"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "kill `cat $CIRCLE_ARTIFACTS/ss.pid`"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "while [ -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done"
+               }
+            },
+            {
+               "run" : {
+                  "background" : true,
+                  "command" : "IS_BROWSER_TEST=1 TEST_WD_BROWSER=firefox TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-firefox-$CIRCLE_NODE_INDEX.txt.dat 2>&1"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-browser-circleci"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "true"
                }
             },
             {

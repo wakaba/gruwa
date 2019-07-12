@@ -52,9 +52,15 @@ local/accounts.sql: local/accounts-2.sql
 local/accounts-2.sql:
 	curl https://raw.githubusercontent.com/wakaba/accounts/master/db/account.sql > $@
 
-test-main:
+test-main: test-http test-browser
+
+test-http:
 	$(PROVE) t/http/*.t
 
-test-circleci: test-main
+test-browser:
+	TEST_MAX_CONCUR=1 $(PROVE) t/browser/*.t
+
+test-http-circleci: test-http
+test-http-browser: test-browser
 
 ## License: Public Domain.

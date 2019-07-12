@@ -27,13 +27,15 @@ our @EXPORT = grep { not /^\$/ }
 my $RootPath = path (__FILE__)->parent->parent->parent;
 
 our $ServerData;
+my $NeedBrowser;
 push @EXPORT, qw(Test);
 sub Test (&;%) {
   my $code = shift;
+  my %args = @_;
+  $NeedBrowser = 1 if delete $args{browser};
   test {
-    my $c = shift;
     my $current = CurrentTest->new ({
-      c => $c,
+      context => shift,
       server_data => $ServerData,
     });
     Promise->resolve ($current)->then ($code)->catch (sub {
@@ -41,12 +43,11 @@ sub Test (&;%) {
       test {
         ok 0, "promise resolved";
         is $error, undef, "no exception";
-      } $c;
+      } $current->c;
     })->then (sub {
-      done $c;
-      return $current->close;
+      return $current->done;
     });
-  } @_;
+  } %args;
 } # Test
 
 push @EXPORT, qw(RUN);
@@ -58,6 +59,8 @@ sub RUN () {
     mysqld_database_name_suffix => '_test',
     app_config_path => $RootPath->child ('config/test.json'),
     accounts_servers_path => $RootPath->child ('t_deps/config/test-accounts-servers.json'),
+    need_browser => $NeedBrowser,
+    browser_type => $ENV{TEST_WD_BROWSER}, # or undef
   )->to_cv->recv;
 
   note "Tests...";

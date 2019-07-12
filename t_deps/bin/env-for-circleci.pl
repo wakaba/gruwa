@@ -8,10 +8,13 @@ use GruwaSS;
 
 my $RootPath = path (__FILE__)->parent->parent->parent;
 
+my $NeedBrowser = $ENV{IS_BROWSER_TEST};
 my $ac = AbortController->new;
 GruwaSS->run (
   app_docker_image => $ENV{TEST_APP_DOCKER_IMAGE},
   mysqld_database_name_suffix => '_test',
+  need_browser => $NeedBrowser,
+  browser_type => $ENV{TEST_WD_BROWSER}, # or undef
   docker_net_host => 1,
   no_set_uid => 1,
   write_ss_env => 1,
