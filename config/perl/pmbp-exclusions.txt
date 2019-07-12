@@ -25,3 +25,5 @@
 - "../../modules/web-encodings.2" build tests
 - "../../modules/web-url.2" build tests
 - "../../modules/streams" build tests
+- "../../t_deps/modules/promise" build tests
+- "../../t_deps/modules/promised-command" build tests
