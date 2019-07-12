@@ -32,7 +32,7 @@ pmbp-install: pmbp-upgrade
 	perl local/bin/pmbp.pl $(PMBP_OPTIONS) --install \
             --create-perl-command-shortcut @perl \
             --create-perl-command-shortcut @prove \
-            --create-perl-command-shortcut @lserver=perl\ bin/local.pl
+            --create-perl-command-shortcut @lserver=perl\ bin/local-server.pl
 
 js/sha1.js:
 	$(WGET) -O $@ https://raw.githubusercontent.com/emn178/js-sha1/master/src/sha1.js

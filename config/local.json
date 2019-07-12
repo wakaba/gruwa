@@ -5,7 +5,7 @@
     "url": "https://invalid",
     "key": "...",
     "context": "gruwa:local",
-    "servers": ["github", "hatena"]
+    "servers": ["github", "google"]
   },
   "storage": {
     "url": "https://invalid",

@@ -53,8 +53,10 @@ sub run ($%) {
           my ($config, $storage_data, $mysqld_data) = @{$_[0]};
           $data->{config} = $config;
 
-          $config->{accounts}->{key} = $self->key ('accounts_key');
-          $config->{accounts}->{context} = $self->key ('accounts_context');
+          if ($args{has_accounts}) {
+            $config->{accounts}->{key} = $self->key ('accounts_key');
+            $config->{accounts}->{context} = $self->key ('accounts_context');
+          }
           
           $data->{app_docker_image} = $args{app_docker_image}; # or undef
           my $use_docker = defined $data->{app_docker_image};
@@ -173,10 +175,12 @@ sub run ($%) {
         $data->{app_client_url} = $self->client_url ('app');
         $self->set_local_envs ('proxy', $data->{local_envs} = {});
 
-        $data->{accounts_key} = $self->key ('accounts_key');
-        $data->{accounts_context} = $self->key ('accounts_context');
-        $data->{accounts_client_url} = $self->client_url ('accounts');
-
+        if ($args{has_accounts}) {
+          $data->{accounts_key} = $self->key ('accounts_key');
+          $data->{accounts_context} = $self->key ('accounts_context');
+          $data->{accounts_client_url} = $self->client_url ('accounts');
+        }
+        
         return [$data, undef];
       },
     }, # _
@@ -214,6 +218,7 @@ sub run ($%) {
       app_config => {
         app_config_path => $args->{app_config_path},
         app_docker_image => $app_docker_image || undef,
+        has_accounts => ! $args->{dont_run_accounts},
       },
       app => {
         disabled => !! $app_docker_image,
@@ -225,7 +230,9 @@ sub run ($%) {
       xs => {
         disabled => $args->{dont_run_xs},
       },
-      _ => {},
+      _ => {
+        has_accounts => ! $args->{dont_run_accounts},
+      },
     }; # $result->{server_params}
 
     return $result;
