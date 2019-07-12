@@ -15,7 +15,7 @@ Test {
     $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
     my $sk = $1;
     my $url = Web::URL->parse_string ($res->header ('Location'));
-    my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+    my $client = $current->client_for ($url);
     return $client->request (url => $url)->then (sub {
       my $res = $_[0];
       die $res unless $res->status == 200;
@@ -70,7 +70,7 @@ Test {
     $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
     my $sk = $1;
     my $url = Web::URL->parse_string ($res->header ('Location'));
-    my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+    my $client = $current->client_for ($url);
     return $client->request (url => $url)->then (sub {
       my $res = $_[0];
       die $res unless $res->status == 200;
@@ -103,7 +103,7 @@ Test {
     $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
     my $sk = $1;
     my $url = Web::URL->parse_string ($res->header ('Location'));
-    my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+    my $client = $current->client_for ($url);
     return $client->request (url => $url)->then (sub {
       my $res = $_[0];
       die $res unless $res->status == 200;
@@ -128,7 +128,7 @@ RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -141,6 +141,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

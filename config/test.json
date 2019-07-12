@@ -1,16 +1,16 @@
 {
-  "origin": "http://budou:5521",
+  "origin": "http://app.server.test",
   "x_forwarded": false,
   "accounts": {
-    "url": "https://invalid",
+    "url": "http://accounts.server.test",
     "key": "...",
-    "context": "gruwa:local",
-    "servers": ["github", "google"]
+    "context": "...",
+    "servers": ["test1"]
   },
   "storage": {
-    "url": "https://invalid",
+    "url": "http://storage.server.test",
     "aws4": ["access key", "secret key", "us-east-1", "s3"],
-    "bucket": "gruwa-local"
+    "bucket": "..."
   },
   "bitbucket": {
     "public": {"client_id": "..."}

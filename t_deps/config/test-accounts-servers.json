@@ -1,0 +1,12 @@
+{
+  "test1": {
+    "name": "test1",
+    "url_scheme": "http",
+    "host": "xs.server.test",
+    "auth_endpoint": "/authorize",
+    "token_endpoint": "/token",
+    "linked_id_field": "access_token",
+
+    "":""
+  }
+}

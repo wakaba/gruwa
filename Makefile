@@ -32,7 +32,7 @@ pmbp-install: pmbp-upgrade
 	perl local/bin/pmbp.pl $(PMBP_OPTIONS) --install \
             --create-perl-command-shortcut @perl \
             --create-perl-command-shortcut @prove \
-            --create-perl-command-shortcut @lserver=perl\ bin/local.pl
+            --create-perl-command-shortcut @lserver=perl\ bin/local-server.pl
 
 js/sha1.js:
 	$(WGET) -O $@ https://raw.githubusercontent.com/emn178/js-sha1/master/src/sha1.js
@@ -43,19 +43,24 @@ PROVE = ./prove
 
 test: test-deps test-main
 
-test-deps: deps deps-accounts deps-minio
+test-deps: deps local/accounts.sql
 
-deps-accounts:
-	perl local/bin/pmbp.pl $(PMBP_OPTIONS) \
-	    --install-perl-app https://github.com/wakaba/accounts
+deps-circleci: test-deps
 
-deps-minio: local/bin/minio
+local/accounts.sql: local/accounts-2.sql
+	cp $< $@
+local/accounts-2.sql:
+	curl https://raw.githubusercontent.com/wakaba/accounts/master/db/account.sql > $@
 
-local/bin/minio:
-	$(WGET) -O $@ https://dl.minio.io/server/minio/release/linux-amd64/minio
-	chmod u+x $@
+test-main: test-http test-browser
 
-test-main:
+test-http:
 	$(PROVE) t/http/*.t
+
+test-browser:
+	TEST_MAX_CONCUR=1 $(PROVE) t/browser/*.t
+
+test-http-circleci: test-http
+test-browser-circleci: test-browser
 
 ## License: Public Domain.

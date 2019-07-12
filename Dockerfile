@@ -15,7 +15,8 @@ RUN cd /app && \
     make deps-docker PMBP_OPTIONS=--execute-system-package-installer && \
     echo '#!/bin/bash' > /server && \
     echo 'cd /app' >> /server && \
-    echo 'exec ./perl bin/server.pl 8080' >> /server && \
+    echo 'port=${PORT:-8080}' >> /server && \
+    echo 'exec ./perl bin/server.pl ${port}' >> /server && \
     chmod u+x /server && \
     rm -fr /app/.git /app/deps /app/t /app/t_deps && \
     rm -rf /var/lib/apt/lists/*

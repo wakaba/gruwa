@@ -231,6 +231,181 @@ Importer.run = function (sourceId, statusContainer, opts) {
     return runNext ();
   }; // importFromKeywordlogs
 
+  var importFromTasklogs = function (group, indexId, taskGroupId2IndexId, imported, site, as, taskCount) {
+    var importById = function (id) {
+      return group.tasklog ('/tasklog?tlid=' + id).then (function (r) {
+        if (!r) return false;
+
+        var page = group.getTaskPageURL (r.taskGroupId, r.taskId);
+        var current = imported[page];
+        if (current && current.type == 2 /* object */) {
+          var currentTimestamp = parseFloat (current.sync_info.timestamp);
+          current.hasLatestData = (
+            Number.isFinite (currentTimestamp) &&
+            currentTimestamp >= r.date.valueOf () / 1000
+          );
+          if (current.hasLatestData &&
+              (current.sync_info.source_type === 'tasklog' ||
+               current.sync_info.source_type === 'taskList')) {
+            return true;
+          }
+        }
+
+        var createObject = function () {
+          if (current && current.type == 2 /* object */) {
+            return Promise.resolve (current.dest_id);
+          }
+
+          var fd = new FormData;
+          fd.append ('source_site', site);
+          fd.append ('source_page', page);
+          return gFetch ('o/create.json', {post: true, formData: fd}).then (function (json) {
+            imported[page] = {type: 2, sync_info: {}, dest_id: json.object_id};
+            return json.object_id;
+          });
+        }; // createObject
+
+        return createObject ().then (function (objectId) {
+          var currentRevTS = parseFloat (current && current.sync_info.rev_timestamp);
+          if (r.date &&
+              Number.isFinite (currentRevTS) &&
+              r.date.valueOf () / 1000 <= currentRevTS) return;
+          
+          var fd = new FormData;
+          fd.append ('source_type', 'tasklog');
+          fd.append ('revision_author_hatena_id', r.author.url_name);
+          if (r.date) {
+            var ts = r.date.valueOf () / 1000;
+            fd.append ('revision_timestamp', ts);
+            fd.append ('source_timestamp', ts);
+            fd.append ('source_rev_timestamp', ts);
+          }
+          fd.append ('revision_imported_url', r.url);
+          fd.append ('edit_index_id', 1);
+          fd.append ('index_id', indexId);
+          if (r.taskGroupId) {
+            var labelIndexId = taskGroupId2IndexId[r.taskGroupId];
+            if (!labelIndexId) throw new Error ("Task group |"+r.taskGroupId+"| not imported");
+            fd.append ('index_id', labelIndexId);
+          }
+          fd.append ('title', r.title);
+          fd.append ('body_type', 1); // html
+          fd.append ('body_source_type', 3); // hatena
+          var hatena = '>' + hatenaHtmlStartTag ({base: page}) + "<\n\n" + r.bodyHatena + '\n\n></hatena-html><';
+          fd.append ('body_source', hatena);
+          return Formatter.hatena (hatena).then (function (body) {
+            fd.append ('body', body);
+          }).then (function () {
+            return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
+          });
+        }).then (function () {
+          return true;
+        });
+      });
+    }; // importById
+
+    var nextId = 1;
+    var itemCount = taskCount;
+    var missingCount = 0;
+    var runNext = function () {
+      if (itemCount < nextId) itemCount = nextId;
+      as.stageProgress ('objects', nextId-1, itemCount);
+      return importById (nextId).then (function (result) {
+        if (result) {
+          missingCount = 0;
+        } else {
+          missingCount++;
+          if (missingCount > 20) return;
+        }
+        nextId++;
+        return runNext ();
+      });
+    }; // runNext
+    return runNext ();
+  }; // importFromTasklogs
+
+  var setTaskStatus = function (group, taskGroupId, taskId, status, date, imported) {
+    return Promise.resolve ().then (() => {
+      var page = group.getTaskPageURL (taskGroupId, taskId);
+      var current = imported[page];
+    if (current && current.type == 2 /* object */) {
+      var currentTimestamp = parseFloat (current.sync_info.timestamp);
+      current.hasLatestData = (
+        Number.isFinite (currentTimestamp) &&
+        currentTimestamp >= date.valueOf () / 1000
+      );
+      if (current.hasLatestData) {
+        if (current.sync_info.source_type === 'taskList') {
+          return current.dest_id;
+        } else if (current.sync_info.source_type === 'tasklog') {
+          // continue importing
+        } else {
+          throw new Error ('Task |'+taskId+'| is updated during importing');
+        }
+      }
+    }
+
+    if (!current) throw new Error ('Task |'+taskId+'| is not imported');
+    var objectId = current.dest_id;
+          
+    var fd = new FormData;
+    fd.append ('source_type', 'taskList');
+    var ts = date.valueOf () / 1000;
+    fd.append ('revision_timestamp', ts);
+    fd.append ('source_timestamp', ts);
+    fd.append ('source_rev_timestamp', ts);
+    //fd.append ('revision_imported_url', r.url);
+    if (status === '終わった') {
+      fd.append ('todo_state', 2);
+    } else if (status === 'ペンディング') {
+      fd.append ('todo_state', 1);
+    } else if (status === 'TODO') {
+      fd.append ('todo_state', 1);
+    }
+    fd.append ('todo_bb_state', status); // This is not BB but reused for preserving original status.
+    return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd}).then (() => {
+      return objectId;
+    });
+
+    });
+  }; // setTaskStatus
+
+  var importTaskComments = function (group, imported, site, taskGroupId, taskId) {
+    var page = group.getTaskPageURL (taskGroupId, taskId);
+    var current = imported[page];
+    var parentObjectId = current.dest_id;
+    return group.task (taskGroupId, taskId).then (comments => {
+      return $promised.forEach (function (c) {
+        var url = group.getTaskPageURL (taskGroupId, taskId) + '#c' + c.taskCommentId;
+
+        var current = imported[url];
+        if (current && current.type == 2 /* object */) {
+          return Promise.resolve ();
+        }
+
+        var fd = new FormData;
+        fd.append ('source_site', site);
+        fd.append ('source_page', url);
+        return gFetch ('o/create.json', {post: true, formData: fd}).then (function (json) {
+          var fd = new FormData;
+          fd.append ('parent_object_id', parentObjectId);
+          // Task comment has no timestamp :-<
+          //fd.append ('timestamp', c.timestamp);
+          //fd.append ('revision_timestamp', c.timestamp);
+          fd.append ('body_type', 2); // text
+          fd.append ('body', c.body);
+          fd.append ('revision_imported_url', url);
+          fd.append ('author_name', c.author.url_name);
+          fd.append ('revision_author_name', c.author.url_name);
+          fd.append ('author_hatena_id', c.author.url_name);
+          fd.append ('revision_author_hatena_id', c.author.url_name);
+          fd.append ('source_type', 'task');
+          return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
+        });
+      }, comments);
+    });
+  }; // importTaskComments
+
   var divide = function (array, n) {
     var list = [];
     var i = 0;
@@ -262,6 +437,31 @@ Importer.run = function (sourceId, statusContainer, opts) {
       return Promise.resolve ();
     }
 
+    // Current star map (of the destination object, before this importing)
+    var currentStarMapPromise;
+    var getCurrentStarMap = () => {
+      if (currentStarMapPromise) return currentStarMapPromise;
+      return currentStarMapPromise = gotObjectId.then ((parentObjectId) => {
+        return gFetch ('o/get.json?with_data=1&object_id=' + encodeURIComponent (parentObjectId), {}).then (json => {
+          var starMap = {};
+          var parentObject = json.objects[parentObjectId] || {data: {}};
+          var div = document.createElement ('div');
+          div.innerHTML = (parentObject.data.body || '')
+            .replace (/<img/g, ''); // avoid unused image loads
+          var hh = div.querySelector ('hatena-html[starmap]');
+          if (hh) {
+            var values = hh.getAttribute ('starmap').split (/\s+/);
+            while (values.length) {
+              var id = values.shift ();
+              var objectId = values.shift ();
+              starMap[id] = objectId;
+            }
+          }
+          return starMap;
+        });
+      });
+    }; // getCurrentStarMap
+
     var starURLs = {};
     var starLists = {};
     sectionNames.forEach (function (id) {
@@ -281,6 +481,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         type: "hatenaStar",
         starURLs: starURLList,
       }).then (function (json) {
+        var checkDups = [];
         json.entries.forEach (function (entry) {
           var url = starURLs[entry.uri];
 
@@ -289,8 +490,11 @@ Importer.run = function (sourceId, statusContainer, opts) {
             console.log ("Unexpected star URL " + entry.uri + ' [here=' + url + ']', starURLs, starLists);
             return;
           }
+
+          var newStars = [];
           (entry.stars || []).forEach (function (star) {
-            stars.push ([star.name, 0, parseInt (star.count || 1), star.quote]);
+            newStars.push
+                ([star.name, 0, parseInt (star.count || 1), star.quote]);
           });
           (entry.colored_stars || []).forEach (function (_) {
             var type = {
@@ -300,19 +504,37 @@ Importer.run = function (sourceId, statusContainer, opts) {
               purple: 4,
             }[_.color];
             (_.stars || []).forEach (function (star) {
-              stars.push ([star.name, type, parseInt (star.count || 1), star.quote]);
+              newStars.push
+                  ([star.name, type, parseInt (star.count || 1), star.quote]);
             });
           });
 
+          var newComments = [];
+          var commentArrays = [];
           (entry.comments || []).forEach (function (comment) {
             comment.section_id = stars.id;
-            comments.push (comment);
+            newComments.push (comment);
+            commentArrays.push
+                ([comment.name, comment.body, comment.section_id]);
           });
+
+          var stringified = JSON.stringify ([newStars, commentArrays]);
+          if (!checkDups[url]) {
+            checkDups[url] = new Set ([stringified]);
+          } else if (checkDups[url].has (stringified)) {
+            // duplicate
+            return;
+          } else {
+            checkDups[url].add (stringified);
+          }
+
+          newStars.forEach (_ => stars.push (_));
+          newComments.forEach (_ => comments.push (_));
         });
       });
     }, starURLListSet).then (function () {
       return $promised.forEach (function (url) {
-        var starPage = new URL (site + '#star:' + encodeURIComponent (url)).toString ();
+        var starPage = new URL (site + '#hatenastar:' + encodeURIComponent (url)).toString ();
         var stars = {};
         starLists[url].forEach (function (star) {
           var key = [star[0], star[1], star[3]].join (",");
@@ -337,22 +559,50 @@ Importer.run = function (sourceId, statusContainer, opts) {
           }
         }
 
-        var fd = new FormData;
-        fd.append ('source_site', site);
-        fd.append ('source_page', starPage);
-        return gFetch ('o/create.json', {
-          post: true,
-          formData: fd,
-        }).then (function (json) {
-          starMap[starLists[url].id] = json.object_id;
+        var updateMapping = false;
+        return Promise.resolve ().then (() => {
+          if (current) {
+            // A #hatenastar: URL mapping is found.
+            return current.dest_id;
+          } else {
+            return getCurrentStarMap ().then (currentStarMap => {
+              var currentId = currentStarMap[starLists[url].id];
+              if (currentId) {
+                // A starmap="" ID mapping is found.  It need to be
+                // registered.  c.f. gr:25241595326780653
+                updateMapping = true;
+                return currentId;
+              } else {
+                // No existing mapping is found.  A new Hatena Star
+                // object is created and a mapping is registered.
+                var fd = new FormData;
+                fd.append ('source_site', site);
+                fd.append ('source_page', starPage);
+                return gFetch ('o/create.json', {
+                  post: true,
+                  formData: fd,
+                }).then (function (json) {
+                  starMap[starLists[url].id] = json.object_id;
+                  imported[starPage] = {type: 2, sync_info: {}, dest_id: json.object_id};
+                  return json.object_id;
+                });
+              }
+            });
+          }
+        }).then ((starObjectId) => {
           return gotObjectId.then (function (parentObjectId) {
             var fd = new FormData;
             fd.append ('parent_object_id', parentObjectId);
             fd.append ('source_sha', sha);
+            if (updateMapping) { // fixing mapping gr:25241595326780653
+              fd.append ('source_site', site);
+              fd.append ('source_page', starPage);
+              imported[starPage] = {type: 2, sync_info: {}, dest_id: starObjectId};
+            }
             fd.append ('timestamp', 0);
             fd.append ('body_type', 3); // data
             fd.append ('body_data', JSON.stringify ({hatena_star: stars}));
-            return gFetch ('o/' + json.object_id + '/edit.json', {
+            return gFetch ('o/' + starObjectId + '/edit.json', {
               post: true,
               formData: fd,
             });
@@ -377,6 +627,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           post: true,
           formData: fd,
         }).then (function (json) {
+          imported[commentPage] = {type: 2, sync_info: {}, dest_id: json.object_id};
           return gotObjectId.then (function (parentObjectId) {
             var fd = new FormData;
             fd.append ('parent_object_id', parentObjectId);
@@ -557,7 +808,9 @@ Importer.run = function (sourceId, statusContainer, opts) {
                         'creatediary',
                         'getfilelist',
                         'createfileuploader',
-                        'getfiles']});
+                        'getfiles',
+                        'gettaskgrouplist',
+                        'createtasktodo']});
     return Importer.createClient (sourceId).then (function (client) {
       var group = new Importer.HatenaGroup (client);
       var site = group.getSiteURL ();
@@ -706,6 +959,70 @@ Importer.run = function (sourceId, statusContainer, opts) {
                 subAs.stageEnd ('objects');
                 subAs.end ({ok: true});
                 as.stageEnd ('getfiles');
+              });
+            });
+          });
+        });
+      }).then (function () {
+        as.stageStart ('gettaskgrouplist');
+        return group.taskGroupList ().then ((taskGroups) => {
+          as.stageEnd ('gettaskgrouplist');
+          if (taskGroups.length === 0) return;
+          as.stageStart ('createtasktodo');
+          var page = group.getTaskTopPageURL ();
+          var title = taskGroups.title;
+          return Importer.createIndex (site, page, imported, {
+            indexType: 3, // todo
+            title: title,
+          }).then ((index) => {
+            index.itemCount = taskGroups.taskCount;
+            index.originalTitle = title;
+            var todoIndexId = index.index_id;
+            return mapTable.showObjects ([index], {}).then ((re) => {
+              as.stageEnd ('createtasktodo');
+              as.stageStart ('createtaskobjects');
+              var subAs = getActionStatus (re.items[0]);
+              subAs.start ({stages: ['labels', 'objects', 'statuses']});
+              subAs.stageStart ('labels');
+              var c = 0;
+              var taskGroupId2IndexId = {};
+              return $promised.forEach (function (taskGroup) {
+                subAs.stageProgress ('labels', c, taskGroups.length);
+                c++;
+                var page = group.getTaskGroupPageURL (taskGroup.taskGroupId);
+                return Importer.createIndex (site, page, imported, {
+                  indexType: 4, // label
+                  title: taskGroup.title,
+                }).then ((labelIndex) => {
+                  taskGroupId2IndexId[taskGroup.taskGroupId] = labelIndex.index_id;
+                });
+              }, taskGroups).then (() => {
+                subAs.stageEnd ('labels');
+                subAs.stageStart ('objects');
+                return importFromTasklogs (group, index.index_id, taskGroupId2IndexId, imported, site, subAs, taskGroups.taskCount);
+              }).then (() => {
+                subAs.stageEnd ('objects');
+                subAs.stageStart ('statuses');
+                var c = 0;
+                return $promised.forEach (taskGroup => {
+                  subAs.stageProgress ('statuses', c, taskGroups.length);
+                  c++;
+                  return group.taskList (taskGroup.taskGroupId).then (tasks => {
+                    return $promised.forEach (task => {
+                      return Promise.resolve ().then (() => {
+                        if (task.commentCount) {
+                          return importTaskComments (group, imported, site, taskGroup.taskGroupId, task.taskId);
+                        }
+                      }).then (() => {
+                        return setTaskStatus (group, taskGroup.taskGroupId, task.taskId, task.status, task.date, imported);
+                      });
+                    }, tasks);
+                  });
+                }, taskGroups);
+              }).then (() => {
+                subAs.stageEnd ('statuses');
+                subAs.end ({ok: true});
+                as.stageEnd ('createtaskobjects');
               });
             });
           });
@@ -880,6 +1197,18 @@ Importer.HatenaGroup.prototype.getKeywordPagePath = function (k) {
   return '/keyword/' + encodeURIComponent (k).replace (/%2F/g, '/');
 }; // getKeywordPagePath
 
+Importer.HatenaGroup.prototype.getTaskTopPageURL = function () {
+  return this.getSiteURL () + '/task/';
+}; // getTaskTopPageURL
+
+Importer.HatenaGroup.prototype.getTaskGroupPageURL = function (id) {
+  return this.getSiteURL () + '/task/' + id + '/';
+}; // getTaskGroupPageURL
+
+Importer.HatenaGroup.prototype.getTaskPageURL = function (gId, id) {
+  return this.getSiteURL () + '/task/' + gId + '/' + id + '/';
+}; // getTaskPageURL
+
 Importer.HatenaGroup.prototype.getDiaryTopPageURL = function (u) {
   return this.getSiteURL () + '/' + u + '/';
 }; // getDiaryTopPageURL
@@ -995,6 +1324,115 @@ Importer.HatenaGroup.prototype.keywordlog = function (url) {
     return log;
   });
 }; // keywordlog
+
+Importer.HatenaGroup.prototype.tasklog = function (url) {
+  var client = this.client;
+  return client.fetchHTML (url).then (function (div) {
+    var container = div.querySelector ('.day');
+    if (!container) return null;
+
+    var log = {
+      url: new URL (url, client.getOrigin ()).toString ().replace (/^http:/, 'https:'),
+      title: div.querySelector ('.day h2 .title').textContent,
+      author: {},
+      bodyHatena: '',
+    };
+
+    var taskURL = (div.querySelector ('.day h2 a') || {href: ""}).href;
+    var m = taskURL.match (/\/task\/([0-9]+)\/([0-9]+)/);
+    if (m) {
+      log.taskGroupId = parseInt (m[1]);
+      log.taskId = parseInt (m[2]);
+    }
+
+    // If the body is empty, there is no textarea.
+    var body = div.querySelector ('.day .body textarea[name=body]');
+    if (body) log.bodyHatena = body.value;
+
+    var m = ((div.querySelector ('.day .body .footnote .footnote') || {}).textContent || "").match
+          (/([0-9]+-[0-9]+-[0-9]+\s+[0-9]+:[0-9]+:[0-9]+)/);
+    if (m) log.date = new Date (m[1].replace (/\s+/, 'T') + '+09:00');
+
+    var userLink = div.querySelector ('.day .body .footnote a');
+    if (userLink) {
+      var m = userLink.pathname.match (/^\/([^\/]+)\//);
+      if (m) log.author.url_name = m[1];
+    }
+
+    return log;
+  });
+}; // tasklog
+
+Importer.HatenaGroup.prototype.taskGroupList = function () {
+  var client = this.client;
+  var result = [];
+  result.taskCount = 0;
+  return client.fetchXML ('/task/?mode=rss').then (function (doc) {
+    result.title = ($$ (doc, 'RDF > channel > title')[0] || {textContent: ''}).textContent.replace (/ - タスクグループ一覧$/, '');
+
+    $$ (doc, 'item').forEach (item => {
+      var m = (item.querySelector ('link') || {textContent: ''}).textContent.match (/\/task\/([0-9]+)\//);
+      var n = ((item.querySelector ('title') || {textContent: ''}).textContent).match (/^(.+\S)\s*\(([0-9]+)\)\s*$/);
+      result.taskCount += parseInt (n[2]);
+      result.push ({
+        title: n[1],
+        //updated - dc:date
+        taskGroupId: parseInt (m[1]),
+      });
+    });
+    return result;
+  });
+}; // taskGroupList
+
+Importer.HatenaGroup.prototype.taskList = function (taskGroupId) {
+  var client = this.client;
+  var result = [];
+  return client.fetchHTML ('/task/'+taskGroupId+'/?status=ALL').then (function (div) {
+    var items = $$ (div, '.ashikatable tr');
+    items.shift (); // header
+    items.pop (); // form
+    items.forEach (item => {
+      var m = (item.querySelector ('a:last-of-type') || {href: ''}).href.match (/\/task\/([0-9]+)\/([0-9]+)/);
+      var date = null;
+      var n = (item.querySelector ('td:nth-child(3)') || {textContent: ''}).textContent.match
+          (/([0-9]+-[0-9]+-[0-9]+\s+[0-9]+:[0-9]+:[0-9]+)/);
+      if (n) date = new Date (n[1].replace (/\s+/, 'T') + '+09:00');
+      result.push ({
+        taskId: parseInt (m[2]),
+        status: (item.querySelector ('td:nth-child(2)') || {textContent: ''}).textContent,
+        date: date,
+        commentCount: parseInt ((item.querySelector ('td:nth-child(5)') || {textContent: ''}).textContent || 0),
+      });
+    });
+    return result;
+  });
+}; // taskList
+
+Importer.HatenaGroup.prototype.task = function (taskGroupId, taskId) {
+  var client = this.client;
+  var result = [];
+  return client.fetchHTML ('/task/'+taskGroupId+'/'+taskId).then (function (div) {
+    var items = $$ (div, '.comment form p:not(:first-of-type)');
+    items.forEach (item => {
+      var comment = {
+        taskCommentId: (item.querySelector ('input[name=taskcommentid]') || {value: ''}).value,
+        author: {},
+      };
+      
+      var userLink = item.querySelector ('.canchor + a');
+      if (userLink) {
+        var m = userLink.pathname.match (/^\/([^\/]+)\//);
+        if (m) comment.author.url_name = m[1];
+      }
+
+      var text = item.lastChild.data.replace (/^\s*『/, '').replace (/』\s*$/, '');
+      comment.body = text;
+      
+      result.push (comment);
+    });
+    return result;
+  });
+}; // task
 
 Importer.HatenaGroup.prototype.diarylist = function () {
   var client = this.client;
@@ -1444,7 +1882,7 @@ Importer.BitBucket.prototype.run = function (name, repo, statusContainer, opts) 
 
 License:
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

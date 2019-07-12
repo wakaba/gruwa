@@ -74,3 +74,19 @@
 	path = modules/web-css
 	url = https://github.com/manakai/perl-web-css
 	track = master
+[submodule "modules/streams"]
+	path = modules/streams
+	url = https://github.com/manakai/perl-streams
+	track = master
+[submodule "t_deps/modules/web-driver-client"]
+	path = t_deps/modules/web-driver-client
+	url = https://github.com/manakai/perl-web-driver-client
+	track = master
+[submodule "t_deps/modules/serverset"]
+	path = t_deps/modules/serverset
+	url = https://github.com/wakaba/serverset
+	track = master
+[submodule "t_deps/modules/promised-docker-webdriver"]
+	path = t_deps/modules/promised-docker-webdriver
+	url = https://github.com/wakaba/perl-promised-docker-webdriver
+	track = master

@@ -50,7 +50,7 @@ Test {
     } $current->c;
     return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
       title => "aaae\x{5233}",
-      mime_type => "text/plain; hoge=fuga\x{222}",
+      mime_type => "text/plain; hoge=fuga",
       file_size => 52523,
       file_name => "ho\x{2244}ge.png",
       file_closed => 1,
@@ -62,7 +62,7 @@ Test {
     test {
       is $obj->{data}->{upload_token}, undef;
       is $obj->{data}->{title}, "aaae\x{5233}";
-      is $obj->{data}->{mime_type}, "text/plain; hoge=fuga";
+      is $obj->{data}->{mime_type}, "text/plain;hoge=fuga";
       is $obj->{data}->{file_size}, 52523;
       is $obj->{data}->{file_name}, "ho\x{2244}ge.png";
       is $obj->{data}->{file_closed}, 1;
@@ -71,7 +71,7 @@ Test {
   })->then (sub {
     my $result = $_[0];
     test {
-      is $result->{res}->header ('content-type'), 'text/plain; hoge=fuga';
+      is $result->{res}->header ('content-type'), 'text/plain;hoge=fuga';
       is $result->{res}->header ('content-disposition'),
           q{attachment; filename=ho%E2%89%84ge.png; filename*=utf-8''ho%E2%89%84ge.png};
       is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
@@ -92,7 +92,7 @@ Test {
   })->then (sub {
     my $result = $_[0];
     test {
-      is $result->{res}->header ('content-type'), 'text/plain; hoge=fuga';
+      is $result->{res}->header ('content-type'), 'text/plain;hoge=fuga';
       is $result->{res}->header ('content-disposition'),
           q{attachment; filename=ho%E2%89%84ge.png; filename*=utf-8''ho%E2%89%84ge.png};
       is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
@@ -209,7 +209,7 @@ Test {
   })->then (sub {
     return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
       title => "aaae\x{5233}",
-      mime_type => "text/plain; hoge=fuga\x{222}",
+      mime_type => "text/plain",
       file_size => 52523,
       file_name => "ho\x{2244}ge.png",
       file_closed => 1,
@@ -222,9 +222,10 @@ Test {
     test {
       is $result->{res}->header ('last-modified'),
           'Mon, 18 Jun 2136 21:37:22 GMT';
+      is $result->{res}->header ('content-type'), 'text/plain';
     } $current->c;
   });
-} n => 2, name => 'file last modified timestamp';
+} n => 3, name => 'file last modified timestamp';
 
 Test {
   my $current = shift;
