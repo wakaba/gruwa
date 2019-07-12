@@ -1,0 +1,106 @@
+{
+   "jobs" : {
+      "build" : {
+         "environment" : {
+            "CIRCLE_ARTIFACTS" : "/tmp/circle-artifacts"
+         },
+         "machine" : {
+            "enabled" : true
+         },
+         "steps" : [
+            "checkout",
+            {
+               "run" : {
+                  "command" : "mkdir -p $CIRCLE_ARTIFACTS"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "docker info"
+               }
+            },
+            {
+               "run" : {
+                  "background" : true,
+                  "command" : "docker pull quay.io/wakaba/docker-perl-app-base && docker pull minio/minio && docker pull mariadb"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "make deps-circleci"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "docker info"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "docker build -t quay.io/wakaba/gruwa ."
+               }
+            },
+            {
+               "run" : {
+                  "command" : "rm -fr $CIRCLE_ARTIFACTS/ss.pid"
+               }
+            },
+            {
+               "run" : {
+                  "background" : true,
+                  "command" : "TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-http-$CIRCLE_NODE_INDEX.txt.dat 2>&1"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-circleci"
+               }
+            },
+            {
+               "store_artifacts" : {
+                  "path" : "/tmp/circle-artifacts"
+               }
+            },
+            {
+               "deploy" : {
+                  "command" : "if [ \u0022${CIRCLE_BRANCH}\u0022 == 'master' ]; then\u000Atrue\u000Adocker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS quay.io || docker login -u $DOCKER_USER -p $DOCKER_PASS quay.io\u000Afi"
+               }
+            },
+            {
+               "deploy" : {
+                  "command" : "if [ \u0022${CIRCLE_BRANCH}\u0022 == 'master' ]; then\u000Atrue\u000Adocker push quay.io/wakaba/gruwa && curl -sSLf $BWALL_URL -X POST\u000Afi"
+               }
+            },
+            {
+               "deploy" : {
+                  "command" : "if [ \u0022${CIRCLE_BRANCH}\u0022 == 'nightly' ]; then\u000Atrue\u000Agit rev-parse HEAD > head.txt\u000Acurl -f -s -S --request POST --header \u0022Authorization:token $GITHUB_ACCESS_TOKEN\u0022 --header \u0022Content-Type:application/json\u0022 --data-binary \u0022{\u005C\u0022base\u005C\u0022:\u005C\u0022master\u005C\u0022,\u005C\u0022head\u005C\u0022:\u005C\u0022`cat head.txt`\u005C\u0022,\u005C\u0022commit_message\u005C\u0022:\u005C\u0022auto-merge $CIRCLE_BRANCH into master\u005C\u0022}\u0022 \u0022https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges\u0022\u000Afi"
+               }
+            },
+            {
+               "deploy" : {
+                  "command" : "if [ \u0022${CIRCLE_BRANCH}\u0022 == 'staging' ]; then\u000Atrue\u000Agit rev-parse HEAD > head.txt\u000Acurl -f -s -S --request POST --header \u0022Authorization:token $GITHUB_ACCESS_TOKEN\u0022 --header \u0022Content-Type:application/json\u0022 --data-binary \u0022{\u005C\u0022base\u005C\u0022:\u005C\u0022master\u005C\u0022,\u005C\u0022head\u005C\u0022:\u005C\u0022`cat head.txt`\u005C\u0022,\u005C\u0022commit_message\u005C\u0022:\u005C\u0022auto-merge $CIRCLE_BRANCH into master\u005C\u0022}\u0022 \u0022https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges\u0022\u000Afi"
+               }
+            }
+         ]
+      }
+   },
+   "version" : 2,
+   "workflows" : {
+      "build" : {
+         "jobs" : [
+            "build"
+         ]
+      },
+      "version" : 2
+   }
+}

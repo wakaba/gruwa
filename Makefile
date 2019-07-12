@@ -43,17 +43,9 @@ PROVE = ./prove
 
 test: test-deps test-main
 
-test-deps: deps deps-accounts deps-minio local/accounts.sql
+test-deps: deps local/accounts.sql
 
-deps-accounts:
-	perl local/bin/pmbp.pl $(PMBP_OPTIONS) \
-	    --install-perl-app https://github.com/wakaba/accounts
-
-deps-minio: local/bin/minio
-
-local/bin/minio:
-	$(WGET) -O $@ https://dl.minio.io/server/minio/release/linux-amd64/minio
-	chmod u+x $@
+deps-circleci: test-deps
 
 local/accounts.sql: local/accounts-2.sql
 	cp $< $@
@@ -62,5 +54,7 @@ local/accounts-2.sql:
 
 test-main:
 	$(PROVE) t/http/*.t
+
+test-circleci: test-main
 
 ## License: Public Domain.

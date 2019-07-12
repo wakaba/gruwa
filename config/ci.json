@@ -4,23 +4,22 @@
     "required_docker_images": [
       "quay.io/wakaba/docker-perl-app-base",
       "minio/minio",
-      "mysql/mysql-server"
+      "mariadb"
     ],
     "merger": 1,
     "gaa": 1,
 
     "build": [
-      "make test-deps"
+      "make deps-circleci"
     ],
     "tests": [
-      "# XXX run tests using docker",
-      "make test",
+      "rm -fr $CIRCLE_ARTIFACTS/ss.pid",
+      {"TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-http-$CIRCLE_NODE_INDEX.txt.dat 2>&1": {
+        "background": true}},
+      "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done",
+      "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid",
 
-      "echo '{\u0022origin\u0022:\u0022http://localhost:5511\u0022}' > config.json",
-      "docker run --name server -v `pwd`/config.json:/config.json -e CONFIG_FILE=/config.json -e DATABASE_DSN=XXX -d -p 5511:8080 quay.io/wakaba/gruwa; sleep 10",
-      "curl -f http://localhost:5511/css/common.css",
-      "docker logs server"
-
+      "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-circleci"
     ]
   }
 }
