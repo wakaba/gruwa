@@ -33,6 +33,7 @@ sub Test (&;%) {
   my $code = shift;
   my %args = @_;
   $NeedBrowser = 1 if delete $args{browser};
+  $args{timeout} //= 120;
   test {
     my $current = CurrentTest->new ({
       context => shift,

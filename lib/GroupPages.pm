@@ -1513,7 +1513,7 @@ sub group_object ($$$$) {
 
             for my $key (qw(owner_status user_status thread_id
                             parent_object_id)) {
-              $update->{$key} = $object->{data}->{$key}
+              $update->{$key} = $object->{data}->{$key} || 0
                   if $changes->{fields}->{$key};
             }
             return $db->update ('object', $update, where => {
