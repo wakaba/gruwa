@@ -6,7 +6,8 @@ use Promised::Flow;
 use JSON::PS;
 use Web::Encoding;
 use Web::URL;
-use Web::Transport::ConnectionClient;
+use Web::Transport::BasicClient;
+use ServerSet::ReverseProxyProxyManager;
 use Test::More;
 use Test::X1;
 
@@ -19,10 +20,16 @@ sub c ($) {
 } # c
 
 sub client ($) {
-  my $self = $_[0];
-  return $self->{client}
-      ||= Web::Transport::ConnectionClient->new_from_url ($self->{url});
+  my ($self) = @_;
+  return $self->client_for ($self->{server_data}->{app_client_url});
 } # client
+
+sub client_for ($$) {
+  my ($self, $url) = @_;
+  $self->{clients}->{$url->get_origin->to_ascii} ||= Web::Transport::BasicClient->new_from_url ($url, {
+    proxy_manager => ServerSet::ReverseProxyProxyManager->new_from_envs ($self->{server_data}->{local_envs}),
+  });
+} # client_for
 
 sub get_html ($$;$%) {
   my ($self, $path, $params, %args) = @_;
@@ -362,9 +369,7 @@ sub create_invitation ($$) {
 
 sub accounts_client ($) {
   my $self = $_[0];
-  return $self->{accounts_client}
-      ||= Web::Transport::ConnectionClient->new_from_url
-          (Web::URL->parse_string ($self->{accounts}->{url}));
+  return $self->client_for ($self->{server_data}->{accounts_client_url});
 } # accounts_client
 
 sub create_account ($$$) {
@@ -375,9 +380,9 @@ sub create_account ($$$) {
     method => 'POST',
     path => ['session'],
     params => {
-      sk_context => $self->{accounts}->{context},
+      sk_context => $self->{server_data}->{accounts_context},
     },
-    bearer => $self->{accounts}->{key},
+    bearer => $self->{server_data}->{accounts_key},
   )->then (sub {
     die $_[0] unless $_[0]->status == 200;
     $account->{cookies}->{sk} = (json_bytes2perl $_[0]->body_bytes)->{sk};
@@ -385,11 +390,11 @@ sub create_account ($$$) {
       method => 'POST',
       path => ['create'],
       params => {
-        sk_context => $self->{accounts}->{context},
+        sk_context => $self->{server_data}->{accounts_context},
         sk => $account->{cookies}->{sk},
         name => $opts->{name},
       },
-      bearer => $self->{accounts}->{key},
+      bearer => $self->{server_data}->{accounts_key},
     );
   })->then (sub {
     die $_[0] unless $_[0]->status == 200;
@@ -422,7 +427,7 @@ sub _account ($$) {
 
 sub resolve ($$) {
   my $self = shift;
-  return Web::URL->parse_string (shift, $self->{url});
+  return Web::URL->parse_string (shift, $self->{server_data}->{app_client_url});
 } # resolve
 
 sub o ($$) {
@@ -528,7 +533,7 @@ sub close ($) {
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -541,6 +546,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

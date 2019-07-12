@@ -43,7 +43,7 @@ PROVE = ./prove
 
 test: test-deps test-main
 
-test-deps: deps deps-accounts deps-minio
+test-deps: deps deps-accounts deps-minio local/accounts.sql
 
 deps-accounts:
 	perl local/bin/pmbp.pl $(PMBP_OPTIONS) \
@@ -54,6 +54,11 @@ deps-minio: local/bin/minio
 local/bin/minio:
 	$(WGET) -O $@ https://dl.minio.io/server/minio/release/linux-amd64/minio
 	chmod u+x $@
+
+local/accounts.sql: local/accounts-2.sql
+	cp $< $@
+local/accounts-2.sql:
+	curl https://raw.githubusercontent.com/wakaba/accounts/master/db/account.sql > $@
 
 test-main:
 	$(PROVE) t/http/*.t
