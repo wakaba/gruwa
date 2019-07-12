@@ -61,6 +61,6 @@ test-browser:
 	TEST_MAX_CONCUR=1 $(PROVE) t/browser/*.t
 
 test-http-circleci: test-http
-test-http-browser: test-browser
+test-browser-circleci: test-browser
 
 ## License: Public Domain.
