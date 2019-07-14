@@ -70,6 +70,33 @@
         参加中に作成した<a href=#objects>記事</a>などは、
         そのまま残ります。
       </section>
+
+      <section id=themes>
+        <h1>配色</h1>
+
+        <p>グループ、
+        <a href=#blogs>日記</a>、
+        <a href=#wiki>Wiki</a>、
+        <a href=#todos>TODO リスト</a>は、
+        設定から「配色」 (デザインテーマ) を変更できます。グループの配色は、
+        <a href=#blogs>日記</a>、
+        <a href=#wiki>Wiki</a>、
+        <a href=#todos>TODO リスト</a>以外のページに適用されます。
+
+        <p>グループごと、日記ごとに違う配色を選ぶと、
+        誤投稿しにくくなって便利です。
+
+          <div class=notes>
+            <p><a href=https://github.com/wakaba/gruwa-themes>利用できる配色</a>の中には、
+            他のソフトウェア
+            (<cite>tDiary</cite> や<a href=http://d.hatena.ne.jp/keyword/%A4%CF%A4%C6%A4%CA%A5%C0%A5%A4%A5%A2%A5%EA%A1%BC%A5%C6%A1%BC%A5%DE%BA%EE%C0%AE%BB%FE%A4%CE%C3%ED%B0%D5?kid=1342#fn3><cite>はてなダイアリー</cite></a>)
+            のために開発され、
+            オープンソースライセンスで配布されているものも含まれます。
+            Gruwa と他のソフトウェアの構造の違いのため、
+            適切に表示できないものもあります
+            (順次改善予定です)。
+          </div>
+      </section>
     </section>
 
     <section id=blogs>

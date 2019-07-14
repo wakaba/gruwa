@@ -1,7 +1,9 @@
 @import 'base.css';
 
 html {
-  line-height: 1.8;
+  background: transparent;
+  color: var(--main-color);
+  line-height: 1.8;  
 }
 
 body {

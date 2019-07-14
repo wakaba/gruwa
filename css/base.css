@@ -1,6 +1,9 @@
+@import 'themes.css';
+
 html { /* [data-thema=green] */
-  color: var(--main-color);
-  background-color: var(--main-background-color);
+  color: var(--wall-color);
+  background: var(--wall-background);
+  /* min-height: var(--wall-min-height); box-sizing: border-box */
 
   --dark-background-color: green;
   --dark-color: white;
@@ -17,6 +20,10 @@ html { /* [data-thema=green] */
   --main-color: black;
   --main-background-color: white;
   --main-shadow-color: gray;
+
+  --wall-color: var(--main-color);
+  --wall-background: var(--main-background-color);
+  --wall-min-height: 0;
 
   --accented-color: black;
   --accented-border-color: green;
@@ -50,9 +57,51 @@ html { /* [data-thema=green] */
 
   --toolbar-hover-background-color: var(--light-1-background-color);
   --toolbar-hover-color: var(--light-1-color);
+
+  --pageheader-color: var(--light-1-color);
+  --pageheader-background: var(--light-1-background-color);
+  --pageheader-min-height: 0;
+  --pageheader-border-width: 1px;
+  --pageheader-border-style: none;
+  --pageheader-border-color: var(--accented-border-color);
+  --pageheader-padding: 2em;
+
+  --header3-color: var(--accented-color);
+  --header3-background: var(--accented-background-color);
+  --header3-min-height: 0;
+  --header3-border-width: 0;
+  --header3-border-style: none;
+  --header3-border-color: var(--accented-border-color);
+  --header3-padding: 0.3em;
+
+  --header2-color: var(--header3-color);
+  --header2-background: var(--header3-background);
+  --header2-min-height: var(--header3-min-height);
+  --header2-border-width: var(--header3-border-width);
+  --header2-border-style: var(--header3-border-style);
+  --header2-border-color: var(--header3-border-color);
+  --header2-padding: var(--header3-padding);
+
+  --header1-color: var(--header3-color);
+  --header1-background: var(--header3-background);
+  --header1-min-height: var(--header3-min-height);
+  --header1-border-width: var(--header3-border-width);
+  --header1-border-style: var(--header3-border-style);
+  --header1-border-color: var(--header3-border-color);
+  --header1-padding: var(--header3-padding);
+}
+
+html[data-theme=green] {
+  --header3-border-width: 1px;
+  --header3-border-style: none none solid none;
+  --header3-padding: 0.3em;
 }
 
 html[data-theme=blue] {
+  --header3-border-width: 1px;
+  --header3-border-style: none none solid none;
+  --header3-padding: 0.3em;
+  
   --dark-background-color: #0c0ca9;
   --light-1-background-color: rgb(225, 225, 255);
   --light-2-background-color: rgb(245, 245, 255);
@@ -61,6 +110,10 @@ html[data-theme=blue] {
 }
 
 html[data-theme=red] {
+  --header3-border-width: 1px;
+  --header3-border-style: none none solid none;
+  --header3-padding: 0.3em;
+
   --dark-background-color: #e40000;
   --light-1-background-color: rgb(255, 225, 225);
   --light-2-background-color: rgb(255, 245, 245);
@@ -69,6 +122,10 @@ html[data-theme=red] {
 }
 
 html[data-theme=black] {
+  --header3-border-width: 1px;
+  --header3-border-style: none none solid none;
+  --header3-padding: 0.3em;
+
   --dark-background-color: #ddd;
   --dark-color: black;
 
@@ -116,11 +173,14 @@ section > h1:not([hidden]),
 section > header.section:not([hidden]) {
   display: block;
   margin: 0 0 1rem 0;
-  border-bottom: 1px solid;
-  border-color: var(--accented-border-color);
-  padding: 0.3em;
-  color: var(--accented-color);
-  background-color: var(--accented-background-color);
+  border-style: var(--header3-border-style);
+  border-width: var(--header3-border-width);
+  border-color: var(--header3-border-color);
+  padding: var(--header3-padding);
+  background: var(--header3-background);
+  color: var(--header3-color);
+  min-height: var(--header3-min-height);
+  box-sizing: border-box;
 }
 
 section > h1,
@@ -878,9 +938,14 @@ hatena-star img.hatena-user-icon {
   opacity: 0.8;
 }
 
+small {
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+}
+
 /*
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
