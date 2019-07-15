@@ -16,7 +16,7 @@ html { /* [data-thema=green] */
   --light-2-color: black;
   --light-2-shadow-color: #ccc;
 
-  --main-border-color: rgb(205, 255, 205);
+  --main-border-color: transparent;
   --main-color: black;
   --main-background-color: white;
   --main-shadow-color: gray;
@@ -26,7 +26,7 @@ html { /* [data-thema=green] */
   --wall-min-height: 0;
 
   --accented-color: black;
-  --accented-border-color: green;
+  --accented-border-color: currentcolor;
   --accented-background-color: transparent;
 
   --menu-background-color: var(--main-background-color);
@@ -67,14 +67,23 @@ html { /* [data-thema=green] */
   --pageheader-padding: 2em;
   --pageheader-align: start;
 
-  --header3-color: var(--accented-color);
-  --header3-background: var(--accented-background-color);
-  --header3-min-height: 0;
-  --header3-border-width: 0;
-  --header3-border-style: none;
-  --header3-border-color: var(--accented-border-color);
-  --header3-padding: 0.3em;
-  --header3-align: start;
+  --header4-color: var(--accented-color);
+  --header4-background: var(--accented-background-color);
+  --header4-min-height: 0;
+  --header4-border-width: 1px;
+  --header4-border-style: none none solid none;
+  --header4-border-color: var(--accented-border-color);
+  --header4-padding: 0.3em;
+  --header4-align: start;
+
+  --header3-color: var(--header4-color);
+  --header3-background: var(--header4-background);
+  --header3-min-height: var(--header4-min-height);
+  --header3-border-width: var(--header4-border-width);
+  --header3-border-style: none; /* var(--header4-border-style); */
+  --header3-border-color: var(--header4-border-color);
+  --header3-padding: var(--header4-padding);
+  --header3-align: var(--header4-align);
 
   --header2-color: var(--header3-color);
   --header2-background: var(--header3-background);
@@ -83,7 +92,7 @@ html { /* [data-thema=green] */
   --header2-border-style: var(--header3-border-style);
   --header2-border-color: var(--header3-border-color);
   --header2-padding: var(--header3-padding);
-  --header2-align: start;
+  --header2-align: var(--header3-align);
 
   --header1-color: var(--header3-color);
   --header1-background: var(--header3-background);
@@ -92,7 +101,7 @@ html { /* [data-thema=green] */
   --header1-border-style: var(--header3-border-style);
   --header1-border-color: var(--header3-border-color);
   --header1-padding: var(--header3-padding);
-  --header1-align: start;
+  --header1-align: var(--header3-align);
 }
 
 html[data-theme=green],
@@ -104,11 +113,16 @@ html[data-theme=black] {
   --header3-padding: 0.3em;
 
   --header2-border-width: .3em;
-  --header2-border-style: none none solid none;
+  --header2-border-style: none none none solid;
   --header2-border-color: var(--accented-border-color);
   --header2-padding: .3em .5em;
   --header2-background: var(--accented-background-color);
   --header2-color: var(--accented-color);
+}
+
+html[data-theme=green] {
+  --main-border-color: rgb(205, 255, 205);
+  --accented-border-color: green;
 }
 
 html[data-theme=blue] {
@@ -175,15 +189,15 @@ section > h1:not([hidden]),
 section > header.section:not([hidden]) {
   display: block;
   margin: 0 0 1rem 0;
-  border-style: var(--header3-border-style);
-  border-width: var(--header3-border-width);
-  border-color: var(--header3-border-color);
-  padding: var(--header3-padding);
-  background: var(--header3-background);
-  color: var(--header3-color);
-  min-height: var(--header3-min-height);
+  border-style: var(--header4-border-style);
+  border-width: var(--header4-border-width);
+  border-color: var(--header4-border-color);
+  padding: var(--header4-padding);
+  background: var(--header4-background);
+  color: var(--header4-color);
+  min-height: var(--header4-min-height);
   box-sizing: border-box;
-  text-align: var(--header3-text-align);
+  text-align: var(--header4-text-align);
 }
 
 section > h1,
@@ -287,9 +301,7 @@ p {
 form {
   margin: 0 1em 1em;
   border: 1px dashed;
-  border-color: var(--main-border-color);
-  color: var(--main-color);
-  background-color: var(--main-background-color);
+  border-color: var(--accented-border-color);
   padding: 1em;
 }
 
@@ -332,7 +344,7 @@ input:not([type]) {
   box-sizing: border-box;
   width: 100%;
   border: dotted 1px;
-  border-color: var(--main-border-color);
+  border-color: var(--accented-border-color);
   padding: .3em;
   color: var(--main-color);
   background-color: var(--main-background-color);
@@ -340,13 +352,16 @@ input:not([type]) {
 
 input[type=date] {
   border: dotted 1px;
-  border-color: var(--main-border-color);
+  border-color: var(--accented-border-color);
   padding: .3em;
   color: var(--main-color);
   background-color: var(--main-background-color);
 }
 
 select {
+  border: dotted 1px;
+  border-color: var(--accented-border-color);
+  padding: .3em;
   color: var(--main-color);
   background-color: var(--main-background-color);
   min-width: 10em;
@@ -357,7 +372,7 @@ list-control {
   width: 100%;
   box-sizing: border-box;
   border: dotted 1px;
-  border-color: var(--main-border-color);
+  border-color: var(--accented-border-color);
   padding: .1em .3em;
   color: var(--main-color);
   background-color: var(--main-background-color);
@@ -401,7 +416,7 @@ list-dropdown:not([hidden]) {
   right: 0;
   display: block;
   border: solid 1px;
-  border-color: var(--main-border-color);
+  border-color: var(--accented-border-color);
   box-shadow: 3px 3px var(--main-shadow-color);
   color: var(--main-color);
   background-color: var(--main-background-color);

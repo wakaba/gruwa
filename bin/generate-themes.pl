@@ -5,7 +5,7 @@ use JSON::PS;
 use Web::Encoding;
 
 my $Data = {};
-my $Meta = {};
+my $Meta = {default_names => []};
 
 sub css_rule ($%) {
   my ($theme, %prop) = @_;
@@ -34,6 +34,8 @@ sub css_rule ($%) {
       $Meta->{themes}->{$theme}->{label} = $def->{info}->{label};
       $Meta->{themes}->{$theme}->{score} = $def->{score};
       $Meta->{themes}->{$theme}->{url} = $def->{info}->{url};
+      push @{$Meta->{default_names}}, $theme
+          if $def->{info}->{default_ok};
     }
   }
   
@@ -201,22 +203,12 @@ sub css_rule ($%) {
         }
       }
     }
-    $p{'main-border-color'} //= $p{'accented-border-color'} // $p{'main-color'};
     
     push @{$Data->{$license}->{styles} ||= []}, css_rule $theme, %p;
 
 =pod
 
 XXX
-
-  --accented-color: black;
-  --accented-border-color: green;
-  --accented-background-color: transparent;
-
-  --menu-background-color: var(--main-background-color);
-  --menu-color: var(--main-color);
-  --menu-border-color: var(--accented-border-color);
-  --menu-shadow-color: var(--main-shadow-color);
 
   --error-color: red;
   --error-background-color: transparent;
@@ -226,9 +218,6 @@ XXX
 
   --disabled-color: gray;
   --disabled-background-color: transparent;
-
-  --toolbar-hover-background-color: var(--light-1-background-color);
-  --toolbar-hover-color: var(--light-1-color);
 
 =cut
 
@@ -266,6 +255,51 @@ See <https://github.com/wakaba/gruwa-themes>.
         (join "\n", @{$def->{styles} or []});
   }
   $RootPath->child ('css/themes.css')->spew (encode_web_utf8 $Out);
+}
+
+{
+  push @{$Meta->{default_names}}, qw(
+    270b 270g 270or 270pk
+    3minutes 3pink 90 aoikuruma artnouveau-red artnouveau-blue artnouveau-green
+    bluegrad bright-green cards DEN easy flower gardenia
+    haru hatena hatena2-brown hatena2-darkgray hatena2-green hatena2-lightblue
+    hatena2-lightgray hatena2-pink hatena2-purple hatena2-red 
+    hatena2-sepia hatena2-tea hatena2-white
+    hatena_light-blue hatena_light-green hatena_light-orange
+    hatena_simple2 hydrangea iris madrascheck mintblue monotone-flower
+    pale precision puppy sagegreen seam-line snake spring summer_wave
+    tag apollo 
+    asterisk-blue asterisk-lightgray asterisk-maroon asterisk-orange
+    asterisk-pink hatena_christmas coloredleaves-green
+    coloredleaves-red coloredleaves-yellow delta 
+    hatena_fabric-blue hatena_fabric-green hatena_fabric-red 
+    hatena_flower hatena_flower-blue hatena_flower-orange
+    hatena_flat-brown hatena_flat-green hatena_flat-lightblue
+    hatena_flat-orange hatena_flat-pink hatena_flat-purple
+    himawari inka-red inka-green inka-blue kanshin
+    kitchen-classic kitchen-french loose-leaf lovely_pink
+    memo memo2 memo3 pain pastelpink purple_sun query000
+    query011 query101 query110 query111or hatena_rainyseason 
+    rim-daidaiiro rim-fujiiro rim-mizuiro rim-sakurairo
+    rim-tanpopoiro rim-wakabairo sakura sakuramochi
+    savanna sepia hatena_simple-black hatena_simple-blue
+    hatena_simple-red smoking_gray smoking_white soft-carrot
+    soft-kiwi soft-mocha tuki vitamin wani hatena
+    hatena-brown hatena-darkgray hatena-green hatena-lightblue
+    hatena-lightgray hatena-lime hatena-orange
+    hatena-pink hatena-purple hatena-red hatena-sepia
+    hatena-tea hatena-white clover silver kaki flower-tree-bird
+  );
+  my $found = {};
+  @{$Meta->{default_names}} = grep {
+    not $found->{$_}++;
+  } @{$Meta->{default_names}};
+  for (@{$Meta->{default_names}}) {
+    unless ($Meta->{themes}->{$_}) {
+      die "Bad theme name |$_|";
+    }
+    $Meta->{themes}->{$_}->{score} += 50;
+  }
 }
 
 {

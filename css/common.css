@@ -148,7 +148,7 @@ section.page > header {
   color: var(--pageheader-color);
   min-height: var(--pageheader-min-height);
   box-sizing: border-box;
-  text-align: var(--pageheader-text-align);
+  text-align: var(--pageheader-align);
 }
 
 section.page > header h1 {
@@ -185,7 +185,7 @@ section.page section > h1 {
   color: var(--header1-color);
   min-height: var(--header1-min-height);
   box-sizing: border-box;
-  text-align: var(--header1-text-align);
+  text-align: var(--header1-align);
 }
 
 section.page section section > h1,
@@ -198,7 +198,7 @@ section.page article.object > header {
   color: var(--header2-color);
   min-height: var(--header2-min-height);
   box-sizing: border-box;
-  text-align: var(--header2-text-align);
+  text-align: var(--header2-align);
 }
 
 section.page section section section > h1 {
@@ -210,7 +210,19 @@ section.page section section section > h1 {
   color: var(--header3-color);
   min-height: var(--header3-min-height);
   box-sizing: border-box;
-  text-align: var(--header3-text-align);
+  text-align: var(--header3-align);
+}
+
+section.page section section section section > h1 {
+  border-style: var(--header4-border-style);
+  border-width: var(--header4-border-width);
+  border-color: var(--header4-border-color);
+  padding: var(--header4-padding);
+  background: var(--header4-background);
+  color: var(--header4-color);
+  min-height: var(--header4-min-height);
+  box-sizing: border-box;
+  text-align: var(--header4-align);
 }
  
 list-container.index-list {

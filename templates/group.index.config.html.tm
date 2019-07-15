@@ -74,7 +74,6 @@
                     return res.json ();
                   }).then (json => {
                     var select = document.querySelector ('select[name=theme]');
-                    var selected = select.value;
                     select.textContent = '';
                     json.names.forEach (theme => {
                       var def = json.themes[theme];
@@ -85,7 +84,7 @@
                       def.name = theme;
                       select.appendChild (option);
                     });
-                    select.value = selected;
+                    select.value = document.documentElement.getAttribute ('data-theme');
                     select.onchange ();
                   });
                 </script>

@@ -1,76 +1,28 @@
 {
-   "names" : [
-      "green",
+   "default_names" : [
       "blue",
+      "green",
       "red",
-      "black",
-      "20panda",
       "270b",
       "270g",
       "270or",
       "270pk",
       "3minutes",
       "3pink",
-      "4chairs-cherry",
-      "4chairs-lime",
-      "4chairs-sky",
       "90",
       "aoikuruma",
+      "artnouveau-red",
       "artnouveau-blue",
       "artnouveau-green",
-      "artnouveau-red",
-      "autumn",
-      "babypink",
-      "bill",
-      "black-lingerie",
-      "blackboard-tulip",
       "bluegrad",
       "bright-green",
-      "britannian",
-      "brown",
-      "candle-green",
-      "candle-red",
-      "candy",
       "cards",
-      "cat",
-      "check",
-      "cherry",
-      "cross",
       "DEN",
-      "dice",
-      "darkwhite",
-      "darkness-pop",
-      "date",
-      "deepblue",
-      "denim",
-      "diamond_dust",
-      "double",
-      "earth-brown",
       "easy",
-      "fine",
       "flower",
-      "fragments_gr",
-      "fri",
-      "futaba",
-      "garashic-blue",
-      "garashic-green",
-      "garashic-pink",
-      "garden",
       "gardenia",
-      "gear",
-      "germany",
-      "glass",
-      "gothic-black",
-      "gothic-pink",
-      "gothic-red",
-      "gothic-violet",
-      "gray",
-      "gray-note",
-      "green-border",
-      "greentea3",
       "haru",
-      "hatena2",
-      "hatena2-black",
+      "hatena",
       "hatena2-brown",
       "hatena2-darkgray",
       "hatena2-green",
@@ -82,31 +34,307 @@
       "hatena2-sepia",
       "hatena2-tea",
       "hatena2-white",
+      "hatena_light-blue",
+      "hatena_light-green",
+      "hatena_light-orange",
+      "hatena_simple2",
+      "hydrangea",
+      "iris",
+      "madrascheck",
+      "mintblue",
+      "monotone-flower",
+      "pale",
+      "precision",
+      "puppy",
+      "sagegreen",
+      "seam-line",
+      "snake",
+      "spring",
+      "summer_wave",
+      "tag",
+      "apollo",
+      "asterisk-blue",
+      "asterisk-lightgray",
+      "asterisk-maroon",
+      "asterisk-orange",
+      "asterisk-pink",
+      "hatena_christmas",
+      "coloredleaves-green",
+      "coloredleaves-red",
+      "coloredleaves-yellow",
+      "delta",
+      "hatena_fabric-blue",
+      "hatena_fabric-green",
+      "hatena_fabric-red",
+      "hatena_flower",
+      "hatena_flower-blue",
+      "hatena_flower-orange",
+      "hatena_flat-brown",
+      "hatena_flat-green",
+      "hatena_flat-lightblue",
+      "hatena_flat-orange",
+      "hatena_flat-pink",
+      "hatena_flat-purple",
+      "himawari",
+      "inka-red",
+      "inka-green",
+      "inka-blue",
+      "kanshin",
+      "kitchen-classic",
+      "kitchen-french",
+      "loose-leaf",
+      "lovely_pink",
+      "memo",
+      "memo2",
+      "memo3",
+      "pain",
+      "pastelpink",
+      "purple_sun",
+      "query000",
+      "query011",
+      "query101",
+      "query110",
+      "query111or",
+      "hatena_rainyseason",
+      "rim-daidaiiro",
+      "rim-fujiiro",
+      "rim-mizuiro",
+      "rim-sakurairo",
+      "rim-tanpopoiro",
+      "rim-wakabairo",
+      "sakura",
+      "sakuramochi",
+      "savanna",
+      "sepia",
+      "hatena_simple-black",
+      "hatena_simple-blue",
+      "hatena_simple-red",
+      "smoking_gray",
+      "smoking_white",
+      "soft-carrot",
+      "soft-kiwi",
+      "soft-mocha",
+      "tuki",
+      "vitamin",
+      "wani",
+      "hatena-brown",
+      "hatena-darkgray",
+      "hatena-green",
+      "hatena-lightblue",
+      "hatena-lightgray",
+      "hatena-lime",
+      "hatena-orange",
+      "hatena-pink",
+      "hatena-purple",
+      "hatena-red",
+      "hatena-sepia",
+      "hatena-tea",
+      "hatena-white",
+      "clover",
+      "silver",
+      "kaki",
+      "flower-tree-bird"
+   ],
+   "names" : [
+      "green",
+      "blue",
+      "red",
+      "black",
+      "270b",
+      "270g",
+      "270or",
+      "270pk",
+      "3minutes",
+      "3pink",
+      "90",
+      "aoikuruma",
+      "artnouveau-blue",
+      "artnouveau-green",
+      "artnouveau-red",
+      "bluegrad",
+      "bright-green",
+      "cards",
+      "DEN",
+      "easy",
+      "flower",
+      "gardenia",
+      "haru",
+      "hatena2-brown",
+      "hatena2-darkgray",
+      "hatena2-green",
+      "hatena2-lightblue",
+      "hatena2-lightgray",
+      "hatena2-pink",
+      "hatena2-purple",
+      "hatena2-red",
+      "hatena2-sepia",
+      "hatena2-tea",
+      "hatena2-white",
+      "hatena_light-blue",
+      "hatena_light-green",
+      "hatena_light-orange",
+      "hatena_simple2",
+      "hydrangea",
+      "iris",
+      "madrascheck",
+      "mintblue",
+      "monotone-flower",
+      "pale",
+      "precision",
+      "puppy",
+      "sagegreen",
+      "seam-line",
+      "snake",
+      "spring",
+      "summer_wave",
+      "tag",
+      "apollo",
+      "asterisk-blue",
+      "asterisk-lightgray",
+      "asterisk-maroon",
+      "asterisk-orange",
+      "asterisk-pink",
+      "hatena_christmas",
+      "coloredleaves-green",
+      "coloredleaves-red",
+      "coloredleaves-yellow",
+      "delta",
+      "hatena_fabric-blue",
+      "hatena_fabric-green",
+      "hatena_fabric-red",
+      "hatena_flower",
+      "hatena_flower-blue",
+      "hatena_flower-orange",
+      "hatena_flat-brown",
+      "hatena_flat-green",
+      "hatena_flat-lightblue",
+      "hatena_flat-orange",
+      "hatena_flat-pink",
+      "hatena_flat-purple",
+      "himawari",
+      "inka-blue",
+      "inka-green",
+      "inka-red",
+      "kanshin",
+      "kitchen-classic",
+      "kitchen-french",
+      "loose-leaf",
+      "lovely_pink",
+      "memo",
+      "memo2",
+      "memo3",
+      "pain",
+      "pastelpink",
+      "purple_sun",
+      "query000",
+      "query011",
+      "query101",
+      "query110",
+      "query111or",
+      "hatena_rainyseason",
+      "rim-daidaiiro",
+      "rim-fujiiro",
+      "rim-mizuiro",
+      "rim-sakurairo",
+      "rim-tanpopoiro",
+      "rim-wakabairo",
+      "sakura",
+      "sakuramochi",
+      "savanna",
+      "sepia",
+      "hatena_simple-black",
+      "hatena_simple-blue",
+      "hatena_simple-red",
+      "smoking_gray",
+      "smoking_white",
+      "soft-carrot",
+      "soft-kiwi",
+      "soft-mocha",
+      "tuki",
+      "vitamin",
+      "wani",
+      "hatena",
+      "hatena-brown",
+      "hatena-darkgray",
+      "hatena-green",
+      "hatena-lightblue",
+      "hatena-lightgray",
+      "hatena-lime",
+      "hatena-orange",
+      "hatena-pink",
+      "hatena-purple",
+      "hatena-red",
+      "hatena-sepia",
+      "hatena-tea",
+      "hatena-white",
+      "clover",
+      "silver",
+      "kaki",
+      "flower-tree-bird",
+      "20panda",
+      "4chairs-cherry",
+      "4chairs-lime",
+      "4chairs-sky",
+      "autumn",
+      "babypink",
+      "bill",
+      "black-lingerie",
+      "blackboard-tulip",
+      "britannian",
+      "brown",
+      "candle-green",
+      "candle-red",
+      "candy",
+      "cat",
+      "check",
+      "cherry",
+      "cross",
+      "dice",
+      "darkwhite",
+      "darkness-pop",
+      "date",
+      "deepblue",
+      "denim",
+      "diamond_dust",
+      "double",
+      "earth-brown",
+      "fine",
+      "fragments_gr",
+      "fri",
+      "futaba",
+      "garashic-blue",
+      "garashic-green",
+      "garashic-pink",
+      "garden",
+      "gear",
+      "germany",
+      "glass",
+      "gothic-black",
+      "gothic-pink",
+      "gothic-red",
+      "gothic-violet",
+      "gray",
+      "gray-note",
+      "green-border",
+      "greentea3",
+      "hatena2",
+      "hatena2-black",
       "hatena_carving-blue",
       "hatena_carving-green",
       "hatena_carving-red",
       "hatena_chilled-blue",
       "hatena_chilled-green",
       "hatena_chilled-red",
-      "hatena_light-blue",
-      "hatena_light-green",
-      "hatena_light-orange",
-      "hatena_simple2",
       "hellali",
-      "hydrangea",
-      "iris",
       "kaeru",
       "karte",
       "lr",
       "lightning",
       "lime",
       "line",
-      "madrascheck",
       "magic",
       "matcha",
       "metal",
-      "mintblue",
-      "monotone-flower",
       "moo",
       "nachtmusik",
       "nahanaha",
@@ -119,7 +347,6 @@
       "orange-blue",
       "orange-border",
       "orangegrad",
-      "pale",
       "pastel-liquid",
       "petith",
       "petith-b",
@@ -128,8 +355,6 @@
       "pink-border",
       "pinkgrad",
       "piyo-family",
-      "precision",
-      "puppy",
       "pure-melon",
       "pure-peach",
       "pure-soda",
@@ -140,27 +365,21 @@
       "right",
       "s-blue",
       "s-pink",
-      "sagegreen",
       "sakana",
       "sakura-core",
       "scarlet",
-      "seam-line",
       "sidelight",
       "silver2",
       "simple",
       "simpleblack",
       "sky",
-      "snake",
       "snow-couple",
       "snow-girl",
       "snowy",
-      "spring",
       "starlight",
       "stripe",
       "subdued",
-      "summer_wave",
       "sunset",
-      "tag",
       "teacup",
       "thin",
       "w2k_button",
@@ -178,14 +397,8 @@
       "alfa",
       "ambient",
       "another_blue",
-      "apollo",
       "aqua",
       "arrow",
-      "asterisk-blue",
-      "asterisk-lightgray",
-      "asterisk-maroon",
-      "asterisk-orange",
-      "asterisk-pink",
       "autumn-leaf",
       "hatena_autumn",
       "bird",
@@ -216,7 +429,6 @@
       "chocolate-mint",
       "choochoo",
       "christmas",
-      "hatena_christmas",
       "hatena_cinnamon",
       "cinq",
       "citrus",
@@ -226,15 +438,11 @@
       "cock-green",
       "cock-pink",
       "coffeetime",
-      "coloredleaves-green",
-      "coloredleaves-red",
-      "coloredleaves-yellow",
       "hatena_colorful-blue",
       "hatena_colorful-green",
       "hatena_colorful-red",
       "colorlabel",
       "connect",
-      "delta",
       "dog",
       "dot",
       "dot-lime",
@@ -246,14 +454,8 @@
       "dotted_line-red",
       "eden",
       "emboss",
-      "hatena_fabric-blue",
-      "hatena_fabric-green",
-      "hatena_fabric-red",
       "fairytale",
       "feeling",
-      "hatena_flower",
-      "hatena_flower-blue",
-      "hatena_flower-orange",
       "hatena_flower2-blue",
       "hatena_flower2-green",
       "hatena_flower2-red",
@@ -284,37 +486,22 @@
       "gray2",
       "green-tea",
       "halloween",
-      "hatena_flat-brown",
-      "hatena_flat-green",
-      "hatena_flat-lightblue",
       "hatena_flat-darkgray",
-      "hatena_flat-orange",
-      "hatena_flat-pink",
-      "hatena_flat-purple",
       "hatena_kimono-ararekomon",
       "hatena_kimono-chidori",
       "hatena_kimono-koi",
       "hatena_kimono-korinkiri",
       "hatena_kimono-modernpink",
       "hazakura",
-      "himawari",
       "husen",
-      "inka-blue",
-      "inka-green",
-      "inka-red",
       "hatena_japanese",
       "jungler",
-      "kanshin",
       "kasumi",
-      "kitchen-classic",
-      "kitchen-french",
       "kitchen-natural",
       "kurenai",
       "hatena_leaf",
       "hatena_leaf-red",
       "light-blue",
-      "loose-leaf",
-      "lovely_pink",
       "hatena_machiya-blue",
       "hatena_machiya-green",
       "hatena_machiya-red",
@@ -324,9 +511,6 @@
       "mappycat-mocha",
       "mappycat-mono",
       "marguerite",
-      "memo",
-      "memo2",
-      "memo3",
       "menu",
       "mini-g",
       "mini-p",
@@ -343,60 +527,33 @@
       "nimbus",
       "noel",
       "hatena_note",
-      "pain",
-      "pastelpink",
       "pearl",
       "plum",
       "pokke-blue",
       "pokke-orange",
       "psps",
       "pudding",
-      "purple_sun",
       "qualm",
-      "query000",
-      "query011",
-      "query101",
-      "query110",
-      "query111or",
       "quirky",
       "quirky2",
       "rainy-season",
-      "hatena_rainyseason",
       "redgrid",
       "repro",
-      "rim-daidaiiro",
-      "rim-fujiiro",
-      "rim-mizuiro",
-      "rim-sakurairo",
-      "rim-tanpopoiro",
-      "rim-wakabairo",
       "russet",
       "hatena_ryukyu-black",
       "hatena_ryukyu-blue",
       "hatena_ryukyu-green",
-      "sakura",
-      "sakuramochi",
-      "savanna",
       "hatena_savanna-blue",
       "hatena_savanna-green",
       "hatena_savanna-red",
       "hatena_savanna-white",
       "script",
-      "sepia",
       "sesame-strawberry",
       "sheet-may",
-      "hatena_simple-black",
-      "hatena_simple-blue",
-      "hatena_simple-red",
       "simpler",
       "hatena_sky",
       "smoking_black",
-      "smoking_gray",
-      "smoking_white",
       "soda",
-      "soft-carrot",
-      "soft-kiwi",
-      "soft-mocha",
       "hatena_sunflower",
       "hatena_tango",
       "techno-goth",
@@ -404,7 +561,6 @@
       "tinybox",
       "tinybox_green",
       "town",
-      "tuki",
       "tulip-blue",
       "tulip-pink",
       "tulip-purple",
@@ -415,13 +571,11 @@
       "ugomemo-wood",
       "utsusemi",
       "vi",
-      "vitamin",
       "wall1",
       "wall2",
       "wall3",
       "wall4",
       "wall5_tatami",
-      "wani",
       "hatena_water",
       "wave",
       "widow",
@@ -435,28 +589,12 @@
       "naname",
       "nande-ya-nen",
       "happa",
-      "hatena",
       "hatena-black",
-      "hatena-brown",
-      "hatena-darkgray",
-      "hatena-green",
-      "hatena-lightblue",
-      "hatena-lightgray",
-      "hatena-lime",
-      "hatena-orange",
-      "hatena-pink",
-      "hatena-purple",
-      "hatena-red",
-      "hatena-sepia",
-      "hatena-tea",
       "hatena-test",
-      "hatena-white",
       "lovely",
       "giza",
       "xmas",
-      "clover",
       "cool_ice",
-      "silver",
       "triple_gray",
       "natural_gray",
       "pool_side",
@@ -465,12 +603,10 @@
       "paper",
       "kaizou",
       "nippon",
-      "kaki",
       "kanban",
       "midnight",
       "desert",
       "anagaattara",
-      "flower-tree-bird",
       "yuruyuru-sketch",
       "snow_man",
       "wood"
@@ -487,28 +623,28 @@
          "author" : "id:chepooka",
          "label" : "270b",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/270b/README"
       },
       "270g" : {
          "author" : "id:chepooka",
          "label" : "270g",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/270g/README"
       },
       "270or" : {
          "author" : "id:chepooka",
          "label" : "270or",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/270or/README"
       },
       "270pk" : {
          "author" : "id:chepooka",
          "label" : "270pk",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/270pk/README"
       },
       "3minutes" : {
@@ -516,7 +652,7 @@
          "copyright" : "Copyright 2003 (C) by Nana \u003Cmoo@xu.boo.jp>",
          "label" : "3minutes",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/3minutes/README"
       },
       "3pink" : {
@@ -524,7 +660,7 @@
          "copyright" : "Copyright 2003 (C) by Nana \u003Cmoo@xu.boo.jp>",
          "label" : "3pink",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/3pink/README"
       },
       "4chairs-cherry" : {
@@ -552,14 +688,14 @@
          "author" : "id:chepooka",
          "label" : "90",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/90/README"
       },
       "DEN" : {
          "author" : "id:darco",
          "label" : "DEN",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/DEN/README"
       },
       "alfa" : {
@@ -597,14 +733,14 @@
          "copyright" : "Copyright 2003 (C) by Nana \u003Cclorets@estyle.ne.jp>",
          "label" : "Aoikuruma",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/aoikuruma/README"
       },
       "apollo" : {
          "author" : "id:chepooka",
          "label" : "apollo",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/apollo/README"
       },
       "aqua" : {
@@ -626,56 +762,56 @@
          "author" : "id:DocSeri",
          "label" : "ArtNouveau (artnouveau-blue)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/artnouveau-blue/README"
       },
       "artnouveau-green" : {
          "author" : "id:DocSeri",
          "label" : "ArtNouveau (artnouveau-green)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/artnouveau-green/README"
       },
       "artnouveau-red" : {
          "author" : "id:DocSeri",
          "label" : "ArtNouveau (artnouveau-red)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/artnouveau-red/README"
       },
       "asterisk-blue" : {
          "author" : "n-yuji",
          "label" : "asterisk-blue",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/asterisk-blue/README"
       },
       "asterisk-lightgray" : {
          "author" : "n-yuji",
          "label" : "asterisk-lightgray",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/asterisk-lightgray/README"
       },
       "asterisk-maroon" : {
          "author" : "n-yuji",
          "label" : "asterisk-maroon",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/asterisk-maroon/README"
       },
       "asterisk-orange" : {
          "author" : "n-yuji",
          "label" : "asterisk-orange",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/asterisk-orange/README"
       },
       "asterisk-pink" : {
          "author" : "n-yuji",
          "label" : "asterisk-pink",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/asterisk-pink/README"
       },
       "autumn" : {
@@ -772,7 +908,7 @@
          "copyright" : null,
          "label" : "Gruwa Classic (青)",
          "license" : "AGPL3\u002B",
-         "score" : 100008,
+         "score" : 100058,
          "url" : "https://github.com/wakaba/gruwa"
       },
       "blue-feather" : {
@@ -786,7 +922,7 @@
          "author" : "zoe",
          "label" : "Bluegrad",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/bluegrad/README"
       },
       "bluely" : {
@@ -836,7 +972,7 @@
          "copyright" : "Copyright 2003 (C) by Nana \u003Cclorets@estyle.ne.jp>",
          "label" : "Bright-green",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/bright-green/README"
       },
       "britannian" : {
@@ -935,7 +1071,7 @@
          "author" : "NT",
          "label" : "Cards",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/cards/README"
       },
       "cassis" : {
@@ -1045,7 +1181,7 @@
          "copyright" : "Copyright 2002 (C) by TADA Tadashi \u003Csho@spc.gr.jp>",
          "label" : "クローバー",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/clover/README"
       },
       "clover-pink" : {
@@ -1087,21 +1223,21 @@
          "author" : "PIXEL DESIGN",
          "label" : "coloredleaves-green",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/coloredleaves-green/README"
       },
       "coloredleaves-red" : {
          "author" : "PIXEL DESIGN",
          "label" : "coloredleaves-red",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/coloredleaves-red/README"
       },
       "coloredleaves-yellow" : {
          "author" : "PIXEL DESIGN",
          "label" : "coloredleaves-yellow",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/coloredleaves-yellow/README"
       },
       "colorlabel" : {
@@ -1173,7 +1309,7 @@
          "author" : "kamioka",
          "label" : "delta",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/delta/README"
       },
       "denim" : {
@@ -1289,7 +1425,7 @@
          "author" : "abbey",
          "label" : "Easy",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/easy/README"
       },
       "eden" : {
@@ -1333,14 +1469,14 @@
          "copyright" : "Copyright 2002 (C) by Nana \u003Cmoo@xu.boo.jp>",
          "label" : "Flower",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/flower/README"
       },
       "flower-tree-bird" : {
          "author" : "id:hinnen",
          "label" : "花の木と鳥",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/flower-tree-bird/README"
       },
       "flowercat-green" : {
@@ -1522,7 +1658,7 @@
          "copyright" : "Copyright 2002 (C) by oyuu \u003Coyuu@mocha.freemail.ne.jp>",
          "label" : "Gardenia",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/gardenia/README"
       },
       "gear" : {
@@ -1655,7 +1791,7 @@
          "copyright" : null,
          "label" : "Gruwa Classic (緑)",
          "license" : "AGPL3\u002B",
-         "score" : 100009,
+         "score" : 100059,
          "url" : "https://github.com/wakaba/gruwa"
       },
       "green-border" : {
@@ -1700,7 +1836,7 @@
          "copyright" : "Copyright by (C) Nana http://moo.boo.jp",
          "label" : "HARU",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/haru/README"
       },
       "hatena" : {
@@ -1708,7 +1844,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena/README"
       },
       "hatena-black" : {
@@ -1724,7 +1860,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-brown)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-brown/README"
       },
       "hatena-darkgray" : {
@@ -1732,7 +1868,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-darkgray)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-darkgray/README"
       },
       "hatena-green" : {
@@ -1740,7 +1876,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-green)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-green/README"
       },
       "hatena-lightblue" : {
@@ -1748,7 +1884,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-lightblue)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-lightblue/README"
       },
       "hatena-lightgray" : {
@@ -1756,7 +1892,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-lightgray)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-lightgray/README"
       },
       "hatena-lime" : {
@@ -1764,7 +1900,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-lime)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-lime/README"
       },
       "hatena-orange" : {
@@ -1772,7 +1908,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-orange)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-orange/README"
       },
       "hatena-pink" : {
@@ -1780,7 +1916,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-pink)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-pink/README"
       },
       "hatena-purple" : {
@@ -1788,7 +1924,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-purple)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-purple/README"
       },
       "hatena-red" : {
@@ -1796,7 +1932,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-red)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-red/README"
       },
       "hatena-sepia" : {
@@ -1804,7 +1940,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-sepia)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-sepia/README"
       },
       "hatena-tea" : {
@@ -1812,7 +1948,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-tea)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-tea/README"
       },
       "hatena-test" : {
@@ -1827,7 +1963,7 @@
          "copyright" : "Copyright (c) 2002 Junya Kondo, Hatena Co.,Ltd.",
          "label" : "はてなダイアリー (hatena-white)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena-white/README"
       },
       "hatena2" : {
@@ -1848,77 +1984,77 @@
          "author" : "Hatena",
          "label" : "Hatena2-brown",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-brown/README"
       },
       "hatena2-darkgray" : {
          "author" : "Hatena",
          "label" : "Hatena2-darkgray",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-darkgray/README"
       },
       "hatena2-green" : {
          "author" : "Hatena",
          "label" : "Hatena2-green",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-green/README"
       },
       "hatena2-lightblue" : {
          "author" : "Hatena",
          "label" : "Hatena2-lightblue",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-lightblue/README"
       },
       "hatena2-lightgray" : {
          "author" : "Hatena",
          "label" : "Hatena2-lightgray",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-lightgray/README"
       },
       "hatena2-pink" : {
          "author" : "Hatena",
          "label" : "Hatena2-pink",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-pink/README"
       },
       "hatena2-purple" : {
          "author" : "Hatena",
          "label" : "Hatena2-purple",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-purple/README"
       },
       "hatena2-red" : {
          "author" : "Hatena",
          "label" : "Hatena2-red",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-red/README"
       },
       "hatena2-sepia" : {
          "author" : "Hatena",
          "label" : "Hatena2-sepia",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-sepia/README"
       },
       "hatena2-tea" : {
          "author" : "Hatena",
          "label" : "Hatena2-tea",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-tea/README"
       },
       "hatena2-white" : {
          "author" : "Hatena",
          "label" : "Hatena2-white",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena2-white/README"
       },
       "hatena_autumn" : {
@@ -1974,7 +2110,7 @@
          "author" : "hatena",
          "label" : "christmas (hatena_christmas)",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_christmas/README"
       },
       "hatena_cinnamon" : {
@@ -2009,28 +2145,28 @@
          "author" : "hatena",
          "label" : "fabric-blue",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_fabric-blue/README"
       },
       "hatena_fabric-green" : {
          "author" : "hatena",
          "label" : "fabric-green",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_fabric-green/README"
       },
       "hatena_fabric-red" : {
          "author" : "hatena",
          "label" : "fabric-red",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_fabric-red/README"
       },
       "hatena_flat-brown" : {
          "author" : "Hatena",
          "label" : "hatena_flat-brown",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_flat-brown/README"
       },
       "hatena_flat-darkgray" : {
@@ -2044,56 +2180,56 @@
          "author" : "Hatena",
          "label" : "hatena_flat-green",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_flat-green/README"
       },
       "hatena_flat-lightblue" : {
          "author" : "Hatena",
          "label" : "hatena_flat-lightblue",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_flat-lightblue/README"
       },
       "hatena_flat-orange" : {
          "author" : "Hatena",
          "label" : "hatena_flat-orange",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_flat-orange/README"
       },
       "hatena_flat-pink" : {
          "author" : "Hatena",
          "label" : "hatena_flat-pink",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_flat-pink/README"
       },
       "hatena_flat-purple" : {
          "author" : "Hatena",
          "label" : "hatena_flat-purple",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_flat-purple/README"
       },
       "hatena_flower" : {
          "author" : "hatena",
          "label" : "flower",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_flower/README"
       },
       "hatena_flower-blue" : {
          "author" : "hatena",
          "label" : "flower-blue",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_flower-blue/README"
       },
       "hatena_flower-orange" : {
          "author" : "hatena",
          "label" : "flower-orange",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_flower-orange/README"
       },
       "hatena_flower2-blue" : {
@@ -2184,21 +2320,21 @@
          "author" : "Hatena",
          "label" : "Hatena_light-blue",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_light-blue/README"
       },
       "hatena_light-green" : {
          "author" : "Hatena",
          "label" : "Hatena_light-green",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_light-green/README"
       },
       "hatena_light-orange" : {
          "author" : "Hatena",
          "label" : "Hatena_light-orange",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_light-orange/README"
       },
       "hatena_machiya-blue" : {
@@ -2240,7 +2376,7 @@
          "author" : "hatena",
          "label" : "rainyseason",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_rainyseason/README"
       },
       "hatena_ryukyu-black" : {
@@ -2296,28 +2432,28 @@
          "author" : "hatena",
          "label" : "simple-black",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_simple-black/README"
       },
       "hatena_simple-blue" : {
          "author" : "hatena",
          "label" : "simple-blue",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_simple-blue/README"
       },
       "hatena_simple-red" : {
          "author" : "hatena",
          "label" : "simple-red",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_simple-red/README"
       },
       "hatena_simple2" : {
          "author" : "Hatena",
          "label" : "Hatena_simple2",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hatena_simple2/README"
       },
       "hatena_sky" : {
@@ -2366,7 +2502,7 @@
          "author" : "naoko",
          "label" : "himawari",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/himawari/README"
       },
       "husen" : {
@@ -2380,28 +2516,28 @@
          "author" : "oyuu",
          "label" : "Hydrangea",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/hydrangea/README"
       },
       "inka-blue" : {
          "author" : "PIXEL DESIGN",
          "label" : "inka_blue",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/inka-blue/README"
       },
       "inka-green" : {
          "author" : "PIXEL DESIGN",
          "label" : "inka_green",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/inka-green/README"
       },
       "inka-red" : {
          "author" : "PIXEL DESIGN",
          "label" : "inka_red",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/inka-red/README"
       },
       "iris" : {
@@ -2409,7 +2545,7 @@
          "copyright" : "Copyright 2002 (C) by oyuu \u003Chttp://landscape.tdiary.net>",
          "label" : "Iris",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/iris/README"
       },
       "jungler" : {
@@ -2440,7 +2576,7 @@
          "copyright" : "Copyright (c) 2002 oyuu",
          "label" : "柿",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/kaki/README"
       },
       "kanban" : {
@@ -2456,7 +2592,7 @@
          "copyright" : "Copyright by (C) abbey \u003Cinlet@cello.no-ip.org>",
          "label" : "kanshin",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/kanshin/README"
       },
       "karte" : {
@@ -2477,14 +2613,14 @@
          "author" : "Nishioka Yuji",
          "label" : "kitchen-classic",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/kitchen-classic/README"
       },
       "kitchen-french" : {
          "author" : "Nishioka Yuji",
          "label" : "kitchen-french",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/kitchen-french/README"
       },
       "kitchen-natural" : {
@@ -2545,7 +2681,7 @@
          "copyright" : "Copyright 2003 (C) by Nana \u003Cclorets@estyle.ne.jp>",
          "label" : "loose-leaf",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/loose-leaf/README"
       },
       "lovely" : {
@@ -2559,7 +2695,7 @@
          "author" : "しんちゃん",
          "label" : "lovely_pink.",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/lovely_pink/README"
       },
       "lr" : {
@@ -2574,7 +2710,7 @@
          "author" : "Nana",
          "label" : "Madras check",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/madrascheck/README"
       },
       "magic" : {
@@ -2646,21 +2782,21 @@
          "author" : "id:chepooka",
          "label" : "memo",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/memo/README"
       },
       "memo2" : {
          "author" : "id:chepooka",
          "label" : "memo2",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/memo2/README"
       },
       "memo3" : {
          "author" : "id:chepooka",
          "label" : "memo3",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/memo3/README"
       },
       "menu" : {
@@ -2703,7 +2839,7 @@
          "copyright" : "Copyright by epi All Rights Reserved.",
          "label" : "Mintblue",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/mintblue/README"
       },
       "mirage" : {
@@ -2740,7 +2876,7 @@
          "author" : "id:tikeda",
          "label" : "Monotone-flower",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/monotone-flower/README"
       },
       "moo" : {
@@ -2921,7 +3057,7 @@
          "copyright" : "Copyright by epi All Rights Reserved.",
          "label" : "pain",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/pain/README"
       },
       "pale" : {
@@ -2929,7 +3065,7 @@
          "copyright" : "Copyright 2003 (C) by Nana \u003Cclorets@estyle.ne.jp>",
          "label" : "Pale",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/pale/README"
       },
       "paper" : {
@@ -2952,7 +3088,7 @@
          "copyright" : "Copyright 2002 (C) by abbey \u003Cinlet@cello.no-ip.org>",
          "label" : "pastelpink",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/pastelpink/README"
       },
       "pearl" : {
@@ -3050,7 +3186,7 @@
          "author" : "id:htak",
          "label" : "Precision",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/precision/README"
       },
       "psps" : {
@@ -3073,7 +3209,7 @@
          "copyright" : "Copyright 2003(C)by Nana \u003Cclorets@estyle.ne.jp>",
          "label" : "Puppy",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/puppy/README"
       },
       "pure-melon" : {
@@ -3101,7 +3237,7 @@
          "author" : "くわ",
          "label" : "purple sun",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/purple_sun/README"
       },
       "qualm" : {
@@ -3115,35 +3251,35 @@
          "author" : "id:kamioka",
          "label" : "query000",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/query000/README"
       },
       "query011" : {
          "author" : "id:kamioka",
          "label" : "query011",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/query011/README"
       },
       "query101" : {
          "author" : "id:kamioka",
          "label" : "query101",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/query101/README"
       },
       "query110" : {
          "author" : "id:kamioka",
          "label" : "query110",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/query110/README"
       },
       "query111or" : {
          "author" : "id:kamioka",
          "label" : "query111or",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/query111or/README"
       },
       "quiet_black" : {
@@ -3203,7 +3339,7 @@
          "copyright" : null,
          "label" : "Gruwa Classic (赤)",
          "license" : "AGPL3\u002B",
-         "score" : 100007,
+         "score" : 100057,
          "url" : "https://github.com/wakaba/gruwa"
       },
       "redgrid" : {
@@ -3232,42 +3368,42 @@
          "author" : "id:hikoichi",
          "label" : "rim-daidaiiro",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/rim-daidaiiro/README"
       },
       "rim-fujiiro" : {
          "author" : "id:hikoichi",
          "label" : "rim-fujiiro",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/rim-fujiiro/README"
       },
       "rim-mizuiro" : {
          "author" : "id:hikoichi",
          "label" : "rim-mizuiro",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/rim-mizuiro/README"
       },
       "rim-sakurairo" : {
          "author" : "id:hikoichi",
          "label" : "rim-sakurairo",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/rim-sakurairo/README"
       },
       "rim-tanpopoiro" : {
          "author" : "id:hikoichi",
          "label" : "rim-tanpopoiro",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/rim-tanpopoiro/README"
       },
       "rim-wakabairo" : {
          "author" : "id:hikoichi",
          "label" : "rim-wakabairo",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/rim-wakabairo/README"
       },
       "russet" : {
@@ -3298,7 +3434,7 @@
          "copyright" : "Copyright 2003 (C) by Nana \u003Cmoo@xu.boo.jp>",
          "label" : "Sagegreen",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/sagegreen/README"
       },
       "sakana" : {
@@ -3313,7 +3449,7 @@
          "copyright" : "Copyright by (C) nga \u003Chttp://nga.jp/>",
          "label" : "sakura.css",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/sakura/README"
       },
       "sakura-core" : {
@@ -3327,7 +3463,7 @@
          "author" : "id:chepooka",
          "label" : "sakuramochi",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/sakuramochi/README"
       },
       "savanna" : {
@@ -3335,7 +3471,7 @@
          "copyright" : "Copyright 2003 (C) by abbey \u003Cinlet@sd6.so-net.ne.jp>",
          "label" : "savanna",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/savanna/README"
       },
       "scarlet" : {
@@ -3358,14 +3494,14 @@
          "copyright" : "Copyright (C) 2002 Nana http://mikan.sakura.ne.jp/~mpc",
          "label" : "Seam-line",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/seam-line/README"
       },
       "sepia" : {
          "author" : "naoko",
          "label" : "sepia",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/sepia/README"
       },
       "sesame-strawberry" : {
@@ -3394,7 +3530,7 @@
          "copyright" : "Copyright (C) 2002 by s.sawada \u003Chttp://mwave.sppd.ne.jp/diary/>",
          "label" : "シルバー",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/silver/README"
       },
       "silver2" : {
@@ -3446,21 +3582,21 @@
          "author" : "186",
          "label" : "smoking_gray",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/smoking_gray/README"
       },
       "smoking_white" : {
          "author" : "186（一服中）",
          "label" : "smoking_white",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/smoking_white/README"
       },
       "snake" : {
          "author" : "s.sawada",
          "label" : "Snake",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/snake/README"
       },
       "snow-couple" : {
@@ -3503,21 +3639,21 @@
          "author" : "PIXEL DESIGN",
          "label" : "soft-carrot",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/soft-carrot/README"
       },
       "soft-kiwi" : {
          "author" : "PIXEL DESIGN",
          "label" : "soft-kiwi",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/soft-kiwi/README"
       },
       "soft-mocha" : {
          "author" : "PIXEL DESIGN",
          "label" : "soft-mocha",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/soft-mocha/README"
       },
       "spring" : {
@@ -3525,7 +3661,7 @@
          "copyright" : "Copyright 2002 (C) by Nana \u003Cclorets@estyle.ne.jp>",
          "label" : "Spring",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/spring/README"
       },
       "starlight" : {
@@ -3556,7 +3692,7 @@
          "author" : "shimery",
          "label" : "Summer Wave",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/summer_wave/README"
       },
       "sunset" : {
@@ -3572,7 +3708,7 @@
          "copyright" : "Copyright (C) zoe http://www.kasumi.sakura.ne.jp/~zoe/",
          "label" : "Tag",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/tag/README"
       },
       "teacup" : {
@@ -3640,7 +3776,7 @@
          "copyright" : "Copyright by (C) Nana \u003Chttp://moo.boo.jp>",
          "label" : "tuki",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/tuki/README"
       },
       "tulip-blue" : {
@@ -3717,7 +3853,7 @@
          "author" : "id:marchenroad",
          "label" : "vitamin",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/vitamin/README"
       },
       "w2k_button" : {
@@ -3767,7 +3903,7 @@
          "author" : "id:nekowani",
          "label" : "wani",
          "license" : "GPL",
-         "score" : 10,
+         "score" : 60,
          "url" : "http://d.hatena.ne.jp/theme/wani/README"
       },
       "wave" : {

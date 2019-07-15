@@ -15,6 +15,30 @@ body[data-source-type="3"] {
   white-space: normal;
 }
 
+section > h1:not([hidden]) {
+  border-style: var(--header3-border-style);
+  border-width: var(--header3-border-width);
+  border-color: var(--header3-border-color);
+  padding: var(--header3-padding);
+  background: var(--header3-background);
+  color: var(--header3-color);
+  min-height: var(--header3-min-height);
+  box-sizing: border-box;
+  text-align: var(--header3-align);
+}
+
+section section > h1:not([hidden]) {
+  border-style: var(--header4-border-style);
+  border-width: var(--header4-border-width);
+  border-color: var(--header4-border-color);
+  padding: var(--header4-padding);
+  background: var(--header4-background);
+  color: var(--header4-color);
+  min-height: var(--header4-min-height);
+  box-sizing: border-box;
+  text-align: var(--header4-align);
+}
+
 menu.context {
   position: absolute;
   margin: 0;
