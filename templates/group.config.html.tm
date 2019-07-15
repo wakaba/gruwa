@@ -56,9 +56,8 @@
                   </small>
                 </gr-theme-info>
                 <script>
-                  fetch ('/theme/list.json').then (res => {
-                    if (res.status !== 200) throw res;
-                    return res.json ();
+                  $with ('GR').then (() => {
+                    return GR.theme.list ();
                   }).then (json => {
                     var select = document.querySelector ('select[name=theme]');
                     select.textContent = '';
@@ -99,6 +98,19 @@
                 <th><label for=create-blog-title>日記の題名</>
                 <td><input name=title id=create-blog-title required>
           </table>
+          <script>
+            ((c) => {
+              $with ('GR').then (() => {
+                return GR.theme.getDefault ();
+              }).then (theme => {
+                var input = document.createElement ('input');
+                input.type = 'hidden';
+                input.name = 'theme';
+                input.value = theme;
+                c.appendChild (input);
+              });
+            }) (document.currentScript.parentNode);
+          </script>
 
           <p class=operations>
             <input type=hidden name=index_type value=1>
@@ -118,6 +130,19 @@
                 <th><label for=create-wiki-title>Wiki の題名</>
                 <td><input name=title id=create-wiki-title required>
           </table>
+          <script>
+            ((c) => {
+              $with ('GR').then (() => {
+                return GR.theme.getDefault ();
+              }).then (theme => {
+                var input = document.createElement ('input');
+                input.type = 'hidden';
+                input.name = 'theme';
+                input.value = theme;
+                c.appendChild (input);
+              });
+            }) (document.currentScript.parentNode);
+          </script>
 
           <p class=operations>
             <input type=hidden name=index_type value=2>
@@ -137,6 +162,19 @@
                 <th><label for=create-todo-list-title>TODOリストの題名</>
                 <td><input name=title id=create-todo-list-title required>
           </table>
+          <script>
+            ((c) => {
+              $with ('GR').then (() => {
+                return GR.theme.getDefault ();
+              }).then (theme => {
+                var input = document.createElement ('input');
+                input.type = 'hidden';
+                input.name = 'theme';
+                input.value = theme;
+                c.appendChild (input);
+              });
+            }) (document.currentScript.parentNode);
+          </script>
 
           <p class=operations>
             <input type=hidden name=index_type value=3>
@@ -208,7 +246,6 @@
         </section>
       </tab-set>
     </section>
-  </section>
 
   <section class=group-config-import>
     <h1>データのインポート</h1>
@@ -360,10 +397,11 @@
       </list-container>
     </div>
   </section>
+  </section>
 
 <!--
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

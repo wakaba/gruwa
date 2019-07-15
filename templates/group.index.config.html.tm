@@ -69,9 +69,8 @@
                   </small>
                 </gr-theme-info>
                 <script>
-                  fetch ('/theme/list.json').then (res => {
-                    if (res.status !== 200) throw res;
-                    return res.json ();
+                  $with ('GR').then (() => {
+                    return GR.theme.list ();
                   }).then (json => {
                     var select = document.querySelector ('select[name=theme]');
                     select.textContent = '';

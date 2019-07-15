@@ -1,3 +1,24 @@
+window.GR = {};
+
+// XXX
+$with.register ('GR', () => window.GR);
+
+GR.theme = {};
+
+GR.theme.list = function () {
+  return fetch ('/theme/list.json').then (res => {
+    if (res.status !== 200) throw res;
+    return res.json ();
+  });
+}; // GR.theme.list
+
+GR.theme.getDefault = function () {
+  return this.list ().then (json => {
+    var list = json.default_names;
+    return list[Math.floor (Math.random () * list.length)];
+  });
+}; // GR.theme.getDefault
+
 function $$c (n, s) {
   return Array.prototype.filter.call (n.querySelectorAll (s), function (e) {
     var f = e.parentNode;

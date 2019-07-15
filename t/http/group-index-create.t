@@ -64,9 +64,10 @@ Test {
     my $index = $_[0];
     test {
       is $index->{index_type}, 2;
+      is $index->{theme}, 'green';
     } $current->c;
   });
-} n => 1, name => 'create with index_id';
+} n => 2, name => 'create with index_id';
 
 Test {
   my $current = shift;
@@ -164,11 +165,35 @@ Test {
   });
 } n => 9, name => 'create with source';
 
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->post_json (['i', 'create.json'], {
+      title => "\x{500}",
+      theme => 'abcdef',
+      index_type => 3,
+    }, account => 'a1', group => $current->o ('g1'));
+  })->then (sub {
+    my $result = $_[0];
+    return $current->index ({group_id => $current->o ('g1')->{group_id},
+                             index_id => $result->{json}->{index_id}},
+                            account => 'a1');
+  })->then (sub {
+    my $index = $_[0];
+    test {
+      is $index->{title}, "\x{500}";
+      is $index->{theme}, 'abcdef';
+    } $current->c;
+  });
+} n => 2, name => 'create with theme';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -181,6 +206,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut
