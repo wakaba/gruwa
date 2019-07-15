@@ -69,6 +69,7 @@ sub run ($%) {
           $config->{storage}->{bucket} = $storage_data->{bucket_domain};
           #$config->{s3_form_url} = $storage_data->{form_client_url}->stringify;
           #$config->{s3_file_url_prefix} = $storage_data->{file_root_client_url}->stringify;
+          $config->{storage}->{url} = $self->client_url ('storage');
 
           $data->{envs} = my $envs = {};
           if ($use_docker) {

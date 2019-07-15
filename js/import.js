@@ -15,15 +15,35 @@ Importer.getImported = function (site) {
 
 Importer.createIndex = function (site, page, imported, opts) {
   if (imported[page] && imported[page].type == 1 /* index */) {
-    return Promise.resolve ({index_id: imported[page].dest_id});
+    return Promise.resolve ().then (() => {
+      if (opts.theme && opts.theme !== 'hatena2' /* Hatena Group's default */) {
+        var fd = new FormData;
+        fd.append ('theme', opts.theme);
+        return gFetch ('i/'+imported[page].dest_id+'/edit.json', {post: true, formData: fd});
+      }
+    }).then (() => {
+      return {index_id: imported[page].dest_id};
+    });
   }
 
   var fd = new FormData;
-  fd.append ('index_type', opts.indexType);
-  fd.append ('title', opts.title);
-  fd.append ('source_site', site);
-  fd.append ('source_page', page);
-  return gFetch ('i/create.json', {post: true, formData: fd}).then (function (json) {
+  return Promise.resolve ().then (() => {
+    if (opts.theme && opts.theme !== 'hatena2' /* Hatena Group's default */) {
+      fd.append ('theme', opts.theme);
+    } else if (opts.indexType == 1 ||
+               opts.indexType == 2 ||
+               opts.indexType == 3) {
+      return GR.theme.getDefault ().then (theme => {
+        fd.append ('theme', theme);
+      });
+    }
+  }).then (() => {
+    fd.append ('index_type', opts.indexType);
+    fd.append ('title', opts.title);
+    fd.append ('source_site', site);
+    fd.append ('source_page', page);
+    return gFetch ('i/create.json', {post: true, formData: fd});
+  }).then (function (json) {
     return {index_id: json.index_id, title: opts.title};
   });
 }; // createIndex
@@ -800,7 +820,38 @@ Importer.run = function (sourceId, statusContainer, opts) {
     });
   }; // importFile
 
+    var saveSamplePage = function (group, client, imported, site, url) {
+      return client.fetchHTML (url).then (div => {
+        var page = group.getSiteURL () + url;
+        var current = imported[page];
+
+        return Promise.resolve ().then (() => {
+          if (current) {
+            return current.dest_id;
+          } else {
+            var fd = new FormData;
+            fd.append ('source_site', site);
+            fd.append ('source_page', page);
+            return gFetch ('o/create.json', {post: true, formData: fd}).then (function (json) {
+              imported[page] = {type: 2, sync_info: {}, dest_id: json.object_id};
+              return json.object_id;
+            });
+          }
+        }).then (objectId => {
+          var fd = new FormData;
+          fd.append ('body_type', 1); // html
+          fd.append ('body', div.grSourceText);
+          fd.append ('revision_imported_url', page);
+          fd.append ('source_type', 'raw');
+          return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
+        }).then (() => {
+          return div;
+        });
+      });
+    }; // saveSamplePage
+
     as.start ({stages: ['getimported',
+                        'savegroupinfo',
                         'getkeywordlist',
                         'createkeywordwiki',
                         'createkeywordobjects',
@@ -813,16 +864,43 @@ Importer.run = function (sourceId, statusContainer, opts) {
                         'createtasktodo']});
     return Importer.createClient (sourceId).then (function (client) {
       var group = new Importer.HatenaGroup (client);
+      var groupTheme = null;
       var site = group.getSiteURL ();
       as.stageStart ('getimported');
       var gI = opts.forceUpdate ? Promise.resolve ({}) : Importer.getImported (site);
       return gI.then (function (imported) {
         as.stageEnd ('getimported');
+        as.stageStart ('savegroupinfo');
 
-      as.stageStart ('getkeywordlist');
-      return group.keywordlist ().then (function (keywords) {
-        as.stageEnd ('getkeywordlist');
-        if (keywords.length === 0) return;
+        return saveSamplePage (group, client, imported, site, '/about').then ((div) => {
+          var themeLink = div.querySelector ('link[rel=stylesheet][href*="/theme/"]');
+          if (themeLink) {
+            var m = themeLink.href.match (/[^\/]+\/([^\/]+).css/);
+            if (m) groupTheme = m[1];
+          }
+          
+          var icon = div.querySelector ('link[rel~=icon]');
+          var url = icon.href.replace (/^https?:/, '');
+          var current = imported['https:'+url];
+          if (!current) {
+            // updates can't be detected ;-<
+            return client.fetchBlob (url).then (function (blob) {
+              var nullAs = getActionStatus (null);
+              nullAs.start ({stages: []});
+              return uploadFile (blob, {
+                mime_type: 'image/vnd.microsoft.icon',
+                sourceSite: site,
+                sourcePage: 'https:' + url,
+              }, nullAs);
+            });
+          }
+        }).then (() => {
+          as.stageEnd ('savegroupinfo');
+          as.stageStart ('getkeywordlist');
+          return group.keywordlist ();
+        }).then (function (keywords) {
+          as.stageEnd ('getkeywordlist');
+          if (keywords.length === 0) return;
         as.stageStart ('createkeywordwiki');
         keywords = keywords.reverse ();
         var page = group.getKeywordTopPageURL ();
@@ -830,6 +908,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         return Importer.createIndex (site, page, imported, {
           indexType: 2, // wiki
           title: title,
+          theme: groupTheme,
         }).then (function (index) {
           index.itemCount = keywords.length;
           index.originalTitle = title;
@@ -867,9 +946,18 @@ Importer.run = function (sourceId, statusContainer, opts) {
           var diaryI = 0;
           return $promised.forEach (function (diary) {
             var page = group.getDiaryTopPageURL (diary.url_name);
-            return Importer.createIndex (site, page, imported, {
-              indexType: 1, // diary
-              title: diary.title,
+            return saveSamplePage (group, client, imported, site, '/'+diary.url_name+'/12340101').then ((div) => {
+              var theme = null;
+              var themeLink = div.querySelector ('link[rel=stylesheet][href*="/theme/"]');
+              if (themeLink) {
+                var m = themeLink.href.match (/[^\/]+\/([^\/]+).css/);
+                if (m) theme = m[1];
+              }
+              return Importer.createIndex (site, page, imported, {
+                indexType: 1, // diary
+                title: diary.title,
+                theme: theme,
+              });
             }).then (function (index) {
               index.originalTitle = diary.title;
               return mapTable.showObjects ([index], {}).then (function (re) {
@@ -974,6 +1062,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           return Importer.createIndex (site, page, imported, {
             indexType: 3, // todo
             title: title,
+            theme: groupTheme,
           }).then ((index) => {
             index.itemCount = taskGroups.taskCount;
             index.originalTitle = title;
@@ -1158,6 +1247,7 @@ Importer.Client.prototype.fetchHTML = function (url) {
     doc.head.appendChild (base);
     var div = doc.createElement ('div');
     div.innerHTML = html;
+    div.grSourceText = html;
     return div;
   });
 }; // fetchHTML
@@ -1171,6 +1261,11 @@ Importer.Client.prototype.fetchXML = function (url) {
     return doc;
   });
 }; // fetchXML
+
+Importer.Client.prototype.fetchText = function (url) {
+  var client = this;
+  return client.sendCommand ({type: "fetch", url: url, resultType: "text"});
+}; // fetchText
 
 Importer.Client.prototype.fetchBlob = function (url) {
   var client = this;

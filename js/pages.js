@@ -1650,10 +1650,12 @@ function uploadFile (file, data, as) {
     return gFetch ('o/' + data.object_id + '/upload.json?token=' + encodeURIComponent (json.upload_token), {post: true, body: file, as: as, asStage: "upload"});
   }).then (function () {
     var fd2 = new FormData;
-    fd2.append ('edit_index_id', 1);
-    fd2.append ('index_id', data.index_id);
-    fd2.append ('file_name', data.file_name);
-    fd2.append ('file_size', data.file_size);
+    if (data.index_id) {
+      fd2.append ('edit_index_id', 1);
+      fd2.append ('index_id', data.index_id);
+    }
+    if (data.file_name != null) fd2.append ('file_name', data.file_name);
+    if (data.file_size != null) fd2.append ('file_size', data.file_size);
     if (data.mime_type) fd2.append ('mime_type', data.mime_type);
     if (data.timestamp) fd2.append ('timestamp', data.timestamp);
     if (data.sourceTimestamp) fd2.append ('source_timestamp', data.sourceTimestamp);
