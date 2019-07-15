@@ -173,6 +173,29 @@ sub css_rule ($%) {
     $c_bg->('header3' => 'header3');
     $borders->('header3' => 'header3');
     $padding->('header3' => 'header3');
+
+    {
+      my $skip = {'' => 1};
+      $skip->{$ss->{$_}->{color}} = 1 for qw(main bg);
+      for (qw(header2 header1 header3 pageTitle)) {
+        unless ($skip->{$ss->{$_}->{borderLeftColor} // ''}) {
+          $p{'accented-color'} = $ss->{$_}->{color};
+          $p{'accented-background-color'} = $ss->{$_}->{backgroundColor};
+          $p{'accented-border-color'} = $ss->{$_}->{borderLeftColor};
+          last;
+        }
+      }
+      last if defined $p{'accented-color'};
+      for (qw(header2 header1 header3 pageTitle)) {
+        unless ($skip->{$ss->{$_}->{color}}) {
+          $p{'accented-color'} = $ss->{$_}->{color};
+          $p{'accented-background-color'} = $ss->{$_}->{backgroundColor};
+          $p{'accented-border-color'} = $ss->{$_}->{borderLeftColor};
+          last;
+        }
+      }
+    }
+    $p{'main-border-color'} //= $p{'accented-border-color'} // $p{'main-color'};
     
     push @{$Data->{$license}->{styles} ||= []}, css_rule $theme, %p;
 

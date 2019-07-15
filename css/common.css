@@ -186,7 +186,8 @@ section.page section > h1 {
   box-sizing: border-box;
 }
 
-section.page section section > h1 {
+section.page section section > h1,
+section.page article.object > header {
   border-style: var(--header2-border-style);
   border-width: var(--header2-border-width);
   border-color: var(--header2-border-color);
@@ -296,17 +297,14 @@ article.object.editing > edit-container header > p {
 
 article.object > header {
   position: relative;
-  border-left: .3em solid;
-  border-color: var(--accented-border-color);
-  padding: .3em .5em;
 }
 
 article.object > header h1 {
   display: block;
   margin: 0;
   padding: 0;
-  background-color: var(--accented-background-color);
-  color: var(--accented-color);
+  background: transparent;
+  color: inherit;
   font-size: 120%;
   line-height: 1.4;
 }

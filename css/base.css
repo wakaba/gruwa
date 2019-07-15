@@ -91,17 +91,23 @@ html { /* [data-thema=green] */
   --header1-padding: var(--header3-padding);
 }
 
-html[data-theme=green] {
+html[data-theme=green],
+html[data-theme=blue],
+html[data-theme=red],
+html[data-theme=black] {
   --header3-border-width: 1px;
   --header3-border-style: none none solid none;
   --header3-padding: 0.3em;
+
+  --header2-border-width: .3em;
+  --header2-border-style: none none solid none;
+  --header2-border-color: var(--accented-border-color);
+  --header2-padding: .3em .5em;
+  --header2-background: var(--accented-background-color);
+  --header2-color: var(--accented-color);
 }
 
 html[data-theme=blue] {
-  --header3-border-width: 1px;
-  --header3-border-style: none none solid none;
-  --header3-padding: 0.3em;
-  
   --dark-background-color: #0c0ca9;
   --light-1-background-color: rgb(225, 225, 255);
   --light-2-background-color: rgb(245, 245, 255);
@@ -110,10 +116,6 @@ html[data-theme=blue] {
 }
 
 html[data-theme=red] {
-  --header3-border-width: 1px;
-  --header3-border-style: none none solid none;
-  --header3-padding: 0.3em;
-
   --dark-background-color: #e40000;
   --light-1-background-color: rgb(255, 225, 225);
   --light-2-background-color: rgb(255, 245, 245);
@@ -122,10 +124,6 @@ html[data-theme=red] {
 }
 
 html[data-theme=black] {
-  --header3-border-width: 1px;
-  --header3-border-style: none none solid none;
-  --header3-padding: 0.3em;
-
   --dark-background-color: #ddd;
   --dark-color: black;
 
@@ -283,7 +281,7 @@ p {
 
 form {
   margin: 0 1em 1em;
-  border: 1px solid;
+  border: 1px dashed;
   border-color: var(--main-border-color);
   color: var(--main-color);
   background-color: var(--main-background-color);
