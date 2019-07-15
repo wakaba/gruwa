@@ -65,6 +65,7 @@ html { /* [data-thema=green] */
   --pageheader-border-style: none;
   --pageheader-border-color: var(--accented-border-color);
   --pageheader-padding: 2em;
+  --pageheader-align: start;
 
   --header3-color: var(--accented-color);
   --header3-background: var(--accented-background-color);
@@ -73,6 +74,7 @@ html { /* [data-thema=green] */
   --header3-border-style: none;
   --header3-border-color: var(--accented-border-color);
   --header3-padding: 0.3em;
+  --header3-align: start;
 
   --header2-color: var(--header3-color);
   --header2-background: var(--header3-background);
@@ -81,6 +83,7 @@ html { /* [data-thema=green] */
   --header2-border-style: var(--header3-border-style);
   --header2-border-color: var(--header3-border-color);
   --header2-padding: var(--header3-padding);
+  --header2-align: start;
 
   --header1-color: var(--header3-color);
   --header1-background: var(--header3-background);
@@ -89,6 +92,7 @@ html { /* [data-thema=green] */
   --header1-border-style: var(--header3-border-style);
   --header1-border-color: var(--header3-border-color);
   --header1-padding: var(--header3-padding);
+  --header1-align: start;
 }
 
 html[data-theme=green],
@@ -179,6 +183,7 @@ section > header.section:not([hidden]) {
   color: var(--header3-color);
   min-height: var(--header3-min-height);
   box-sizing: border-box;
+  text-align: var(--header3-text-align);
 }
 
 section > h1,

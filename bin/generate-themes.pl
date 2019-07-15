@@ -82,6 +82,12 @@ sub css_rule ($%) {
     }; # $c_bg
     my $borders = sub {
       my ($key, $type) = @_;
+
+      my $ta = $ss->{$key}->{textAlign} // '';
+      if ($ta eq 'center') {
+        $p{$type.'-align'} = 'center';
+      }
+      
       my $bs = join ' ',
           $ss->{$key}->{borderTopStyle} // 'none',
           $ss->{$key}->{borderRightStyle} // 'none',
