@@ -203,6 +203,11 @@ return sub {
           return GroupPages->invitation ($app, $path, $acall);
         }
 
+        if (@$path == 2 and $path->[0] eq 'theme' and $path->[1] eq 'list.json') {
+          # /theme/list.json
+          return StaticFiles->main ($app, $path);
+        }
+        
         if (@$path == 1) {
           return CommonPages->main ($app, $path, $db);
         }

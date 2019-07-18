@@ -3,6 +3,7 @@ all:
 WGET = wget
 CURL = curl
 GIT = git
+PERL = ./perl
 
 updatenightly: local/bin/pmbp.pl
 	$(CURL) -s -S -L -f https://gist.githubusercontent.com/wakaba/34a71d3137a52abb562d/raw/gistfile1.txt | sh
@@ -13,8 +14,8 @@ updatenightly: local/bin/pmbp.pl
 
 ## ------ Setup ------
 
-deps: git-submodules pmbp-install js/sha1.js
-deps-docker:         pmbp-install js/sha1.js
+deps: git-submodules pmbp-install build
+deps-docker:         pmbp-install
 
 git-submodules:
 	$(GIT) submodule update --init
@@ -37,13 +38,23 @@ pmbp-install: pmbp-upgrade
 js/sha1.js:
 	$(WGET) -O $@ https://raw.githubusercontent.com/emn178/js-sha1/master/src/sha1.js
 
+build: build-deps build-main
+build-deps: git-submodules pmbp-install
+build-main: css/themes.css themes.json js/sha1.js
+
+GRUWA_THEMES_DIR = ../gruwa-themes
+
+themes.json: css/themes.css
+css/themes.css: bin/generate-themes.pl $(GRUWA_THEMES_DIR)
+	$(PERL) $< $(GRUWA_THEMES_DIR)
+
 ## ------ Tests ------
 
 PROVE = ./prove
 
 test: test-deps test-main
 
-test-deps: deps local/accounts.sql
+test-deps: git-submodules pmbp-install local/accounts.sql
 
 deps-circleci: test-deps
 

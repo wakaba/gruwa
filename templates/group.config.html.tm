@@ -36,12 +36,44 @@
             <tr>
               <th><label for=edit-theme>配色</>
               <td>
-                <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme>
+                <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme onchange="
+                  var opt = this.selectedOptions[0];
+                  $fill (document.querySelector ('gr-theme-info'), opt.grDef);
+                ">
                   <option value=green pl:selected="$group->{data}->{theme} eq 'green'?'':undef">緑
                   <option value=blue pl:selected="$group->{data}->{theme} eq 'blue'?'':undef">青
                   <option value=red pl:selected="$group->{data}->{theme} eq 'red'?'':undef">赤
                   <option value=black pl:selected="$group->{data}->{theme} eq 'black'?'':undef">黒
                 </select>
+                <gr-theme-info>
+                  <strong data-field=label />
+                  <code data-field=name />
+                  <span data-field=author />
+                  <small>
+                    <span data-field=license />
+                    <span data-field=copyright />
+                    (<a data-href-template={url} target=_blank rel="noreferrer noopener">出典</a>)
+                  </small>
+                </gr-theme-info>
+                <script>
+                  $with ('GR').then (() => {
+                    return GR.theme.list ();
+                  }).then (json => {
+                    var select = document.querySelector ('select[name=theme]');
+                    select.textContent = '';
+                    json.names.forEach (theme => {
+                      var def = json.themes[theme];
+                      var option = document.createElement ('option');
+                      option.value = theme;
+                      option.label = def.label;
+                      option.grDef = def;
+                      def.name = theme;
+                      select.appendChild (option);
+                    });
+                    select.value = document.documentElement.getAttribute ('data-theme');
+                    select.onchange ();
+                  });
+                </script>
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>
@@ -66,6 +98,19 @@
                 <th><label for=create-blog-title>日記の題名</>
                 <td><input name=title id=create-blog-title required>
           </table>
+          <script>
+            ((c) => {
+              $with ('GR').then (() => {
+                return GR.theme.getDefault ();
+              }).then (theme => {
+                var input = document.createElement ('input');
+                input.type = 'hidden';
+                input.name = 'theme';
+                input.value = theme;
+                c.appendChild (input);
+              });
+            }) (document.currentScript.parentNode);
+          </script>
 
           <p class=operations>
             <input type=hidden name=index_type value=1>
@@ -85,6 +130,19 @@
                 <th><label for=create-wiki-title>Wiki の題名</>
                 <td><input name=title id=create-wiki-title required>
           </table>
+          <script>
+            ((c) => {
+              $with ('GR').then (() => {
+                return GR.theme.getDefault ();
+              }).then (theme => {
+                var input = document.createElement ('input');
+                input.type = 'hidden';
+                input.name = 'theme';
+                input.value = theme;
+                c.appendChild (input);
+              });
+            }) (document.currentScript.parentNode);
+          </script>
 
           <p class=operations>
             <input type=hidden name=index_type value=2>
@@ -104,6 +162,19 @@
                 <th><label for=create-todo-list-title>TODOリストの題名</>
                 <td><input name=title id=create-todo-list-title required>
           </table>
+          <script>
+            ((c) => {
+              $with ('GR').then (() => {
+                return GR.theme.getDefault ();
+              }).then (theme => {
+                var input = document.createElement ('input');
+                input.type = 'hidden';
+                input.name = 'theme';
+                input.value = theme;
+                c.appendChild (input);
+              });
+            }) (document.currentScript.parentNode);
+          </script>
 
           <p class=operations>
             <input type=hidden name=index_type value=3>
@@ -175,7 +246,6 @@
         </section>
       </tab-set>
     </section>
-  </section>
 
   <section class=group-config-import>
     <h1>データのインポート</h1>
@@ -327,10 +397,11 @@
       </list-container>
     </div>
   </section>
+  </section>
 
 <!--
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

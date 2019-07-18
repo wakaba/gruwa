@@ -10,6 +10,7 @@ ADD modules/ /app/modules/
 ADD templates/ /app/templates/
 ADD css/ /app/css/
 ADD js/ /app/js/
+ADD themes.json /app/themes.json
 
 RUN cd /app && \
     make deps-docker PMBP_OPTIONS=--execute-system-package-installer && \

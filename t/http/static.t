@@ -1,5 +1,24 @@
-Unless otherwise specified, the license of the files in this
-repository is AGPL:
+use strict;
+use warnings;
+use Path::Tiny;
+use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps/lib');
+use Tests;
+
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['theme', 'list.json'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'application/json;charset=utf-8';
+      like $res->body_bytes, qr<}>;
+    } $current->c;
+  });
+} n => 3, name => '/theme/list.json';
+
+RUN;
+
+=head1 LICENSE
 
 Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
@@ -16,6 +35,4 @@ Affero General Public License for more details.
 You does not have received a copy of the GNU Affero General Public
 License along with this program, see <https://www.gnu.org/licenses/>.
 
-Some files have different license terms, though all of them are
-opensourced.  Especially, many design theme definitions have different
-terms.  See |themes.json| and |css/themes.css|.
+=cut

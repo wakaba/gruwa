@@ -137,12 +137,18 @@ section.page::after {
 }
 
 section.page > header {
-  display: block;
+  display: grid;
+  align-items: center;
   margin: 0 0 1em 0;
-  border-bottom: 1px solid var(--accented-border-color);
-  padding: 4em 2em 4em 2em;
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
+  border-style: var(--pageheader-border-style);
+  border-width: var(--pageheader-border-width);
+  border-color: var(--pageheader-border-color);
+  padding: var(--pageheader-padding);
+  background: var(--pageheader-background);
+  color: var(--pageheader-color);
+  min-height: var(--pageheader-min-height);
+  box-sizing: border-box;
+  text-align: var(--pageheader-align);
 }
 
 section.page > header h1 {
@@ -164,6 +170,61 @@ section.page > footer {
   margin: 2em;
 }
 
+section.page > section,
+section.page > list-container > list-main > section {
+  color: var(--main-color);
+  background-color: var(--main-background-color);
+}
+
+section.page section > h1 {
+  border-style: var(--header1-border-style);
+  border-width: var(--header1-border-width);
+  border-color: var(--header1-border-color);
+  padding: var(--header1-padding);
+  background: var(--header1-background);
+  color: var(--header1-color);
+  min-height: var(--header1-min-height);
+  box-sizing: border-box;
+  text-align: var(--header1-align);
+}
+
+section.page section section > h1,
+section.page article.object > header {
+  border-style: var(--header2-border-style);
+  border-width: var(--header2-border-width);
+  border-color: var(--header2-border-color);
+  padding: var(--header2-padding);
+  background: var(--header2-background);
+  color: var(--header2-color);
+  min-height: var(--header2-min-height);
+  box-sizing: border-box;
+  text-align: var(--header2-align);
+}
+
+section.page section section section > h1 {
+  border-style: var(--header3-border-style);
+  border-width: var(--header3-border-width);
+  border-color: var(--header3-border-color);
+  padding: var(--header3-padding);
+  background: var(--header3-background);
+  color: var(--header3-color);
+  min-height: var(--header3-min-height);
+  box-sizing: border-box;
+  text-align: var(--header3-align);
+}
+
+section.page section section section section > h1 {
+  border-style: var(--header4-border-style);
+  border-width: var(--header4-border-width);
+  border-color: var(--header4-border-color);
+  padding: var(--header4-padding);
+  background: var(--header4-background);
+  color: var(--header4-color);
+  min-height: var(--header4-min-height);
+  box-sizing: border-box;
+  text-align: var(--header4-align);
+}
+ 
 list-container.index-list {
   display: block;
 }
@@ -252,17 +313,14 @@ article.object.editing > edit-container header > p {
 
 article.object > header {
   position: relative;
-  border-left: .3em solid;
-  border-color: var(--accented-border-color);
-  padding: .3em .5em;
 }
 
 article.object > header h1 {
   display: block;
   margin: 0;
   padding: 0;
-  background-color: var(--accented-background-color);
-  color: var(--accented-color);
+  background: transparent;
+  color: inherit;
   font-size: 120%;
   line-height: 1.4;
 }
@@ -1118,6 +1176,43 @@ list-is-empty:not([hidden]) {
 .group-config-import #import-status > action-status progress:not([hidden]) {
   display: block;
   width: 100%;
+}
+
+gr-theme-info:not(hidden) {
+  display: block;
+  max-width: 20em;
+  margin: 0.5em;
+  padding: 0.5em;
+  font-size: 80%;
+  color: var(--light-1-color);
+  background-color: var(--light-1-background-color);
+}
+
+gr-theme-info strong:not([hidden]) {
+  display: block;
+}
+
+gr-theme-info code:not([hidden]) {
+  display: block;
+  font-style: italic;
+  font-size: 80%;
+}
+
+gr-theme-info span[data-field=author]:not([hidden]) {
+  display: block;
+  text-align: right;
+  font-size: 80%;
+}
+
+gr-theme-info small:not([hidden]) {
+  display: block;
+  margin-top: .5em;
+  padding: .5em;
+}
+
+gr-theme-info span[data-field=license]:not([hidden]) {
+  display: block;
+  font-weight: bolder;
 }
 
 index-list-item .colored:not([hidden]) {

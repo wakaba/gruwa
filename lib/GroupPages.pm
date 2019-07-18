@@ -807,7 +807,7 @@ sub group_index ($$$$) {
       my $index_type = 0+($app->bare_param ('index_type') || 0);
       my $options = {};
       if ($index_type == 1 or $index_type == 2 or $index_type == 3) {
-        $options->{theme} = 'green';
+        $options->{theme} = $app->text_param ('theme') // 'green';
       } elsif ($index_type == 4) {
         $options->{color} = sprintf '#%02X%02X%02X',
             int rand 256,
