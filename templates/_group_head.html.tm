@@ -9,6 +9,7 @@
 <t:else>
   <meta name=referrer content=origin>
 </t:if>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel=stylesheet href=/css/common.css>
 <script src=/js/framework.js class=body-js />
 <script src=/js/pages.js async />
@@ -17,7 +18,7 @@
 
 <!--
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -30,6 +31,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 -->

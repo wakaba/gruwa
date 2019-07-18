@@ -5,6 +5,7 @@
 <t:else>
   <meta name=referrer content=origin>
 </t:if>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel=stylesheet href=/css/common.css>
 <script src=/js/framework.js class=body-js />
 <script src=/js/pages.js async />
