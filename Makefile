@@ -54,7 +54,7 @@ PROVE = ./prove
 
 test: test-deps test-main
 
-test-deps: git-submodules pmb-install local/accounts.sql
+test-deps: git-submodules pmbp-install local/accounts.sql
 
 deps-circleci: test-deps
 
