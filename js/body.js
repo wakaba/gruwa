@@ -765,7 +765,7 @@ function upgradeObjectRef (e) {
   return sendGetObjectWithSearchData (objectId).then (function (object) {
     var f = document.createElement ('object-ref-content');
     f.appendChild (document.querySelector ('#object-ref-template').content.cloneNode (true));
-    $fill (f, object);
+    $grfill (f, object);
   
     var sr = e.attachShadow ({mode: 'open'});
 
@@ -813,7 +813,7 @@ function upgradeHatenaStar (e) {
     }).forEach (function (star) {
       var item = document.createElement ('list-item');
       item.appendChild (document.querySelector ('#hatena-star-template').content.cloneNode (true));
-      $fill (item, {name: star[0], name2: star[0].substring (0, 2),
+      $grfill (item, {name: star[0], name2: star[0].substring (0, 2),
                     type: star[1],
                     count: star[2],
                     quote: star[3]});

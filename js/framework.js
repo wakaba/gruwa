@@ -24,7 +24,7 @@ function $$ (n, s) {
   return Array.prototype.slice.call (n.querySelectorAll (s));
 } // $$
 
-function $fill (e, o) {
+function $grfill (e, o) {
   $$ (e, '[data-field]').forEach (function (f) {
     var name = f.getAttribute ('data-field').split (/\./);
     var value = o;
@@ -44,7 +44,7 @@ function $fill (e, o) {
       } catch (e) {
         console.log (e); // XXX
       }
-    } else if (f.localName === 'enum-value') {
+    } else if (f.localName === 'gr-enum-value') {
       f.setAttribute ('value', value);
       if (value == null) {
         f.hidden = true;
@@ -87,7 +87,7 @@ function $fill (e, o) {
       f.setAttribute (attr, value);
     });
   });
-} // $fill
+} // $grfill
 
 /*
 

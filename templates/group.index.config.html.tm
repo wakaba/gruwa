@@ -51,7 +51,7 @@
                 <td>
                 <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme onchange="
                   var opt = this.selectedOptions[0];
-                  $fill (document.querySelector ('gr-theme-info'), opt.grDef);
+                  $grfill (document.querySelector ('gr-theme-info'), opt.grDef);
                 ">
                   <option value=green pl:selected="$group->{data}->{theme} eq 'green'?'':undef">緑
                   <option value=blue pl:selected="$group->{data}->{theme} eq 'blue'?'':undef">青

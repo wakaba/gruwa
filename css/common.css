@@ -662,7 +662,7 @@ gr-list-container[key=groups] td.desc {
 gr-list-container[key=members] tr:not(.editing) input,
 gr-list-container[key=members] tr:not(.editing) select,
 gr-list-container[key=members] tr:not(.editing) .save-button,
-gr-list-container[key=members] tr.editing enum-value,
+gr-list-container[key=members] tr.editing gr-enum-value,
 gr-list-container[key=members] tr.editing span[data-field=desc],
 gr-list-container[key=members] tr.editing .edit-button,
 html:not([data-group-member-type="2"]) gr-list-container[key=members] input[name=desc],
@@ -673,9 +673,9 @@ gr-list-container[key=members] tr.account-is-self select[name=owner_status] {
 }
 
 html:not([data-group-member-type="2"]) gr-list-container[key=members] span[data-field=desc],
-html[data-group-member-type="2"] gr-list-container[key=members] tr.account-is-self enum-value[data-field=user_status],
-gr-list-container[key=members] tr.editing enum-value[data-field=member_type],
-gr-list-container[key=members] tr.editing enum-value[data-field=owner_status] {
+html[data-group-member-type="2"] gr-list-container[key=members] tr.account-is-self gr-enum-value[data-field=user_status],
+gr-list-container[key=members] tr.editing gr-enum-value[data-field=member_type],
+gr-list-container[key=members] tr.editing gr-enum-value[data-field=owner_status] {
   display: inline;
 }
 

@@ -292,7 +292,7 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       } catch (e) {
         console.log (e); // XXX
       }
-    } else if (field.localName === 'enum-value') {
+    } else if (field.localName === 'gr-enum-value') {
       field.setAttribute ('value', value);
       if (value == null) {
         field.hidden = true;
@@ -1996,7 +1996,7 @@ stageActions.showCreatedObjectInCommentList.stages = ['showcreatedobjectincommen
 
 stageActions.fill = function (args) {
   var e = document.getElementById (args.arg);
-  $fill (e, args.result);
+  $grfill (e, args.result);
   e.hidden = false;
 }; // fill
 

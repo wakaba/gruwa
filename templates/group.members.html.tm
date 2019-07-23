@@ -26,19 +26,19 @@
           <account-name data-field=account_id />
           <input type=hidden name=account_id data-field=account_id>
         <td class=member_type>
-          <enum-value data-field=member_type text-1=一般 text-2=所有者 />
+          <gr-enum-value data-field=member_type text-1=一般 text-2=所有者 />
           <select name=member_type data-field=member_type>
             <option value=1>一般
             <option value=2>所有者
           </select>
         <td class=user_status>
-          <enum-value data-field=user_status text-1=参加中 text-2=招待中 />
+          <gr-enum-value data-field=user_status text-1=参加中 text-2=招待中 />
           <select name=user_status data-field=user_status>
             <option value=1>参加中
             <option value=2>招待中
           </select>
         <td class=owner_status>
-          <enum-value data-field=owner_status text-1=承認済 text-2=未承認 />
+          <gr-enum-value data-field=owner_status text-1=承認済 text-2=未承認 />
           <select name=owner_status data-field=owner_status>
             <option value=1>承認済
             <option value=2>未承認
@@ -139,7 +139,7 @@
           <template>
             <td><a data-href-field=invitation_url><time data-field=created /></a>
             <td><account-name data-field=author_account_id />
-            <td><enum-value data-field=invitation_data.member_type text-1=一般 text-2=所有者 />
+            <td><gr-enum-value data-field=invitation_data.member_type text-1=一般 text-2=所有者 />
             <td><time data-field=expires>
             <td>
               <only-if data-field=used cond="!=0" hidden>
