@@ -213,7 +213,7 @@ section > header.section > h1 {
   margin: 0;
 }
 
-section > header.section popup-menu {
+section > header.section gr-popup-menu {
   position: absolute;
   top: 0;
   right: 0;
@@ -244,14 +244,14 @@ main {
   display: block;
 }
 
-tab-set:not([hidden]) {
+gr-tab-set:not([hidden]) {
   display: block;
   margin: 1em;
   border-bottom: 1px solid;
   border-color: var(--main-border-color);
 }
 
-tab-set > menu:not([hidden]) {
+gr-tab-set > menu:not([hidden]) {
   display: block;
   margin: 0 0 .5em 0;
   border-bottom: 1px solid;
@@ -259,7 +259,7 @@ tab-set > menu:not([hidden]) {
   padding: 0;
 }
 
-tab-set > menu > a:not([hidden]) {
+gr-tab-set > menu > a:not([hidden]) {
   display: inline-block;
   margin: 0 1em 0 0;
   padding: .2em .5em;
@@ -269,22 +269,22 @@ tab-set > menu > a:not([hidden]) {
   text-decoration: none;
 }
 
-tab-set > menu > a.active {
+gr-tab-set > menu > a.active {
   font-weight: bolder;
   border-bottom: 3px solid;
 }
 
-tab-set > section:not([active]) {
+gr-tab-set > section:not([active]) {
   display: none;
 }
 
-tab-set > section[active]:not([hidden]) {
+gr-tab-set > section[active]:not([hidden]) {
   display: block;
   margin: 0;
   padding: .5em;
 }
 
-tab-set[initialized] > section > h1 {
+gr-tab-set[initialized] > section > h1 {
   display: none;
 }
 
@@ -640,12 +640,12 @@ todo-state[value="2"] {
   color: white;
 }
 
-popup-menu:not([hidden]) {
+gr-popup-menu:not([hidden]) {
   position: relative;
   display: inline-block;
 }
 
-popup-menu > button:not([hidden]) {
+gr-popup-menu > button:not([hidden]) {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -658,15 +658,15 @@ popup-menu > button:not([hidden]) {
   font-size: 100%;
 }
 
-popup-menu > button:not([hidden]):hover,
-popup-menu > button:not([hidden]):active,
-popup-menu > button:not([hidden]):focus {
+gr-popup-menu > button:not([hidden]):hover,
+gr-popup-menu > button:not([hidden]):active,
+gr-popup-menu > button:not([hidden]):focus {
   border-color: var(--accented-border-color);
   color: var(--accented-color);
   background-color: var(--accented-background-color);
 }
 
-popup-menu > menu:not([hidden]) {
+gr-popup-menu > menu:not([hidden]) {
   position: absolute;
   z-index: 10;
   right: 0;
@@ -684,21 +684,21 @@ popup-menu > menu:not([hidden]) {
   font-size: 100%;
 }
 
-popup-menu > menu > li:not([hidden]),
-popup-menu > menu > list-container > list-main > li:not([hidden]) {
+gr-popup-menu > menu > li:not([hidden]),
+gr-popup-menu > menu > list-container > list-main > li:not([hidden]) {
   display: block;
   margin: 0;
   padding: 0;
   font-size: 100%;
 }
 
-popup-menu > menu > li > copy-button:not([hidden]) {
+gr-popup-menu > menu > li > copy-button:not([hidden]) {
   display: block;
 }
 
-popup-menu > menu > li > a:only-child,
-popup-menu > menu > li > copy-button > a:only-child,
-popup-menu > menu > list-container > list-main > li > a:only-child {
+gr-popup-menu > menu > li > a:only-child,
+gr-popup-menu > menu > li > copy-button > a:only-child,
+gr-popup-menu > menu > list-container > list-main > li > a:only-child {
   display: block;
   padding: .5em;
   font-size: 100%;
@@ -706,19 +706,19 @@ popup-menu > menu > list-container > list-main > li > a:only-child {
   line-height: 1.0;
 }
 
-popup-menu > menu > li > a:only-child:hover,
-popup-menu > menu > li > a:only-child:active,
-popup-menu > menu > li > a:only-child:focus,
-popup-menu > menu > li > copy-button > a:only-child:hover,
-popup-menu > menu > li > copy-button > a:only-child:active,
-popup-menu > menu > li > copy-button > a:only-child:focus,
-popup-menu > menu > list-container > list-main > li > a:only-child:hover,
-popup-menu > menu > list-container > list-main > li > a:only-child:active,
-popup-menu > menu > list-container > list-main > li > a:only-child:focus {
+gr-popup-menu > menu > li > a:only-child:hover,
+gr-popup-menu > menu > li > a:only-child:active,
+gr-popup-menu > menu > li > a:only-child:focus,
+gr-popup-menu > menu > li > copy-button > a:only-child:hover,
+gr-popup-menu > menu > li > copy-button > a:only-child:active,
+gr-popup-menu > menu > li > copy-button > a:only-child:focus,
+gr-popup-menu > menu > list-container > list-main > li > a:only-child:hover,
+gr-popup-menu > menu > list-container > list-main > li > a:only-child:active,
+gr-popup-menu > menu > list-container > list-main > li > a:only-child:focus {
   text-decoration: underline;
 }
 
-popup-menu > menu > li > button:only-child:not([hidden]) {
+gr-popup-menu > menu > li > button:only-child:not([hidden]) {
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
@@ -734,26 +734,26 @@ popup-menu > menu > li > button:only-child:not([hidden]) {
   text-align: left;
 }
 
-popup-menu > menu > li > button:only-child:not([hidden]):hover,
-popup-menu > menu > li > button:only-child:not([hidden]):focus,
-popup-menu > menu > li > button:only-child:not([hidden]):active {
+gr-popup-menu > menu > li > button:only-child:not([hidden]):hover,
+gr-popup-menu > menu > li > button:only-child:not([hidden]):focus,
+gr-popup-menu > menu > li > button:only-child:not([hidden]):active {
   text-decoration: underline;
 }
 
-popup-menu > menu > li > button:only-child:not([hidden]):hover,
-popup-menu > menu > li > button:only-child:not([hidden]):active {
+gr-popup-menu > menu > li > button:only-child:not([hidden]):hover,
+gr-popup-menu > menu > li > button:only-child:not([hidden]):active {
   color: var(--hover-color);
   background-color: var(--hover-background-color);
 }
 
-popup-menu > menu > hr {
+gr-popup-menu > menu > hr {
   visibility: visible;
   border-size: 1px;
   border-style: solid none none none;
   border-color: var(--menu-border-color);
 }
 
-popup-menu > menu > list-container {
+gr-popup-menu > menu > list-container {
   max-height: 15rem;
   overflow: auto;
 }

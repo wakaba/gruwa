@@ -540,7 +540,7 @@ function fillFields (contextEl, rootEl, el, object, opts) {
         var max = object.data ? object.data[maxKey] : null;
         if (max) field.setAttribute ('max', max);
       }
-    } else if (field.localName === 'unit-number') {
+    } else if (field.localName === 'gr-unit-number') {
       field.setAttribute ('value', value);
     } else {
       field.textContent = value || field.getAttribute ('data-empty') || '';
@@ -2533,10 +2533,10 @@ function upgradeTabSet (e) {
       } else if (x.localName) {
         $$ (x, 'form').forEach (upgradeForm);
       }
-      if (x.localName === 'popup-menu') {
+      if (x.localName === 'gr-popup-menu') {
         upgradePopupMenu (x);
       } else if (x.localName) {
-        $$ (x, 'popup-menu').forEach (upgradePopupMenu);
+        $$ (x, 'gr-popup-menu').forEach (upgradePopupMenu);
       }
       if (x.localName === 'copy-button') {
         upgradeCopyButton (x);
@@ -2548,10 +2548,10 @@ function upgradeTabSet (e) {
       } else if (x.localName) {
         $$ (x, 'with-sidebar').forEach (upgradeWithSidebar);
       }
-      if (x.localName === 'unit-number') {
+      if (x.localName === 'gr-unit-number') {
         upgradeUnitNumber (x);
       } else if (x.localName) {
-        $$ (x, 'unit-number').forEach (upgradeUnitNumber);
+        $$ (x, 'gr-unit-number').forEach (upgradeUnitNumber);
       }
       if (x.localName === 'run-action') {
         upgradeRunAction (x);
@@ -2563,10 +2563,10 @@ function upgradeTabSet (e) {
       } else if (x.localName) {
         $$ (x, 'object-ref').forEach (upgradeObjectRef);
       }
-      if (x.localName === 'tab-set') {
+      if (x.localName === 'gr-tab-set') {
         upgradeTabSet (x);
       } else if (x.localName) {
-        $$ (x, 'tab-set').forEach (upgradeTabSet);
+        $$ (x, 'gr-tab-set').forEach (upgradeTabSet);
       }
     });
   });
@@ -2574,19 +2574,19 @@ function upgradeTabSet (e) {
 $$ (document, 'list-container').forEach (upgradeList);
 $$ (document, 'form').forEach (upgradeForm);
 $$ (document, 'account-name[account_id]').forEach (upgradeAccountName);
-$$ (document, 'popup-menu').forEach (upgradePopupMenu);
+$$ (document, 'gr-popup-menu').forEach (upgradePopupMenu);
 $$ (document, 'copy-button').forEach (upgradeCopyButton);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 $$ (document, 'run-action').forEach (upgradeRunAction);
-$$ (document, 'unit-number').forEach (upgradeUnitNumber);
+$$ (document, 'gr-unit-number').forEach (upgradeUnitNumber);
 $$ (document, 'object-ref').forEach (upgradeObjectRef);
-$$ (document, 'tab-set').forEach (upgradeTabSet);
+$$ (document, 'gr-tab-set').forEach (upgradeTabSet);
 
 /*
 
 License:
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

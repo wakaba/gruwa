@@ -17,7 +17,7 @@
     </>
   </header-area>
   <header-area>
-    <popup-menu>
+    <gr-popup-menu>
       <button><account-name><t:text value="$account->{name}"></account-name></button>
       <menu hidden>
         <li><a href=/dashboard>ダッシュボード</></li>
@@ -30,7 +30,7 @@
         </list-container>
         <li><a href=/jump>ジャンプリストの編集</></li>
       </menu>
-    </popup-menu>
+    </gr-popup-menu>
     <a href=/help>ヘルプ</a>
   </header-area>
 </header>
@@ -38,12 +38,12 @@
   <section>
     <header class=section>
       <h1>ジャンプリスト</>
-      <popup-menu>
+      <gr-popup-menu>
         <button type=button>⋁</>
         <menu hidden>
           <li><a href=/help#jump>ヘルプ</a>
         </menu>
-      </popup-menu>
+      </gr-popup-menu>
     </header>
 
     <list-container type=table src=/jump/list.json key=items class=main-table>

@@ -17,7 +17,7 @@
     <section>
       <header class=section>
         <h1>検索</>
-        <popup-menu>
+        <gr-popup-menu>
           <button type=button>⋁</>
           <menu hidden>
             <li><copy-button>
@@ -28,7 +28,7 @@
             </copy-button>
             <li><a href=/help#search>ヘルプ</a>
           </menu>
-        </popup-menu>
+        </gr-popup-menu>
       </header>
 
       <list-container src=o/search.json key=objects pl:param-q="$app->text_param ('q')" class=object-search>

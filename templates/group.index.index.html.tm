@@ -112,21 +112,21 @@
         <t:if x="($index->{options}->{subtype} // '') eq 'image'">
           <t:class name="'image-list'">
           <template>
-            <popup-menu>
+            <gr-popup-menu>
               <button type=button>⋁</button>
                 <menu hidden>
                   <li><copy-button>
                     <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
                   </>
               </menu>
-            </popup-menu>
+            </gr-popup-menu>
             <figure>
               <a data-href-template={GROUP}/o/{object_id}/image data-title-data-field=title>
                 <img src data-src-template={GROUP}/o/{object_id}/image>
               </a>
               <figcaption>
                 <code data-data-field=file_name></code>
-                <unit-number data-data-field=file_size type=bytes />
+                <gr-unit-number data-data-field=file_size type=bytes />
                 <code data-data-field=mime_type />
                 <a data-href-template={GROUP}/o/{object_id}/>
                   <time data-field=timestamp class=ambtime />
@@ -137,21 +137,21 @@
         <t:else>
           <t:class name="'file-list'">
           <template>
-            <popup-menu>
+            <gr-popup-menu>
               <button type=button>⋁</button>
                 <menu hidden>
                   <li><copy-button>
                     <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
                   </>
               </menu>
-            </popup-menu>
+            </gr-popup-menu>
             <p class=main-line>
               <a data-href-template={GROUP}/o/{object_id}/file download>
                 <span data-data-field=title data-empty=■ />
                 <code data-data-field=file_name></code>
               </a>
             <p class=info-line>
-              <unit-number data-data-field=file_size type=bytes />
+              <gr-unit-number data-data-field=file_size type=bytes />
               <code data-data-field=mime_type />
               <a data-href-template={GROUP}/o/{object_id}/>
                 <time data-field=timestamp class=ambtime />
@@ -166,7 +166,7 @@
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
             <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
-            <popup-menu>
+            <gr-popup-menu>
               <button type=button>⋁</button>
               <menu hidden>
                 <li><a data-href-template={GROUP}/o/{object_id}/>記事</a>
@@ -178,7 +178,7 @@
                 </>
                 <li><button type=button class=edit-button>編集</button>
               </menu>
-            </popup-menu>
+            </gr-popup-menu>
           </header>
           <main><iframe data-data-field=body /></main>
           <footer>
@@ -312,7 +312,7 @@
             <list-container type=table>
               <template>
                 <td class=file-name><code data-data-field=file_name />
-                <td class=file-size><unit-number data-data-field=file_size type=bytes />
+                <td class=file-size><gr-unit-number data-data-field=file_size type=bytes />
                 <td class=progress><action-status hidden
                         stage-create=作成中...
                         stage-upload=アップロード中...
@@ -376,22 +376,22 @@
               </template>
 
               <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' data-empty=(マイルストーン制約なし) />
-              <popup-menu>
+              <gr-popup-menu>
                 <button type=button title=選択>...</button>
                 <menu hidden>
                   <form action=javascript:>
                     <list-control-list editable template=edit-milestone clear-template=edit-milestone-clear filters='[{"key": ["data", "index_type"], "value": "5"}]' />
                   </form>
                 </menu>
-              </popup-menu>
+              </gr-popup-menu>
 
               <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "4"}]' data-empty=(ラベル制約なし) />
-              <popup-menu>
+              <gr-popup-menu>
                 <button type=button title=選択>...</button>
                 <menu hidden>
                   <list-control-list editable template=edit filters='[{"key": ["data", "index_type"], "value": "4"}]' />
                 </menu>
-              </popup-menu>
+              </gr-popup-menu>
             </list-control>
 
             <list-control name=assigned_account_id key=assigned_account_ids list=member-list>
@@ -412,14 +412,14 @@
               </template>
 
               <list-control-list template=view data-empty=(担当者制約なし) />
-              <popup-menu>
+              <gr-popup-menu>
                 <button type=button title=変更>...</button>
                 <menu hidden>
                   <form action=javascript:>
                     <list-control-list editable template=edit clear-template=edit-clear />
                   </form>
                 </menu>
-              </popup-menu>
+              </gr-popup-menu>
             </list-control>
           </list-query>
 
