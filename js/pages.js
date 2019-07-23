@@ -2028,6 +2028,8 @@ stageActions.updateParent = function (args) {
 }; // updateParent
 
 function upgradeForm (form) {
+  if (form.hasAttribute ('is')) return;
+  
   var formType = form.getAttribute ('data-form-type');
   if (formType === 'uploader') {
     return initUploader (form);
