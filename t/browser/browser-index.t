@@ -61,6 +61,35 @@ Test {
   });
 } n => 1, name => ['unit-number.js'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {members => ['a1']}],
+    [i1 => index => {group => 'g1', account => 'a1'}],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'time:not(:empty):not(.asis)',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var time = document.querySelector ('time:not(:empty):not(.asis)');
+      return [time.getAttribute ('datetime'), time.textContent];
+    });
+  })->then (sub {
+    my $vv = $_[0]->json->{value};
+    test {
+      ok $vv->[0];
+      isnt $vv->[1], $vv->[0];
+    } $current->c;
+  });
+} n => 2, name => ['time.js'], browser => 1;
+
 RUN;
 
 =head1 LICENSE

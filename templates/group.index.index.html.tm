@@ -73,8 +73,8 @@
         <template>
           <p><a data-href-template={GROUP}/i/{INDEX_ID}/wiki/{title}#{object_id}>
             <strong data-data-field=title data-empty=■ />
-            <time data-field=created class=ambtime />
-            (<time data-field=updated class=ambtime /> 編集)
+            <time data-field=created data-format=ambtime />
+            (<time data-field=updated data-format=ambtime /> 編集)
           </a></p>
         </template>
       <t:elsif x="not defined $wiki_name and
@@ -99,8 +99,8 @@
               </span>
               <progress data-data-field=checked_checkbox_count data-max-data-field=all_checkbox_count />
             </checkbox-count>
-            <time data-field=created class=ambtime />
-            (<time data-field=updated class=ambtime /> 編集)
+            <time data-field=created data-format=ambtime />
+            (<time data-field=updated data-format=ambtime /> 編集)
             <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=マイルストーン />
             <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "4"}]' title=ラベル />
             <account-list data-data-field=assigned_account_ids title=担当者 />
@@ -129,7 +129,7 @@
                 <unit-number data-data-field=file_size type=bytes />
                 <code data-data-field=mime_type />
                 <a data-href-template={GROUP}/o/{object_id}/>
-                  <time data-field=timestamp class=ambtime />
+                  <time data-field=timestamp data-format=ambtime />
                 </a>
               </figcaption>
             </figure>
@@ -154,7 +154,7 @@
               <unit-number data-data-field=file_size type=bytes />
               <code data-data-field=mime_type />
               <a data-href-template={GROUP}/o/{object_id}/>
-                <time data-field=timestamp class=ambtime />
+                <time data-field=timestamp data-format=ambtime />
               </a>
           </template>
         </t:if>
@@ -191,8 +191,8 @@
                 <account-list data-data-field=assigned_account_ids />
               </span>
               <index-list data-data-field=index_ids />
-              <time data-field=created class=ambtime />
-              (<time data-field=updated class=ambtime /> 編集)
+              <time data-field=created data-format=ambtime />
+              (<time data-field=updated data-format=ambtime /> 編集)
           </footer>
 
           <article-comments>
@@ -217,8 +217,8 @@
                     </if-defined>
 
                     <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
-                      <time data-field=timestamp class=ambtime />
-                      (<time data-field=updated class=ambtime />)
+                      <time data-field=timestamp data-format=ambtime />
+                      (<time data-field=updated data-format=ambtime />)
                     </a>
                   </header>
                   <main><iframe data-data-field=body /></main>
@@ -226,11 +226,11 @@
               </template>
               <template data-name=close class=change-action>
                 <p><!-- XXX が -->閉じました。
-                (<time data-field=created class=ambtime />)
+                (<time data-field=created data-format=ambtime />)
               </template>
               <template data-name=reopen class=change-action>
                 <p><!-- XXX が -->開き直しました。
-                (<time data-field=created class=ambtime />)
+                (<time data-field=created data-format=ambtime />)
               </template>
               <template data-name=changed class=change-action>
                 <p><!-- XXX が -->
@@ -248,10 +248,10 @@
                 <index-list data-field=data.body_data.old.assigned_account_ids />
                 への割当を削除しました。
                 -->
-                (<time data-field=created class=ambtime />)
+                (<time data-field=created data-format=ambtime />)
               </template>
               <template data-name=trackback class=trackback>
-                <time data-field=created class=ambtime />にこの記事が参照されました。
+                <time data-field=created data-format=ambtime />にこの記事が参照されました。
                 <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
               </template>
               <p class="operations pager">
@@ -473,7 +473,7 @@
             template-selector=object>
           <template />
           <template data-name=trackback class=trackback>
-            <time data-field=created class=ambtime />にこのWikiページが参照されました。
+            <time data-field=created data-format=ambtime />にこのWikiページが参照されました。
             <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
           </template>
           <p class="operations pager">

@@ -37,12 +37,12 @@ function $grfill (e, o) {
         f.localName === 'select') {
       f.value = value;
     } else if (f.localName === 'time') {
-      var date = new Date (parseFloat (value) * 1000);
       try {
-        f.setAttribute ('datetime', date.toISOString ());
-        f.textContent = date.toLocaleString ();
+        var dt = new Date (parseFloat (value) * 1000);
+        f.setAttribute ('datetime', dt.toISOString ());
       } catch (e) {
-        console.log (e); // XXX
+        f.removeAttribute ('datetime');
+        f.textContent = e;
       }
     } else if (f.localName === 'gr-enum-value') {
       f.setAttribute ('value', value);

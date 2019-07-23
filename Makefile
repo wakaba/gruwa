@@ -49,8 +49,9 @@ themes.json: css/themes.css
 css/themes.css: bin/generate-themes.pl $(GRUWA_THEMES_DIR)
 	$(PERL) $< $(GRUWA_THEMES_DIR)
 
-js/components.js: local/unit-number.js local/page-components.js
-	cat local/unit-number.js local/page-components.js > $@
+js/components.js: local/unit-number.js local/page-components.js local/time.js
+	cat local/unit-number.js local/page-components.js \
+	    local/time.js > $@
 css/components.css: local/unit-number.css local/page-components.css
 	cat local/unit-number.css local/page-components.css > $@
 
@@ -64,6 +65,8 @@ local/maps.js: local/generated
 	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/html-page-components/master/src/maps.js
 local/page-components.css: local/generated
 	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/html-page-components/master/css/default.css
+local/time.js: local/generated
+	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/timejs/master/src/time.js
 
 local/generated:
 	touch $@

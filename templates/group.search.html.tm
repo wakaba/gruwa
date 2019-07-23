@@ -44,7 +44,7 @@
 
         <template>
           <a href data-href-template=o/{object_id}/>
-            <time data-field=timestamp class=date />
+            <time data-field=timestamp data-format=date />
             <strong data-field=title data-empty=■></strong>
             <time data-field=updated />
             <search-snippet data-field=snippet />
