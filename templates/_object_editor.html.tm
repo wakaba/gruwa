@@ -213,7 +213,7 @@
         <gr-list-container>
           <template>
             <p><code data-data-field=file_name />
-            (<gr-unit-number data-data-field=file_size type=bytes />)
+            (<unit-number data-data-field=file_size type=bytes />)
             <p><action-status hidden
                     stage-create=作成中...
                     stage-upload=アップロード中...
@@ -272,7 +272,7 @@
         <gr-list-container>
           <template>
             <p><code data-data-field=file_name />
-            (<gr-unit-number data-data-field=file_size type=bytes />)
+            (<unit-number data-data-field=file_size type=bytes />)
             <p><action-status hidden
                     stage-create=作成中...
                     stage-upload=アップロード中...

@@ -126,7 +126,7 @@
               </a>
               <figcaption>
                 <code data-data-field=file_name></code>
-                <gr-unit-number data-data-field=file_size type=bytes />
+                <unit-number data-data-field=file_size type=bytes />
                 <code data-data-field=mime_type />
                 <a data-href-template={GROUP}/o/{object_id}/>
                   <time data-field=timestamp class=ambtime />
@@ -151,7 +151,7 @@
                 <code data-data-field=file_name></code>
               </a>
             <p class=info-line>
-              <gr-unit-number data-data-field=file_size type=bytes />
+              <unit-number data-data-field=file_size type=bytes />
               <code data-data-field=mime_type />
               <a data-href-template={GROUP}/o/{object_id}/>
                 <time data-field=timestamp class=ambtime />
@@ -312,7 +312,7 @@
             <gr-list-container type=table>
               <template>
                 <td class=file-name><code data-data-field=file_name />
-                <td class=file-size><gr-unit-number data-data-field=file_size type=bytes />
+                <td class=file-size><unit-number data-data-field=file_size type=bytes />
                 <td class=progress><action-status hidden
                         stage-create=作成中...
                         stage-upload=アップロード中...

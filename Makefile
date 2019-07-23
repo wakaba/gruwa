@@ -35,18 +35,32 @@ pmbp-install: pmbp-upgrade
             --create-perl-command-shortcut @prove \
             --create-perl-command-shortcut @lserver=perl\ bin/local-server.pl
 
-js/sha1.js:
+js/sha1.js: local/generated
 	$(WGET) -O $@ https://raw.githubusercontent.com/emn178/js-sha1/master/src/sha1.js
 
 build: build-deps build-main
 build-deps: git-submodules pmbp-install
-build-main: css/themes.css themes.json js/sha1.js
+build-main: css/themes.css themes.json js/sha1.js \
+    js/components.js css/components.css
 
 GRUWA_THEMES_DIR = ../gruwa-themes
 
 themes.json: css/themes.css
 css/themes.css: bin/generate-themes.pl $(GRUWA_THEMES_DIR)
 	$(PERL) $< $(GRUWA_THEMES_DIR)
+
+js/components.js: local/unit-number.js
+	cat local/unit-number.js > $@
+css/components.css: local/unit-number.css
+	cat local/unit-number.css > $@
+
+local/unit-number.js: local/generated
+	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/html-unit-number/master/src/unit-number.js
+local/unit-number.css: local/generated
+	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/html-unit-number/master/css/default.css
+
+local/generated:
+	touch $@
 
 ## ------ Tests ------
 

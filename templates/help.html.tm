@@ -7,6 +7,7 @@
 </t:if>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel=stylesheet href=/css/common.css>
+<script src=/js/components.js class=body-js async />
 <script src=/js/framework.js class=body-js />
 <script src=/js/pages.js async />
 
@@ -204,7 +205,7 @@
       ファイルをアップロードできます。
 
       <p>1個のファイルのサイズの上限は、
-      <gr-unit-number><number-value>100</><number-unit>MB</></> です。
+      <unit-number type=bytes><number-value>100</><number-unit>MB</></> です。
     </section>
 
     <section id=objects>

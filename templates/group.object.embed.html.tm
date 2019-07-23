@@ -20,7 +20,7 @@
       ">
       <code><t:text value="$object->{data}->{file_name}"></code>
       <t:if x="$object->{data}->{file_size}">
-        <span class=note>(<gr-unit-number type=bytes><t:text value="$object->{data}->{file_size}"></gr-unit-number>)</span>
+        <span class=note>(<unit-number type=bytes pl:value="$object->{data}->{file_size}"/>)</span>
       </t:if>
     </a>
   <t:else>
