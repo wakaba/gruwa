@@ -7,7 +7,7 @@
 </t:if>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel=stylesheet href=/css/common.css>
-<script src=/js/components.js class=body-js async />
+<script src=/js/components.js class=body-js async data-export="$fill $promised" />
 <script src=/js/framework.js class=body-js />
 <script src=/js/pages.js async />
 
@@ -54,7 +54,7 @@
         <td class=operations>
           <button type=button class=edit-button data-command=editJumpLabel data-prompt=ラベルを指定してください>編集</button>
           <button type=button class=edit-button data-command=deleteJump>削除</button>
-          <action-status hidden stage-fetch=... />
+          <gr-action-status hidden stage-fetch=... />
       </template>
 
       <table>
@@ -64,7 +64,7 @@
             <th>編集
         <tbody>
       </table>
-      <action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読み込み中... />
     </gr-list-container>
 
     <p>新しいジャンプメニューを追加するには、追加したい項目のメニュー (⋁)

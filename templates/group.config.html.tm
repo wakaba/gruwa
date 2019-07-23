@@ -38,7 +38,7 @@
               <td>
                 <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme onchange="
                   var opt = this.selectedOptions[0];
-                  $grfill (document.querySelector ('gr-theme-info'), opt.grDef);
+                  $fill (document.querySelector ('gr-theme-info'), opt.grDef);
                 ">
                   <option value=green pl:selected="$group->{data}->{theme} eq 'green'?'':undef">緑
                   <option value=blue pl:selected="$group->{data}->{theme} eq 'blue'?'':undef">青
@@ -77,7 +77,7 @@
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>
-          <action-status hidden stage-fetch=保存中... ok=保存しました。 />
+          <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
       </form>
     </section>
 
@@ -115,7 +115,7 @@
           <p class=operations>
             <input type=hidden name=index_type value=1>
             <button type=submit class=save-button>作成する</>
-            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
         </section>
 
@@ -147,7 +147,7 @@
           <p class=operations>
             <input type=hidden name=index_type value=2>
             <button type=submit class=save-button>作成する</>
-            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
         </section>
 
@@ -179,7 +179,7 @@
           <p class=operations>
             <input type=hidden name=index_type value=3>
             <button type=submit class=save-button>作成する</>
-            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
 
       <details>
@@ -197,7 +197,7 @@
           <p class=operations>
             <input type=hidden name=index_type value=4>
             <button type=submit class=save-button>作成する</>
-            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
       </details>
 
@@ -216,7 +216,7 @@
           <p class=operations>
             <input type=hidden name=index_type value=5>
             <button type=submit class=save-button>作成する</>
-            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
       </details>
         </section>
@@ -241,7 +241,7 @@
           <p class=operations>
             <input type=hidden name=index_type value=6>
             <button type=submit class=save-button>作成する</>
-            <action-status hidden stage-fetch=作成中... stage-next=移動します... />
+            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
         </section>
       </gr-tab-set>
@@ -313,7 +313,7 @@
             <th>操作
         <tbody>
       </table>
-      <action-status hidden stage-load=読込中... />
+      <gr-action-status hidden stage-load=読込中... />
       <list-is-empty>
         現在インポートできるグループはありません。
       </list-is-empty>
@@ -351,7 +351,7 @@
             <th>操作
         <tbody>
       </table>
-      <action-status hidden stage-load=読込中... />
+      <gr-action-status hidden stage-load=読込中... />
       <list-is-empty>
         現在インポートできるリポジトリーはありません。
       </list-is-empty>
@@ -361,7 +361,7 @@
     </gr-tab-set>
 
     <div id=import-status>
-      <action-status
+      <gr-action-status
           stage-auth=アクセス許可を取得中...
           stage-getimported=インポート済みデータを確認中...
           stage-getkeywordlist=キーワード一覧を取得中...
@@ -381,7 +381,7 @@
           <td><cite data-field=originalTitle>
           <td><a data-href-template=i/{index_id}/ data-field=title data-empty=(トップページ) />
           <td><data data-field=itemCount />
-          <td><action-status
+          <td><gr-action-status
                   stage-objects=変換中...
                   ok=完了 />
         </template>

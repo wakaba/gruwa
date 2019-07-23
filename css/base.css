@@ -565,41 +565,41 @@ gr-list-container > .operations {
   margin: 0 0.5em 0.5em 0.5em;
 }
 
-action-status {
+gr-action-status {
   color: var(--small-color);
   background-color: var(--small-background-color);
   font-size: 90%;
 }
 
-gr-list-container > action-status:not([hidden]) {
+gr-list-container > gr-action-status:not([hidden]) {
   display: block;
 }
 
-.operations action-status {
+.operations gr-action-status {
   unicode-bidi: embed;
 }
 
-.operations action-status > * {
+.operations gr-action-status > * {
   direction: ltr;
 }
 
-action-status-message {
+gr-action-status-message {
   margin-left: .5em;
   margin-right: .5em;
   unicode-bidi: embed;
 }
 
-action-status[status=ok] action-status-message {
+gr-action-status[status=ok] gr-action-status-message {
   background-color: var(--error-success-color);
   color: var(--success-color);
 }
 
-action-status[status=ng] action-status-message {
+gr-action-status[status=ng] gr-action-status-message {
   background-color: var(--error-background-color);
   color: var(--error-color);
 }
 
-gr-list-container > action-status progress:not([hidden]) {
+gr-list-container > gr-action-status progress:not([hidden]) {
   display: block;
   width: 100%;
   margin-top: .5em;
@@ -817,7 +817,7 @@ gr-list-container.main-table td.operations button {
   font-size: 80%;
 }
 
-gr-list-container.main-table td.operations action-status {
+gr-list-container.main-table td.operations gr-action-status {
   display: block;
   margin-top: .5em;
 }

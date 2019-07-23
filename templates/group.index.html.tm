@@ -41,7 +41,7 @@
             </gr-list-container>
         </template>
         <list-main/>
-        <action-status hidden stage-load=読み込み中... />
+        <gr-action-status hidden stage-load=読み込み中... />
       </gr-list-container>
     </section>
 
@@ -54,7 +54,7 @@
 
       <list-main></list-main>
 
-      <action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読み込み中... />
     </gr-list-container>
   </section>
 

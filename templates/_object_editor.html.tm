@@ -70,7 +70,7 @@
       <p class=operations>
         <button type=submit class=save-button>保存する</button>
         <button type=button class=cancel-button>取り消し</button>
-        <action-status hidden
+        <gr-action-status hidden
             stage-loader=読込中...
             stage-saver=変換中...
             stage-create=作成中...
@@ -203,7 +203,7 @@
     <list-is-empty hidden>
       このグループには<a href=/help#fileset-image target=help>アルバム</a>がありません。
     </list-is-empty>
-    <action-status hidden stage-load=読み込み中... />
+    <gr-action-status hidden stage-load=読み込み中... />
   </gr-list-container>
 
   <panel-main hidden>
@@ -214,7 +214,7 @@
           <template>
             <p><code data-data-field=file_name />
             (<unit-number data-data-field=file_size type=bytes />)
-            <p><action-status hidden
+            <p><gr-action-status hidden
                     stage-create=作成中...
                     stage-upload=アップロード中...
                     stage-close=保存中...
@@ -241,7 +241,7 @@
         </button>
       </template>
       <list-main/>
-      <action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読み込み中... />
       <p class="operations pager">
         <button type=button class=next-page-button hidden>もっと昔</button>
     </gr-list-container>
@@ -262,7 +262,7 @@
     <list-is-empty hidden>
       このグループには<a href=/help#fileset-file target=help>ファイルアップローダー</a>がありません。
     </list-is-empty>
-    <action-status hidden stage-load=読み込み中... />
+    <gr-action-status hidden stage-load=読み込み中... />
   </gr-list-container>
 
   <panel-main hidden>
@@ -273,7 +273,7 @@
           <template>
             <p><code data-data-field=file_name />
             (<unit-number data-data-field=file_size type=bytes />)
-            <p><action-status hidden
+            <p><gr-action-status hidden
                     stage-create=作成中...
                     stage-upload=アップロード中...
                     stage-close=保存中...
@@ -300,7 +300,7 @@
         </button>
       </template>
       <list-main/>
-      <action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読み込み中... />
       <p class="operations pager">
         <button type=button class=next-page-button hidden>もっと昔</button>
     </gr-list-container>

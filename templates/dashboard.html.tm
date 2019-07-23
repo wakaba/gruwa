@@ -7,7 +7,7 @@
 </t:if>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel=stylesheet href=/css/common.css>
-<script src=/js/components.js class=body-js async />
+<script src=/js/components.js class=body-js async data-export="$fill $promised" />
 <script src=/js/framework.js class=body-js />
 <script src=/js/pages.js async />
 
@@ -65,7 +65,7 @@
             <th>
         <tbody>
       </table>
-      <action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読み込み中... />
     </gr-list-container>
 
     <details>
@@ -83,7 +83,7 @@
 
         <p class=operations>
           <button type=submit class=save-button>作成する</>
-          <action-status hidden
+          <gr-action-status hidden
               stage-fetch=グループを作成中...
               stage-creategroupwiki_1=グループのWikiを作成中...
               stage-creategroupwiki_2=グループの設定中...

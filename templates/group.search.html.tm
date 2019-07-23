@@ -54,7 +54,7 @@
         <list-is-empty hidden>
           <p>一致する記事は見つかりませんでした。
         </list-is-empty>
-        <action-status hidden stage-load=読み込み中... />
+        <gr-action-status hidden stage-load=読み込み中... />
         <p class=operations>
           <button type=button class=next-page-button hidden>もっと昔</button>
       </gr-list-container>
