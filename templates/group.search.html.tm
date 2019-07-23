@@ -7,7 +7,6 @@
   </t:include>
 
 <body>
-  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:group_member=$group_member m:app=$app />
 
   <section class=page>
     <header>
@@ -62,10 +61,11 @@
 
     </section>
   </section>
+  <t:include path=_common.html.tm m:app=$app m:account=$account m:group=$group m:group_member=$group_member />
 
 <!--
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -78,6 +78,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 -->
