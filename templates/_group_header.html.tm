@@ -12,7 +12,7 @@
     </form>
   </header-area>
   <header-area>
-    <popup-menu>
+    <gr-popup-menu>
       <button><account-name><t:text value="$account->{name}"></account-name></button>
       <menu hidden>
         <li><a href=/dashboard>ダッシュボード</></li>
@@ -28,13 +28,13 @@
         </list-container>
         <li><a href=/jump>ジャンプリストの編集</></li>
       </menu>
-    </popup-menu>
+    </gr-popup-menu>
     <a href=/help>ヘルプ</a>
   </header-area>
 </header>
 
 <t:macro name=group-menu t:params=$group>
-  <popup-menu>
+  <gr-popup-menu>
     <button type=button>⋁</button>
     <menu hidden>
       <li>
@@ -60,11 +60,11 @@
           設定
         </a>
     </menu>
-  </popup-menu>
+  </gr-popup-menu>
 </t:macro>
 
 <t:macro name=index-menu t:params="$group $index">
-  <popup-menu>
+  <gr-popup-menu>
     <button type=button>⋁</button>
     <menu hidden>
       <li>
@@ -90,11 +90,11 @@
         <li><a href=/help#filesets>ヘルプ</a>
       </t:if>
     </menu>
-  </popup-menu>
+  </gr-popup-menu>
 </t:macro>
 
 <t:macro name=wiki-menu t:params="$wiki_name">
-  <popup-menu>
+  <gr-popup-menu>
     <button type=button>⋁</button>
     <menu hidden>
       <li>
@@ -112,7 +112,7 @@
         </a>
       </>
     </menu>
-  </popup-menu>
+  </gr-popup-menu>
 </t:macro>
 
 <!--

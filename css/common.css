@@ -135,20 +135,20 @@ header.group > header-area > a:active {
   text-decoration: underline;
 }
 
-header.common > header-area > popup-menu > button:not([hidden]):hover,
-header.group > header-area > popup-menu > button:not([hidden]):hover,
-header.common > header-area > popup-menu > button:not([hidden]):active,
-header.group > header-area > popup-menu > button:not([hidden]):active,
-header.common > header-area > popup-menu > button:not([hidden]):focus,
-header.group > header-area > popup-menu > button:not([hidden]):focus {
+header.common > header-area > gr-popup-menu > button:not([hidden]):hover,
+header.group > header-area > gr-popup-menu > button:not([hidden]):hover,
+header.common > header-area > gr-popup-menu > button:not([hidden]):active,
+header.group > header-area > gr-popup-menu > button:not([hidden]):active,
+header.common > header-area > gr-popup-menu > button:not([hidden]):focus,
+header.group > header-area > gr-popup-menu > button:not([hidden]):focus {
   border-color: transparent;
   color: inherit;
   background-color: transparent;
   text-decoration: underline;
 }
 
-header.common > header-area > popup-menu > button::after,
-header.group > header-area > popup-menu > button::after {
+header.common > header-area > gr-popup-menu > button::after,
+header.group > header-area > gr-popup-menu > button::after {
   display: inline-block;
   content: "⋁";
   margin-left: .5em;
@@ -229,7 +229,7 @@ section.page > header h1 {
   text-shadow: 2px 2px var(--light-1-shadow-color);
 }
 
-section.page > header > popup-menu {
+section.page > header > gr-popup-menu {
   display: block;
   float: right;
   margin: 2.5em 0 0 0;
@@ -402,7 +402,7 @@ article.object > header h1 a {
   min-width: 5em;
 }
 
-article.object > header popup-menu {
+article.object > header gr-popup-menu {
   position: absolute;
   top: 0;
   right: 0;
@@ -932,7 +932,7 @@ form[data-form-type=uploader] table progress:not([hidden]) {
   clear: both;
 }
 
-.file-list list-main > list-item popup-menu {
+.file-list list-main > list-item gr-popup-menu {
   float: right;
   font-size: 90%;
 }
@@ -972,7 +972,7 @@ form[data-form-type=uploader] table progress:not([hidden]) {
   width: 13em;
 }
 
-.image-list list-main > list-item > popup-menu {
+.image-list list-main > list-item > gr-popup-menu {
   position: absolute;
   top: 0;
   right: 0;

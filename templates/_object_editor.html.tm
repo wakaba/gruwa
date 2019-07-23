@@ -100,12 +100,12 @@
                 </template>
 
                 <list-control-list template=view data-empty=(なし) />
-                <popup-menu>
+                <gr-popup-menu>
                   <button type=button title=変更>...</button>
                   <menu hidden>
                     <list-control-list editable template=edit />
                   </menu>
-                </popup-menu>
+                </gr-popup-menu>
               </list-control>
       </table>
 
@@ -139,32 +139,32 @@
               <th>マイルストーン
               <td>
                 <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' data-empty=(なし) />
-                <popup-menu>
+                <gr-popup-menu>
                   <button type=button title=変更>...</button>
                   <menu hidden>
                     <list-control-list editable template=edit-milestone clear-template=edit-milestone-clear filters='[{"key": ["data", "index_type"], "value": "5"}]' />
                   </menu>
-                </popup-menu>
+                </gr-popup-menu>
             <tr>
               <th>ラベル
               <td>
                 <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "4"}]' data-empty=(なし) />
-                <popup-menu>
+                <gr-popup-menu>
                   <button type=button title=変更>...</button>
                   <menu hidden>
                     <list-control-list editable template=edit filters='[{"key": ["data", "index_type"], "value": "4"}]' />
                   </menu>
-                </popup-menu>
+                </gr-popup-menu>
             <tr>
               <th>日記、Wiki、TODOリスト
               <td>
                 <list-control-list template=view filters='[{"key": ["data", "index_type"], "valueIn": {"1": true, "2": true, "3": true}}]' data-empty=(なし) />
-                <popup-menu>
+                <gr-popup-menu>
                   <button type=button title=変更>...</button>
                   <menu hidden>
                     <list-control-list editable template=edit filters='[{"key": ["data", "index_type"], "valueIn": {"1": true, "2": true, "3": true}}]' />
                   </menu>
-                </popup-menu>
+                </gr-popup-menu>
         </table>
       </list-control>
     </details>
@@ -213,7 +213,7 @@
         <list-container>
           <template>
             <p><code data-data-field=file_name />
-            (<unit-number data-data-field=file_size type=bytes />)
+            (<gr-unit-number data-data-field=file_size type=bytes />)
             <p><action-status hidden
                     stage-create=作成中...
                     stage-upload=アップロード中...
@@ -272,7 +272,7 @@
         <list-container>
           <template>
             <p><code data-data-field=file_name />
-            (<unit-number data-data-field=file_size type=bytes />)
+            (<gr-unit-number data-data-field=file_size type=bytes />)
             <p><action-status hidden
                     stage-create=作成中...
                     stage-upload=アップロード中...

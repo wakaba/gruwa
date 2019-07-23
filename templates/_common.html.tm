@@ -47,7 +47,7 @@
     </gr-nav-panel>
 
 <t:macro name=group-menu t:params=$group>
-  <popup-menu>
+  <gr-popup-menu>
     <button type=button>⋁</button>
     <menu hidden>
       <li>
@@ -73,11 +73,11 @@
           設定
         </a>
     </menu>
-  </popup-menu>
+  </gr-popup-menu>
 </t:macro>
 
 <t:macro name=index-menu t:params="$group $index">
-  <popup-menu>
+  <gr-popup-menu>
     <button type=button>⋁</button>
     <menu hidden>
       <li>
@@ -103,11 +103,11 @@
         <li><a href=/help#filesets>ヘルプ</a>
       </t:if>
     </menu>
-  </popup-menu>
+  </gr-popup-menu>
 </t:macro>
 
 <t:macro name=wiki-menu t:params="$wiki_name">
-  <popup-menu>
+  <gr-popup-menu>
     <button type=button>⋁</button>
     <menu hidden>
       <li>
@@ -125,7 +125,7 @@
         </a>
       </>
     </menu>
-  </popup-menu>
+  </gr-popup-menu>
 </t:macro>
     
 <!--

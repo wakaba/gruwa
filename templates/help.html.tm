@@ -204,7 +204,7 @@
       ファイルをアップロードできます。
 
       <p>1個のファイルのサイズの上限は、
-      <unit-number><number-value>100</><number-unit>MB</></> です。
+      <gr-unit-number><number-value>100</><number-unit>MB</></> です。
     </section>
 
     <section id=objects>

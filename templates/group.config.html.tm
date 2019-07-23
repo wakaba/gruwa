@@ -84,7 +84,7 @@
     <section>
       <h1>作成</h1>
 
-      <tab-set>
+      <gr-tab-set>
         <menu/>
 
         <section>
@@ -244,7 +244,7 @@
             <action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
         </section>
-      </tab-set>
+      </gr-tab-set>
     </section>
 
   <section class=group-config-import>
@@ -256,7 +256,7 @@
     <p>他のサービスからこのグループにデータをインポートできます。
     詳しくは<a href=/help#import target=help>ヘルプ</a>をご参照ください。</p>
 
-    <tab-set>
+    <gr-tab-set>
       <menu />
 
       <section>
@@ -358,7 +358,7 @@
     </list-container>
 
       </section>
-    </tab-set>
+    </gr-tab-set>
 
     <div id=import-status>
       <action-status
