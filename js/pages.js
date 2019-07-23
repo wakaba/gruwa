@@ -292,7 +292,7 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       } catch (e) {
         console.log (e); // XXX
       }
-    } else if (field.localName === 'enum-value') {
+    } else if (field.localName === 'gr-enum-value') {
       field.setAttribute ('value', value);
       if (value == null) {
         field.hidden = true;
@@ -540,7 +540,7 @@ function fillFields (contextEl, rootEl, el, object, opts) {
         var max = object.data ? object.data[maxKey] : null;
         if (max) field.setAttribute ('max', max);
       }
-    } else if (field.localName === 'gr-unit-number') {
+    } else if (field.localName === 'unit-number') {
       field.setAttribute ('value', value);
     } else {
       field.textContent = value || field.getAttribute ('data-empty') || '';
@@ -1996,7 +1996,7 @@ stageActions.showCreatedObjectInCommentList.stages = ['showcreatedobjectincommen
 
 stageActions.fill = function (args) {
   var e = document.getElementById (args.arg);
-  $fill (e, args.result);
+  $grfill (e, args.result);
   e.hidden = false;
 }; // fill
 
@@ -2309,34 +2309,6 @@ function upgradeAccountName (e) {
   });
 } // upgradeAccountName
 
-function upgradeUnitNumber (field) {
-  var value = field.getAttribute ('value') || field.textContent;
-  var unitType = field.getAttribute ('type');
-  if (unitType === 'bytes') {
-    var v = parseFloat (value);
-    var u = 'B';
-    field.title = v + u;
-    if (v > 1000) {
-      v = Math.round (v / 1024 * 10) / 10;
-      u = 'KB';
-      if (v > 1000) {
-        v = Math.round (v / 1024 * 10) / 10;
-        u = 'MB';
-            if (v > 1000) {
-              v = Math.round (v / 1024 * 10) / 10;
-              u = 'GB';
-            }
-          }
-        }
-        field.innerHTML = '<number-value></number-value><number-unit></number-unit>';
-        field.firstChild.textContent = v.toLocaleString ();
-        field.lastChild.textContent = u;
-      } else {
-        field.textContent = parseFloat (value).toLocaleString ();
-      }
-
-} // upgradeUnitNumber
-
 function upgradeObjectRef (e) {
   var objectId = e.getAttribute ('value');
   if (!objectId) return;
@@ -2550,11 +2522,6 @@ function upgradeTabSet (e) {
       } else if (x.localName) {
         $$ (x, 'with-sidebar').forEach (upgradeWithSidebar);
       }
-      if (x.localName === 'gr-unit-number') {
-        upgradeUnitNumber (x);
-      } else if (x.localName) {
-        $$ (x, 'gr-unit-number').forEach (upgradeUnitNumber);
-      }
       if (x.localName === 'run-action') {
         upgradeRunAction (x);
       } else if (x.localName) {
@@ -2580,7 +2547,6 @@ $$ (document, 'gr-popup-menu').forEach (upgradePopupMenu);
 $$ (document, 'copy-button').forEach (upgradeCopyButton);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 $$ (document, 'run-action').forEach (upgradeRunAction);
-$$ (document, 'gr-unit-number').forEach (upgradeUnitNumber);
 $$ (document, 'object-ref').forEach (upgradeObjectRef);
 $$ (document, 'gr-tab-set').forEach (upgradeTabSet);
 

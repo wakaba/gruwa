@@ -1,3 +1,4 @@
+@import 'components.css';
 @import 'themes.css';
 
 html { /* [data-thema=green] */
@@ -619,7 +620,7 @@ account-name[loading] {
   background-color: var(--disabled-background-color);
 }
 
-enum-value[data-field="data.todo_state"]:not([hidden]),
+gr-enum-value[data-field="data.todo_state"]:not([hidden]),
 todo-state:not([hidden]) {
   display: inline-block;
   margin: .3em 0;
@@ -628,13 +629,13 @@ todo-state:not([hidden]) {
   text-align: center;
 }
 
-enum-value[data-field="data.todo_state"][value="1"],
+gr-enum-value[data-field="data.todo_state"][value="1"],
 todo-state[value="1"] {
   background: red;
   color: white;
 }
 
-enum-value[data-field="data.todo_state"][value="2"],
+gr-enum-value[data-field="data.todo_state"][value="2"],
 todo-state[value="2"] {
   background: green;
   color: white;
@@ -878,7 +879,7 @@ ref-header:not([hidden]) {
   display: block;
 }
 
-ref-header enum-value {
+ref-header gr-enum-value {
   line-height: 1.0;
   margin-top: 0;
   margin-bottom: 0;

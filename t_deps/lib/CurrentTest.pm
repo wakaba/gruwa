@@ -6,6 +6,7 @@ use Promised::Flow;
 use JSON::PS;
 use Web::Encoding;
 use Web::URL;
+use Web::URL::Encoding;
 use Web::Transport::BasicClient;
 use ServerSet::ReverseProxyProxyManager;
 use Test::More;
@@ -222,6 +223,15 @@ sub generate_text ($;$) {
   $v .= chr int rand 0x10FFFF for 1..rand 10;
   return $_[0]->{objects}->{$_[1] // ''} = decode_web_utf8 encode_web_utf8 $v;
 } # generate_text
+
+sub create ($;@) {
+  my $self = shift;
+  return promised_for {
+    my ($name, $type, $opts) = @{$_[0]};
+    my $method = 'create_' . $type;
+    return $self->$method ($name => $opts);
+  } [@_];
+} # create
 
 sub create_group ($$$) {
   my ($self, $name, $opts) = @_;
@@ -567,6 +577,97 @@ sub b_set_account ($$$) {
         (sk => defined $_[0] ? $_[0]->{cookies}->{sk} : '', path => '/');
   });
 } # b_set_account
+
+sub b_wait ($$$) {
+  my ($self, $name, $for) = @_;
+  my $i = 0;
+  return promised_wait_until {
+    return Promise->resolve->then (sub {
+      #return $self->b_screenshot ($name, $for->{name} // $for->{selector})
+      #    if $i++ > 5;
+    })->then (sub {
+      #return $self->b_save_source ($name, $for->{name} // $for->{selector})
+      #    if $i++ > 5;
+    })->then (sub {
+      return Promise->all ([
+        (defined $for->{element} ? Promise->resolve ([1, $for->{element}]) : defined $for->{selector} ? $self->b ($name)->execute (q{
+          return document.querySelector (arguments[0]);
+        }, [$for->{selector}])->then (sub {
+          return [1, $_[0]->json->{value}];
+        }) : Promise->resolve ([0, undef]))->then (sub {
+          return 1 unless $_[0]->[0];
+          my $selected = $_[0]->[1];
+          return 0 unless $selected;
+          
+          return Promise->resolve->then (sub {
+            if ($for->{shown}) {
+              return $self->b_is_hidden ($name, $selected)->then (sub {
+                if ($_[0]) {
+                  return 0;
+                } else {
+                  return 1;
+                }
+              });
+            }
+            return 1;
+          })->then (sub {
+            return $_[0] if not $_[0] or not $for->{scroll};
+            return $self->b ($name)->execute (q{
+              arguments[0].scrollIntoView (false);
+            }, [$selected]);
+            return 1;
+          })->then (sub {
+            return $_[0] if not $_[0] or not defined $for->{text};
+            return $self->b ($name)->execute (q{
+              return arguments[0].textContent;
+            }, [$selected])->then (sub {
+              my $res = $_[0];
+              return $res->json->{value} =~ /\Q@{[$for->{text}]}\E/;
+            });
+          })->then (sub {
+            return $_[0] if not $_[0] or not $for->{disabled};
+            return $self->b ($name)->execute (q{
+              return arguments[0].disabled;
+            }, [$selected])->then (sub {
+              my $res = $_[0];
+              return $res->json->{value};
+            });
+          })->then (sub {
+            return $_[0] if not $_[0] or not $for->{enabled};
+            return $self->b ($name)->execute (q{
+              return arguments[0].disabled;
+            }, [$selected])->then (sub {
+              my $res = $_[0];
+              return ! $res->json->{value};
+            });
+          });
+        }),
+        (defined $for->{code} ? Promise->resolve->then ($for->{code}) : 1),
+      ])->then (sub {
+        my @has_false = grep { ! $_ } @{$_[0]};
+        if ($for->{not}) {
+          return !!@has_false;
+        } else {
+          return ! @has_false;
+        }
+      });
+    })->catch (sub {
+      my $err = $_[0];
+      warn $err; # e.g. stale element reference (after navigation)
+      return 0;
+    });
+  } timeout => 60*2;
+} # b_wait
+
+# XXX WD
+sub b_is_hidden ($$$) {
+  my ($self, $name, $element) = @_;
+    return $self->b ($name)->execute (q{
+    return [arguments[0].offsetWidth, arguments[0].offsetHeight];
+  }, [$element])->then (sub {
+    return ! ($_[0]->json->{value}->[0] && $_[0]->json->{value}->[1]);
+  });
+} # b_is_hidden
 
 sub done ($) {
   my $self = $_[0];
