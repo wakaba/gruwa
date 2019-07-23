@@ -22,12 +22,12 @@
       <menu hidden>
         <li><a href=/dashboard>ダッシュボード</></li>
         <hr>
-        <list-container src=/jump/list.json key=items type=list>
+        <gr-list-container src=/jump/list.json key=items type=list>
           <template>
             <a href data-href-template={URL} data-ping-template=/jump/ping.json?url={HREF} data-field=label></a>
           </template>
           <list-main/>
-        </list-container>
+        </gr-list-container>
         <li><a href=/jump>ジャンプリストの編集</></li>
       </menu>
     </gr-popup-menu>
@@ -38,7 +38,7 @@
   <section>
     <h1>参加グループ</>
 
-    <list-container type=table src=my/groups.json key=groups sortkey=updated class=main-table>
+    <gr-list-container type=table src=my/groups.json key=groups sortkey=updated class=main-table>
       <template>
         <th>
           <a href data-href-template="/g/{group_id}/">
@@ -65,7 +65,7 @@
         <tbody>
       </table>
       <action-status hidden stage-load=読み込み中... />
-    </list-container>
+    </gr-list-container>
 
     <details>
       <summary>グループの作成</summary>

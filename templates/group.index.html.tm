@@ -18,14 +18,14 @@
     <section>
       <h1>最近の更新</>
 
-      <list-container src=i/list.json?index_type=1&index_type=2&index_type=3 key=index_list sortkey=updated class=index-list>
+      <gr-list-container src=i/list.json?index_type=1&index_type=2&index_type=3 key=index_list sortkey=updated class=index-list>
         <template>
           <p>
             <a href data-href-template="i/{index_id}/#{updated}">
               <time data-field=updated />
               <strong data-field=title></strong>
             </a>
-            <list-container
+            <gr-list-container
                 data-src-template="o/get.json?index_id={index_id}&limit=5"
                 data-parent-template=i/{index_id}/
                 data-context-template={index_type}
@@ -38,14 +38,14 @@
                 </a>
               </template>
               <list-main/>
-            </list-container>
+            </gr-list-container>
         </template>
         <list-main/>
         <action-status hidden stage-load=読み込み中... />
-      </list-container>
+      </gr-list-container>
     </section>
 
-    <list-container listitemtype=object key=objects
+    <gr-list-container listitemtype=object key=objects
         pl:src-index_id="$group->{data}->{default_wiki_index_id}"
         src-wiki_name=GroupTop>
       <template class=object>
@@ -55,7 +55,7 @@
       <list-main></list-main>
 
       <action-status hidden stage-load=読み込み中... />
-    </list-container>
+    </gr-list-container>
   </section>
 
   <!-- Necessary for checkboxes -->

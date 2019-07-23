@@ -20,7 +20,7 @@
     <section>
       <h1>参加者一覧</>
 
-    <list-container type=table src=members/list.json key=members class=main-table>
+    <gr-list-container type=table src=members/list.json key=members class=main-table>
       <template>
         <th>
           <account-name data-field=account_id />
@@ -88,7 +88,7 @@
           <tbody>
         </table>
         <action-status hidden stage-load=読み込み中... />
-      </list-container>
+      </gr-list-container>
     </section>
 
     <section id=invite>
@@ -135,7 +135,7 @@
       <section id=invitations>
         <h1>発行済招待状</h1>
 
-        <list-container type=table src=members/invitations/list.json key=invitations sortkey=created class=main-table id=invitations-list>
+        <gr-list-container type=table src=members/invitations/list.json key=invitations sortkey=created class=main-table id=invitations-list>
           <template>
             <td><a data-href-field=invitation_url><time data-field=created /></a>
             <td><account-name data-field=author_account_id />
@@ -177,7 +177,7 @@
           <p class="operations pager">
             <button type=button class=next-page-button hidden>もっと昔</button>
           </p>
-        </list-container>
+        </gr-list-container>
       </section>
     </t:if>
 

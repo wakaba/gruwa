@@ -20,12 +20,12 @@
         <summary><account-name><t:text value="$account->{name}"></account-name></summary>
         <p><a href=/dashboard>ダッシュボード</a></p>
         <hr>
-        <list-container src=/jump/list.json key=items type=list>
+        <gr-list-container src=/jump/list.json key=items type=list>
           <template>
             <p><a href data-href-template={URL} data-ping-template=/jump/ping.json?url={HREF} data-field=label></a>
           </template>
           <list-main/>
-        </list-container>
+        </gr-list-container>
         <p><a href=/jump>ジャンプリストの編集</></li>
       </details>
       <details open>

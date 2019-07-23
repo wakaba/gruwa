@@ -24,7 +24,7 @@ function $$c (n, s) {
     var f = e.parentNode;
     while (f) {
       if (f === n) break;
-      if (f.localName === 'list-container' ||
+      if (f.localName === 'gr-list-container' ||
           f.localName === 'edit-container' ||
           f.localName === 'list-query' ||
           f.localName === 'list-control' ||
@@ -43,7 +43,7 @@ function $$c2 (n, s) {
     var f = e.parentNode;
     while (f) {
       if (f === n) break;
-      if (f.localName === 'list-container' ||
+      if (f.localName === 'gr-list-container' ||
           f.localName === 'edit-container' ||
           f.localName === 'list-query' ||
           f.localName === 'list-control' ||
@@ -253,17 +253,17 @@ FieldCommands.setListIndex = function () {
   var panel = $$ancestor (this, 'section');
   $$c (panel, 'panel-main').forEach (function (s) {
     fillFields (s, s, s, object, {});
-    $$c (s, 'list-container[data-src-template]').forEach (function (list) {
+    $$c (s, 'gr-list-container[data-src-template]').forEach (function (list) {
       list.removeAttribute ('disabled');
       list.clearObjects ();
       list.load ();
     });
-    $$c (s, 'form[data-form-type=uploader] list-container').forEach (function (list) {
+    $$c (s, 'form[data-form-type=uploader] gr-list-container').forEach (function (list) {
       list.clearObjects ();
     });
     s.hidden = false;
   });
-  $$c (panel.querySelector ('list-container[key=index_list]'), 'button[data-command=setListIndex]').forEach (function (b) {
+  $$c (panel.querySelector ('gr-list-container[key=index_list]'), 'button[data-command=setListIndex]').forEach (function (b) {
     b.classList.toggle ('active', b.value === object.index_id);
   });
 }; // setListIndex
@@ -1495,7 +1495,7 @@ function editObject (article, object, opts) {
         as.end ({ok: true});
       } else { // new object
         return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
-          return document.querySelector ('list-container[src-index_id]')
+          return document.querySelector ('gr-list-container[src-index_id]')
               .showObjects (json.objects, {prepend: true});
         }).then (function () {
           //as.stageEnd ("update");
@@ -1669,7 +1669,7 @@ function uploadFile (file, data, as) {
 
 function initUploader (form) {
   var upload = function (file) {
-    var list = form.querySelector ('list-container');
+    var list = form.querySelector ('gr-list-container');
     var data = {
       file_name: file.name,
       file_size: file.size,
@@ -1987,7 +1987,7 @@ stageActions.showCreatedObjectInCommentList = function (args) {
       p = p.parentNode;
       if (p.localName === 'article-comments') break;
     }
-    return $$ (p, 'list-container.comment-list')[0].showObjects (json.objects, {});
+    return $$ (p, 'gr-list-container.comment-list')[0].showObjects (json.objects, {});
   }).then (function () {
     args.as.stageEnd ('showcreatedobjectincommentlist');
   });
@@ -2028,6 +2028,8 @@ stageActions.updateParent = function (args) {
 }; // updateParent
 
 function upgradeForm (form) {
+  if (form.hasAttribute ('is')) return;
+  
   var formType = form.getAttribute ('data-form-type');
   if (formType === 'uploader') {
     return initUploader (form);
@@ -2237,7 +2239,7 @@ function upgradeCopyButton (e) {
         if (f.title) fd.append ('label', f.title);
         fd.append ('url', f.href);
         gFetch ('/jump/add.json', {post: true, formData: fd}).then (function () {
-          $$ (document, 'list-container[src="/jump/list.json"]').forEach (function (e) {
+          $$ (document, 'gr-list-container[src="/jump/list.json"]').forEach (function (e) {
             e.clearObjects ();
             e.load ();
           });
@@ -2417,7 +2419,7 @@ var RunAction = {};
 
 RunAction.installPrependNewObjects = function () {
   this.parentNode.addEventListener ('gruwaobjectsadded', function (ev) {
-    return ev.wait (Promise.all ($$c (this, 'list-container[key=objects]').map (function (e) {
+    return ev.wait (Promise.all ($$c (this, 'gr-list-container[key=objects]').map (function (e) {
       return e.showObjects (ev.objects, {prepend: true});
     })));
   });
@@ -2517,10 +2519,10 @@ function upgradeTabSet (e) {
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {
     Array.prototype.forEach.call (m.addedNodes, function (x) {
-      if (x.localName === 'list-container') {
+      if (x.localName === 'gr-list-container') {
         upgradeList (x);
       } else if (x.localName) {
-        $$ (x, 'list-container').forEach (upgradeList);
+        $$ (x, 'gr-list-container').forEach (upgradeList);
       }
       if (x.localName === 'account-name' &&
           x.hasAttribute ('account_id')) {
@@ -2571,7 +2573,7 @@ function upgradeTabSet (e) {
     });
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
-$$ (document, 'list-container').forEach (upgradeList);
+$$ (document, 'gr-list-container').forEach (upgradeList);
 $$ (document, 'form').forEach (upgradeForm);
 $$ (document, 'account-name[account_id]').forEach (upgradeAccountName);
 $$ (document, 'gr-popup-menu').forEach (upgradePopupMenu);
