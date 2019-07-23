@@ -291,7 +291,7 @@
 
         <script src=/js/sha1.js />
         <script src=/js/import.js />
-    <list-container loader=import key=sources type=table id=import-list>
+    <gr-list-container loader=import key=sources type=table id=import-list>
       <p class=buttons>
         <button type=button class=reload-button>再読込</button>
       </p>
@@ -317,7 +317,7 @@
       <list-is-empty>
         現在インポートできるグループはありません。
       </list-is-empty>
-    </list-container>
+    </gr-list-container>
 
       </section>
 
@@ -326,7 +326,7 @@
 
         <p>Bitbucket リポジトリーの Issues をこのグループにインポートできます。</p>
 
-    <list-container loader=bitbucket-repos noautoload key=repos type=table id=import-bb-list>
+    <gr-list-container loader=bitbucket-repos noautoload key=repos type=table id=import-bb-list>
       <p class=buttons>
         <button type=button class=reload-button>再読込</button>
       </p>
@@ -355,7 +355,7 @@
       <list-is-empty>
         現在インポートできるリポジトリーはありません。
       </list-is-empty>
-    </list-container>
+    </gr-list-container>
 
       </section>
     </gr-tab-set>
@@ -376,7 +376,7 @@
           stage-getissuelist=Issue一覧を取得中...
           stage-createissueobjects=Issueをインポート中...
           ok=完了しました />
-      <list-container type=table class=mapping-table>
+      <gr-list-container type=table class=mapping-table>
         <template>
           <td><cite data-field=originalTitle>
           <td><a data-href-template=i/{index_id}/ data-field=title data-empty=(トップページ) />
@@ -394,7 +394,7 @@
               <th>進捗
           <tbody>
         </table>
-      </list-container>
+      </gr-list-container>
     </div>
   </section>
   </section>

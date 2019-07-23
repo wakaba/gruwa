@@ -20,12 +20,12 @@
           <li><a pl:href="'/g/'.$group->{group_id}.'/i/'.$group_member->{data}->{default_index_id}.'/'">グループの自分の日記</a>
         </t:if>
         <hr>
-        <list-container src=/jump/list.json key=items type=list>
+        <gr-list-container src=/jump/list.json key=items type=list>
           <template>
             <a href data-href-template={URL} data-ping-template=/jump/ping.json?url={HREF} data-field=label></a>
           </template>
           <list-main/>
-        </list-container>
+        </gr-list-container>
         <li><a href=/jump>ジャンプリストの編集</></li>
       </menu>
     </gr-popup-menu>

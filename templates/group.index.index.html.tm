@@ -44,7 +44,7 @@
       </t:if>
     </header>
 
-    <list-container key=objects>
+    <gr-list-container key=objects>
       <t:if x="defined $object">
         <t:attr name="'src-object_id'" value="$object->{object_id}">
       <t:elsif x="defined $index">
@@ -197,7 +197,7 @@
 
           <article-comments>
 
-            <list-container class=comment-list
+            <gr-list-container class=comment-list
                 pl:data-src-template="'o/get.json?parent_object_id={object_id}&limit='.(defined $object ? 30 : 5).'&with_data=1'"
                 key=objects sortkey=timestamp,created prepend
                 template-selector=object>
@@ -259,7 +259,7 @@
               </p>
               <action-status hidden stage-load=読み込み中... />
               <list-main/>
-            </list-container>
+            </gr-list-container>
 
           <details class=actions>
             <summary>コメントを書く</summary>
@@ -309,7 +309,7 @@
           </article>
         <t:elsif x="$index->{index_type} == 6 # fileset">
           <form action=javascript: method=post data-form-type=uploader pl:data-context="$index->{index_id}">
-            <list-container type=table>
+            <gr-list-container type=table>
               <template>
                 <td class=file-name><code data-data-field=file_name />
                 <td class=file-size><gr-unit-number data-data-field=file_size type=bytes />
@@ -328,7 +328,7 @@
                     <th class=progress>進捗
                 <tbody>
               </table>
-            </list-container>
+            </gr-list-container>
             <p class=operations>
               <t:if x="($index->{options}->{subtype} // '') eq 'image'">
                 <input type=file name=file multiple hidden accept=image/*>
@@ -462,12 +462,12 @@
           <button type=button class=next-page-button hidden>もっと昔</button>
       </t:if>
       <run-action name=installPrependNewObjects />
-    </list-container>
+    </gr-list-container>
 
     <t:if x="defined $wiki_name">
       <article-comments>
 
-        <list-container class=comment-list
+        <gr-list-container class=comment-list
             pl:src="'o/get.json?index_id=' . $index->{index_id} . '&parent_wiki_name=' . Web::URL::Encoding::percent_encode_c ($wiki_name) . '&limit=30&with_data=1'"
             key=objects sortkey=timestamp,created prepend
             template-selector=object>
@@ -481,7 +481,7 @@
           </p>
           <action-status hidden stage-load=読み込み中... />
           <list-main/>
-        </list-container>
+        </gr-list-container>
       </article-comments>
 
       <footer>

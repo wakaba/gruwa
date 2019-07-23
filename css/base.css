@@ -556,11 +556,11 @@ body-control[disabled] iframe {
   pointer-events: none;
 }
 
-list-container {
+gr-list-container {
   display: block;
 }
 
-list-container > .operations {
+gr-list-container > .operations {
   margin: 0 0.5em 0.5em 0.5em;
 }
 
@@ -570,7 +570,7 @@ action-status {
   font-size: 90%;
 }
 
-list-container > action-status:not([hidden]) {
+gr-list-container > action-status:not([hidden]) {
   display: block;
 }
 
@@ -598,7 +598,7 @@ action-status[status=ng] action-status-message {
   color: var(--error-color);
 }
 
-list-container > action-status progress:not([hidden]) {
+gr-list-container > action-status progress:not([hidden]) {
   display: block;
   width: 100%;
   margin-top: .5em;
@@ -685,7 +685,7 @@ gr-popup-menu > menu:not([hidden]) {
 }
 
 gr-popup-menu > menu > li:not([hidden]),
-gr-popup-menu > menu > list-container > list-main > li:not([hidden]) {
+gr-popup-menu > menu > gr-list-container > list-main > li:not([hidden]) {
   display: block;
   margin: 0;
   padding: 0;
@@ -698,7 +698,7 @@ gr-popup-menu > menu > li > copy-button:not([hidden]) {
 
 gr-popup-menu > menu > li > a:only-child,
 gr-popup-menu > menu > li > copy-button > a:only-child,
-gr-popup-menu > menu > list-container > list-main > li > a:only-child {
+gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child {
   display: block;
   padding: .5em;
   font-size: 100%;
@@ -712,9 +712,9 @@ gr-popup-menu > menu > li > a:only-child:focus,
 gr-popup-menu > menu > li > copy-button > a:only-child:hover,
 gr-popup-menu > menu > li > copy-button > a:only-child:active,
 gr-popup-menu > menu > li > copy-button > a:only-child:focus,
-gr-popup-menu > menu > list-container > list-main > li > a:only-child:hover,
-gr-popup-menu > menu > list-container > list-main > li > a:only-child:active,
-gr-popup-menu > menu > list-container > list-main > li > a:only-child:focus {
+gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child:hover,
+gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child:active,
+gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child:focus {
   text-decoration: underline;
 }
 
@@ -753,70 +753,70 @@ gr-popup-menu > menu > hr {
   border-color: var(--menu-border-color);
 }
 
-gr-popup-menu > menu > list-container {
+gr-popup-menu > menu > gr-list-container {
   max-height: 15rem;
   overflow: auto;
 }
 
 
-list-container.main-table table {
+gr-list-container.main-table table {
   border-collapse: collapse;
   margin-bottom: 1em;
   width: 100%;
 }
 
-list-container.main-table thead {
+gr-list-container.main-table thead {
   border-bottom: 3px solid;
   border-color: var(--accented-border-color);
 }
 
-list-container.main-table thead th {
+gr-list-container.main-table thead th {
   color: var(--accented-color);
   background-color: var(--accented-background-color);
   font-weight: bolder;
 }
 
-list-container.main-table thead th,
-list-container.main-table td {
+gr-list-container.main-table thead th,
+gr-list-container.main-table td {
   padding: .5em;
 }
 
-list-container.main-table tbody tr {
+gr-list-container.main-table tbody tr {
   background-color: var(--light-1-background-color);
   color: var(--light-1-color);
 }
 
-list-container.main-table tbody tr:nth-child(2n+1) {
+gr-list-container.main-table tbody tr:nth-child(2n+1) {
   background-color: var(--light-2-background-color);
   color: var(--light-2-color);
 }
 
-list-container.main-table tbody th {
+gr-list-container.main-table tbody th {
   padding: 0;
 }
 
-list-container.main-table tbody th {
+gr-list-container.main-table tbody th {
   font-weight: normal;
   min-width: 20em;
   text-align: left;
 }
 
-list-container.main-table tbody th a:only-child {
+gr-list-container.main-table tbody th a:only-child {
   display: block;
   padding: .5em;
 }
 
-list-container.main-table td.operations {
+gr-list-container.main-table td.operations {
   text-align: right;
   font-size: 80%;
 }
 
-list-container.main-table td.operations button {
+gr-list-container.main-table td.operations button {
   margin: 0;
   font-size: 80%;
 }
 
-list-container.main-table td.operations action-status {
+gr-list-container.main-table td.operations action-status {
   display: block;
   margin-top: .5em;
 }

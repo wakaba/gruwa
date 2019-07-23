@@ -31,7 +31,7 @@
         </gr-popup-menu>
       </header>
 
-      <list-container src=o/search.json key=objects pl:param-q="$app->text_param ('q')" class=object-search>
+      <gr-list-container src=o/search.json key=objects pl:param-q="$app->text_param ('q')" class=object-search>
         <form method=get action=search class=search-form data-pjax=search?q={q}>
           <input type=search name=q pl:value="$app->text_param ('q')">
           <button type=submit>検索</button>
@@ -57,7 +57,7 @@
         <action-status hidden stage-load=読み込み中... />
         <p class=operations>
           <button type=button class=next-page-button hidden>もっと昔</button>
-      </list-container>
+      </gr-list-container>
 
     </section>
   </section>

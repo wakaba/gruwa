@@ -187,13 +187,13 @@
       data-link-url-prompt=リンク先のURLを指定してください。
       data-link-wiki-name-prompt=リンク先のWiki名を指定してください。 />
 
-  <list-container type=$with id=index-list src=i/list.json key=index_list itemkey=index_id />
-  <list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />
+  <gr-list-container type=$with id=index-list src=i/list.json key=index_list itemkey=index_id />
+  <gr-list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />
 
 <template id=template-panel-image-list>
   <run-action name=installPrependNewObjects />
 
-  <list-container src=i/list.json?index_type=6&subtype=image
+  <gr-list-container src=i/list.json?index_type=6&subtype=image
       key=index_list sortkey=updated
       loaded-actions=clickFirstButton>
     <template>
@@ -204,13 +204,13 @@
       このグループには<a href=/help#fileset-image target=help>アルバム</a>がありません。
     </list-is-empty>
     <action-status hidden stage-load=読み込み中... />
-  </list-container>
+  </gr-list-container>
 
   <panel-main hidden>
     <details>
       <summary>新しい画像</summary>
       <form action=javascript: method=post data-form-type=uploader data-context-template={index_id}>
-        <list-container>
+        <gr-list-container>
           <template>
             <p><code data-data-field=file_name />
             (<gr-unit-number data-data-field=file_size type=bytes />)
@@ -222,14 +222,14 @@
                     ok=アップロード完了 />
           </template>
           <list-main/>
-        </list-container>
+        </gr-list-container>
         <p class=operations>
           <input type=file name=file multiple hidden accept=image/*>
           <button type=button name=upload-button class=edit-button>アップロード...</button>
       </form>
     </details>
 
-    <list-container disabled
+    <gr-list-container disabled
         data-src-template="o/get.json?index_id={index_id}&limit=9"
         key=objects sortkey=timestamp,created
         added-actions=editCommands>
@@ -244,7 +244,7 @@
       <action-status hidden stage-load=読み込み中... />
       <p class="operations pager">
         <button type=button class=next-page-button hidden>もっと昔</button>
-    </list-container>
+    </gr-list-container>
   </panel-main>
 
 </template>
@@ -252,7 +252,7 @@
 <template id=template-panel-file-list>
   <run-action name=installPrependNewObjects />
 
-  <list-container src=i/list.json?index_type=6&subtype=file
+  <gr-list-container src=i/list.json?index_type=6&subtype=file
       key=index_list sortkey=updated
       loaded-actions=clickFirstButton>
     <template>
@@ -263,13 +263,13 @@
       このグループには<a href=/help#fileset-file target=help>ファイルアップローダー</a>がありません。
     </list-is-empty>
     <action-status hidden stage-load=読み込み中... />
-  </list-container>
+  </gr-list-container>
 
   <panel-main hidden>
     <details>
       <summary>新しいファイル</summary>
       <form action=javascript: method=post data-form-type=uploader data-context-template={index_id}>
-        <list-container>
+        <gr-list-container>
           <template>
             <p><code data-data-field=file_name />
             (<gr-unit-number data-data-field=file_size type=bytes />)
@@ -281,14 +281,14 @@
                     ok=アップロード完了 />
           </template>
           <list-main/>
-        </list-container>
+        </gr-list-container>
         <p class=operations>
           <input type=file name=file multiple hidden>
           <button type=button name=upload-button class=edit-button>アップロード...</button>
       </form>
     </details>
 
-    <list-container disabled
+    <gr-list-container disabled
         data-src-template="o/get.json?index_id={index_id}&limit=10&with_data=1"
         key=objects sortkey=timestamp,created
         added-actions=editCommands>
@@ -303,7 +303,7 @@
       <action-status hidden stage-load=読み込み中... />
       <p class="operations pager">
         <button type=button class=next-page-button hidden>もっと昔</button>
-    </list-container>
+    </gr-list-container>
   </panel-main>
 
 </template>
