@@ -183,7 +183,7 @@
           <main><iframe data-data-field=body /></main>
           <footer>
             <p>
-              <action-status hidden
+              <gr-action-status hidden
                   stage-edit=保存中...
                   ok=保存しました />
               <span data-if-data-non-empty-field=assigned_account_ids>
@@ -257,7 +257,7 @@
               <p class="operations pager">
                 <button type=button class=next-page-button hidden>もっと昔</button>
               </p>
-              <action-status hidden stage-load=読み込み中... />
+              <gr-action-status hidden stage-load=読み込み中... />
               <list-main/>
             </gr-list-container>
 
@@ -280,7 +280,7 @@
                 <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
                 <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
 
-                <action-status hidden
+                <gr-action-status hidden
                     stage-fetch=作成中...
                     stage-editcreatedobject_fetch=保存中...
                     stage-editobject_fetch=状態を変更中...
@@ -313,7 +313,7 @@
               <template>
                 <td class=file-name><code data-data-field=file_name />
                 <td class=file-size><unit-number data-data-field=file_size type=bytes />
-                <td class=progress><action-status hidden
+                <td class=progress><gr-action-status hidden
                         stage-create=作成中...
                         stage-upload=アップロード中...
                         stage-close=保存中...
@@ -456,7 +456,7 @@
         </list-is-empty>
       </t:if>
 
-      <action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読み込み中... />
       <t:if x="not defined $wiki_name">
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
@@ -479,7 +479,7 @@
           <p class="operations pager">
             <button type=button class=next-page-button hidden>もっと昔</button>
           </p>
-          <action-status hidden stage-load=読み込み中... />
+          <gr-action-status hidden stage-load=読み込み中... />
           <list-main/>
         </gr-list-container>
       </article-comments>

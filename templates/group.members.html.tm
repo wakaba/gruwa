@@ -70,7 +70,7 @@
               as.end ({error: error});
             });
           ">保存</>
-          <action-status hidden stage-save=保存中... ok=保存しました。 />
+          <gr-action-status hidden stage-save=保存中... ok=保存しました。 />
         <td>
           <a href data-href-template="i/{default_index_id}/" data-if-field=default_index_id>日記</a>
       </template>
@@ -87,7 +87,7 @@
               <th>
           <tbody>
         </table>
-        <action-status hidden stage-load=読み込み中... />
+        <gr-action-status hidden stage-load=読み込み中... />
       </gr-list-container>
     </section>
 
@@ -118,7 +118,7 @@
   
           <p class=operations>
             <button type=submit class=save-button>発行する</button>
-            <action-status hidden stage-fetch=発行中... ok=発行しました />
+            <gr-action-status hidden stage-fetch=発行中... ok=発行しました />
 
           <p id=invite-invitation hidden>招待状の URL は
             <code data-field=invitation_url />
@@ -147,7 +147,7 @@
               </only-if>
               <only-if data-field=used cond="==0" hidden>
                 <form method=post action=javascript: data-data-action-template=members/invitations/{invitation_key}/invalidate.json data-next=reloadList:invitations-list>
-                  <action-status hidden stage-fetch=変更中... />
+                  <gr-action-status hidden stage-fetch=変更中... />
                   <button type=submit class=delete-button>無効にする</>
                 </form>
               </only-if>
@@ -173,7 +173,7 @@
           <list-is-empty hidden>
             <p>招待状はありません。
           </list-is-empty>
-          <action-status hidden stage-load=読み込み中... />
+          <gr-action-status hidden stage-load=読み込み中... />
           <p class="operations pager">
             <button type=button class=next-page-button hidden>もっと昔</button>
           </p>

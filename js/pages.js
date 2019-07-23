@@ -68,17 +68,6 @@ function $$ancestor (e, name) {
   return null;
 } // $$ancestor
 
-function $promised () { }
-
-$promised.forEach = function (code, items) {
-  var list = Array.prototype.slice.call (items);
-  var run; run = function () {
-    if (!list.length) return Promise.resolve ();
-    return Promise.resolve (list.shift ()).then (code).then (run);
-  };
-  return run ();
-}; // forEach
-
 function gFetch (pathquery, opts) {
   if (opts.asStage) opts.as.stageStart (opts.asStage);
   var body;
@@ -1784,11 +1773,11 @@ function applyFilters (objects, filtersText) {
 function getActionStatus (container) {
   var as = new ActionStatus;
   if (container) {
-    as.elements = $$c2 (container, 'action-status');
+    as.elements = $$c2 (container, 'gr-action-status');
     as.elements.forEach (function (e) {
       if (e.hasChildNodes ()) return;
       e.hidden = true;
-      e.innerHTML = '<action-status-message></action-status-message> <progress></progress>';
+      e.innerHTML = '<gr-action-status-message></gr-action-status-message> <progress></progress>';
     });
   } else {
     as.elements = [];
@@ -1808,7 +1797,7 @@ ActionStatus.prototype.start = function (opts) {
     });
   }
   this.elements.forEach (function (e) {
-    $$ (e, 'action-status-message').forEach (function (f) {
+    $$ (e, 'gr-action-status-message').forEach (function (f) {
       f.hidden = true;
     });
     $$ (e, 'progress').forEach (function (f) {
@@ -1830,7 +1819,7 @@ ActionStatus.prototype.start = function (opts) {
 ActionStatus.prototype.stageStart = function (stage) {
   this.elements.forEach (function (e) {
     var label = e.getAttribute ('stage-' + stage);
-    $$ (e, 'action-status-message').forEach (function (f) {
+    $$ (e, 'gr-action-status-message').forEach (function (f) {
       if (label) {
         f.textContent = label;
         f.hidden = false;
@@ -1880,7 +1869,7 @@ ActionStatus.prototype.stageEnd = function (stage) {
 ActionStatus.prototype.end = function (opts) {
   this.elements.forEach (function (e) {
     var shown = false;
-    $$ (e, 'action-status-message').forEach (function (f) {
+    $$ (e, 'gr-action-status-message').forEach (function (f) {
       var msg;
       var status;
       if (opts.ok) {

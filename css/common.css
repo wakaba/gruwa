@@ -587,7 +587,7 @@ article.object > .actions form {
   border-style: none;
 }
 
-gr-list-container[key=objects] action-status {
+gr-list-container[key=objects] gr-action-status {
   margin-left: 1em;
   margin-right: 1em;
 }
@@ -887,12 +887,12 @@ form[data-form-type=uploader] table td.file-size {
   text-align: right;
 }
 
-form[data-form-type=uploader] table action-status:not([hidden]) {
+form[data-form-type=uploader] table gr-action-status:not([hidden]) {
   display: block;
   margin: 0;
 }
 
-form[data-form-type=uploader] table action-status-message:not([hidden]) {
+form[data-form-type=uploader] table gr-action-status-message:not([hidden]) {
   display: block;
   margin: 0;
   line-height: 1.3;
@@ -1097,21 +1097,21 @@ list-is-empty:not([hidden]) {
   color: var(--light-2-color);
 }
 
-.panel.image-list panel-main > details list-item action-status:not([hidden]),
-.panel.file-list panel-main > details list-item action-status:not([hidden]) {
+.panel.image-list panel-main > details list-item gr-action-status:not([hidden]),
+.panel.file-list panel-main > details list-item gr-action-status:not([hidden]) {
   display: block;
   margin: .4em 0 0 0;
 }
 
-.panel.image-list panel-main > details list-item action-status action-status-message:not([hidden]),
-.panel.file-list panel-main > details list-item action-status action-status-message:not([hidden]) {
+.panel.image-list panel-main > details list-item gr-action-status gr-action-status-message:not([hidden]),
+.panel.file-list panel-main > details list-item gr-action-status gr-action-status-message:not([hidden]) {
   display: block;
   margin: 0;
   padding: 0;
 }
 
-.panel.image-list panel-main > details list-item action-status progress:not([hidden]),
-.panel.file-list panel-main > details list-item action-status progress:not([hidden]) {
+.panel.image-list panel-main > details list-item gr-action-status progress:not([hidden]),
+.panel.file-list panel-main > details list-item gr-action-status progress:not([hidden]) {
   width: 100%;
 }
 
@@ -1239,13 +1239,13 @@ list-is-empty:not([hidden]) {
   padding: .2em .4em;
 }
 
-.group-config-import #import-status > action-status:not([hidden]) {
+.group-config-import #import-status > gr-action-status:not([hidden]) {
   display: block;
   margin-top: 1em;
   margin-bottom: .5em;
 }
 
-.group-config-import #import-status > action-status progress:not([hidden]) {
+.group-config-import #import-status > gr-action-status progress:not([hidden]) {
   display: block;
   width: 100%;
 }

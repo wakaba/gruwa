@@ -51,7 +51,7 @@
                 <td>
                 <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme onchange="
                   var opt = this.selectedOptions[0];
-                  $grfill (document.querySelector ('gr-theme-info'), opt.grDef);
+                  $fill (document.querySelector ('gr-theme-info'), opt.grDef);
                 ">
                   <option value=green pl:selected="$group->{data}->{theme} eq 'green'?'':undef">緑
                   <option value=blue pl:selected="$group->{data}->{theme} eq 'blue'?'':undef">青
@@ -123,7 +123,7 @@
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>
-          <action-status hidden stage-fetch=保存中... ok=保存しました。 />
+          <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
       </form>
 
       <t:if x="defined $group_member->{data}->{default_index_id} and
@@ -135,7 +135,7 @@
           <p class=operations>
             <input type=hidden name=is_default value=1>
             <button type=submit class=save-button>設定する</>
-            <action-status hidden stage-fetch=保存中... ok=保存しました。 />
+            <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
         </form>
       </t:if>
 
@@ -148,7 +148,7 @@
           <p class=operations>
             <input type=hidden name=default_wiki_index_id pl:value="$index->{index_id}">
             <button type=submit class=save-button>設定する</>
-            <action-status hidden stage-fetch=保存中... ok=保存しました。 />
+            <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
         </form>
       </t:if>
 

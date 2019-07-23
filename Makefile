@@ -49,15 +49,21 @@ themes.json: css/themes.css
 css/themes.css: bin/generate-themes.pl $(GRUWA_THEMES_DIR)
 	$(PERL) $< $(GRUWA_THEMES_DIR)
 
-js/components.js: local/unit-number.js
-	cat local/unit-number.js > $@
-css/components.css: local/unit-number.css
-	cat local/unit-number.css > $@
+js/components.js: local/unit-number.js local/page-components.js
+	cat local/unit-number.js local/page-components.js > $@
+css/components.css: local/unit-number.css local/page-components.css
+	cat local/unit-number.css local/page-components.css > $@
 
 local/unit-number.js: local/generated
 	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/html-unit-number/master/src/unit-number.js
 local/unit-number.css: local/generated
 	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/html-unit-number/master/css/default.css
+local/page-components.js: local/generated
+	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/html-page-components/master/src/page-components.js
+local/maps.js: local/generated
+	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/html-page-components/master/src/maps.js
+local/page-components.css: local/generated
+	$(WGET) -O $@ https://raw.githubusercontent.com/wakaba/html-page-components/master/css/default.css
 
 local/generated:
 	touch $@
