@@ -274,12 +274,12 @@ function fillFields (contextEl, rootEl, el, object, opts) {
         field.localName === 'select') {
       field.value = value;
     } else if (field.localName === 'time') {
-      var date = new Date (parseFloat (value) * 1000);
       try {
-        field.setAttribute ('datetime', date.toISOString ());
-        field.textContent = date.toLocaleString ();
+        var dt = new Date (parseFloat (value) * 1000);
+        field.setAttribute ('datetime', dt.toISOString ());
       } catch (e) {
-        console.log (e); // XXX
+        field.removeAttribute ('datetime');
+        field.textContent = e;
       }
     } else if (field.localName === 'gr-enum-value') {
       field.setAttribute ('value', value);
@@ -1113,7 +1113,7 @@ function upgradeList (el) {
         } catch (e) {
           console.log (e); // XXX
         }
-        t.textContent = date.getUTCFullYear () + '/' + (date.getUTCMonth () + 1) + '/' + date.getUTCDate (); // XXX
+        t.setAttribute ('data-format', 'date');
         h.appendChild (t);
         section.appendChild (h);
 

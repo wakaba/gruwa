@@ -11,7 +11,7 @@
 </t:if>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel=stylesheet href=/css/common.css>
-<script src=/js/components.js class=body-js async data-export="$fill $promised" />
+<script src=/js/components.js class=body-js async data-export="$fill $promised" data-time-selector="time:not(.asis)" />
 <script src=/js/framework.js class=body-js />
 <script src=/js/pages.js async />
 <link rel=preload as=style href=/css/body.css class=body-css>

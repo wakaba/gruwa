@@ -34,7 +34,7 @@
                 <a href data-href-template="o/{object_id}/"
                     data-2-href-template={PARENT}wiki/{title}#{updated}>
                   <strong data-field=title data-empty=■ />
-                  (<time data-field=updated class=ambtime />)
+                  (<time data-field=updated data-format=ambtime />)
                 </a>
               </template>
               <list-main/>
