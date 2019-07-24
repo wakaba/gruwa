@@ -1,4 +1,4 @@
-<html t:params="$app $account $group $group_member">
+<html t:params="$app">
   <body>
 
     <gr-nav-button>
@@ -17,7 +17,11 @@
     
     <gr-nav-panel>
       <details open>
-        <summary><account-name><t:text value="$account->{name}"></account-name></summary>
+        <summary>
+          <gr-account self>
+            <gr-account-name data-field=name data-filling>アカウント</>
+          </gr-account>
+        </summary>
         <p><a href=/dashboard>ダッシュボード</a></p>
         <hr>
         <gr-list-container src=/jump/list.json key=items type=list>
@@ -29,20 +33,23 @@
         <p><a href=/jump>ジャンプリストの編集</></li>
       </details>
       <details open>
-        <summary><t:text value="$group->{data}->{title}"></summary>
-        <p><a pl:href="'/g/'.$group->{group_id}.'/'">トップ</a></p>
-        <t:if x="$group_member->{data}->{default_index_id}">
-          <p><a pl:href="'/g/'.$group->{group_id}.'/i/'.$group_member->{data}->{default_index_id}.'/'">自分の日記</a>
-        </t:if>
-        <form method=get pl:action="'/g/'.$group->{group_id}.'/search'" class=search-form>
-          <input type=search name=q required placeholder=グループ内検索>
-          <button type=submit>検索</button>
-        </form>
+        <summary>
+          <gr-group>
+            <gr-group-name data-field=title data-filling>グループ</>
+          </gr-group>
+        </summary>
+        <gr-group>
+          <p><a data-href-template=/g/{group_id}/>トップ</a>
+          <p class=if-has-default-index><a data-href-template=/g/{group_id}/i/{member.default_index_id}/>自分の日記</a>
+          <form method=get data-action-template=/g/{group_id}/search class=search-form>
+            <input type=search name=q required placeholder=グループ内検索>
+            <button type=submit>検索</button>
+          </form>
+        </gr-group>
       </details>
       <details>
         <summary>Gruwa</summary>
-        <p><a href=/>トップ</a>
-        <p><a href=/help>ヘルプ</a>
+        <p><a href=/help target=help>ヘルプ</a>
       </details>
     </gr-nav-panel>
 

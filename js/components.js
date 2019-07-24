@@ -440,6 +440,8 @@ License along with this program, see <https://www.gnu.org/licenses/>.
           f.textContent = value;
         }
       }
+
+      f.removeAttribute ('data-filling');
     }); // [data-field]
 
     root.querySelectorAll ('[data-enable-by-fill]').forEach ((f) => {

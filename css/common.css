@@ -17,7 +17,9 @@ gr-nav-button > button:not([hidden]) {
   display: block;
   -webkit-appearance: none;
   border-style: none;
-  font-size: 200%;
+  padding: 0.3em;
+  line-height: 1.0;
+  font-size: 150%;
   background: var(--dark-background-color);
   color: var(--dark-color);
 }
@@ -39,6 +41,7 @@ gr-nav-panel:not([hidden]) {
   background: var(--dark-background-color);
   color: var(--dark-color);
   z-index: 1000000;
+  font-size: 90%;
 }
 
 gr-nav-panel:not([active]) {
@@ -53,8 +56,13 @@ gr-nav-panel > details > summary {
   font-weight: bolder;
 }
 
-gr-nav-panel > details > *:not(summary) {
+gr-nav-panel > details > *:not(summary),
+gr-nav-panel > details > gr-group > * {
   margin: 2px;
+}
+
+gr-nav-panel gr-group:not([hidden]) {
+  display: contents;
 }
 
 gr-nav-panel summary:not([hidden]),

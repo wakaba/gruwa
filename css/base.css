@@ -615,6 +615,8 @@ dfn {
   font-weight: bolder;
 }
 
+gr-account-name[data-filling],
+gr-group-name[data-filling],
 account-name[loading] {
   color: var(--disabled-color);
   background-color: var(--disabled-background-color);

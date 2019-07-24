@@ -26,7 +26,7 @@
             <li><copy-button type=jump>
               <a href>ジャンプリストに追加</a>
             </copy-button>
-            <li><a href=/help#search>ヘルプ</a>
+            <li><a href=/help#search target=help>ヘルプ</a>
           </menu>
         </gr-popup-menu>
       </header>
@@ -61,7 +61,7 @@
 
     </section>
   </section>
-  <t:include path=_common.html.tm m:app=$app m:account=$account m:group=$group m:group_member=$group_member />
+  <t:include path=_common.html.tm m:app=$app />
 
 <!--
 

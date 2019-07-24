@@ -6,13 +6,16 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->create_account (a2 => {});
-  })->then (sub {
-    return $current->create_account (a3 => {});
-  })->then (sub {
-    return $current->create_group (g1 => {title => "a\x{500}", owner => 'a1', members => ['a3']});
-  })->then (sub {
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [a3 => account => {}],
+    [g1 => group => {
+      title => $current->generate_text (t1 => {}),
+      owner => 'a1',
+      members => ['a3'],
+    }],
+  )->then (sub {
     return $current->are_errors (
       ['GET', ['g', $current->o ('g1')->{group_id}, 'info.json'], {}, account => 'a1'],
       [
@@ -29,7 +32,7 @@ Test {
       is $result->{status}, 200;
       is $result->{json}->{group_id}, $current->o ('g1')->{group_id};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
-      is $result->{json}->{title}, "a\x{500}";
+      is $result->{json}->{title}, $current->o ('t1');
     } $current->c;
     return $current->get_json (['g', $current->o ('g1')->{group_id}, 'info.json'], {}, account => 'a3');
   })->then (sub {
@@ -38,17 +41,18 @@ Test {
       is $result->{status}, 200;
       is $result->{json}->{group_id}, $current->o ('g1')->{group_id};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
-      is $result->{json}->{title}, "a\x{500}";
-#XXX default_wiki_index_id
+      is $result->{json}->{title}, $current->o ('t1');
+      is $result->{json}->{default_wiki_index_id}, undef;
+      is $result->{json}->{theme}, 'green';
     } $current->c;
   });
-} n => 9, name => '/g/{}/info.json';
+} n => 11, name => '/g/{}/info.json';
 
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

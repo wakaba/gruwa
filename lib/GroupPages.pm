@@ -214,6 +214,29 @@ sub group ($$$$) {
       theme => $g->{data}->{theme},
       default_wiki_index_id => $g->{data}->{default_wiki_index_id},
     };
+  } elsif (@$path == 3 and $path->[2] eq 'myinfo.json') {
+    # /g/{group_id}/myinfo.json
+    my $acc = $opts->{account};
+    my $g = $opts->{group};
+    my $gm = $opts->{group_member};
+    return json $app, {
+      account => {
+        account_id => ''.$acc->{account_id},
+        name => $acc->{name},
+      },
+      group => {
+        group_id => ''.$g->{group_id},
+        title => $g->{data}->{title},
+        created => $g->{created},
+        updated => $g->{updated},
+        theme => $g->{data}->{theme},
+        default_wiki_index_id => $g->{data}->{default_wiki_index_id},
+      },
+      group_member => {
+        theme => $gm->{data}->{theme},
+        member_type => $gm->{member_type},
+      },
+    };
   }
 
   if (@$path == 3 and $path->[2] eq 'search') {
