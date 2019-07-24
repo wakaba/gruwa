@@ -17,7 +17,8 @@
 
     <section>
       <h1>グループ設定</>
-      <form action=javascript: data-action=edit.json id=edit-form>
+      <form is=save-data data-saver=groupSaver method=post action=edit.json id=edit-form>
+        <!-- XXX data-next=update group info -->
         <table class=config>
           <tbody>
             <tr>
@@ -67,7 +68,7 @@
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>
-          <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
+          <action-status hidden stage-saver=保存中... ok=保存しました。 />
       </form>
     </section>
 

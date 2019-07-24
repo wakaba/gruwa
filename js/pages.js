@@ -2165,6 +2165,24 @@ function upgradeForm (form) {
   };
 } // upgradeForm
 
+(() => {
+  var e = document.createElementNS ('data:,pc', 'saver');
+  e.setAttribute ('name', 'groupSaver');
+  e.pcHandler = function (fd) {
+    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/' + this.getAttribute ('action');
+    return fetch (url, {
+      credentials: 'same-origin',
+      method: 'POST',
+      referrerPolicy: 'same-origin',
+      body: fd,
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+      return res;
+    });
+  };
+  document.head.appendChild (e);
+}) ();
+
 function upgradeListControl (control) {
   control._selectedValues = [];
 
