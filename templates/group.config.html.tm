@@ -23,48 +23,23 @@
           <tbody>
             <tr>
               <th><label for=edit-title>グループ名</>
-              <td><input name=title pl:value="$group->{data}->{title}" id=edit-title>
+              <td><input name=title pl:value="$group->{data}->{title}" id=edit-title required>
             <tr>
               <th><label for=edit-theme>配色</>
               <td>
-                <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme onchange="
-                  var opt = this.selectedOptions[0];
-                  $fill (document.querySelector ('gr-theme-info'), opt.grDef);
-                ">
-                  <option value=green pl:selected="$group->{data}->{theme} eq 'green'?'':undef">緑
-                  <option value=blue pl:selected="$group->{data}->{theme} eq 'blue'?'':undef">青
-                  <option value=red pl:selected="$group->{data}->{theme} eq 'red'?'':undef">赤
-                  <option value=black pl:selected="$group->{data}->{theme} eq 'black'?'':undef">黒
-                </select>
-                <gr-theme-info>
-                  <strong data-field=label />
-                  <code data-field=name />
-                  <span data-field=author />
-                  <small>
-                    <span data-field=license />
-                    <span data-field=copyright />
-                    (<a data-href-template={url} target=_blank rel="noreferrer noopener">出典</a>)
-                  </small>
-                </gr-theme-info>
-                <script>
-                  $with ('GR').then (() => {
-                    return GR.theme.list ();
-                  }).then (json => {
-                    var select = document.querySelector ('select[name=theme]');
-                    select.textContent = '';
-                    json.names.forEach (theme => {
-                      var def = json.themes[theme];
-                      var option = document.createElement ('option');
-                      option.value = theme;
-                      option.label = def.label;
-                      option.grDef = def;
-                      def.name = theme;
-                      select.appendChild (option);
-                    });
-                    select.value = document.documentElement.getAttribute ('data-theme');
-                    select.onchange ();
-                  });
-                </script>
+                <gr-select-theme name=theme pl:value="$group->{data}->{theme}">
+                  <select id=edit-theme form required />
+                  <gr-theme-info>
+                    <strong data-field=label />
+                    <code data-field=name />
+                    <span data-field=author />
+                    <small>
+                      <span data-field=license />
+                      <span data-field=copyright />
+                      (<a data-href-template={url} target=_blank rel="noreferrer noopener">出典</a>)
+                    </small>
+                  </gr-theme-info>
+                </gr-select-theme>
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>

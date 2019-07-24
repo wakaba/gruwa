@@ -26,7 +26,12 @@ Test {
     return $current->b (1)->execute (q{
       var form = document.querySelector ('form[action="edit.json"]');
       form.querySelector ('input[name=title]').value = arguments[0];
-      form.querySelector ('select#edit-theme').value = arguments[1];
+      var select = form.querySelector ('select#edit-theme');
+
+      // select editing
+      select.value = arguments[1];
+      select.dispatchEvent (new Event ('change', {bubbles: true}));
+
       form.querySelector ('button[type=submit]').click ();
     }, [$current->generate_text (t1 => {}), 'red']);
   })->then (sub {
