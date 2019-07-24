@@ -56,7 +56,7 @@ defineElement ({
             var theme = select.value;
             document.documentElement.setAttribute ('data-theme', theme);
             this.value = theme;
-            $fill (this.querySelector ('gr-theme-info'), info.themes[theme]);
+            $fill (this.querySelector ('gr-theme-info'), info.themes[theme] || {});
           };
         });
 
@@ -64,7 +64,7 @@ defineElement ({
           var theme = this.getAttribute ('value');
           this.querySelectorAll ('select').forEach (_ => _.value = theme);
           this.value = theme;
-          $fill (this.querySelector ('gr-theme-info'), info.themes[theme]);
+          $fill (this.querySelector ('gr-theme-info'), info.themes[theme] || {});
         };
         var mo = new MutationObserver (setValue);
         mo.observe (this, {attributes: true, attributeFilter: ['value']});
