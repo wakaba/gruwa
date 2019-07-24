@@ -11,11 +11,11 @@
             _.removeAttribute ('active');
           }
         });
-        document.querySelector ('gr-nav-panel :-webkit-any(a, input, summary)').focus ();
+        document.querySelector ('gr-nav-panel').focus ();
       ">三</button>
     </gr-nav-button>
     
-    <gr-nav-panel>
+    <gr-nav-panel tabindex=0>
       <details open>
         <summary>
           <gr-account self>

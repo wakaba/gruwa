@@ -18,21 +18,8 @@
     </>
   </header-area>
   <header-area>
-    <gr-popup-menu>
-      <button><account-name><t:text value="$account->{name}"></account-name></button>
-      <menu hidden>
-        <li><a href=/dashboard>ダッシュボード</></li>
-        <hr>
-        <gr-list-container src=/jump/list.json key=items type=list>
-          <template>
-            <a href data-href-template={URL} data-ping-template=/jump/ping.json?url={HREF} data-field=label></a>
-          </template>
-          <list-main/>
-        </gr-list-container>
-        <li><a href=/jump>ジャンプリストの編集</></li>
-      </menu>
-    </gr-popup-menu>
-    <a href=/help>ヘルプ</a>
+    <a href=/dashboard>ダッシュボード</a>
+    <a href=/jump>ジャンプリスト</a>
   </header-area>
 </header>
 
