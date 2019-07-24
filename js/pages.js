@@ -1,3 +1,17 @@
+var defineElement = function (def) {
+  var e = document.createElementNS ('data:,pc', 'element');
+  e.pcDef = def;
+  document.head.appendChild (e);
+
+  if (def.fill) {
+    var e = document.createElementNS ('data:,pc', 'filltype');
+    e.setAttribute ('name', def.name);
+    e.setAttribute ('content', def.fill);
+    document.head.appendChild (e);
+    delete def.fill;
+  }
+}; // defineElement
+
 window.GR = {};
 
 // XXX
@@ -18,6 +32,73 @@ GR.theme.getDefault = function () {
     return list[Math.floor (Math.random () * list.length)];
   });
 }; // GR.theme.getDefault
+
+GR._state = {};
+
+GR._updateMyInfo = function () {
+  return GR._state.updateMyInfo = gFetch ('myinfo.json', {}).then (json => {
+    var oldAccount = GR._state.account || {};
+    GR._state.account = json.account;
+    GR._state.group = json.group;
+    GR._state.group.member = json.group_member;
+
+    if (oldAccount.account_id !== json.account) {
+      // XXX
+    }
+  });
+  // XXX if 403
+}; // GR._updateMyInfo
+// XXX auto _updateMyInfo
+
+GR._myinfo = function () {
+  return GR._state.updateMyInfo || GR._updateMyInfo ();
+}; // GR._myinfo
+
+GR.account = {};
+
+GR.account.info = function () {
+  return GR._myinfo ().then (_ => {
+    return GR._state.account;
+  });
+}; // GR.account.info
+
+GR.group = {};
+
+GR.group.info = function () {
+  return GR._myinfo ().then (_ => {
+    return GR._state.group;
+  });
+}; // GR.group.info
+
+defineElement ({
+  name: 'gr-account',
+  props: {
+    pcInit: function () {
+      if (this.hasAttribute ('self')) {
+        return GR.account.info ().then (account => {
+          $fill (this, account);
+        });
+      } else if (this.hasAttribute ('value')) {
+        // XXX
+        
+      }
+    }, // pcInit
+  },
+}); // <gr-account>
+
+defineElement ({
+  name: 'gr-group',
+  props: {
+    pcInit: function () {
+      return GR.group.info ().then (group => {
+        $fill (this, group);
+        this.querySelectorAll ('.if-has-default-index').forEach (_ => {
+          _.hidden = ! group.member.default_index_id;
+        });
+      });
+    }, // pcInit
+  },
+}); // <gr-group>
 
 function $$c (n, s) {
   return Array.prototype.filter.call (n.querySelectorAll (s), function (e) {
