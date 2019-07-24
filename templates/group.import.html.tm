@@ -1,4 +1,4 @@
-<html t:params="$group $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
+<html t:params="$group $app" pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-theme="$group->{data}->{theme}"
     pl:data-bb-clientid="$app->config->{bitbucket}->{public}->{client_id}">
 <!--
@@ -12,7 +12,7 @@
 
 -->
 <head>
-  <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
+  <t:include path=_group_head.html.tm m:group=$group m:app=$app>
     設定
   </t:include>
 

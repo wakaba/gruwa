@@ -1,18 +1,7 @@
-<html t:params="$group $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
-    pl:data-theme="$group->{data}->{theme}"
-    pl:data-bb-clientid="$app->config->{bitbucket}->{public}->{client_id}">
-<!--
-
-  The bitbucket.public.client_id value has to be the Key of a
-  BitBucket OAuth consumer, with following configurations:
-
-    Callback URL: https://{host}/account/done
-    This is a private consumer: Unchcked
-    Permissions: Account - Read, Repositories - Read, Issues - Read
-
--->
+<html t:params="$group $app" pl:data-group-url="'/g/'.$group->{group_id}"
+    pl:data-theme="$group->{data}->{theme}">
 <head>
-  <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
+  <t:include path=_group_head.html.tm m:group=$group m:app=$app>
     設定
   </t:include>
 
@@ -28,57 +17,33 @@
 
     <section>
       <h1>グループ設定</>
-      <form action=javascript: data-action=edit.json id=edit-form>
+      <form is=save-data data-saver=groupSaver method=post action=edit.json id=edit-form>
+        <!-- XXX data-next=update group info -->
         <table class=config>
           <tbody>
             <tr>
               <th><label for=edit-title>グループ名</>
-              <td><input name=title pl:value="$group->{data}->{title}" id=edit-title>
+              <td><input name=title pl:value="$group->{data}->{title}" id=edit-title required>
             <tr>
               <th><label for=edit-theme>配色</>
               <td>
-                <select name=theme oninput=" document.documentElement.setAttribute ('data-theme', value) " id=edit-theme onchange="
-                  var opt = this.selectedOptions[0];
-                  $fill (document.querySelector ('gr-theme-info'), opt.grDef);
-                ">
-                  <option value=green pl:selected="$group->{data}->{theme} eq 'green'?'':undef">緑
-                  <option value=blue pl:selected="$group->{data}->{theme} eq 'blue'?'':undef">青
-                  <option value=red pl:selected="$group->{data}->{theme} eq 'red'?'':undef">赤
-                  <option value=black pl:selected="$group->{data}->{theme} eq 'black'?'':undef">黒
-                </select>
-                <gr-theme-info>
-                  <strong data-field=label />
-                  <code data-field=name />
-                  <span data-field=author />
-                  <small>
-                    <span data-field=license />
-                    <span data-field=copyright />
-                    (<a data-href-template={url} target=_blank rel="noreferrer noopener">出典</a>)
-                  </small>
-                </gr-theme-info>
-                <script>
-                  $with ('GR').then (() => {
-                    return GR.theme.list ();
-                  }).then (json => {
-                    var select = document.querySelector ('select[name=theme]');
-                    select.textContent = '';
-                    json.names.forEach (theme => {
-                      var def = json.themes[theme];
-                      var option = document.createElement ('option');
-                      option.value = theme;
-                      option.label = def.label;
-                      option.grDef = def;
-                      def.name = theme;
-                      select.appendChild (option);
-                    });
-                    select.value = document.documentElement.getAttribute ('data-theme');
-                    select.onchange ();
-                  });
-                </script>
+                <gr-select-theme name=theme pl:value="$group->{data}->{theme}">
+                  <select id=edit-theme form required />
+                  <gr-theme-info>
+                    <strong data-field=label />
+                    <code data-field=name />
+                    <span data-field=author />
+                    <small>
+                      <span data-field=license />
+                      <span data-field=copyright />
+                      (<a data-href-template={url} target=_blank rel="noreferrer noopener">出典</a>)
+                    </small>
+                  </gr-theme-info>
+                </gr-select-theme>
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>
-          <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
+          <action-status hidden stage-saver=保存中... ok=保存しました。 />
       </form>
     </section>
 

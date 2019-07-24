@@ -33,6 +33,52 @@ GR.theme.getDefault = function () {
   });
 }; // GR.theme.getDefault
 
+defineElement ({
+  name: 'gr-select-theme',
+  fill: 'contentattribute',
+  props: {
+    pcInit: function () {
+      this.setAttribute ('formcontrol', '');
+
+      this.ready = GR.theme.list ().then (info => {
+        this.querySelectorAll ('select').forEach (select => {
+          select.textContent = '';
+          info.names.forEach (theme => {
+            var def = info.themes[theme];
+            var option = document.createElement ('option');
+            option.value = theme;
+            option.label = def.label;
+            def.name = theme;
+            select.appendChild (option);
+          });
+
+          select.onchange = () => {
+            var theme = select.value;
+            document.documentElement.setAttribute ('data-theme', theme);
+            this.value = theme;
+            $fill (this.querySelector ('gr-theme-info'), info.themes[theme]);
+          };
+        });
+
+        var setValue = () => {
+          var theme = this.getAttribute ('value');
+          this.querySelectorAll ('select').forEach (_ => _.value = theme);
+          this.value = theme;
+          $fill (this.querySelector ('gr-theme-info'), info.themes[theme]);
+        };
+        var mo = new MutationObserver (setValue);
+        mo.observe (this, {attributes: true, attributeFilter: ['value']});
+        setValue ();
+      });
+    }, // pcInit
+    pcModifyFormData: function (fd) {
+      var name = this.getAttribute ('name');
+      if (!name) return;
+      return this.ready.then (() => fd.append (name, this.value));
+    }, // pcModifyFormData
+  },
+}); // <gr-select-theme>
+
 GR._state = {};
 
 GR._updateMyInfo = function () {
@@ -2164,6 +2210,24 @@ function upgradeForm (form) {
     });
   };
 } // upgradeForm
+
+(() => {
+  var e = document.createElementNS ('data:,pc', 'saver');
+  e.setAttribute ('name', 'groupSaver');
+  e.pcHandler = function (fd) {
+    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/' + this.getAttribute ('action');
+    return fetch (url, {
+      credentials: 'same-origin',
+      method: 'POST',
+      referrerPolicy: 'same-origin',
+      body: fd,
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+      return res;
+    });
+  };
+  document.head.appendChild (e);
+}) ();
 
 function upgradeListControl (control) {
   control._selectedValues = [];

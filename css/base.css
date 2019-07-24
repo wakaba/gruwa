@@ -565,6 +565,7 @@ gr-list-container > .operations {
   margin: 0 0.5em 0.5em 0.5em;
 }
 
+action-status,
 gr-action-status {
   color: var(--small-color);
   background-color: var(--small-background-color);
@@ -575,14 +576,25 @@ gr-list-container > gr-action-status:not([hidden]) {
   display: block;
 }
 
+.operations action-status:not([hidden]),
 .operations gr-action-status {
+  display: inline-block;
   unicode-bidi: embed;
 }
 
+.operations action-status > *,
 .operations gr-action-status > * {
   direction: ltr;
 }
 
+.operations action-status progress:not([hidden]) {
+  display: inline;
+  width: 10em;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+action-status-message,
 gr-action-status-message {
   margin-left: .5em;
   margin-right: .5em;
@@ -594,6 +606,7 @@ gr-action-status[status=ok] gr-action-status-message {
   color: var(--success-color);
 }
 
+action-status[status=ng] action-status-message,
 gr-action-status[status=ng] gr-action-status-message {
   background-color: var(--error-background-color);
   color: var(--error-color);
