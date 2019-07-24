@@ -9,7 +9,8 @@
   </t:include>
 
 <body>
-  <t:include path=_group_header.html.tm m:group=$group m:account=$account m:group_member=$group_member m:app=$app />
+  <!-- XXX -->
+  <t:include path=_common.html.tm m:app=$app />
 
   <section class=page>
     <header>
