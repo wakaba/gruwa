@@ -16,7 +16,7 @@ Test {
     }],
   )->then (sub {
     return $current->are_errors (
-      ['GET', ['g', $current->o ('g1')->{group_id}, 'config'], {}, account => 'a1'],
+      ['GET', ['g', $current->o ('g1')->{group_id}, 'import'], {}, account => 'a1'],
       [
         {path => ['g', int rand 10000, 'members'], status => 404},
         {account => '', status => 403},
@@ -24,20 +24,20 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->get_html (['g', $current->o ('g1')->{group_id}, 'config'], {}, account => 'a1');
+    return $current->get_html (['g', $current->o ('g1')->{group_id}, 'import'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
       ok 1;
     } $current->c;
-    return $current->get_html (['g', $current->o ('g1')->{group_id}, 'config'], {}, account => 'a2');
+    return $current->get_html (['g', $current->o ('g1')->{group_id}, 'import'], {}, account => 'a2');
   })->then (sub {
     my $result = $_[0];
     test {
       ok 1;
     } $current->c;
   });
-} n => 3, name => '/g/{}/config';
+} n => 3, name => '/g/{}/import';
 
 RUN;
 
