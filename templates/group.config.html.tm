@@ -1,18 +1,7 @@
-<html t:params="$group $account $group_member $app" pl:data-group-url="'/g/'.$group->{group_id}"
-    pl:data-theme="$group->{data}->{theme}"
-    pl:data-bb-clientid="$app->config->{bitbucket}->{public}->{client_id}">
-<!--
-
-  The bitbucket.public.client_id value has to be the Key of a
-  BitBucket OAuth consumer, with following configurations:
-
-    Callback URL: https://{host}/account/done
-    This is a private consumer: Unchcked
-    Permissions: Account - Read, Repositories - Read, Issues - Read
-
--->
+<html t:params="$group $app" pl:data-group-url="'/g/'.$group->{group_id}"
+    pl:data-theme="$group->{data}->{theme}">
 <head>
-  <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
+  <t:include path=_group_head.html.tm m:group=$group m:app=$app>
     設定
   </t:include>
 

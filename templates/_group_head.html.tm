@@ -1,4 +1,4 @@
-<html t:params="$group $account $app">
+<html t:params="$group $app">
 <title t:parse>
   <t:content>
   -
