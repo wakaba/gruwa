@@ -119,9 +119,24 @@ Test {
       ok ! $res->header ('last-modified');
       is $res->header ('cache-control'), undef;
       is $res->body_bytes, q{404 File not found};
-    } $current->c, name => 'Current revision';
+    } $current->c;
   });
 } n => 5, name => '/css/404.css';
+
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['robots.txt'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'text/plain; charset=utf-8';
+      is $res->header ('last-modified'), 'Tue, 30 Apr 2019 15:00:00 GMT';
+      is $res->header ('cache-control'), undef;
+      is $res->header ('x-rev'), $current->app_rev;
+      is $res->body_bytes, "User-agent: *\x0ADisallow: /g/\x0ADisallow: /invitation/\x0A";
+    } $current->c;
+  });
+} n => 6, name => '/robots.txt';
 
 RUN;
 

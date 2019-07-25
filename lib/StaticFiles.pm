@@ -45,6 +45,16 @@ sub main ($$$) {
     return static $app, ['themes.json'], 'application/json;charset=utf-8';
   }
 
+  if (@$path == 1 and $path->[0] eq 'robots.txt') {
+    $app->http->set_response_header ('X-Rev' => $app->config->{git_sha});
+    $app->http->set_response_last_modified (1556636400);
+    if ($app->config->{is_live} or $app->config->{is_test_script}) {
+      return $app->send_plain_text ("User-agent: *\x0ADisallow: /g/\x0ADisallow: /invitation/\x0A");
+    } else {
+      return $app->send_plain_text ("User-agent: *\x0ADisallow: /\x0A");
+    }
+  } # /robots.txt
+
   return $app->throw_error (404);
 } # main
 
