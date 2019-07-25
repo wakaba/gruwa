@@ -6,15 +6,122 @@ use Tests;
 
 Test {
   my $current = shift;
+  return $current->client->request (path => ['css', 'base.css'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'text/css;charset=utf-8';
+      like $res->body_bytes, qr<GNU Affero General Public License>;
+      ok $res->header ('last-modified');
+      $current->set_o (rev1 => $res->header ('last-modified'));
+      is $res->header ('cache-control'), undef;
+    } $current->c;
+    return $current->client->request (path => ['css', 'base.css'], params => {
+      r => rand,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      ok ! $res->header ('last-modified');
+      is $res->header ('cache-control'), 'no-cache';
+    } $current->c, name => 'Unknown revision';
+    return $current->client->request (path => ['css', 'base.css'], params => {
+      r => $current->app_rev,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('last-modified'), $current->o ('rev1');
+      is $res->header ('cache-control'), undef;
+    } $current->c, name => 'Current revision';
+  });
+} n => 11, name => '/css/base.css';
+
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['js', 'pages.js'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'text/javascript;charset=utf-8';
+      like $res->body_bytes, qr<GNU Affero General Public License>;
+      ok $res->header ('last-modified');
+      $current->set_o (rev1 => $res->header ('last-modified'));
+      is $res->header ('cache-control'), undef;
+    } $current->c;
+    return $current->client->request (path => ['js', 'pages.js'], params => {
+      r => rand,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      ok ! $res->header ('last-modified');
+      is $res->header ('cache-control'), 'no-cache';
+    } $current->c, name => 'Unknown revision';
+    return $current->client->request (path => ['js', 'pages.js'], params => {
+      r => $current->app_rev,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('last-modified'), $current->o ('rev1');
+      is $res->header ('cache-control'), undef;
+    } $current->c, name => 'Current revision';
+  });
+} n => 11, name => '/js/pages.css';
+
+Test {
+  my $current = shift;
   return $current->client->request (path => ['theme', 'list.json'])->then (sub {
     my $res = $_[0];
     test {
       is $res->status, 200;
       is $res->header ('content-type'), 'application/json;charset=utf-8';
       like $res->body_bytes, qr<}>;
+      ok $res->header ('last-modified');
+      $current->set_o (rev1 => $res->header ('last-modified'));
+      is $res->header ('cache-control'), undef;
     } $current->c;
+    return $current->client->request (path => ['theme', 'list.json'], params => {
+      r => rand,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      ok ! $res->header ('last-modified');
+      is $res->header ('cache-control'), 'no-cache';
+    } $current->c, name => 'Unknown revision';
+    return $current->client->request (path => ['theme', 'list.json'], params => {
+      r => $current->app_rev,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('last-modified'), $current->o ('rev1');
+      is $res->header ('cache-control'), undef;
+    } $current->c, name => 'Current revision';
   });
-} n => 3, name => '/theme/list.json';
+} n => 11, name => '/theme/list.json';
+
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['css', '404.css'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 404;
+      is $res->header ('content-type'), 'text/plain; charset=us-ascii';
+      ok ! $res->header ('last-modified');
+      is $res->header ('cache-control'), undef;
+      is $res->body_bytes, q{404 File not found};
+    } $current->c, name => 'Current revision';
+  });
+} n => 5, name => '/css/404.css';
 
 RUN;
 

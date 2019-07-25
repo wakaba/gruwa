@@ -1,4 +1,5 @@
 {
+  "is_local": true,
   "origin": "http://budou:5521",
   "x_forwarded": false,
   "accounts": {

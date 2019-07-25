@@ -41,6 +41,7 @@ sub run ($%) {
       keys => {
         accounts_context => 'key:,20',
         accounts_group_context => 'key:,20',
+        app_rev => 'key',
       },
       start => sub ($$%) {
         my ($handler, $self, %args) = @_;
@@ -77,6 +78,7 @@ sub run ($%) {
           } else {
             $self->set_local_envs ('proxy' => $envs);
           }
+          $envs->{APP_REV} = $self->key ('app_rev');
 
           $data->{config_path} = $self->path ('app-config.json');
           return $self->write_json ('app-config.json', $config);
@@ -179,6 +181,7 @@ sub run ($%) {
         $data->{app_client_url} = $self->client_url ('app');
         $self->set_local_envs ('proxy', $data->{local_envs} = {});
         $self->set_docker_envs ('proxy', $data->{docker_envs} = {});
+        $data->{app_rev} = $self->key ('app_rev');
 
         if ($args{has_accounts}) {
           $data->{accounts_key} = $self->key ('accounts_key');
