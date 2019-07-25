@@ -9,8 +9,8 @@ my $RootPath = path (__FILE__)->parent->parent;
 sub static ($$$) {
   my ($app, $path, $mime) = @_;
   my $file = Promised::File->new_from_path ($RootPath->child (@$path));
+  my $r = $app->bare_param ('r');
   return $file->stat->then (sub {
-    my $r = $app->bare_param ('r');
     if (not defined $r or
         $r eq $app->config->{git_sha}) {
       $app->http->set_response_last_modified ($_[0]->mtime);
@@ -22,7 +22,16 @@ sub static ($$$) {
     return $app->throw_error (404, reason_phrase => 'File not found');
   })->then (sub {
     $app->http->add_response_header ('Content-Type' => $mime);
-    $app->http->send_response_body_as_ref (\($_[0]));
+    if ($mime eq 'text/css;charset=utf-8' and
+        defined $r and
+        $r eq $app->config->{git_sha} and
+        $r =~ /\A[0-9A-Za-z.]+\z/) {
+      my $x = $_[0];
+      $x =~ s{(\@import '[A-Za-z0-9-]+\.css)(';)}{$1?r=$r$2}g;
+      $app->http->send_response_body_as_ref (\$x);
+    } else {
+      $app->http->send_response_body_as_ref (\($_[0]));
+    }
     return $app->http->close_response_body;
   });
 } # static
