@@ -17,7 +17,6 @@ RUN cd /app && \
     make deps-docker PMBP_OPTIONS=--execute-system-package-installer && \
     echo '#!/bin/bash' > /server && \
     echo 'cd /app' >> /server && \
-    echo 'export APP_REV=`cat /app/rev`' >> /server && \
     echo 'port=${PORT:-8080}' >> /server && \
     echo 'exec ./perl bin/server.pl ${port}' >> /server && \
     chmod u+x /server && \

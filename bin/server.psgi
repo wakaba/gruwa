@@ -26,7 +26,7 @@ if ($Config->{x_forwarded}) {
   $Wanage::HTTP::UseXForwardedHost = 1;
 }
 
-$Config->{git_sha} = $ENV{APP_REV} // '';
+$Config->{git_sha} = path (__FILE__)->parent->parent->child ('rev')->slurp;
 $Config->{git_sha} =~ s/[\x0D\x0A]//g;
 
 my $dsn = $ENV{DATABASE_DSN} // die "No |DATABASE_DSN|";
