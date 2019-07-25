@@ -24,7 +24,7 @@
         </summary>
         <p><a href=/dashboard>ダッシュボード</a></p>
         <hr>
-        <gr-list-container src=/jump/list.json key=items type=list>
+        <gr-list-container src=/jump/list.json key=items>
           <template>
             <p><a href data-href-template={URL} data-ping-template=/jump/ping.json?url={HREF} data-field=label></a>
           </template>
