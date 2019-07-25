@@ -14,6 +14,10 @@ sub config ($) {
   return $_[0]->{app_config};
 } # config
 
+sub rev ($) {
+  return $_[0]->{app_config}->{git_sha};
+} # rev
+
 1;
 
 =head1 LICENSE

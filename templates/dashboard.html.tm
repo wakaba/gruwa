@@ -1,15 +1,9 @@
 <html t:params="$account $app">
-<title>ダッシュボード - Gruwa</title>
-<t:if x="not $app->config->{is_production}">
-  <meta name=referrer content=no-referrer>
-<t:else>
-  <meta name=referrer content=origin>
-</t:if>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel=stylesheet href=/css/common.css>
-<script src=/js/components.js class=body-js async data-export="$fill $promised" data-time-selector="time:not(.asis)" />
-<script src=/js/framework.js class=body-js />
-<script src=/js/pages.js async />
+  <head>
+    <t:include path=_other_head.html.tm m:app=$app>
+      ダッシュボード
+    </t:include>
+  <body>
 
 <header class=common>
   <header-area>

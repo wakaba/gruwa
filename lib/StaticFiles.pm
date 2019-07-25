@@ -12,7 +12,7 @@ sub static ($$$) {
   my $r = $app->bare_param ('r');
   return $file->stat->then (sub {
     if (not defined $r or
-        $r eq $app->config->{git_sha}) {
+        $r eq $app->rev) {
       $app->http->set_response_last_modified ($_[0]->mtime);
     } else {
       $app->http->add_response_header ('cache-control', 'no-cache');
@@ -24,7 +24,7 @@ sub static ($$$) {
     $app->http->add_response_header ('Content-Type' => $mime);
     if ($mime eq 'text/css;charset=utf-8' and
         defined $r and
-        $r eq $app->config->{git_sha} and
+        $r eq $app->rev and
         $r =~ /\A[0-9A-Za-z.]+\z/) {
       my $x = $_[0];
       $x =~ s{(\@import '[A-Za-z0-9-]+\.css)(';)}{$1?r=$r$2}g;
@@ -55,7 +55,7 @@ sub main ($$$) {
   }
 
   if (@$path == 1 and $path->[0] eq 'robots.txt') {
-    $app->http->set_response_header ('X-Rev' => $app->config->{git_sha});
+    $app->http->set_response_header ('X-Rev' => $app->rev);
     $app->http->set_response_last_modified (1556636400);
     if ($app->config->{is_live} or $app->config->{is_test_script}) {
       return $app->send_plain_text ("User-agent: *\x0ADisallow: /g/\x0ADisallow: /invitation/\x0A");

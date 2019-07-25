@@ -1,19 +1,9 @@
 <html t:params="$group_title $app">
-<head>
-  <title t:parse>グループに参加 - <t:text value=$group_title> - Gruwa</title>
-<t:if x="not $app->config->{is_production}">
-  <!--<meta name=referrer content=no-referrer>-->
-  <meta name=referrer content=origin><!-- required for <form> -->
-<t:else>
-  <meta name=referrer content=origin>
-</t:if>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel=stylesheet href=/css/common.css>
-<script src=/js/components.js class=body-js async data-export="$fill $promised" data-time-selector="time:not(.asis)" />
-<script src=/js/framework.js class=body-js />
-<script src=/js/pages.js async />
-
-<body>
+  <head>
+    <t:include path=_other_head.html.tm m:app=$app m:needreferrer=1>
+      グループに参加 - <t:text value=$group_title>
+    </t:include>
+  <body>
 
 <header class=common>
   <header-area>
@@ -22,15 +12,16 @@
     </>
   </header-area>
   <header-area>
-    <a href=/dashboard>ダッシュボード</>
-    <a href=/help rel=help>ヘルプ</a>
+    <a href=/dashboard>ダッシュボード</a>
+    <a href=/jump>ジャンプリスト</a>
+    <a href=/help target=help>ヘルプ</a>
   </header-area>
 </header>
 
   <section>
     <h1><t:text value="$group_title"></h1>
 
-    <form method=post action=./>
+    <form method=post action=./ referrerpolicy=origin>
       <p>グループ「<t:text value="$group_title">」に参加しますか?
 
       <p class=operations>
@@ -53,7 +44,7 @@
 
 <!--
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
