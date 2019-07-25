@@ -3,19 +3,15 @@
   <t:content>
   -
   <t:text value="$group->{data}->{title}">
-</>
-<t:if x="not $app->config->{is_production}">
-  <meta name=referrer content=no-referrer>
-<t:else>
-  <meta name=referrer content=origin>
-</t:if>
+</title>
+<meta name=referrer content=no-referrer>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel=stylesheet href=/css/common.css>
-<script src=/js/components.js class=body-js async data-export="$fill $promised" data-time-selector="time:not(.asis)" />
-<script src=/js/framework.js class=body-js />
-<script src=/js/pages.js async />
-<link rel=preload as=style href=/css/body.css class=body-css>
-<link rel=preload as=script href=/js/body.js class=body-js>
+<link rel=stylesheet pl:href="'/css/common.css?r='.$app->rev">
+<script pl:src="'/js/components.js?r='.$app->rev" class=body-js async data-export="$fill $promised" data-time-selector="time:not(.asis)" />
+<script pl:src="'/js/framework.js?r='.$app->rev" class=body-js />
+<script pl:src="'/js/pages.js?r='.$app->rev" async />
+<link rel=preload as=style pl:href="'/css/body.css?r='.$app->rev" class=body-css>
+<link rel=preload as=script pl:href="'/js/body.js?r='.$app->rev" class=body-js>
 
 <!--
 

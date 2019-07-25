@@ -18,3 +18,22 @@
 <script pl:src="'/js/components.js?r='.$app->rev" class=body-js async data-export="$fill $promised" data-time-selector="time:not(.asis)" />
 <script pl:src="'/js/framework.js?r='.$app->rev" class=body-js />
 <script pl:src="'/js/pages.js?r='.$app->rev" async />
+
+<!--
+
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Affero General Public License for more details.
+
+You does not have received a copy of the GNU Affero General Public
+License along with this program, see <https://www.gnu.org/licenses/>.
+
+-->
