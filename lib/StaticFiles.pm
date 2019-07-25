@@ -24,8 +24,8 @@ sub static ($$$) {
     $app->http->add_response_header ('Content-Type' => $mime);
     if ($mime eq 'text/css;charset=utf-8' and
         defined $r and
-        $r eq $app->rev and
-        $r =~ /\A[0-9A-Za-z.]+\z/) {
+        (($r eq $app->rev and $r =~ /\A[0-9A-Za-z.]+\z/) or
+         $r =~ /\Alocal-[0-9A-Za-z.]+\z/)) {
       my $x = $_[0];
       $x =~ s{(\@import '[A-Za-z0-9-]+\.css)(';)}{$1?r=$r$2}g;
       $app->http->send_response_body_as_ref (\$x);
