@@ -26,6 +26,9 @@ if ($Config->{x_forwarded}) {
   $Wanage::HTTP::UseXForwardedHost = 1;
 }
 
+$Config->{git_sha} = path (__FILE__)->parent->parent->child ('rev')->slurp;
+$Config->{git_sha} =~ s/[\x0D\x0A]//g;
+
 my $dsn = $ENV{DATABASE_DSN} // die "No |DATABASE_DSN|";
 my $DBSources = {sources => {
   master => {dsn => $dsn, anyevent => 1, writable => 1},
@@ -78,6 +81,8 @@ return sub {
         $app->http->client_ip_addr->as_text,
         $app->http->get_request_header ('User-Agent') // '';
 
+    $app->config->{git_sha} = 'local-' . rand if $app->config->{is_local};
+
     if ($app->config->{origin} eq $app->http->url->ascii_origin) {
       $app->http->set_response_header
           ('Strict-Transport-Security',
@@ -85,13 +90,12 @@ return sub {
 
       my $path = $app->path_segments;
 
-      # XXX tests
       if ($path->[0] eq 'robots.txt' or
-          $path->[0] eq 'favicon.ico' or
-          $path->[0] eq 'manifest.json' or
+          #$path->[0] eq 'favicon.ico' or
+          #$path->[0] eq 'manifest.json' or
           $path->[0] eq 'css' or
-          $path->[0] eq 'js' or
-          $path->[0] eq 'images') {
+          #$path->[0] eq 'images' or
+          $path->[0] eq 'js') {
         return StaticFiles->main ($app, $path);
       }
 
@@ -227,7 +231,7 @@ return sub {
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -240,6 +244,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

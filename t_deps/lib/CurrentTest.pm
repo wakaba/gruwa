@@ -435,6 +435,10 @@ sub _account ($$) {
   }
 } # _account
 
+sub app_rev ($) {
+  return $_[0]->{server_data}->{app_rev};
+} # app_rev
+
 sub resolve ($$) {
   my $self = shift;
   return Web::URL->parse_string (shift, $self->{server_data}->{app_client_url});

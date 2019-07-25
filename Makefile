@@ -14,11 +14,14 @@ updatenightly: local/bin/pmbp.pl
 
 ## ------ Setup ------
 
-deps: git-submodules pmbp-install build
+deps: git-submodules pmbp-install build deps-rev
 deps-docker:         pmbp-install
 
 git-submodules:
 	$(GIT) submodule update --init
+
+deps-rev:
+	$(GIT) rev-parse HEAD > rev
 
 PMBP_OPTIONS=
 
@@ -79,7 +82,7 @@ test: test-deps test-main
 
 test-deps: git-submodules pmbp-install local/accounts.sql
 
-deps-circleci: test-deps
+deps-circleci: test-deps deps-rev
 
 local/accounts.sql: local/accounts-2.sql
 	cp $< $@

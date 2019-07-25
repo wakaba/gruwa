@@ -10,16 +10,20 @@ sub static ($$$) {
   my ($app, $path, $mime) = @_;
   my $file = Promised::File->new_from_path ($RootPath->child (@$path));
   return $file->stat->then (sub {
-    return $_[0]->mtime;
+    my $r = $app->bare_param ('r');
+    if (not defined $r or
+        $r eq $app->config->{git_sha}) {
+      $app->http->set_response_last_modified ($_[0]->mtime);
+    } else {
+      $app->http->add_response_header ('cache-control', 'no-cache');
+    }
+    return $file->read_byte_string;
   }, sub {
     return $app->throw_error (404, reason_phrase => 'File not found');
   })->then (sub {
-    $app->http->set_response_last_modified ($_[0]);
-    return $file->read_byte_string->then (sub {
-      $app->http->add_response_header ('Content-Type' => $mime);
-      $app->http->send_response_body_as_ref (\($_[0]));
-      return $app->http->close_response_body;
-    });
+    $app->http->add_response_header ('Content-Type' => $mime);
+    $app->http->send_response_body_as_ref (\($_[0]));
+    return $app->http->close_response_body;
   });
 } # static
 

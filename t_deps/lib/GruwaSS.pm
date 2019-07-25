@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Path::Tiny;
 use Promise;
+use Promised::File;
 use ServerSet;
 
 my $RootPath = path (__FILE__)->parent->parent->parent->absolute;
@@ -187,8 +188,13 @@ sub run ($%) {
         }
 
         $data->{wd_local_url} = $self->local_url ('wd');
-        
-        return [$data, undef];
+
+        my $rev_path = $RootPath->child ('rev');
+        return Promised::File->new_from_path ($rev_path)->read_byte_string->then (sub {
+          $data->{app_rev} = $_[0];
+          $data->{app_rev} =~ s/[\x0D\x0A]//g;
+          return [$data, undef];
+        });
       },
     }, # _
   }, sub {
