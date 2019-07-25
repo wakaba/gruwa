@@ -1,15 +1,9 @@
 <html t:params="$account $app">
-<title>ジャンプリスト - Gruwa</title>
-<t:if x="not $app->config->{is_production}">
-  <meta name=referrer content=no-referrer>
-<t:else>
-  <meta name=referrer content=origin>
-</t:if>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link rel=stylesheet href=/css/common.css>
-<script src=/js/components.js class=body-js async data-export="$fill $promised" data-time-selector="time:not(.asis)" />
-<script src=/js/framework.js class=body-js />
-<script src=/js/pages.js async />
+  <head>
+    <t:include path=_other_head.html.tm m:app=$app>
+      ジャンプリスト
+    </t:include>
+  <body>
 
 <header class=common>
   <header-area>
@@ -60,7 +54,7 @@
 
 <!--
 
-Copyright 2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2017-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -73,6 +67,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 -->

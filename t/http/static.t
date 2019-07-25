@@ -6,7 +6,7 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->client->request (path => ['css', 'base.css'])->then (sub {
+  return $current->client->request (path => ['css', 'common.css'])->then (sub {
     my $res = $_[0];
     test {
       is $res->status, 200;
@@ -15,8 +15,9 @@ Test {
       ok $res->header ('last-modified');
       $current->set_o (rev1 => $res->header ('last-modified'));
       is $res->header ('cache-control'), undef;
+      like $res->body_bytes, qr{\@import 'base.css';};
     } $current->c;
-    return $current->client->request (path => ['css', 'base.css'], params => {
+    return $current->client->request (path => ['css', 'common.css'], params => {
       r => rand,
     });
   })->then (sub {
@@ -25,8 +26,9 @@ Test {
       is $res->status, 200;
       ok ! $res->header ('last-modified');
       is $res->header ('cache-control'), 'no-cache';
+      like $res->body_bytes, qr{\@import 'base.css';};
     } $current->c, name => 'Unknown revision';
-    return $current->client->request (path => ['css', 'base.css'], params => {
+    return $current->client->request (path => ['css', 'common.css'], params => {
       r => $current->app_rev,
     });
   })->then (sub {
@@ -35,9 +37,10 @@ Test {
       is $res->status, 200;
       is $res->header ('last-modified'), $current->o ('rev1');
       is $res->header ('cache-control'), undef;
+      like $res->body_bytes, qr{\@import 'base\.css\?r=@{[$current->app_rev]}';};
     } $current->c, name => 'Current revision';
   });
-} n => 11, name => '/css/base.css';
+} n => 14, name => '/css/common.css';
 
 Test {
   my $current = shift;
@@ -72,7 +75,7 @@ Test {
       is $res->header ('cache-control'), undef;
     } $current->c, name => 'Current revision';
   });
-} n => 11, name => '/js/pages.css';
+} n => 11, name => '/js/pages.js';
 
 Test {
   my $current = shift;
