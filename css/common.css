@@ -56,9 +56,15 @@ gr-nav-panel > details > summary {
   font-weight: bolder;
 }
 
-gr-nav-panel > details > *:not(summary),
-gr-nav-panel > details > gr-group > * {
+gr-nav-panel > details p,
+gr-nav-panel > details form {
   margin: 2px;
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+}
+
+gr-nav-panel > details hr {
+  margin: 0;
 }
 
 gr-nav-panel gr-group:not([hidden]) {
@@ -72,10 +78,12 @@ gr-nav-panel a:not([hidden]) {
 }
 
 gr-nav-panel a:not(:hover):not(:focus):not(:active) {
+  color: inherit;
+  background: transparent;
   text-decoration: none;
 }
 
-gr-nav-panel form:not([hidden]) {
+gr-nav-panel > details form:not([hidden]) {
   display: flex;
   padding: 0;
 }
