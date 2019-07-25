@@ -1,5 +1,6 @@
 {
   "is_local": false,
+  "is_test_script": true,
   "origin": "http://app.server.test",
   "x_forwarded": false,
   "accounts": {
