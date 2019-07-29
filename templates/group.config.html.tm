@@ -68,33 +68,21 @@
             を作成します。 (この操作は取り消せません。)
           </section-intro>
 
-        <form method=post action=javascript: data-action=i/create.json
-            data-next=go:/g/{group_id}/i/{index_id}/config>
-          <table class=config>
-            <tbody>
-              <tr>
-                <th><label for=create-blog-title>名前</>
-                <td><input name=title id=create-blog-title required placeholder=題名>
-          </table>
-          <script>
-            ((c) => {
-              $with ('GR').then (() => {
-                return GR.theme.getDefault ();
-              }).then (theme => {
-                var input = document.createElement ('input');
-                input.type = 'hidden';
-                input.name = 'theme';
-                input.value = theme;
-                c.appendChild (input);
-              });
-            }) (document.currentScript.parentNode);
-          </script>
+          <form is=save-data data-saver=groupSaver method=post action=i/create.json
+              data-next=go:/g/{group_id}/i/{index_id}/config>
+            <table class=config>
+              <tbody>
+                <tr>
+                  <th><label for=create-blog-title>名前</>
+                  <td><input name=title id=create-blog-title required placeholder=題名>
+            </table>
 
-          <p class=operations>
-            <input type=hidden name=index_type value=1>
-            <button type=submit class=save-button>作成する</>
-            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
-        </form>
+            <p class=operations>
+              <gr-input-hidden-random-theme name=theme />
+              <input type=hidden name=index_type value=1>
+              <button type=submit class=save-button>作成する</>
+              <action-status hidden stage-saver=作成中... />
+          </form>
         </section>
 
         <section id=create-wiki>
@@ -105,33 +93,21 @@
             を作成します。 (この操作は取り消せません。)
           </section-intro>
 
-        <form method=post action=javascript: data-action=i/create.json
-            data-next=go:/g/{group_id}/i/{index_id}/config>
-          <table class=config>
-            <tbody>
-              <tr>
-                <th><label for=create-wiki-title>名前</>
-                <td><input name=title id=create-wiki-title required value=Wiki>
-          </table>
-          <script>
-            ((c) => {
-              $with ('GR').then (() => {
-                return GR.theme.getDefault ();
-              }).then (theme => {
-                var input = document.createElement ('input');
-                input.type = 'hidden';
-                input.name = 'theme';
-                input.value = theme;
-                c.appendChild (input);
-              });
-            }) (document.currentScript.parentNode);
-          </script>
+          <form is=save-data data-saver=groupSaver method=post action=i/create.json
+              data-next=go:/g/{group_id}/i/{index_id}/config>
+            <table class=config>
+              <tbody>
+                <tr>
+                  <th><label for=create-wiki-title>名前</>
+                  <td><input name=title id=create-wiki-title required value=Wiki>
+            </table>
 
-          <p class=operations>
-            <input type=hidden name=index_type value=2>
-            <button type=submit class=save-button>作成する</>
-            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
-        </form>
+            <p class=operations>
+              <gr-input-hidden-random-theme name=theme />
+              <input type=hidden name=index_type value=2>
+              <button type=submit class=save-button>作成する</>
+              <action-status hidden stage-saver=作成中... />
+          </form>
         </section>
 
         <section id=create-todo-list>
@@ -143,75 +119,63 @@
             を作成します。 (この操作は取り消せません。)
           </section-intro>
 
-        <form method=post action=javascript: data-action=i/create.json
-            data-next=go:/g/{group_id}/i/{index_id}/config>
-          <table class=config>
-            <tbody>
-              <tr>
-                <th><label for=create-todo-list-title>名前</>
-                <td><input name=title id=create-todo-list-title required value=TODOリスト>
-          </table>
-          <script>
-            ((c) => {
-              $with ('GR').then (() => {
-                return GR.theme.getDefault ();
-              }).then (theme => {
-                var input = document.createElement ('input');
-                input.type = 'hidden';
-                input.name = 'theme';
-                input.value = theme;
-                c.appendChild (input);
-              });
-            }) (document.currentScript.parentNode);
-          </script>
+          <form is=save-data data-saver=groupSaver method=post action=action=i/create.json
+              data-next=go:/g/{group_id}/i/{index_id}/config>
+            <table class=config>
+              <tbody>
+                <tr>
+                  <th><label for=create-todo-list-title>名前</>
+                  <td><input name=title id=create-todo-list-title required value=TODOリスト>
+            </table>
 
-          <p class=operations>
-            <input type=hidden name=index_type value=3>
-            <button type=submit class=save-button>作成する</>
-            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
-        </form>
+            <p class=operations>
+              <gr-input-hidden-random-theme name=theme />
+              <input type=hidden name=index_type value=3>
+              <button type=submit class=save-button>作成する</>
+              <action-status hidden stage-saver=作成中... />
+          </form>
 
           <section-intro>
             <p>ラベル、マイルストーンはグループ全体で共通です。
           </section-intro>
 
-      <details>
-        <summary>ラベルの作成</summary>
+          <details>
+            <summary>ラベルの作成</summary>
 
-        <form method=post action=javascript: data-action=i/create.json
-            data-next=go:/g/{group_id}/i/{index_id}/config>
-          <table class=config>
-            <tbody>
-              <tr>
-                <th><label for=create-label-title>名前</>
-                <td><input name=title id=create-label-title required placeholder=ラベル>
-          </table>
+            <form is=save-data data-saver=groupSaver method=post action=i/create.json
+                data-next=go:/g/{group_id}/i/{index_id}/config>
+              <table class=config>
+                <tbody>
+                  <tr>
+                    <th><label for=create-label-title>名前</>
+                    <td><input name=title id=create-label-title required placeholder=ラベル>
+              </table>
 
-          <p class=operations>
-            <input type=hidden name=index_type value=4>
-            <button type=submit class=save-button>作成する</>
-            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
-        </form>
-      </details>
+              <p class=operations>
+                <input type=hidden name=index_type value=4>
+                <button type=submit class=save-button>作成する</>
+                <action-status hidden stage-saver=作成中... />
+            </form>
+          </details>
 
-      <details>
-        <summary>マイルストーンの作成</summary>
+          <details>
+            <summary>マイルストーンの作成</summary>
 
-        <form method=post action=javascript: data-action=i/create.json
-            data-next=go:/g/{group_id}/i/{index_id}/config>
-          <table class=config>
-            <tbody>
-              <tr>
-                <th><label for=create-milestone-title>名前</>
-                <td><input name=title id=create-milestone-title required placeholder=マイルストーン名>
-          </table>
+            <form is=save-data data-saver=groupSaver method=post action=i/create.json
+                data-next=go:/g/{group_id}/i/{index_id}/config>
+              <table class=config>
+                <tbody>
+                  <tr>
+                    <th><label for=create-milestone-title>名前</>
+                    <td><input name=title id=create-milestone-title required placeholder=マイルストーン名>
+              </table>
 
-          <p class=operations>
-            <input type=hidden name=index_type value=5>
-            <button type=submit class=save-button>作成する</>
-            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
-        </form>
-      </details>
+              <p class=operations>
+                <input type=hidden name=index_type value=5>
+                <button type=submit class=save-button>作成する</>
+                <action-status hidden stage-saver=作成中... />
+            </form>
+          </details>
         </section>
 
         <section id=create-fileset>
@@ -221,25 +185,25 @@
             <p>新しいアップローダーを作成します。 (この操作は取り消せません。)
           </section-intro>
 
-        <form method=post action=javascript: data-action=i/create.json
-            data-next=go:/g/{group_id}/i/{index_id}/config>
-          <table class=config>
-            <tbody>
-              <tr>
-                <th><label for=create-fileset-title>名前</>
-                <td><input name=title id=create-fileset-title required placeholder=フォルダー名>
-              <tr>
-                <th>種別
-                <td>
-                  <label><input type=radio name=subtype value=file checked required> ファイルアップローダー</label>
-                  <label><input type=radio name=subtype value=image required> アルバム</label>
-          </table>
+          <form is=save-data data-saver=groupSaver method=post action=i/create.json
+              data-next=go:/g/{group_id}/i/{index_id}/config>
+            <table class=config>
+              <tbody>
+                <tr>
+                  <th><label for=create-fileset-title>名前</>
+                  <td><input name=title id=create-fileset-title required placeholder=フォルダー名>
+                <tr>
+                  <th>種別
+                  <td>
+                    <label><input type=radio name=subtype value=file checked required> ファイルアップローダー</label>
+                    <label><input type=radio name=subtype value=image required> アルバム</label>
+            </table>
 
-          <p class=operations>
-            <input type=hidden name=index_type value=6>
-            <button type=submit class=save-button>作成する</>
-            <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
-        </form>
+            <p class=operations>
+              <input type=hidden name=index_type value=6>
+              <button type=submit class=save-button>作成する</>
+              <action-status hidden stage-saver=作成中... />
+          </form>
         </section>
       </tab-set>
     </section>
