@@ -2689,6 +2689,31 @@ $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 $$ (document, 'run-action').forEach (upgradeRunAction);
 $$ (document, 'object-ref').forEach (upgradeObjectRef);
 
+GR.navigate = {};
+
+GR.navigate._show = function (pageName) {
+  // Assert: pageName is valid
+  // XXX progressbar
+  return $getTemplateSet ('page-' + pageName).then (ts => {
+    var params = {};
+    var wait = [];
+    if (ts.hasAttribute ('gr-group')) {
+      wait.push (GR.group.info ().then (_ => params.group = _));
+    }
+    return Promise.all (wait).then (_ => {
+      document.querySelectorAll ('page-main').forEach (_ => {
+        var div = ts.createFromTemplate ('div', params);
+        while (div.firstChild) _.appendChild (div.firstChild);
+      });
+    });
+  });
+}; // _show
+
+(() => {
+  var nav = document.documentElement.getAttribute ('data-navigate');
+  if (nav) GR.navigate._show (nav);
+}) ();
+
 /*
 
 License:

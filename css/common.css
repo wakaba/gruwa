@@ -251,6 +251,11 @@ section.page > header > gr-menu {
   align-self: flex-end;
 }
 
+section.page > header > gr-menu > popup-menu > button:not(:hover):not(:focus):not(:active) {
+  color: inherit;
+  background: transparent;
+}
+
 section.page > header > gr-popup-menu {
   display: block;
   float: right;

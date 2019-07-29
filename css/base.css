@@ -65,7 +65,7 @@ html { /* [data-thema=green] */
   --pageheader-border-width: 1px;
   --pageheader-border-style: none;
   --pageheader-border-color: var(--accented-border-color);
-  --pageheader-padding: 2em;
+  --pageheader-padding: 1em;
   --pageheader-align: start;
 
   --header4-color: var(--accented-color);
