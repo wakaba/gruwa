@@ -2576,52 +2576,6 @@ Formatter.hatena = function (source) {
   });
 }; // hatena
 
-function upgradeTabSet (e) {
-  var init = function () {
-    var tabMenu = null;
-    var tabSections = [];
-    Array.prototype.forEach.call (e.children, function (f) {
-      if (f.localName === 'section') {
-        tabSections.push (f);
-      } else if (f.localName === 'menu') {
-        tabMenu = f;
-      }
-    });
-    if (!tabMenu) return;
-    if (!tabSections.length) return;
-
-    var showTab = function (f) {
-      $$ (tabMenu, 'a').forEach (function (g) {
-        g.classList.toggle ('active', g.section === f);
-      });
-      tabSections.forEach (function (g) {
-        if (f === g) {
-          g.setAttribute ('active', '');
-        } else {
-          g.removeAttribute ('active');
-        }
-      });
-    }; // showTab
-
-    tabMenu.textContent = '';
-    tabSections.forEach (function (f) {
-      var header = $$ (f, 'h1')[0];
-      var a = document.createElement ('a');
-      a.href = 'javascript:';
-      a.onclick = function () { showTab (this.section) };
-      a.section = f;
-      a.textContent = header ? header.textContent : '§';
-      tabMenu.appendChild (a);
-    });
-
-    e.setAttribute ('initialized', '');
-    showTab (tabSections[0]);
-  }; // init
-
-  init ();
-  new MutationObserver (init).observe (e, {childList: true});
-} // upgradeTabSet
-
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {
     Array.prototype.forEach.call (m.addedNodes, function (x) {
@@ -2666,11 +2620,6 @@ function upgradeTabSet (e) {
       } else if (x.localName) {
         $$ (x, 'object-ref').forEach (upgradeObjectRef);
       }
-      if (x.localName === 'gr-tab-set') {
-        upgradeTabSet (x);
-      } else if (x.localName) {
-        $$ (x, 'gr-tab-set').forEach (upgradeTabSet);
-      }
     });
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
@@ -2682,7 +2631,6 @@ $$ (document, 'copy-button').forEach (upgradeCopyButton);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 $$ (document, 'run-action').forEach (upgradeRunAction);
 $$ (document, 'object-ref').forEach (upgradeObjectRef);
-$$ (document, 'gr-tab-set').forEach (upgradeTabSet);
 
 /*
 

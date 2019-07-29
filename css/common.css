@@ -1225,36 +1225,6 @@ list-is-empty:not([hidden]) {
   text-align: right;
 }
 
-.help table,
-.group-config-import table {
-  width: 100%;
-}
-
-.help table thead tr,
-.group-config-import table thead tr {
-  background-color: var(--dark-background-color);
-  color: var(--dark-color);
-}
-
-.help table tbody tr,
-.group-config-import table tbody tr {
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-}
-
-.help table tbody tr:nth-child(2n),
-.group-config-import table tbody tr:nth-child(2n) {
-  background-color: var(--light-2-background-color);
-  color: var(--light-2-color);
-}
-
-.help table th,
-.help table td,
-.group-config-import table th,
-.group-config-import table td {
-  padding: .2em .4em;
-}
-
 .group-config-import #import-status > gr-action-status:not([hidden]) {
   display: block;
   margin-top: 1em;
