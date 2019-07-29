@@ -566,6 +566,13 @@ License along with this program, see <https://www.gnu.org/licenses/>.
     }
   }; // initTemplateSet
 
+  exportable.$getTemplateSet = function (name) {
+    return getDef ('templateSet', name).then (ts => {
+      ts.pcCreateTemplateList ();
+      return ts;
+    });
+  }; // $getTemplateSet
+
   var ActionStatus = function (elements) {
     this.stages = {};
     this.elements = elements;

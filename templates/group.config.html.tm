@@ -6,13 +6,10 @@
   </t:include>
 
 <body>
-  <!-- XXX -->
-  <t:include path=_common.html.tm m:app=$app />
-
   <section class=page>
     <header>
       <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
-      <m:group-menu m:group=$group />
+      <gr-menu type=group />
     </header>
 
     <section>
@@ -214,6 +211,7 @@
       <p>他のサービスからこのグループに<a href=import>データをインポート</a>できます。
     </section>
   </section>
+  <t:include path=_common.html.tm m:app=$app />
 
 <!--
 

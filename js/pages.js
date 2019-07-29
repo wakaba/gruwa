@@ -162,6 +162,47 @@ defineElement ({
   },
 }); // <gr-group>
 
+defineElement ({
+  name: 'gr-menu',
+  props: {
+    pcInit: function () {
+      new MutationObserver (() => this.grUpdate ()).observe
+          (this, {attributes: true, attributeFilter: ['type', 'value']});
+      Promise.resolve ().then (() => this.grUpdate ());
+    }, // pcInit
+    grUpdate: function () {
+      if (this.grUpdateRunning) return;
+      this.grUpdateRunning = true;
+      return $getTemplateSet ('gr-menu').then (ts => {
+        var type = this.getAttribute ('type');
+        if (type === 'group') {
+          return Promise.all ([
+            GR.group.info (),
+            ts,
+            $getTemplateSet ('gr-menu-group'),
+          ]);
+
+          // XXX
+          var value = this.getAttribute ('value');
+        } else {
+          throw new Error ("Unknown <gr-menu type> value |"+type+"|");
+        }
+      }).then (([obj, ts1, ts2]) => {
+        this.textContent = '';
+        window.XXX=ts1;
+        ts1.pcCreateTemplateList ();
+        ts2.pcCreateTemplateList ();
+        var e = ts1.createFromTemplate ('div', {});
+        e.querySelectorAll ('menu-main').forEach (_ => {
+          var f = ts2.createFromTemplate ('div', obj);
+          while (f.firstChild) _.appendChild (f.firstChild);
+        });
+        while (e.firstChild) this.appendChild (e.firstChild);
+      }).finally (_ => this.grUpdateRunning = false);
+    }, // grUpdate
+  },
+}); // <gr-menu>
+
 function $$c (n, s) {
   return Array.prototype.filter.call (n.querySelectorAll (s), function (e) {
     var f = e.parentNode;

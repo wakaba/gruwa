@@ -225,7 +225,7 @@ section.page::after {
 }
 
 section.page > header {
-  display: grid;
+  display: flex;
   align-items: center;
   margin: 0 0 1em 0;
   border-style: var(--pageheader-border-style);
@@ -239,10 +239,16 @@ section.page > header {
   text-align: var(--pageheader-align);
 }
 
-section.page > header h1 {
+section.page > header > h1 {
   margin: 0;
   font-size: 160%;
   text-shadow: 2px 2px var(--light-1-shadow-color);
+  flex-grow: 1;
+}
+
+section.page > header > gr-menu {
+  margin-top: 3em;
+  align-self: flex-end;
 }
 
 section.page > header > gr-popup-menu {

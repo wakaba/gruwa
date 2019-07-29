@@ -53,6 +53,19 @@
       </details>
     </gr-nav-panel>
 
+<template-set name=gr-menu>
+  <template>
+    <popup-menu>
+      <button type=button title=メニュー>
+        <button-label>
+          メニュー
+        </button-label>
+      </button>
+      <menu-main/>
+    </popup-menu>
+  </template>
+</template-set>
+
 <t:macro name=group-menu t:params=$group>
   <gr-popup-menu>
     <button type=button>⋁</button>
@@ -82,6 +95,21 @@
     </menu>
   </gr-popup-menu>
 </t:macro>
+<template-set name=gr-menu-group>
+  <template>
+    <p><a data-href-template=/g/{group_id}/>トップ</a>
+    <p><copy-button><a data-href-template=/g/{group_id}/>
+      URLをコピー
+    </a></copy-button>
+    <p><copy-button type=jump>
+      <a data-href-template=/g/{group_id}/ data-title-field=title>
+        ジャンプリストに追加
+      </a>
+    </copy-button>
+    <p><a data-href-template=/g/{group_id}/members>参加者</a>
+    <p><a data-href-template=/g/{group_id}/config>設定</a>
+  </template>
+</template-set>
 
 <t:macro name=index-menu t:params="$group $index">
   <gr-popup-menu>

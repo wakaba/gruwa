@@ -16,6 +16,32 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'gr-menu[type=group] menu-main a[href$="/config"]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('gr-menu[type=group] menu-main a[href$="/config"]').pathname;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, '/g/'.$current->o ('g1')->{group_id}.'/config';
+    } $current->c;
+  });
+} n => 1, name => ['page'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {members => ['a1']}],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'config'],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'form[action="edit.json"] button[type=submit]:enabled',
     });
   })->then (sub {
