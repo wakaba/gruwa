@@ -26,7 +26,7 @@
     <section id=groups>
       <h1>グループ</h1>
 
-      <p>グループには次の機能があります。
+      <p><a href=#groups>グループ</a>には次の機能があります。
 
       <ul>
         <li><a href=#blogs>日記</a>
@@ -40,7 +40,7 @@
       <section id=group-members>
         <h1>参加者</h1>
 
-        <p>グループの参加者は、
+        <p><a href=#groups>グループ</a>の参加者は、
         <a href=#owner>所有者</a>と<dfn id=normal-member>一般参加者</dfn>にわかれます。
         <dfn id=owner>所有者</dfn>は、グループの参加者を管理することができます。
         その他のほとんどの操作は、
@@ -67,14 +67,70 @@
         そのまま残ります。
       </section>
 
+      <section id=config>
+        <h1>設定</h1>
+
+        <p><a href=#groups>グループ</a>、
+        <a href=#blogs>日記</a>、
+        <a href=#wiki>Wiki</a>、
+        <a href=#todos>TODO リスト</a>、
+        <a href=#labels>ラベル</a>、
+        <a href=#milestones>マイルストーン</a>、
+        <a href=#filesets>アップローダー</a>のメニューから「設定」を選ぶと、
+        設定を変更できます。
+
+        <table>
+          <thead>
+            <tr>
+              <th>項目
+              <th>設定対象
+              <th>説明
+          <tbody>
+            <tr>
+              <th>名前
+              <td>
+                <a href=#groups>グループ</a>、
+                <a href=#blogs>日記</a>、
+                <a href=#wiki>Wiki</a>、
+                <a href=#todos>TODO リスト</a>、
+                <a href=#labels>ラベル</a>、
+                <a href=#milestones>マイルストーン</a>、
+                <a href=#filesets>アップローダー</a>
+              <td>
+                名前 (題名) です。
+            <tr>
+              <th>配色
+              <td>
+                <a href=#groups>グループ</a>、
+                <a href=#blogs>日記</a>、
+                <a href=#wiki>Wiki</a>、
+                <a href=#todos>TODO リスト</a>
+              <td>
+                所属する<a href=#objects>記事</a>ページなどの表示に使う<a href=#themes>配色</a>です。
+        </table>
+
+        <p id=group-config-create><a href=#groups>グループ</a>の<a href=#config>設定</a>ページでは、
+        <a href=#blogs>日記</a>、
+        <a href=#wiki>Wiki</a>、
+        <a href=#todos>TODO リスト</a>、
+        <a href=#labels>ラベル</a>、
+        <a href=#milestones>マイルストーン</a>、
+        <a href=#filesets>アップローダー</a>を作成できます。
+        (この操作は取り消せないのでご注意ください。)
+
+        <p><a href=#groups>グループ</a>の<a href=#config>設定</a>ページから、
+        <a href=#import>インポート</a>機能を利用できます。
+
+      </section>
+
       <section id=themes>
         <h1>配色</h1>
 
-        <p>グループ、
+        <p><a href=#groups>グループ</a>、
         <a href=#blogs>日記</a>、
         <a href=#wiki>Wiki</a>、
         <a href=#todos>TODO リスト</a>は、
-        設定から「配色」 (デザインテーマ) を変更できます。グループの配色は、
+        <a href=#group>設定</a>から「配色」 (デザインテーマ) を変更できます。グループの配色は、
         <a href=#blogs>日記</a>、
         <a href=#wiki>Wiki</a>、
         <a href=#todos>TODO リスト</a>以外のページに適用されます。

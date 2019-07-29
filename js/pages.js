@@ -79,6 +79,22 @@ defineElement ({
   },
 }); // <gr-select-theme>
 
+defineElement ({
+  name: 'gr-input-hidden-random-theme',
+  props: {
+    pcInit: function () {
+      this.setAttribute ('formcontrol', '');
+    }, // pcInit
+    pcModifyFormData: function (fd) {
+      var name = this.getAttribute ('name');
+      if (!name) return;
+      return GR.theme.getDefault ().then (theme => {
+        fd.append (name, theme);
+      });
+    }, // pcModifyFormData
+  },
+});
+
 GR._state = {};
 
 GR._updateMyInfo = function () {

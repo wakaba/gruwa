@@ -23,28 +23,34 @@
       <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
     </header>
 
-  <section class=group-config-import>
-    <h1>データのインポート</h1>
+    <section class=group-config-import>
+      <header class=section>
+        <h1>データのインポート</h1>
+        <a href=/help#import target=help>ヘルプ</a>
+      </header>
 
-    <p><strong>警告</strong>: この機能は実験的なものです。
-    予期せぬ結果となることがあります。
+    <section-intro>
+      <p><strong>警告</strong>: この機能は実験的なものです。
+      予期せぬ結果となることがあります。
 
-    <p>他のサービスからこのグループにデータをインポートできます。
-    詳しくは<a href=/help#import target=help>ヘルプ</a>をご参照ください。</p>
-
+      <p>他のサービスからこのグループにデータをインポートできます。
+      詳しくは<a href=/help#import target=help>ヘルプ</a>をご参照ください。</p>
+    </section-intro>
+    
     <tab-set>
       <tab-menu />
 
       <section>
         <h1>はてなグループ</h1>
 
-        <p><strong>上級者向け</strong>:
-        はてなグループの日記、キーワード、
-        共有ファイルをこのグループにインポートできます。
+        <section-intro>
+          <p><strong>上級者向け</strong>:
+          はてなグループの日記、キーワード、
+          共有ファイルをこのグループにインポートできます。
 
-        <ol>
-          <li><a href id=bookmarklet-link data-confirm=ブックマークレットとしてお使いください>Gruwa インポート用ブックマークレット</a>をお使いの
-          Web ブラウザーのブックマークに登録してください。
+          <ol>
+            <li><a href id=bookmarklet-link data-confirm=ブックマークレットとしてお使いください>Gruwa インポート用ブックマークレット</a>をお使いの
+            Web ブラウザーのブックマークに登録してください。
     <script>
       var url = "javascript:var script=document.createElement('script');script.src='"+location.origin+"/js/embedded.js';document.body.appendChild(script)";
       var a = document.querySelector ("#bookmarklet-link");
@@ -55,16 +61,18 @@
       };
     </script>
 
-          <li>インポートしたい Web サイトを Web 
-          ブラウザーの新しい窓 (タブ) で開き、
-          ブックマークレットを実行してください。
+            <li>インポートしたい Web サイトを Web 
+            ブラウザーの新しい窓 (タブ) で開き、
+            ブックマークレットを実行してください。
 
-          <li>一覧から「インポート開始」を選んでください。
-          インポートには数分から数十分かかります。インポートしたい Web
-          サイトとこのページの両方を開いた状態でお待ちください。
+            <li>一覧から「インポート開始」を選んでください。
+            インポートには数分から数十分かかります。インポートしたい Web
+            サイトとこのページの両方を開いた状態でお待ちください。
 
-        </ol>
+          </ol>
 
+        </section-intro>
+          
         <script src=/js/sha1.js />
         <script src=/js/import.js />
     <gr-list-container loader=import key=sources type=table id=import-list class=main-table>
@@ -100,7 +108,9 @@
       <section>
         <h1>Bitbucket</h1>
 
-        <p>Bitbucket リポジトリーの Issues をこのグループにインポートできます。</p>
+        <section-intro>
+          <p>Bitbucket リポジトリーの Issues をこのグループにインポートできます。</p>
+        </section-intro>
 
     <gr-list-container loader=bitbucket-repos noautoload key=repos type=table id=import-bb-list class=main-table>
       <p class=buttons>
