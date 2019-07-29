@@ -50,6 +50,49 @@ Test {
   });
 } n => 2, name => ['edit'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {members => ['a1']}],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'config'],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#create-blog form button[type=submit]:enabled',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var form = document.querySelector ('#create-blog form');
+      form.querySelector ('input[name=title]').value = arguments[0];
+      form.querySelector ('button[type=submit]').click ();
+    }, [$current->generate_text (t1 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      name => 'redirected to index config',
+      code => sub {
+        return $current->b (1)->url->then (sub {
+          my $url = $_[0];
+          return $url->stringify =~ m{/i/};
+        });
+      },
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var form = document.querySelector ('#edit-form');
+      return form.querySelector ('input[name=title]').value;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, $current->o ('t1');
+    } $current->c;
+  });
+} n => 1, name => ['create an index (blog)'], browser => 1;
+
 RUN;
 
 =head1 LICENSE

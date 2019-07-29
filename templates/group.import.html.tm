@@ -23,8 +23,11 @@
       <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
     </header>
 
-  <section class=group-config-import>
-    <h1>データのインポート</h1>
+    <section class=group-config-import>
+      <header class=section>
+        <h1>データのインポート</h1>
+        <a href=/help#import target=help>ヘルプ</a>
+      </header>
 
     <section-intro>
       <p><strong>警告</strong>: この機能は実験的なものです。

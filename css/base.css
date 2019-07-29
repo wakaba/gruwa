@@ -188,7 +188,8 @@ section:not([hidden]) {
 
 section > h1:not([hidden]),
 section > header.section:not([hidden]) {
-  display: block;
+  display: flex;
+  align-items: center;
   margin: 0 0 1rem 0;
   border-style: var(--header4-border-style);
   border-width: var(--header4-border-width);
@@ -212,6 +213,12 @@ section > header.section {
 
 section > header.section > h1 {
   margin: 0;
+  flex-grow: 1;
+}
+
+section > header.section > a[target=help] {
+  margin: .5em;
+  font-size: 90%;
 }
 
 section > header.section gr-popup-menu {
@@ -269,7 +276,7 @@ tab-set:not([hidden]) {
   display: block;
   margin: 1em;
   border-bottom: 1px solid;
-  border-color: var(--main-border-color);
+  border-color: var(--accented-border-color);
 }
 
 tab-set > tab-menu:not([hidden]) {
@@ -594,6 +601,20 @@ h1 a:visited {
   color: inherit;
   background: transparent;
   text-decoration: none;
+}
+
+.help a[href^="#"]:not(:hover):not(:active):not(:focus) {
+  color: inherit;
+  background: transparent;
+  text-decoration: none;
+  border-bottom: 1px dotted var(--link-color);
+}
+
+.help a[href^="#"]:hover,
+.help a[href^="#"]:active,
+.help a[href^="#"]:focus {
+  text-decoration: none;
+  border-bottom: 1px dotted;
 }
 
 body-control[disabled] iframe {

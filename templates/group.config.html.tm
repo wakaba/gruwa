@@ -16,13 +16,17 @@
     </header>
 
     <section>
-      <h1>グループ設定</>
+      <header class=section>
+        <h1>グループ設定</>
+        <a href=/help#config target=help>ヘルプ</a>
+      </header>
+
       <form is=save-data data-saver=groupSaver method=post action=edit.json id=edit-form>
         <!-- XXX data-next=update group info -->
         <table class=config>
           <tbody>
             <tr>
-              <th><label for=edit-title>グループ名</>
+              <th><label for=edit-title>名前</>
               <td><input name=title pl:value="$group->{data}->{title}" id=edit-title required>
             <tr>
               <th><label for=edit-theme>配色</>
@@ -47,13 +51,16 @@
       </form>
     </section>
 
-    <section>
-      <h1>作成</h1>
+    <section id=create>
+      <header class=section>
+        <h1>作成</h1>
+        <a href=/help#group-config-create target=help>ヘルプ</a>
+      </header>
 
       <tab-set>
         <tab-menu/>
 
-        <section>
+        <section id=create-blog>
           <h1>日記</h1>
 
           <section-intro>
@@ -66,8 +73,8 @@
           <table class=config>
             <tbody>
               <tr>
-                <th><label for=create-blog-title>日記の題名</>
-                <td><input name=title id=create-blog-title required>
+                <th><label for=create-blog-title>名前</>
+                <td><input name=title id=create-blog-title required placeholder=題名>
           </table>
           <script>
             ((c) => {
@@ -90,7 +97,7 @@
         </form>
         </section>
 
-        <section>
+        <section id=create-wiki>
           <h1>Wiki</h1>
 
           <section-intro>
@@ -103,8 +110,8 @@
           <table class=config>
             <tbody>
               <tr>
-                <th><label for=create-wiki-title>Wiki の題名</>
-                <td><input name=title id=create-wiki-title required>
+                <th><label for=create-wiki-title>名前</>
+                <td><input name=title id=create-wiki-title required value=Wiki>
           </table>
           <script>
             ((c) => {
@@ -127,7 +134,7 @@
         </form>
         </section>
 
-        <section>
+        <section id=create-todo-list>
           <h1>TODO リスト</h1>
 
           <section-intro>
@@ -141,8 +148,8 @@
           <table class=config>
             <tbody>
               <tr>
-                <th><label for=create-todo-list-title>TODOリストの題名</>
-                <td><input name=title id=create-todo-list-title required>
+                <th><label for=create-todo-list-title>名前</>
+                <td><input name=title id=create-todo-list-title required value=TODOリスト>
           </table>
           <script>
             ((c) => {
@@ -176,8 +183,8 @@
           <table class=config>
             <tbody>
               <tr>
-                <th><label for=create-label-title>ラベル</>
-                <td><input name=title id=create-label-title required>
+                <th><label for=create-label-title>名前</>
+                <td><input name=title id=create-label-title required placeholder=ラベル>
           </table>
 
           <p class=operations>
@@ -195,8 +202,8 @@
           <table class=config>
             <tbody>
               <tr>
-                <th><label for=create-milestone-title>マイルストーン名</>
-                <td><input name=title id=create-milestone-title required>
+                <th><label for=create-milestone-title>名前</>
+                <td><input name=title id=create-milestone-title required placeholder=マイルストーン名>
           </table>
 
           <p class=operations>
@@ -207,7 +214,7 @@
       </details>
         </section>
 
-        <section>
+        <section id=create-fileset>
           <h1>アップローダー</h1>
 
           <section-intro>
@@ -219,8 +226,8 @@
           <table class=config>
             <tbody>
               <tr>
-                <th><label for=create-fileset-title>フォルダー名</>
-                <td><input name=title id=create-fileset-title required>
+                <th><label for=create-fileset-title>名前</>
+                <td><input name=title id=create-fileset-title required placeholder=フォルダー名>
               <tr>
                 <th>種別
                 <td>
