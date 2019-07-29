@@ -56,6 +56,11 @@
         <section>
           <h1>日記</h1>
 
+          <section-intro>
+            <p>新しい日記 <small>(日記記事ではなく<strong>日記帳</>)</small>
+            を作成します。 (この操作は取り消せません。)
+          </section-intro>
+
         <form method=post action=javascript: data-action=i/create.json
             data-next=go:/g/{group_id}/i/{index_id}/config>
           <table class=config>
@@ -87,6 +92,11 @@
 
         <section>
           <h1>Wiki</h1>
+
+          <section-intro>
+            <p>新しい Wiki <small>(記事ではなく<strong>Wiki</>)</small>
+            を作成します。 (この操作は取り消せません。)
+          </section-intro>
 
         <form method=post action=javascript: data-action=i/create.json
             data-next=go:/g/{group_id}/i/{index_id}/config>
@@ -120,6 +130,12 @@
         <section>
           <h1>TODO リスト</h1>
 
+          <section-intro>
+            <p>新しい TODO リスト <small>(TODO
+            ではなく<strong>リスト</>)</small>
+            を作成します。 (この操作は取り消せません。)
+          </section-intro>
+
         <form method=post action=javascript: data-action=i/create.json
             data-next=go:/g/{group_id}/i/{index_id}/config>
           <table class=config>
@@ -147,6 +163,10 @@
             <button type=submit class=save-button>作成する</>
             <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
+
+          <section-intro>
+            <p>ラベル、マイルストーンはグループ全体で共通です。
+          </section-intro>
 
       <details>
         <summary>ラベルの作成</summary>
@@ -189,6 +209,10 @@
 
         <section>
           <h1>アップローダー</h1>
+
+          <section-intro>
+            <p>新しいアップローダーを作成します。 (この操作は取り消せません。)
+          </section-intro>
 
         <form method=post action=javascript: data-action=i/create.json
             data-next=go:/g/{group_id}/i/{index_id}/config>

@@ -245,6 +245,22 @@ article {
   display: block;
 }
 
+section-intro:not([hidden]) {
+  display: block;
+  margin-bottom: 1em;
+  font-size: 90%;
+}
+
+section-intro > p {
+  text-indent: 0;
+  line-height: 2.0;
+}
+
+.help p {
+  text-indent: 1em;
+  line-height: 2.0;
+}
+
 main {
   display: block;
 }
@@ -304,8 +320,21 @@ tab-set > section.active > h1 {
 }
 
 summary {
-  padding: .5em;
+  padding: .3em;
   cursor: pointer;
+}
+
+summary:active,
+summary:focus,
+summary:hover {
+  color: var(--hover-color);
+  background-color: var(--hover-background-color);
+}
+
+details[open] > summary {
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+  font-weight: bolder;
 }
 
 p {
@@ -314,8 +343,8 @@ p {
 }
 
 form {
-  margin: 0 1em 1em;
-  border: 1px dashed;
+  margin: 0 0 1em 0;
+  border: 1px dotted;
   border-color: var(--accented-border-color);
   padding: 1em;
 }

@@ -1207,12 +1207,6 @@ list-is-empty:not([hidden]) {
   vertical-align: middle;
 }
 
-.help p,
-.group-config-import p {
-  text-indent: 1em;
-  line-height: 2.0;
-}
-
 .group-config-import #import-list,
 .group-config-import #import-status {
   width: 100%;
