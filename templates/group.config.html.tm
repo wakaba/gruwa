@@ -1,20 +1,22 @@
 <html t:params="$group $app" pl:data-group-url="'/g/'.$group->{group_id}"
-    pl:data-theme="$group->{data}->{theme}">
+    pl:data-theme="$group->{data}->{theme}"
+    data-navigate=config>
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:app=$app>
     設定
   </t:include>
 
 <body>
-  <!-- XXX -->
-  <t:include path=_common.html.tm m:app=$app />
-
   <section class=page>
     <header>
       <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
-      <m:group-menu m:group=$group />
+      <gr-menu type=group />
     </header>
+    <page-main/>
+  </section>
 
+<template-set name=page-config gr-group>
+  <template>
     <section>
       <header class=section>
         <h1>グループ設定</>
@@ -27,11 +29,11 @@
           <tbody>
             <tr>
               <th><label for=edit-title>名前</>
-              <td><input name=title pl:value="$group->{data}->{title}" id=edit-title required>
+              <td><input name=title data-field=group.title id=edit-title required>
             <tr>
               <th><label for=edit-theme>配色</>
               <td>
-                <gr-select-theme name=theme pl:value="$group->{data}->{theme}">
+                <gr-select-theme name=theme data-field=group.theme>
                   <select id=edit-theme form required />
                   <gr-theme-info>
                     <strong data-field=label />
@@ -46,7 +48,7 @@
                 </gr-select-theme>
         </table>
         <p class=operations>
-          <button type=submit class=save-button>保存する</>
+          <button type=submit class=save-button data-enable-by-fill>保存する</>
           <action-status hidden stage-saver=保存中... ok=保存しました。 />
       </form>
     </section>
@@ -213,7 +215,9 @@
 
       <p>他のサービスからこのグループに<a href=import>データをインポート</a>できます。
     </section>
-  </section>
+  </template>
+</template-set>
+  <t:include path=_common.html.tm m:app=$app />
 
 <!--
 

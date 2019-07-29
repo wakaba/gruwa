@@ -282,6 +282,12 @@ sub create_group ($$$) {
         });
       });
     } \@owner;
+  })->then (sub {
+    return unless defined $opts->{theme};
+    my $o = $self->{objects}->{$name // 'X'};
+    return $self->post_json (['g', $o->{group_id}, 'edit.json'], {
+      theme => $opts->{theme},
+    }, account => $owner);
   });
 } # create_group
 

@@ -16,12 +16,56 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'gr-menu[type=group] menu-main a[href$="/config"]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('gr-menu[type=group] menu-main a[href$="/config"]').pathname;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, '/g/'.$current->o ('g1')->{group_id}.'/config';
+    } $current->c;
+  });
+} n => 1, name => ['page'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+      title => $current->generate_text (t1 => {}),
+      theme => 'abcdef',
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'config'],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'form[action="edit.json"] button[type=submit]:enabled',
     });
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'form[action="edit.json"] select option[value=red]',
     });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var form = document.querySelector ('form[action="edit.json"]');
+      return [
+        form.querySelector ('input[name=title]').value,
+        form.querySelector ('[name=theme]').getAttribute ('value'),
+      ];
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}->[0], $current->o ('t1');
+      is $res->json->{value}->[1], 'abcdef';
+    } $current->c;
   })->then (sub {
     return $current->b (1)->execute (q{
       var form = document.querySelector ('form[action="edit.json"]');
@@ -48,7 +92,7 @@ Test {
       is $g->{theme}, 'red';
     } $current->c;
   });
-} n => 2, name => ['edit'], browser => 1;
+} n => 4, name => ['edit'], browser => 1;
 
 Test {
   my $current = shift;

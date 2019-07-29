@@ -65,7 +65,7 @@ html { /* [data-thema=green] */
   --pageheader-border-width: 1px;
   --pageheader-border-style: none;
   --pageheader-border-color: var(--accented-border-color);
-  --pageheader-padding: 2em;
+  --pageheader-padding: 1em;
   --pageheader-align: start;
 
   --header4-color: var(--accented-color);
@@ -720,6 +720,10 @@ todo-state[value="2"] {
   color: white;
 }
 
+gr-menu {
+
+}
+
 gr-popup-menu:not([hidden]) {
   position: relative;
   display: inline-block;
@@ -738,6 +742,41 @@ gr-popup-menu > button:not([hidden]) {
   font-size: 100%;
 }
 
+gr-menu > popup-menu > button {
+  -webkit-appearance: none;
+  border: none;
+  padding: .5em;
+  min-width: 1em;
+  min-height: 1em;
+  line-height: 1.0;
+  color: var(--link-color);
+  background-color: var(--link-background-color);
+}
+
+gr-menu > popup-menu[open] > button {
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+}
+
+gr-menu > popup-menu > button:hover,
+gr-menu > popup-menu > button:focus,
+gr-menu > popup-menu > button:active {
+  color: var(--hover-color);
+  background-color: var(--hover-background-color);
+}
+
+gr-menu > popup-menu > button::after {
+  content: "\0025BC";
+}
+
+gr-menu > popup-menu > button > button-label {
+  position: absolute;
+  visibility: hidden;
+  overflow: hidden;
+  width: 0;
+  height: 0;
+}
+
 gr-popup-menu > button:not([hidden]):hover,
 gr-popup-menu > button:not([hidden]):active,
 gr-popup-menu > button:not([hidden]):focus {
@@ -748,22 +787,26 @@ gr-popup-menu > button:not([hidden]):focus {
 
 gr-popup-menu > menu:not([hidden]) {
   position: absolute;
-  z-index: 10;
   right: 0;
   display: block;
   margin: 0;
+}
+
+popup-menu > menu-main,
+gr-popup-menu > menu:not([hidden]) {
+  z-index: 10;
   border: 1px solid;
   border-color: var(--menu-border-color);
-  border-radius: 5px;
-  padding: .5rem;
+  padding: 0;
   background-color: var(--menu-background-color);
   color: var(--menu-color);
   min-width: 10rem;
   text-align: left;
-  box-shadow: 3px 3px var(--menu-shadow-color);
-  font-size: 100%;
+  box-shadow: 1px 1px var(--menu-shadow-color);
+  font-size: 95%;
 }
 
+popup-menu > menu-main p:not([hidden]),
 gr-popup-menu > menu > li:not([hidden]),
 gr-popup-menu > menu > gr-list-container > list-main > li:not([hidden]) {
   display: block;
@@ -774,6 +817,16 @@ gr-popup-menu > menu > gr-list-container > list-main > li:not([hidden]) {
 
 gr-popup-menu > menu > li > copy-button:not([hidden]) {
   display: block;
+}
+
+popup-menu > menu-main p a:not([hidden]) {
+  display: block;
+  padding: .5em;
+  font-size: 100%;
+  text-decoration: none;
+  line-height: 1.0;
+  color: inherit;
+  background: transparent;
 }
 
 gr-popup-menu > menu > li > a:only-child,
@@ -820,6 +873,9 @@ gr-popup-menu > menu > li > button:only-child:not([hidden]):active {
   text-decoration: underline;
 }
 
+popup-menu > menu-main p a:hover,
+popup-menu > menu-main p a:focus,
+popup-menu > menu-main p a:active,
 gr-popup-menu > menu > li > button:only-child:not([hidden]):hover,
 gr-popup-menu > menu > li > button:only-child:not([hidden]):active {
   color: var(--hover-color);
