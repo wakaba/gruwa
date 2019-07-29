@@ -233,6 +233,10 @@ section > * {
   margin-right: 1em;
 }
 
+section > *:last-child {
+  padding-bottom: .5em;
+}
+
 section section:not(:first-child) {
   margin-top: 2em;
 }
@@ -245,47 +249,57 @@ main {
   display: block;
 }
 
-gr-tab-set:not([hidden]) {
+tab-set:not([hidden]) {
   display: block;
   margin: 1em;
   border-bottom: 1px solid;
   border-color: var(--main-border-color);
 }
 
-gr-tab-set > menu:not([hidden]) {
+tab-set > tab-menu:not([hidden]) {
   display: block;
   margin: 0 0 .5em 0;
   border-bottom: 1px solid;
-  border-color: var(--main-border-color);
+  border-color: var(--accented-border-color);
   padding: 0;
 }
 
-gr-tab-set > menu > a:not([hidden]) {
+tab-set > tab-menu > a:not([hidden]) {
   display: inline-block;
-  margin: 0 1em 0 0;
-  padding: .2em .5em;
+  margin: 0 .5em -2px 0;
+  padding: .1em .3em;
   text-align: center;
   color: inherit;
   background: transparent;
   text-decoration: none;
 }
 
-gr-tab-set > menu > a.active {
+tab-set > tab-menu > a.active {
   font-weight: bolder;
   border-bottom: 3px solid;
+  background: var(--light-1-background-color);
+  color: var(--light-1-color);
 }
 
-gr-tab-set > section:not([active]) {
+tab-set > tab-menu > a:hover,
+tab-set > tab-menu > a:focus,
+tab-set > tab-menu > a:active {
+  border-bottom: 3px solid;
+  color: var(--hover-color);
+  background-color: var(--hover-background-color);
+}
+
+tab-set > section:not(.active) {
   display: none;
 }
 
-gr-tab-set > section[active]:not([hidden]) {
+tab-set > section.active:not([hidden]) {
   display: block;
   margin: 0;
   padding: .5em;
 }
 
-gr-tab-set[initialized] > section > h1 {
+tab-set > section.active > h1 {
   display: none;
 }
 
@@ -775,33 +789,40 @@ gr-popup-menu > menu > gr-list-container {
 }
 
 
+.help table,
 gr-list-container.main-table table {
   border-collapse: collapse;
   margin-bottom: 1em;
   width: 100%;
 }
 
+.help table thead,
 gr-list-container.main-table thead {
   border-bottom: 3px solid;
   border-color: var(--accented-border-color);
 }
 
+.help table thead th,
 gr-list-container.main-table thead th {
-  color: var(--accented-color);
   background-color: var(--accented-background-color);
+  color: var(--accented-color);
   font-weight: bolder;
 }
 
+.help table th,
+.help table td,
 gr-list-container.main-table thead th,
 gr-list-container.main-table td {
-  padding: .5em;
+  padding: .3em;
 }
 
+.help table tbody tr,
 gr-list-container.main-table tbody tr {
   background-color: var(--light-1-background-color);
   color: var(--light-1-color);
 }
 
+.help table tbody tr:nth-child(2n+1),
 gr-list-container.main-table tbody tr:nth-child(2n+1) {
   background-color: var(--light-2-background-color);
   color: var(--light-2-color);

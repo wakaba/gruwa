@@ -50,8 +50,8 @@
     <section>
       <h1>作成</h1>
 
-      <gr-tab-set>
-        <menu/>
+      <tab-set>
+        <tab-menu/>
 
         <section>
           <h1>日記</h1>
@@ -210,7 +210,7 @@
             <gr-action-status hidden stage-fetch=作成中... stage-next=移動します... />
         </form>
         </section>
-      </gr-tab-set>
+      </tab-set>
     </section>
 
     <section>

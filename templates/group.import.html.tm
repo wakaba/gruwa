@@ -32,8 +32,8 @@
     <p>他のサービスからこのグループにデータをインポートできます。
     詳しくは<a href=/help#import target=help>ヘルプ</a>をご参照ください。</p>
 
-    <gr-tab-set>
-      <menu />
+    <tab-set>
+      <tab-menu />
 
       <section>
         <h1>はてなグループ</h1>
@@ -67,7 +67,7 @@
 
         <script src=/js/sha1.js />
         <script src=/js/import.js />
-    <gr-list-container loader=import key=sources type=table id=import-list>
+    <gr-list-container loader=import key=sources type=table id=import-list class=main-table>
       <p class=buttons>
         <button type=button class=reload-button>再読込</button>
       </p>
@@ -102,7 +102,7 @@
 
         <p>Bitbucket リポジトリーの Issues をこのグループにインポートできます。</p>
 
-    <gr-list-container loader=bitbucket-repos noautoload key=repos type=table id=import-bb-list>
+    <gr-list-container loader=bitbucket-repos noautoload key=repos type=table id=import-bb-list class=main-table>
       <p class=buttons>
         <button type=button class=reload-button>再読込</button>
       </p>
@@ -134,7 +134,7 @@
     </gr-list-container>
 
       </section>
-    </gr-tab-set>
+    </tab-set>
 
     <div id=import-status>
       <gr-action-status
@@ -152,7 +152,7 @@
           stage-getissuelist=Issue一覧を取得中...
           stage-createissueobjects=Issueをインポート中...
           ok=完了しました />
-      <gr-list-container type=table class=mapping-table>
+      <gr-list-container type=table class="main-table mapping-table">
         <template>
           <td><cite data-field=originalTitle>
           <td><a data-href-template=i/{index_id}/ data-field=title data-empty=(トップページ) />
@@ -171,7 +171,7 @@
           <tbody>
         </table>
         <list-is-empty>
-          準備中...
+          (ここに進捗が表示されます。)
         </list-is-empty>
       </gr-list-container>
     </div>
