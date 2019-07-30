@@ -97,17 +97,18 @@
 </t:macro>
 <template-set name=gr-menu-group>
   <template>
-    <p><a data-href-template=/g/{group_id}/>トップ</a>
-    <p><copy-button><a data-href-template=/g/{group_id}/>
+    <p><a data-href-template=/g/{group.group_id}/>トップ</a>
+    <p><copy-button><a data-href-template=/g/{group.group_id}/>
       URLをコピー
     </a></copy-button>
     <p><copy-button type=jump>
-      <a data-href-template=/g/{group_id}/ data-title-field=title>
+      <a data-href-template=/g/{group.group_id}/ data-title-field=group.title>
         ジャンプリストに追加
       </a>
     </copy-button>
-    <p><a data-href-template=/g/{group_id}/members>参加者</a>
-    <p><a data-href-template=/g/{group_id}/config>設定</a>
+    <p><a data-href-template=/g/{group.group_id}/members>参加者</a>
+    <p><a data-href-template=/g/{group.group_id}/config>設定</a>
+    <p><a href=/help#groups target=help>ヘルプ</a>
   </template>
 </template-set>
 
@@ -140,6 +141,21 @@
     </menu>
   </gr-popup-menu>
 </t:macro>
+<template-set name=gr-menu-index>
+  <template>
+    <p><a data-href-template=/g/{group.group_id}/i/{index.index_id}/>トップ</a>
+    <p><copy-button><a data-href-template=/g/{group.group_id}/i/{index.index_id}/>
+      URLをコピー
+    </a></copy-button>
+    <p><copy-button type=jump>
+      <a data-href-template=/g/{group.group_id}/i/{index.index_id}/ data-title-field=index.title>
+        ジャンプリストに追加
+      </a>
+    </copy-button>
+    <p><a data-href-template=/g/{group.group_id}/i/{index.index_id}/config>設定</a>
+  </template>
+  <!-- XXX <p><a href=/help#filesets>ヘルプ</a> -->
+</template-set>
 
 <t:macro name=wiki-menu t:params="$wiki_name">
   <gr-popup-menu>
