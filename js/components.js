@@ -532,8 +532,18 @@ License along with this program, see <https://www.gnu.org/licenses/>.
         template = document.createElement ('template');
       }
       var e = document.createElement (localName);
-      e.className = template.className;
       e.appendChild (template.content.cloneNode (true));
+      ['class', 'title', 'id'].forEach (_ => {
+        if (template.hasAttribute (_)) {
+          e.setAttribute (_, template.getAttribute (_));
+        }
+        if (template.hasAttribute ('data-'+_+'-template')) {
+          e.setAttribute (_, $fill.string (template.getAttribute ('data-'+_+'-template'), object));
+        }
+        if (template.hasAttribute ('data-'+_+'-field')) {
+          e.setAttribute (_, $fill.string ('{'+template.getAttribute ('data-'+_+'-field')+'}', object));
+        }
+      });
       $fill (e, object);
       return e;
     }, // createFromTemplate
