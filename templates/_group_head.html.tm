@@ -1,9 +1,17 @@
-<html t:params="$group $app">
-<title t:parse>
-  <t:content>
-  -
-  <t:text value="$group->{data}->{title}">
-</title><!-- XXX -->
+<html t:params="$group $app $title?">
+<t:if x="defined $title">
+  <title t:parse>
+    <t:text value="$title">
+    -
+    <t:text value="$group->{data}->{title}">
+  </title><!-- XXX -->
+<t:else>
+  <title t:parse>
+    <t:content>
+    -
+    <t:text value="$group->{data}->{title}">
+  </title><!-- XXX -->
+</t:if>
 <meta name=referrer content=no-referrer>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name=theme-color content="green">
