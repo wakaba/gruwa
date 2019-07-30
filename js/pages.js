@@ -2722,6 +2722,18 @@ GR.navigate._show = function (pageName) {
         var div = ts.createFromTemplate ('div', params);
         contentTitle = div.title;
         div.title = '';
+
+        var isOwner = params.group.member.member_type == 2;
+        if (isOwner) {
+          div.querySelectorAll ('[data-gr-if-group-non-owner]').forEach (_ => {
+            _.remove ();
+          });
+        } else {
+          div.querySelectorAll ('[data-gr-if-group-owner]').forEach (_ => {
+            _.remove ();
+          });
+        }
+        
         while (div.firstChild) _.appendChild (div.firstChild);
       });
       if (contentTitle === '') {

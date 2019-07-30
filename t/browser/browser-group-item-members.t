@@ -11,7 +11,7 @@ Test {
       name => $current->generate_text (t2 => {}),
     }],
     [g1 => group => {
-      members => ['a1'], title => $current->generate_text (t1 => {}),
+      members => ['a1'],
     }],
   )->then (sub {
     return $current->create_browser (1 => {
@@ -28,11 +28,59 @@ Test {
       text => $current->o ('t2'),
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#invite form',
+      not => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#invitations table',
+      not => 1,
+    });
+  })->then (sub {
     test {
       ok 1;
     } $current->c;
   });
-} n => 1, name => ['page'], browser => 1;
+} n => 1, name => ['page, normal member'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {
+      name => $current->generate_text (t2 => {}),
+    }],
+    [g1 => group => {
+      owners => ['a1'],
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'members'],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#members table',
+      text => $current->o ('t2'),
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#invite form',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#invitations table',
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['page, owner'], browser => 1;
 
 RUN;
 

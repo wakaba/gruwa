@@ -78,7 +78,7 @@
         <table>
           <thead>
             <tr>
-              <th>利用者
+              <th>名前
               <th>種別
               <th>参加状態
               <th>参加承認
@@ -94,13 +94,12 @@
     <section id=invite>
       <h1>参加者の追加</h1>
 
-      <t:if x="$group_member->{member_type} == 2 # owner">
-        <section-intro>
-          <p>このグループへの招待状を発行します。 URL 
-          をメールなどで渡して、 Web ブラウザーで開いてもらってください。
-        </section-intro>
+      <section-intro data-gr-if-group-owner>
+        <p>このグループへの招待状を発行します。 URL 
+        をメールなどで渡して、 Web ブラウザーで開いてもらってください。
+      </section-intro>
             
-        <form method=post action=javascript: data-action=members/invitations/create.json data-next="fill:invite-invitation reloadList:invitations-list">
+      <form method=post action=javascript: data-action=members/invitations/create.json data-next="fill:invite-invitation reloadList:invitations-list" data-gr-if-group-owner>
 
           <table class=config>
             <tbody>
@@ -125,19 +124,18 @@
           <p id=invite-invitation hidden>招待状の URL は
             <code data-field=invitation_url />
           です。招待したい人に渡して、 Web ブラウザーで開いてもらってください。
-        </form>
-        
-      <t:else>
+      </form>
+
+      <section-intro data-gr-if-group-non-owner>
         <p>参加者の追加は、グループの<a href=/help#owner>所有者</a>に依頼してください。
-      </t:if>
+      </section-intro>
 
     </section>
 
-    <t:if x="$group_member->{member_type} == 2 # owner">
-      <section id=invitations>
-        <h1>発行済招待状</h1>
+    <section id=invitations>
+      <h1>発行済招待状</h1>
 
-        <gr-list-container type=table src=members/invitations/list.json key=invitations sortkey=created class=main-table id=invitations-list>
+      <gr-list-container type=table src=members/invitations/list.json key=invitations sortkey=created class=main-table id=invitations-list data-gr-if-group-owner>
           <template>
             <td><a data-href-field=invitation_url><time data-field=created /></a>
             <td><account-name data-field=author_account_id />
@@ -179,9 +177,13 @@
           <p class="operations pager">
             <button type=button class=next-page-button hidden>もっと昔</button>
           </p>
-        </gr-list-container>
-      </section>
-    </t:if>
+      </gr-list-container>
+
+      <section-intro data-gr-if-group-non-owner>
+        <p>招待状の一覧は、
+        グループの<a href=/help#owner>所有者</a>が表示できます。
+      </section-intro>
+    </section>
 
   </template-set>
   
