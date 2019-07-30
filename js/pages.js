@@ -142,6 +142,7 @@ GR.group.info = function () {
 
 defineElement ({
   name: 'gr-account',
+  fill: 'contentattribute',
   props: {
     pcInit: function () {
       if (this.hasAttribute ('self')) {
@@ -149,8 +150,9 @@ defineElement ({
           $fill (this, account);
         });
       } else if (this.hasAttribute ('value')) {
-        // XXX
-        
+        return $with ('account', {accountId: this.getAttribute ('value')}).then ((account) => {
+          $fill (this, account);
+        });
       }
     }, // pcInit
   },
@@ -450,10 +452,6 @@ FieldCommands.setListIndex = function () {
 }; // setListIndex
 
 function fillFields (contextEl, rootEl, el, object, opts) {
-  if (object.account_id &&
-      object.account_id === document.documentElement.getAttribute ('data-account')) {
-    rootEl.classList.add ('account-is-self');
-  }
   $$c (el, '[data-field]').forEach (function (field) {
     var name = field.getAttribute ('data-field').split (/\./);
     var value = object;
@@ -2277,6 +2275,34 @@ function upgradeForm (form) {
 } // upgradeForm
 
 (() => {
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'groupLoader');
+  e.pcHandler = function (opts) {
+    if (!this.hasAttribute ('src')) return {};
+    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/' + this.getAttribute ('src');
+    if (opts.ref) {
+      url += /\?/.test (url) ? '&' : '?';
+      url += 'ref=' + encodeURIComponent (opts.ref);
+    }
+    if (opts.limit) {
+      url += /\?/.test (url) ? '&' : '?';
+      url += 'limit=' + encodeURIComponent (opts.limit);
+    }
+    return fetch (url, {
+      credentials: "same-origin",
+      referrerPolicy: 'same-origin',
+    }).then ((res) => res.json ()).then ((json) => {
+      if (!this.hasAttribute ('key')) throw new Error ("|key| is not specified");
+      json = json || {};
+      return {
+        data: json[this.getAttribute ('key')],
+        prev: {ref: json.prev_ref, has: json.has_prev, limit: opts.limit},
+        next: {ref: json.next_ref, has: json.has_next, limit: opts.limit},
+      };
+    });
+  };
+  document.head.appendChild (e);
+  
   var e = document.createElementNS ('data:,pc', 'saver');
   e.setAttribute ('name', 'groupSaver');
   e.pcHandler = function (fd) {
@@ -2293,6 +2319,44 @@ function upgradeForm (form) {
   };
   document.head.appendChild (e);
 }) ();
+
+defineElement ({
+  name: 'gr-editable-tr',
+  props: {
+    pcInit: function () {
+      var tr = this;
+      while (tr && tr.localName !== 'tr') {
+        tr = tr.parentNode;
+      }
+      if (!tr) throw new Error ('No |tr| ancestor');
+
+      this.row = tr;
+      return GR.group.info ().then (group => {
+        if (this.hasAttribute ('owneronly') &&
+            group.member.member_type == 2) {
+          //
+        } else {
+          this.row.querySelectorAll ('.if-editable').forEach (_ => _.remove ());
+          this.remove ();
+        }
+        this.querySelectorAll ('.edit-button').forEach (_ => _.onclick = () => this.grToggleEditable (true));
+        var id;
+        this.querySelectorAll ('form').forEach (_ => {
+          _.id = _.id || Math.random ();
+          id = _.id;
+        });
+        this.row.querySelectorAll ('input, select, textarea').forEach (_ => {
+          if (!_.form) _.setAttribute ('form', id);
+        });
+        this.grToggleEditable (false);
+      });
+    }, // pcInit
+    grToggleEditable: function (editable) {
+      this.row.querySelectorAll ('.if-editable').forEach (_ => _.hidden = ! editable);
+      this.row.querySelectorAll ('.if-not-editable').forEach (_ => _.hidden = editable);
+    }, // grToggleEditable
+  },
+}); // <gr-editable-tr>
 
 function upgradeListControl (control) {
   control._selectedValues = [];
@@ -2748,10 +2812,14 @@ GR.navigate._show = function (pageName) {
   });
 }; // _show
 
-(() => {
-  var nav = document.documentElement.getAttribute ('data-navigate');
-  if (nav) GR.navigate._show (nav);
-}) ();
+defineElement ({
+  name: 'gr-navigate',
+  props: {
+    pcInit: function () {
+      GR.navigate._show (this.getAttribute ('page'));
+    }, // pcInit
+  },
+}); // <gr-navigate>
 
 /*
 

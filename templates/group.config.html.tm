@@ -1,6 +1,6 @@
 <html t:params="$group $app" pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-theme="$group->{data}->{theme}"
-    data-navigate=config data-navigating>
+    data-navigating>
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:app=$app />
 
@@ -10,7 +10,8 @@
     <gr-menu type=group />
   </header>
   <page-main/>
-
+  <gr-navigate page=config />
+  
 <template-set name=page-config>
   <template title=設定>
     <section>

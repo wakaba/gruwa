@@ -360,6 +360,10 @@ form {
   padding: 1em .5em .5em .5em;
 }
 
+gr-editable-tr form:not([hidden]) {
+  display: contents;
+}
+
 .config {
   margin: 0;
   width: 90%;
@@ -640,8 +644,11 @@ gr-action-status {
   font-size: 90%;
 }
 
+list-container > action-status:not([hidden]),
 gr-list-container > gr-action-status:not([hidden]) {
   display: block;
+  margin: 2em auto;
+  max-width: 30em;
 }
 
 .operations action-status:not([hidden]),
@@ -669,6 +676,12 @@ gr-action-status-message {
   unicode-bidi: embed;
 }
 
+list-container > action-status action-status-message {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+action-status[status=ok] action-status-message,
 gr-action-status[status=ok] gr-action-status-message {
   background-color: var(--error-success-color);
   color: var(--success-color);
@@ -680,6 +693,7 @@ gr-action-status[status=ng] gr-action-status-message {
   color: var(--error-color);
 }
 
+list-container > action-status progress:not([hidden]),
 gr-list-container > gr-action-status progress:not([hidden]) {
   display: block;
   width: 100%;
@@ -900,20 +914,20 @@ gr-popup-menu > menu > gr-list-container {
 
 
 .help table,
-gr-list-container.main-table table {
+.main-table table {
   border-collapse: collapse;
   margin-bottom: 1em;
   width: 100%;
 }
 
 .help table thead,
-gr-list-container.main-table thead {
+.main-table thead {
   border-bottom: 3px solid;
   border-color: var(--accented-border-color);
 }
 
 .help table thead th,
-gr-list-container.main-table thead th {
+.main-table thead th {
   background-color: var(--accented-background-color);
   color: var(--accented-color);
   font-weight: bolder;
@@ -921,49 +935,46 @@ gr-list-container.main-table thead th {
 
 .help table th,
 .help table td,
-gr-list-container.main-table thead th,
-gr-list-container.main-table td {
+.main-table th,
+.main-table td {
   padding: .3em;
 }
 
 .help table tbody tr,
-gr-list-container.main-table tbody tr {
+.main-table tbody tr {
   background-color: var(--light-1-background-color);
   color: var(--light-1-color);
 }
 
 .help table tbody tr:nth-child(2n+1),
-gr-list-container.main-table tbody tr:nth-child(2n+1) {
+.main-table tbody tr:nth-child(2n+1) {
   background-color: var(--light-2-background-color);
   color: var(--light-2-color);
 }
 
-gr-list-container.main-table tbody th {
-  padding: 0;
-}
-
-gr-list-container.main-table tbody th {
+.main-table tbody th {
   font-weight: normal;
-  min-width: 20em;
+  min-width: 10em;
   text-align: left;
 }
 
-gr-list-container.main-table tbody th a:only-child {
+.main-table tbody th a:only-child {
   display: block;
   padding: .5em;
 }
 
-gr-list-container.main-table td.operations {
+.main-table td.operations {
   text-align: right;
   font-size: 80%;
 }
 
-gr-list-container.main-table td.operations button {
+.main-table td.operations button {
   margin: 0;
   font-size: 80%;
 }
 
-gr-list-container.main-table td.operations gr-action-status {
+.main-table td.operations action-status:not([hidden]),
+.main-table td.operations gr-action-status {
   display: block;
   margin-top: .5em;
 }

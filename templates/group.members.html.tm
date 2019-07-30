@@ -1,9 +1,7 @@
 <html t:params="$group $account $app $group_member"
     pl:data-group-url="'/g/'.$group->{group_id}"
-    pl:data-account="$account->{account_id}"
-    pl:data-group-member-type="$group_member->{member_type}"
     pl:data-theme="$group->{data}->{theme}"
-    data-navigate=members data-navigating>
+    data-navigating>
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app />
 
@@ -13,86 +11,71 @@
     <gr-menu type=group />
   </header>
   <page-main/>
+  <gr-navigate page=members />
 
 <template-set name=page-members>
   <template title=参加者>
 
     <section id=members>
-      <h1>参加者一覧</>
+      <header class=section>
+        <h1>参加者一覧</h1>
+        <a href=/help#group-members target=help>ヘルプ</a>
+      </header>
 
-    <gr-list-container type=table src=members/list.json key=members class=main-table>
-      <template>
-        <th>
-          <account-name data-field=account_id />
-          <input type=hidden name=account_id data-field=account_id>
-        <td class=member_type>
-          <gr-enum-value data-field=member_type text-1=一般 text-2=所有者 />
-          <select name=member_type data-field=member_type>
-            <option value=1>一般
-            <option value=2>所有者
-          </select>
-        <td class=user_status>
-          <gr-enum-value data-field=user_status text-1=参加中 text-2=招待中 />
-          <select name=user_status data-field=user_status>
-            <option value=1>参加中
-            <option value=2>招待中
-          </select>
-        <td class=owner_status>
-          <gr-enum-value data-field=owner_status text-1=承認済 text-2=未承認 />
-          <select name=owner_status data-field=owner_status>
-            <option value=1>承認済
-            <option value=2>未承認
-          </select>
-        <td class=desc>
-          <span data-field=desc />
-          <input name=desc data-field=desc>
-        <td>
-          <button type=button class=edit-button onclick="
-            parentNode.parentNode.classList.add ('editing');
-          ">編集</>
-          <button type=button class=save-button onclick="
-            var as = getActionStatus (parentNode.parentNode);
-            as.start ({stages: ['formdata', 'save']});
-            var saveButton = this;
-            saveButton.disabled = true;
-            var container = parentNode.parentNode;
-            var fd = new FormData;
-            $$ (container, 'input, select').forEach (function (e) {
-              fd.append (e.name, e.value);
-            });
-            as.stageEnd ('formdata');
-            as.stageStart ('save');
-            gFetch ('members/status.json', {post: true, formData: fd}).then (function () {
-              saveButton.disabled = false;
-              as.end ({ok: true});
-            }, function (error) {
-              saveButton.disabled = false;
-              as.end ({error: error});
-            });
-          ">保存</>
-          <gr-action-status hidden stage-save=保存中... ok=保存しました。 />
-        <td>
-          <a href data-href-template="i/{default_index_id}/" data-if-field=default_index_id>日記</a>
-      </template>
+      <list-container loader=groupLoader type=table src=members/list.json key=members class=main-table>
+        <template>
+          <th>
+            <gr-account data-field=account_id>
+              <gr-account-name data-field=name data-filling>アカウント</gr-account-name/>
+            </gr-account>
+            <input type=hidden name=account_id data-field=account_id>
+          <td>
+            <a href data-href-template="i/{default_index_id}/" data-if-field=default_index_id>日記</a>
+          <td class=member_type>
+            <enum-value data-field=member_type label-1=一般 label-2=所有者 class=if-not-editable />
+            <select name=member_type data-field=member_type class=if-editable hidden>
+              <option value=1>一般参加者
+              <option value=2>所有者
+            </select>
+          <td class=owner_status>
+            <enum-value data-field=owner_status label-1=承認済 label-2=未承認 class=if-not-editable />
+            <select name=owner_status data-field=owner_status class=if-editable hidden>
+              <option value=1>承認済
+              <option value=2>未承認
+            </select>
+          <td class=desc>
+            <span data-field=desc class=if-not-editable />
+            <input name=desc data-field=desc class=if-editable hidden>
+          <td class=operations>
+            <gr-editable-tr owneronly>
+              <form is=save-data data-saver=groupSaver method=post action=members/status.json>
+                <button type=button class="edit-button if-not-editable">編集</>
+                <button type=submit class="if-editable save-button" hidden>保存</>
+                <action-status hidden stage-saver=保存中... ok=保存しました。 />
+              </form>
+            </gr-editable-tr>
+        </template>
 
         <table>
           <thead>
             <tr>
               <th>名前
+              <th>
               <th>種別
-              <th>参加状態
               <th>参加承認
               <th>メモ
-              <th>操作
               <th>
           <tbody>
         </table>
-        <gr-action-status hidden stage-load=読み込み中... />
-      </gr-list-container>
+        <action-status hidden stage-loader=読み込み中... />
+      </list-container>
     </section>
 
     <section id=invite>
-      <h1>参加者の追加</h1>
+      <header class=section>
+        <h1>参加者の追加</h1>
+        <a href=/help#invitation target=help>ヘルプ</a>
+      </header>
 
       <section-intro data-gr-if-group-owner>
         <p>このグループへの招待状を発行します。 URL 
@@ -109,7 +92,7 @@
               <tr>
                 <th><label for=invite-member_type>種別</>
                 <td><select name=member_type id=invite-member_type>
-                  <option value=1 selected>一般
+                  <option value=1 selected>一般参加者
                   <option value=2>所有者
                 </select>
               <tr>
@@ -133,13 +116,16 @@
     </section>
 
     <section id=invitations>
-      <h1>発行済招待状</h1>
+      <header class=section>
+        <h1>発行済招待状</h1>
+        <a href=/help#invitation target=help>ヘルプ</a>
+      </header>
 
       <gr-list-container type=table src=members/invitations/list.json key=invitations sortkey=created class=main-table id=invitations-list data-gr-if-group-owner>
           <template>
             <td><a data-href-field=invitation_url><time data-field=created /></a>
             <td><account-name data-field=author_account_id />
-            <td><gr-enum-value data-field=invitation_data.member_type text-1=一般 text-2=所有者 />
+            <td><gr-enum-value data-field=invitation_data.member_type text-1=一般参加者 text-2=所有者 />
             <td><time data-field=expires>
             <td>
               <only-if data-field=used cond="!=0" hidden>

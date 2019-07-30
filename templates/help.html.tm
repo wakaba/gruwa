@@ -40,26 +40,42 @@
       <section id=group-members>
         <h1>参加者</h1>
 
-        <p><a href=#groups>グループ</a>の参加者は、
+        <p><a href=#groups>グループ</a>の<dfn>参加者</dfn>は、
         <a href=#owner>所有者</a>と<dfn id=normal-member>一般参加者</dfn>にわかれます。
-        <dfn id=owner>所有者</dfn>は、グループの参加者を管理することができます。
+        <dfn id=owner>所有者</dfn>は、
+        <a href=#groups>グループ</a>の<a href=#group-members>参加者</a>を管理できます。
         その他のほとんどの操作は、
         <a href=#owner>所有者</a>も<a href=#normal-member>一般参加者</a>も行えます。
 
-        <p>グループの参加者の管理は、グループメニューの「参加者」のページから行えます。
-        参加者一覧表には利用者本人の「参加状態」と<a href=#owner>所有者</a>が設定する「参加承認」の欄があり、
-        それぞれ「参加中」と「承認済」となっていれば、
-        現在そのグループに参加していることを表します。
-        一方または両方が違う状態のときは、グループの参加者ではありません。
+        <p><a href=#groups>グループ</a>の<a href=#group-members>参加者</a>の管理するには、
+        <a href=#groups>グループ</a>の<a href=#menu>メニュー</a>の
+        「参加者」を開いてください。
 
-        <p>新しい参加者を追加するには、「参加者」
-        ページから<dfn id=invitation>招待状</dfn>を発行してください。
+        <p>「参加者一覧」には、
+        すべての<a href=#group-members>参加者</a>が表示されます。
+        <a href=#owner>所有者</a>は、
+        参加承認を取り消したり、メモを書いたりできます。
+
+          <div class=notes>
+
+            <p>自分自身の参加承認は取り消せません。
+            
+          </div>
+
+        <hr>
+        
+        <p>「参加者の追加」では<dfn id=invitation>招待状</dfn>を発行できます
+        (<a href=#owner>所有者</a>のみ)。
         <a href=#invitation>招待状</a>を開いて参加を選ぶと、
-        招待されたグループの参加者となります。
+        招待された<a href=#groups>グループ</a>の<a href=#group-members>参加者</a>となります。
         1枚の<a href=#invitation>招待状</a>で参加できるのは1人だけです。
-        <a href=#invitation>招待状</a>には有効期限が設定されています。有効期限前でも、
-        グループの<a href=#owner>所有者</a>は「参加者」
-        ページから発行済<a href=#invitation>招待状</a>を無効にすることができます。
+        <a href=#invitation>招待状</a>には有効期限が設定されています。
+
+        <p>「発行済招待状」にはこれまでに発行した<a href=#invitation>招待状</a>が表示されます
+        (<a href=#owner>所有者</a>のみ)。
+        発行済の<a href=#invitation>招待状</a>を無効にすることもできます。
+
+        <hr>
 
         <p>グループの参加者が参加者ではなくなると、
         グループにはアクセスできなくなります。
@@ -76,7 +92,7 @@
         <a href=#todos>TODO リスト</a>、
         <a href=#labels>ラベル</a>、
         <a href=#milestones>マイルストーン</a>、
-        <a href=#filesets>アップローダー</a>のメニューから「設定」を選ぶと、
+        <a href=#filesets>アップローダー</a>の<dfn id=menu>メニュー</dfn>から「設定」を選ぶと、
         設定を変更できます。
 
           <div class=note>
