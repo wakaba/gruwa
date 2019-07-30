@@ -2,23 +2,22 @@
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-account="$account->{account_id}"
     pl:data-group-member-type="$group_member->{member_type}"
-    pl:data-theme="$group->{data}->{theme}">
+    pl:data-theme="$group->{data}->{theme}"
+    data-navigate=members data-navigating>
 <head>
-  <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
-    参加者一覧
-  </t:include>
+  <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app />
 
 <body>
-  <!-- XXX -->
-  <t:include path=_common.html.tm m:app=$app />
+  <header class=page>
+    <h1><a href=./ data-href-field=url data-field=title><t:text value="$group->{data}->{title}"></a></h1>
+    <gr-menu type=group />
+  </header>
+  <page-main/>
 
-  <section class=page>
-    <header>
-      <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
-      <m:group-menu m:group=$group />
-    </header>
+<template-set name=page-members>
+  <template title=参加者>
 
-    <section>
+    <section id=members>
       <h1>参加者一覧</>
 
     <gr-list-container type=table src=members/list.json key=members class=main-table>
@@ -96,16 +95,18 @@
       <h1>参加者の追加</h1>
 
       <t:if x="$group_member->{member_type} == 2 # owner">
-        <form method=post action=javascript: data-action=members/invitations/create.json data-next="fill:invite-invitation reloadList:invitations-list">
-
+        <section-intro>
           <p>このグループへの招待状を発行します。 URL 
           をメールなどで渡して、 Web ブラウザーで開いてもらってください。
+        </section-intro>
+            
+        <form method=post action=javascript: data-action=members/invitations/create.json data-next="fill:invite-invitation reloadList:invitations-list">
 
           <table class=config>
             <tbody>
               <tr>
                 <th>対象者
-                <td>誰でも利用できます。
+                <td>誰でも利用できます。 (一回のみ)
               <tr>
                 <th><label for=invite-member_type>種別</>
                 <td><select name=member_type id=invite-member_type>
@@ -182,11 +183,13 @@
       </section>
     </t:if>
 
-  </section>
+  </template-set>
+  
+  <t:include path=_common.html.tm m:app=$app />
 
 <!--
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

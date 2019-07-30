@@ -191,6 +191,11 @@ section > header.section:not([hidden]) {
   display: flex;
   align-items: center;
   margin: 0 0 1rem 0;
+  box-sizing: border-box;
+}
+  
+section > h1,
+section > header.section {
   border-style: var(--header4-border-style);
   border-width: var(--header4-border-width);
   border-color: var(--header4-border-color);
@@ -198,7 +203,6 @@ section > header.section:not([hidden]) {
   background: var(--header4-background);
   color: var(--header4-color);
   min-height: var(--header4-min-height);
-  box-sizing: border-box;
   text-align: var(--header4-text-align);
 }
 

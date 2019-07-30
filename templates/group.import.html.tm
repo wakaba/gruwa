@@ -12,17 +12,14 @@
 
 -->
 <head>
-  <t:include path=_group_head.html.tm m:group=$group m:app=$app>
-    設定
-  </t:include>
+  <t:include path=_group_head.html.tm m:group=$group m:app=$app m:title="'インポート'" />
 
 <body>
-
-  <section class=page>
-    <header>
-      <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
-    </header>
-
+  <header class=page>
+    <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
+    <gr-menu type=group />
+  </header>
+  <page-main>
     <section class=group-config-import>
       <header class=section>
         <h1>データのインポート</h1>
@@ -185,8 +182,8 @@
         </list-is-empty>
       </gr-list-container>
     </div>
-  </section>
-  </section>
+    </section>
+  </page-main>
   <t:include path=_common.html.tm m:app=$app />
 
 <!--
