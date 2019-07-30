@@ -140,6 +140,13 @@ GR.group.info = function () {
   });
 }; // GR.group.info
 
+GR.index = {};
+
+GR.index.info = function (indexId) {
+  // XXX cache
+  return gFetch ('i/'+indexId+'/info.json', {});
+}; // GR.group.info
+
 defineElement ({
   name: 'gr-account',
   fill: 'contentattribute',
@@ -183,23 +190,28 @@ defineElement ({
     grUpdate: function () {
       if (this.grUpdateRunning) return;
       this.grUpdateRunning = true;
+      var obj = {};
       return $getTemplateSet ('gr-menu').then (ts => {
         var type = this.getAttribute ('type');
         if (type === 'group') {
           return Promise.all ([
-            GR.group.info (),
             ts,
             $getTemplateSet ('gr-menu-group'),
+            GR.group.info ().then (_ => obj.group = _),
           ]);
-
-          // XXX
-          var value = this.getAttribute ('value');
+        } else if (type === 'index') {
+          var indexId = this.getAttribute ('value');
+          return Promise.all ([
+            ts,
+            $getTemplateSet ('gr-menu-index'),
+            GR.group.info ().then (_ => obj.group = _),
+            GR.index.info (indexId).then (_ => obj.index = _),
+          ]);
         } else {
           throw new Error ("Unknown <gr-menu type> value |"+type+"|");
         }
-      }).then (([obj, ts1, ts2]) => {
+      }).then (([ts1, ts2]) => {
         this.textContent = '';
-        window.XXX=ts1;
         ts1.pcCreateTemplateList ();
         ts2.pcCreateTemplateList ();
         var e = ts1.createFromTemplate ('div', {});
@@ -2763,7 +2775,7 @@ $$ (document, 'object-ref').forEach (upgradeObjectRef);
 
 GR.navigate = {};
 
-GR.navigate._show = function (pageName) {
+GR.navigate._show = function (pageName, pageArgs) {
   // Assert: pageName is valid
   // XXX progressbar
   document.documentElement.setAttribute ('data-navigating', '');
@@ -2771,15 +2783,28 @@ GR.navigate._show = function (pageName) {
     var params = {};
     var wait = [];
     wait.push (GR.group.info ().then (_ => params.group = _));
+    if (pageArgs.indexId) {
+      wait.push (GR.index.info (pageArgs.indexId).then (_ => params.index = _));
+    }
     return Promise.all (wait).then (_ => {
       params.title = params.group.title;
       params.url = '/g/' + params.group.group_id + '/';
       params.theme = params.group.theme;
+      if (params.index && params.index.theme) {
+        params.theme = params.index.theme;
+        params.url += 'i/' + params.index.index_id + '/';
+        params.title = params.index.title;
+      }
       document.querySelectorAll ('body > header.page').forEach (_ => {
         $fill (_, params);
 
         var menu = _.querySelector ('gr-menu');
-        menu.setAttribute ('type', 'group');
+        if (params.index && params.index.theme) {
+          menu.setAttribute ('type', 'index');
+          menu.setAttribute ('value', params.index.index_id);
+        } else {
+          menu.setAttribute ('type', 'group');
+        }
       });
       var contentTitle = '';
       document.querySelectorAll ('page-main').forEach (_ => {
@@ -2800,11 +2825,12 @@ GR.navigate._show = function (pageName) {
         
         while (div.firstChild) _.appendChild (div.firstChild);
       });
-      if (contentTitle === '') {
-        document.title = params.group.title;
-      } else {
-        document.title = contentTitle + ' - ' + params.group.title;
+      var title = [params.group.title];
+      if (params.index) {
+        title.unshift (params.index.title);
       }
+      if (contentTitle !== '') title.unshift (contentTitle);
+      document.title = title.join (' - ');
       return GR.theme.set (params.theme);
     });
   }).then (_ => {
@@ -2816,7 +2842,9 @@ defineElement ({
   name: 'gr-navigate',
   props: {
     pcInit: function () {
-      GR.navigate._show (this.getAttribute ('page'));
+      GR.navigate._show (this.getAttribute ('page'), {
+        indexId: this.getAttribute ('indexid'),
+      });
     }, // pcInit
   },
 }); // <gr-navigate>

@@ -2,23 +2,21 @@
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-theme="(defined $index->{options}->{theme})
                        ? $index->{options}->{theme}
-                       : $group->{data}->{theme}">
+                       : $group->{data}->{theme}"
+    data-navigating>
 <head>
-  <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
-    設定 -
-    <t:text value="$index->{title}">
-  </t:include>
+  <t:include path=_group_head.html.tm m:group=$group m:app=$app />
 
 <body>
-  <!-- XXX -->
-  <t:include path=_common.html.tm m:app=$app />
-
-  <section class=page>
-    <header>
-      <h1><a href=./><t:text value="$index->{title}"></a></h1>
-      <m:index-menu m:group=$group m:index=$index />
-    </header>
-
+  <header class=page>
+    <h1><a href=./ data-href-field=url data-field=title><t:text value="$index->{title}"></a></h1>
+    <gr-menu type=index pl:value="$index->{index_id}" />
+  </header>
+  <page-main/>
+  <gr-navigate page=index-config pl:indexid="$index->{index_id}" />
+  
+<template-set name=page-index-config>
+  <template title=設定>
     <section>
       <h1>設定</>
       <form is=save-data data-saver=groupSaver method=post pl:action="'i/'.$index->{index_id}.'/edit.json'" id=edit-form>
@@ -132,7 +130,10 @@
         <p>ラベルやマイルストーンは、<a href=../../config>グループ設定</a>から作成できます。
       </t:if>
     </section>
-  </section>
+  </template>
+</template-set>
+
+  <t:include path=_common.html.tm m:app=$app />
 
 <!--
 
