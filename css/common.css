@@ -224,6 +224,7 @@ section.page::after {
   clear: both;
 }
 
+header.page,
 section.page > header {
   display: flex;
   align-items: center;
@@ -239,6 +240,7 @@ section.page > header {
   text-align: var(--pageheader-align);
 }
 
+header.page > h1,
 section.page > header > h1 {
   margin: 0;
   font-size: 160%;
@@ -246,17 +248,17 @@ section.page > header > h1 {
   flex-grow: 1;
 }
 
-section.page > header > gr-menu {
+header.page > gr-menu {
   margin-top: 3em;
   align-self: flex-end;
 }
 
-section.page > header > gr-menu > popup-menu > button:not(:hover):not(:focus):not(:active) {
+header.page > gr-menu > popup-menu > button:not(:hover):not(:focus):not(:active) {
   color: inherit;
   background: transparent;
 }
 
-section.page > header > gr-popup-menu {
+header.page > gr-popup-menu {
   display: block;
   float: right;
   margin: 2.5em 0 0 0;
@@ -269,12 +271,15 @@ section.page > footer {
   margin: 2em;
 }
 
+page-main > section,
 section.page > section,
 section.page > gr-list-container > list-main > section {
   color: var(--main-color);
   background-color: var(--main-background-color);
 }
 
+section > h1,
+section > header.section,
 section.page section > header.section,
 section.page section > h1 {
   border-style: var(--header1-border-style);
@@ -288,6 +293,8 @@ section.page section > h1 {
   text-align: var(--header1-align);
 }
 
+section section > h1,
+section section > header.section,
 section.page section section > h1,
 section.page section section > header.section,
 section.page article.object > header {
@@ -302,6 +309,8 @@ section.page article.object > header {
   text-align: var(--header2-align);
 }
 
+section section section > h1,
+section section section > header.section,
 section.page section section section > h1,
 section.page section section section > header.section {
   border-style: var(--header3-border-style);
@@ -315,6 +324,8 @@ section.page section section section > header.section {
   text-align: var(--header3-align);
 }
 
+section section section section > h1,
+section section section section > header.section,
 section.page section section section section > h1,
 section.page section section section section > header.section {
   border-style: var(--header4-border-style);

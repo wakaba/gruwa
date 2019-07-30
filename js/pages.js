@@ -33,6 +33,14 @@ GR.theme.getDefault = function () {
   });
 }; // GR.theme.getDefault
 
+GR.theme.set = function (theme) {
+  document.documentElement.setAttribute ('data-theme', theme);
+  return Promise.resolve ().then (() => {
+    var meta = document.querySelector ('meta[name=theme-color]');
+    meta.content = getComputedStyle (document.documentElement).getPropertyValue ("--dark-background-color");
+  });
+}; // GR.theme.set
+
 defineElement ({
   name: 'gr-select-theme',
   fill: 'contentattribute',
@@ -54,7 +62,7 @@ defineElement ({
 
           select.onchange = () => {
             var theme = select.value;
-            document.documentElement.setAttribute ('data-theme', theme);
+            GR.theme.set (theme);
             this.value = theme;
             $fill (this.querySelector ('gr-theme-info'), info.themes[theme] || {});
           };
@@ -2694,18 +2702,37 @@ GR.navigate = {};
 GR.navigate._show = function (pageName) {
   // Assert: pageName is valid
   // XXX progressbar
+  document.documentElement.setAttribute ('data-navigating', '');
   return $getTemplateSet ('page-' + pageName).then (ts => {
     var params = {};
     var wait = [];
-    if (ts.hasAttribute ('gr-group')) {
-      wait.push (GR.group.info ().then (_ => params.group = _));
-    }
+    wait.push (GR.group.info ().then (_ => params.group = _));
     return Promise.all (wait).then (_ => {
+      params.title = params.group.title;
+      params.url = '/g/' + params.group.group_id + '/';
+      params.theme = params.group.theme;
+      document.querySelectorAll ('body > header.page').forEach (_ => {
+        $fill (_, params);
+
+        var menu = _.querySelector ('gr-menu');
+        menu.setAttribute ('type', 'group');
+      });
+      var contentTitle = '';
       document.querySelectorAll ('page-main').forEach (_ => {
         var div = ts.createFromTemplate ('div', params);
+        contentTitle = div.title;
+        div.title = '';
         while (div.firstChild) _.appendChild (div.firstChild);
       });
+      if (contentTitle === '') {
+        document.title = params.group.title;
+      } else {
+        document.title = contentTitle + ' - ' + params.group.title;
+      }
+      return GR.theme.set (params.theme);
     });
+  }).then (_ => {
+    document.documentElement.removeAttribute ('data-navigating');
   });
 }; // _show
 

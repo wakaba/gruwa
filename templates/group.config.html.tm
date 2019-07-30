@@ -1,22 +1,18 @@
 <html t:params="$group $app" pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-theme="$group->{data}->{theme}"
-    data-navigate=config>
+    data-navigate=config data-navigating>
 <head>
-  <t:include path=_group_head.html.tm m:group=$group m:app=$app>
-    設定
-  </t:include>
+  <t:include path=_group_head.html.tm m:group=$group m:app=$app />
 
 <body>
-  <section class=page>
-    <header>
-      <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
-      <gr-menu type=group />
-    </header>
-    <page-main/>
-  </section>
+  <header class=page>
+    <h1><a href=./ data-href-field=url data-field=title><t:text value="$group->{data}->{title}"></a></h1>
+    <gr-menu type=group />
+  </header>
+  <page-main/>
 
-<template-set name=page-config gr-group>
-  <template>
+<template-set name=page-config>
+  <template title=設定>
     <section>
       <header class=section>
         <h1>グループ設定</>

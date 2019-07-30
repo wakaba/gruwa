@@ -183,7 +183,7 @@ body {
 section:not([hidden]) {
   display: block;
   margin: 0 1em 1em 1em;
-  padding: 0;
+  padding: 0 0 0.1px 0;
 }
 
 section > h1:not([hidden]),
@@ -350,10 +350,10 @@ p {
 }
 
 form {
-  margin: 0 0 1em 0;
+  margin: 0 .5em .5em .5em;
   border: 1px dotted;
   border-color: var(--accented-border-color);
-  padding: 1em;
+  padding: 1em .5em .5em .5em;
 }
 
 .config {

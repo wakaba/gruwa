@@ -8,7 +8,10 @@ Test {
   my $current = shift;
   return $current->create (
     [a1 => account => {}],
-    [g1 => group => {members => ['a1']}],
+    [g1 => group => {
+      members => ['a1'], title => $current->generate_text (t1 => {}),
+      theme => 'red',
+    }],
   )->then (sub {
     return $current->create_browser (1 => {
       url => ['g', $current->o ('g1')->{group_id}, 'config'],
@@ -16,19 +19,29 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'gr-menu[type=group] menu-main a[href$="/config"]',
+      selector => 'html:not([data-navigating])',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      return document.querySelector ('gr-menu[type=group] menu-main a[href$="/config"]').pathname;
+      return {
+        config_url: document.querySelector ('gr-menu[type=group] menu-main a[href$="/config"]').pathname,
+        title: document.title,
+        theme_color: document.querySelector ('meta[name=theme-color]').content,
+        header: document.querySelector ('header.page h1').textContent,
+      };
     });
   })->then (sub {
     my $res = $_[0];
+    my $values = $res->json->{value};
     test {
-      is $res->json->{value}, '/g/'.$current->o ('g1')->{group_id}.'/config';
+      use utf8;
+      is $values->{config_url}, '/g/'.$current->o ('g1')->{group_id}.'/config';
+      is $values->{title}, '設定 - ' . $current->o ('t1');
+      is $values->{header}, $current->o ('t1');
+      ok $values->{theme_color};
     } $current->c;
   });
-} n => 1, name => ['page'], browser => 1;
+} n => 4, name => ['page'], browser => 1;
 
 Test {
   my $current = shift;
