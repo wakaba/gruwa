@@ -2822,6 +2822,12 @@ GR.navigate._show = function (pageName, pageArgs) {
             _.remove ();
           });
         }
+
+        if (params.index) {
+          div.querySelectorAll ('[data-gr-if-index-type]:not([data-gr-if-index-type~="'+params.index.index_type+'"])').forEach (_ => {
+            _.remove ();
+          });
+        }
         
         while (div.firstChild) _.appendChild (div.firstChild);
       });

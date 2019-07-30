@@ -138,6 +138,10 @@ Test {
       },
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#edit-form input[name=title]:valid',
+    });
+  })->then (sub {
     return $current->b (1)->execute (q{
       var form = document.querySelector ('#edit-form');
       return form.querySelector ('input[name=title]').value;
