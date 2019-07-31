@@ -153,8 +153,13 @@
       </a>
     </copy-button>
     <p><a data-href-template=/g/{group.group_id}/i/{index.index_id}/config>設定</a>
+    <p data-gr-if-index-type=1><a href=/help#blogs target=help>ヘルプ</a>
+    <p data-gr-if-index-type=2><a href=/help#wiki target=help>ヘルプ</a>
+    <p data-gr-if-index-type=3><a href=/help#todos target=help>ヘルプ</a>
+    <p data-gr-if-index-type=4><a href=/help#labels target=help>ヘルプ</a>
+    <p data-gr-if-index-type=5><a href=/help#milestones target=help>ヘルプ</a>
+    <p data-gr-if-index-type=6><a href=/help#filesets target=help>ヘルプ</a>
   </template>
-  <!-- XXX <p><a href=/help#filesets>ヘルプ</a> -->
 </template-set>
 
 <t:macro name=wiki-menu t:params="$wiki_name">
