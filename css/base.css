@@ -637,7 +637,7 @@ gr-list-container > .operations {
   margin: 0 0.5em 0.5em 0.5em;
 }
 
-action-status,
+action-status:not([hidden]),
 gr-action-status {
   color: var(--small-color);
   background-color: var(--small-background-color);
@@ -699,6 +699,18 @@ gr-list-container > gr-action-status progress:not([hidden]) {
   width: 100%;
   margin-top: .5em;
   margin-bottom: .5em;
+}
+
+gr-navigate-status:not([hidden]) {
+  position: fixed;
+  display: block;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+gr-navigate-status progress:not([hidden]) {
+  margin-bottom: 0;
 }
 
 hr {

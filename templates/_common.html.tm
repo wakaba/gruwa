@@ -53,6 +53,10 @@
       </details>
     </gr-nav-panel>
 
+    <gr-navigate-status>
+      <action-status stage-loading=読込中... />
+    </gr-navigate-status>
+
 <template-set name=gr-menu>
   <template>
     <popup-menu>
@@ -240,7 +244,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=go:/g/{group_id}/i/{index_id}/config>
+              data-next=groupGo:i/{index_id}/config>
             <table class=config>
               <tbody>
                 <tr>
@@ -265,7 +269,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=go:/g/{group_id}/i/{index_id}/config>
+              data-next=groupGo:i/{index_id}/config>
             <table class=config>
               <tbody>
                 <tr>
@@ -291,7 +295,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=action=i/create.json
-              data-next=go:/g/{group_id}/i/{index_id}/config>
+              data-next=groupGo:i/{index_id}/config>
             <table class=config>
               <tbody>
                 <tr>
@@ -314,7 +318,7 @@
             <summary>ラベルの作成</summary>
 
             <form is=save-data data-saver=groupSaver method=post action=i/create.json
-                data-next=go:/g/{group_id}/i/{index_id}/config>
+                data-next=groupGo:i/{index_id}/config>
               <table class=config>
                 <tbody>
                   <tr>
@@ -333,7 +337,7 @@
             <summary>マイルストーンの作成</summary>
 
             <form is=save-data data-saver=groupSaver method=post action=i/create.json
-                data-next=go:/g/{group_id}/i/{index_id}/config>
+                data-next=groupGo:i/{index_id}/config>
               <table class=config>
                 <tbody>
                   <tr>
@@ -357,7 +361,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=go:/g/{group_id}/i/{index_id}/config>
+              data-next=groupGo:i/{index_id}/config>
             <table class=config>
               <tbody>
                 <tr>

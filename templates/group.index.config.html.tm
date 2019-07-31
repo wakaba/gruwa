@@ -13,8 +13,8 @@
     <gr-menu type=index pl:value="$index->{index_id}" />
   </header>
   <page-main/>
-  <gr-navigate page=index-config pl:indexid="$index->{index_id}" />
   <t:include path=_common.html.tm m:app=$app />
+  <gr-navigate/>
 
 <!--
 
