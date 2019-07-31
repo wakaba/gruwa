@@ -18,7 +18,10 @@
 <template-set name=page-index-config>
   <template title=設定>
     <section>
-      <h1>設定</>
+      <header class=section>
+        <h1>設定</h1>
+        <a href=/help#config target=help>ヘルプ</a>
+      </header>
       <form is=save-data data-saver=groupSaver method=post data-action-template=i/{index.index_id}/edit.json id=edit-form>
         <table class=config>
           <tbody>
@@ -87,31 +90,23 @@
           <action-status hidden stage-saver=保存中... ok=保存しました。 />
       </form>
 
-      <t:if x="defined $group_member->{data}->{default_index_id} and
-               $group_member->{data}->{default_index_id} == $index->{index_id}">
-        <p>この日記は<gr-account self><gr-account-name data-field=name /></>の<a href=/help#default-blog-index target=help>既定の日記</a>です。</p>
-      <t:else>
-        <form is=save-data data-saver=groupSaver method=post data-action-template=i/{index.index_id}/my.json data-gr-if-index-type=1>
-          <p>この日記を<gr-account self><gr-account-name data-field=name /></>の<a href=/help#default-blog-index target=help>既定の日記</a>に設定できます。</p>
-          <p class=operations>
-            <input type=hidden name=is_default value=1>
-            <button type=submit class=save-button>設定する</>
-            <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
-        </form>
-      </t:if>
+      <p data-gr-if-default-index>この日記は<gr-account self><gr-account-name data-field=name /></>の<a href=/help#default-blog-index target=help>既定の日記</a>です。</p>
+      <form is=save-data data-saver=groupSaver method=post data-action-template=i/{index.index_id}/my.json data-gr-if-index-type=1 data-gr-if-not-default-index>
+        <p>この日記を<gr-account self><gr-account-name data-field=name /></>の<a href=/help#default-blog-index target=help>既定の日記</a>に設定できます。</p>
+        <p class=operations>
+          <input type=hidden name=is_default value=1>
+          <button type=submit class=save-button>設定する</>
+          <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
+      </form>
 
-      <t:if x="$group->{data}->{default_wiki_index_id} and
-               $group->{data}->{default_wiki_index_id} == $index->{index_id}">
-        <p>この Wiki は<a href=/help#default-wiki-index rel=help>グループの Wiki</a> です。</p>
-      <t:else>
-        <form is=save-data data-saver=groupSaver method=post action=edit.json data-gr-if-index-type=2>
-          <p>この Wiki を<a href=/help#default-wiki-index rel=help>グループの Wiki</a>に設定できます。</p>
-          <p class=operations>
-            <input type=hidden name=default_wiki_index_id data-field=index.index_id>
-            <button type=submit class=save-button>設定する</>
-            <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
-        </form>
-      </t:if>
+      <p data-gr-if-default-wiki>この Wiki は<a href=/help#default-wiki-index rel=help>グループの Wiki</a> です。</p>
+      <form is=save-data data-saver=groupSaver method=post action=edit.json data-gr-if-index-type=2 data-gr-if-not-default-wiki>
+        <p>この Wiki を<a href=/help#default-wiki-index rel=help>グループの Wiki</a>に設定できます。</p>
+        <p class=operations>
+          <input type=hidden name=default_wiki_index_id data-field=index.index_id>
+          <button type=submit class=save-button>設定する</>
+          <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
+      </form>
 
       <p data-gr-if-index-type=3>ラベルやマイルストーンは、<a href=../../config>グループ設定</a>から作成できます。
     </section>

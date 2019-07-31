@@ -219,6 +219,11 @@ defineElement ({
           var f = ts2.createFromTemplate ('div', obj);
           while (f.firstChild) _.appendChild (f.firstChild);
         });
+        if (obj.index) {
+          e.querySelectorAll ('[data-gr-if-index-type]:not([data-gr-if-index-type~="'+obj.index.index_type+'"])').forEach (_ => {
+            _.remove ();
+          });
+        }
         while (e.firstChild) this.appendChild (e.firstChild);
       }).finally (_ => this.grUpdateRunning = false);
     }, // grUpdate
@@ -2827,6 +2832,28 @@ GR.navigate._show = function (pageName, pageArgs) {
           div.querySelectorAll ('[data-gr-if-index-type]:not([data-gr-if-index-type~="'+params.index.index_type+'"])').forEach (_ => {
             _.remove ();
           });
+
+          var isDefaultIndex = params.index.index_id == params.group.member.default_index_id;
+          if (isDefaultIndex) {
+            div.querySelectorAll ('[data-gr-if-not-default-index]').forEach (_ => {
+              _.remove ();
+            });
+          } else {
+            div.querySelectorAll ('[data-gr-if-default-index]').forEach (_ => {
+              _.remove ();
+            });
+          }
+
+          var isDefaultWiki = params.index.index_id == params.group.default_wiki_index_id;
+          if (isDefaultWiki) {
+            div.querySelectorAll ('[data-gr-if-not-default-wiki]').forEach (_ => {
+              _.remove ();
+            });
+          } else {
+            div.querySelectorAll ('[data-gr-if-default-wiki]').forEach (_ => {
+              _.remove ();
+            });
+          }
         }
         
         while (div.firstChild) _.appendChild (div.firstChild);

@@ -235,6 +235,7 @@ sub group ($$$$) {
       group_member => {
         theme => $gm->{data}->{theme},
         member_type => $gm->{member_type},
+        default_index_id => $gm->{data}->{default_index_id},
       },
     };
   }

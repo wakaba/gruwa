@@ -52,6 +52,29 @@ Test {
   });
 } n => 1+2*10, name => '/g/{}/myinfo.json';
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {members => ['a1']}],
+    [i1 => index => {group => 'g1', account => 'a1'}],
+  )->then (sub {
+    return $current->post_json (['i', $current->o ('i1')->{index_id}, 'my.json'], {
+      is_default => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['myinfo.json'], {
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $gm = $result->{json}->{group_member};
+      is $gm->{default_index_id}, $current->o ('i1')->{index_id};
+      like $result->{res}->body_bytes, qr{"default_index_id"\s*:\s*"};
+    } $current->c;
+  });
+} n => 2, name => 'default_index_id';
+
 RUN;
 
 =head1 LICENSE
