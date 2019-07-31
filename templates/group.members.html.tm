@@ -11,8 +11,8 @@
     <gr-menu type=group />
   </header>
   <page-main/>
-  <gr-navigate page=members />
   <t:include path=_common.html.tm m:app=$app />
+  <gr-navigate/>
 
 <!--
 

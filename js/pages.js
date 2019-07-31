@@ -2335,6 +2335,16 @@ function upgradeForm (form) {
     });
   };
   document.head.appendChild (e);
+  
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'groupGo');
+  e.pcHandler = function (args) {
+    return args.json ().then ((json) => {
+      var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/' + $fill.string (args.args[1], json);
+      return GR.navigate.go (url, {});
+    });
+  }; // groupGo
+  document.head.appendChild (e);
 }) ();
 
 defineElement ({
@@ -2780,10 +2790,84 @@ $$ (document, 'object-ref').forEach (upgradeObjectRef);
 
 GR.navigate = {};
 
-GR.navigate._show = function (pageName, pageArgs) {
+GR.navigate._init = function () {
+  addEventListener ('click', (ev) => {
+    var n = ev.target;
+    while (n && n.localName !== 'a') {
+      n = n.parentElement;
+    }
+    if (n &&
+        (n.protocol === 'https:' || n.protocol === 'http:') &&
+        n.target === '') {
+      GR.navigate.go (n.href, {});
+      ev.preventDefault ();
+    }
+  });
+  GR.navigate.enabled = true;
+  history.scrollRestoration = "manual";
+}; // GR.navigate._init
+
+GR.navigate.go = function (u, args) {
+  var url = new URL (u, location.href);
+  var status = document.querySelector ('gr-navigate-status');
+  status.grStart (url);
+  return Promise.resolve ().then (() => {
+    if (GR.navigate.enabled &&
+        url.origin === location.origin) {
+      if (!args.reload &&
+          url.pathname === location.pathname &&
+          url.search === location.search) {
+        return ['fragment', url];
+      }
+      return GR.group.info ().then (group => {
+        var path = url.pathname;
+        var prefix = '/g/' + group.group_id + '/';
+        if (path.substring (0, prefix.length) === prefix) {
+          path = path.substring (prefix.length);
+
+          var m = path.match (/^(config|members)$/);
+          if (m) return ['group', m[1], {
+          }];
+
+          m = path.match (/^i\/([0-9]+)\/(config)$/);
+          if (m) return ['group', 'index-' + m[2], {
+            indexId: m[1],
+          }];
+
+          return ['site', url];
+        } else {
+          return ['site', url];
+        }
+      });
+    }
+    return ['external', url];
+  }).then (_ => {
+    if (_[0] === 'group') {
+      return GR.navigate._show (_[1], _[2], {
+        url: url,
+        replace: args.replace,
+        reload: args.reload,
+        status: status,
+      });
+    } else if (_[0] === 'fragment') {
+      status.grStop ();
+      location.hash = _[1].hash;
+    } else { // external or site
+      status.grStop ();
+      if (args.reload) {
+        location.replace (_[1]);
+      } else {
+        location.href = _[1];
+      }
+    }
+  });
+}; // go
+
+GR.navigate._show = function (pageName, pageArgs, opts) {
   // Assert: pageName is valid
-  // XXX progressbar
-  document.documentElement.setAttribute ('data-navigating', '');
+  // XXX abort / ongoing
+  // XXX 404
+  // XXX revision
   return $getTemplateSet ('page-' + pageName).then (ts => {
     var params = {};
     var wait = [];
@@ -2792,6 +2876,16 @@ GR.navigate._show = function (pageName, pageArgs) {
       wait.push (GR.index.info (pageArgs.indexId).then (_ => params.index = _));
     }
     return Promise.all (wait).then (_ => {
+      if (opts.url) {
+        if (opts.reload) {
+          //
+        } else if (opts.replace) {
+          history.replaceState ({}, null, opts.url);
+        } else {
+          history.pushState ({}, null, opts.url);
+        }
+      }
+    }).then (_ => {
       params.title = params.group.title;
       params.url = '/g/' + params.group.group_id + '/';
       params.theme = params.group.theme;
@@ -2855,7 +2949,8 @@ GR.navigate._show = function (pageName, pageArgs) {
             });
           }
         }
-        
+
+        _.textContent = '';
         while (div.firstChild) _.appendChild (div.firstChild);
       });
       var title = [params.group.title];
@@ -2867,20 +2962,52 @@ GR.navigate._show = function (pageName, pageArgs) {
       return GR.theme.set (params.theme);
     });
   }).then (_ => {
-    document.documentElement.removeAttribute ('data-navigating');
+    document.documentElement.scrollTop = 0; // XXX restore
+    opts.status.grStop ();
   });
 }; // _show
+
+defineElement ({
+  name: 'gr-navigate-status',
+  pcActionStatus: true,
+  props: {
+    pcInit: function () {
+      this.hidden = true;
+    }, // pcInit
+    grStart: function (url) {
+      console.log ("Open URL <"+url+">...");
+      document.documentElement.setAttribute ('data-navigating', '');
+      clearTimeout (this.grTimer);
+      this.grTimer = setTimeout (() => this.hidden = false, 500);
+
+      var as = this.grAS = this.pcActionStatus ();
+      as.start ({stages: ['loading']});
+      as.stageStart ('loading');
+    }, // grStart
+    grStop: function () {
+      this.grAS.end ({ok: true});
+      this.hidden = true;
+      clearTimeout (this.grTimer);
+      document.documentElement.removeAttribute ('data-navigating');
+    }, // grStop
+  },
+}); // <gr-navigate-status>
 
 defineElement ({
   name: 'gr-navigate',
   props: {
     pcInit: function () {
-      GR.navigate._show (this.getAttribute ('page'), {
-        indexId: this.getAttribute ('indexid'),
-      });
+      if (!GR.navigate.enabled) GR.navigate._init ();
+      GR.navigate.go (location.href, {reload: true});
+      this.remove ();
     }, // pcInit
   },
 }); // <gr-navigate>
+
+addEventListener ('popstate', ev => {
+  var nav = document.createElement ('gr-navigate');
+  document.body.appendChild (nav);
+});
 
 /*
 
