@@ -28,9 +28,7 @@ Test {
   })->then (sub {
     return $current->b (1)->execute (q{
       window.testState = 123445;
-setTimeout(() => {
       document.querySelector ('gr-menu[type=group] a[href$="/members"]').click ();
-}, 0);
     });
   })->then (sub {
     return $current->b_wait (1 => {
@@ -83,6 +81,83 @@ setTimeout(() => {
     } $current->c;
   });
 } n => 6, name => ['/config -> /members -> back'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+      title => $current->generate_text (t1 => {}),
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'config'],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      window.testState = 123445;
+      var a = document.createElement ('a');
+      a.href = 'i/32523533/config';
+      document.body.appendChild (a);
+      a.click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      setTimeout (() => history.back (), 0);
+      return {
+        path: location.pathname,
+        state: window.testState,
+        statusHidden: document.querySelector ('gr-navigate-status').hidden,
+        status: document.querySelector ('gr-navigate-status action-status-message').textContent,
+        pageMain: document.querySelector ('page-main').textContent,
+      };
+    });
+  })->then (sub {
+    my $values = $_[0]->json->{value};
+    test {
+      use utf8;
+      is $values->{path}, '/g/'.$current->o ('g1')->{group_id}.'/i/32523533/config';
+      is $values->{state}, 123445;
+      ok ! $values->{statusHidden}, $values->{statusHidden};
+      like $values->{status}, qr{404 Not Found};
+      is $values->{pageMain}, '';
+    } $current->c;
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#edit-form',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      setTimeout (() => history.back (), 0);
+      return {
+        path: location.pathname,
+        title: document.title,
+        state: window.testState,
+      };
+    });
+  })->then (sub {
+    my $values = $_[0]->json->{value};
+    test {
+      use utf8;
+      is $values->{path}, '/g/'.$current->o ('g1')->{group_id}.'/config';
+      is $values->{title}, '設定 - ' . $current->o ('t1');
+      is $values->{state}, 123445;
+    } $current->c;
+  });
+} n => 8, name => ['/config -> 404 -> back'], browser => 1;
 
 RUN;
 

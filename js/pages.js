@@ -2523,7 +2523,7 @@ function upgradePopupMenu (e) {
 
 function upgradeCopyButton (e) {
   $$ (e, 'a').forEach (function (f) {
-    f.onclick = function () {
+    f.onclick = function (ev) {
       if (e.getAttribute ('type') === 'jump') {
         var fd = new FormData;
         if (f.title) fd.append ('label', f.title);
@@ -2537,6 +2537,7 @@ function upgradeCopyButton (e) {
       } else {
         copyText (f.href);
       }
+      ev.stopPropagation ();
       return false;
     };
   });
@@ -2798,7 +2799,8 @@ GR.navigate._init = function () {
     }
     if (n &&
         (n.protocol === 'https:' || n.protocol === 'http:') &&
-        n.target === '') {
+        n.target === '' &&
+        !n.is) {
       GR.navigate.go (n.href, {});
       ev.preventDefault ();
     }
@@ -2868,6 +2870,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
   // XXX abort / ongoing
   // XXX 404
   // XXX revision
+  var pushed = false;
   return $getTemplateSet ('page-' + pageName).then (ts => {
     var params = {};
     var wait = [];
@@ -2885,6 +2888,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           history.pushState ({}, null, opts.url);
         }
       }
+      pushed = true;
     }).then (_ => {
       params.title = params.group.title;
       params.url = '/g/' + params.group.group_id + '/';
@@ -2964,6 +2968,20 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
   }).then (_ => {
     document.documentElement.scrollTop = 0; // XXX restore
     opts.status.grStop ();
+  }, e => { 
+    if (!pushed && opts.url) {
+      if (opts.reload) {
+        //
+      } else if (opts.replace) {
+        history.replaceState ({}, null, opts.url);
+      } else {
+        history.pushState ({}, null, opts.url);
+      }
+    }
+    document.querySelectorAll ('page-main').forEach (_ => {
+      _.textContent = '';
+    });
+    opts.status.grAbort (e);
   });
 }; // _show
 
@@ -2990,6 +3008,12 @@ defineElement ({
       clearTimeout (this.grTimer);
       document.documentElement.removeAttribute ('data-navigating');
     }, // grStop
+    grAbort: function (e) {
+      this.grAS.end ({error: e});
+      clearTimeout (this.grTimer);
+      this.hidden = false;
+      document.documentElement.removeAttribute ('data-navigating');
+    }, // grAbort
   },
 }); // <gr-navigate-status>
 
