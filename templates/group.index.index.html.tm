@@ -32,17 +32,17 @@
     <header>
       <t:if x="defined $wiki_name">
         <h1><a href><t:text value=$wiki_name></a></h1>
-        <m:wiki-menu m:group=$group m:wiki_name=$wiki_name />
+        <gr-menu type=wiki pl:indexid="$index->{index_id}" pl:wikiname=$wiki_name />
       <t:elsif x="defined $index">
         <h1><a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
           <t:text value="$index->{title}">
         </a></h1>
-        <m:index-menu m:group=$group m:index=$index />
+        <gr-menu type=index pl:indexid="$index->{index_id}" />
       <t:else>
         <h1><a pl:href="'/g/'.$group->{group_id}.'/'">
           <t:text value="$group->{data}->{title}">
         </a></h1>
-        <m:group-menu m:group=$group />
+        <gr-menu type=group />
       </t:if>
     </header>
 
