@@ -211,7 +211,7 @@ defineElement ({
   props: {
     pcInit: function () {
       new MutationObserver (() => this.grUpdate ()).observe
-          (this, {attributes: true, attributeFilter: ['type', 'value']});
+          (this, {attributes: true, attributeFilter: ['type', 'indexid', 'wikiname']});
       Promise.resolve ().then (() => this.grUpdate ());
     }, // pcInit
     grUpdate: function () {
@@ -227,10 +227,20 @@ defineElement ({
             GR.group.info ().then (_ => obj.group = _),
           ]);
         } else if (type === 'index') {
-          var indexId = this.getAttribute ('value');
+          var indexId = this.getAttribute ('indexid');
           return Promise.all ([
             ts,
             $getTemplateSet ('gr-menu-index'),
+            GR.group.info ().then (_ => obj.group = _),
+            GR.index.info (indexId).then (_ => obj.index = _),
+          ]);
+        } else if (type === 'wiki') {
+          var indexId = this.getAttribute ('indexid');
+          var wikiName = this.getAttribute ('wikiname');
+          obj.wiki = {name: wikiName};
+          return Promise.all ([
+            ts,
+            $getTemplateSet ('gr-menu-wiki'),
             GR.group.info ().then (_ => obj.group = _),
             GR.index.info (indexId).then (_ => obj.index = _),
           ]);
@@ -2994,7 +3004,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         var menu = _.querySelector ('gr-menu');
         if (params.index && params.index.theme) {
           menu.setAttribute ('type', 'index');
-          menu.setAttribute ('value', params.index.index_id);
+          menu.setAttribute ('indexid', params.index.index_id);
         } else {
           menu.setAttribute ('type', 'group');
         }

@@ -10,7 +10,7 @@
 <body>
   <header class=page>
     <h1><a href=./ data-href-field=url data-field=title><t:text value="$index->{title}"></a></h1>
-    <gr-menu type=index pl:value="$index->{index_id}" />
+    <gr-menu type=index pl:indexid="$index->{index_id}" />
   </header>
   <page-main/>
   <t:include path=_common.html.tm m:app=$app />

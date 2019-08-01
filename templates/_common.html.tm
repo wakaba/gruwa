@@ -70,35 +70,6 @@
   </template>
 </template-set>
 
-<t:macro name=group-menu t:params=$group>
-  <gr-popup-menu>
-    <button type=button>⋁</button>
-    <menu hidden>
-      <li>
-        <a pl:href="'/g/'.$group->{group_id}.'/'">
-          トップ
-        </a>
-      <li><copy-button>
-        <a pl:href="'/g/'.$group->{group_id}.'/'">
-          URLをコピー
-        </a>
-      </copy-button>
-      <li><copy-button type=jump>
-        <a pl:href="'/g/'.$group->{group_id}.'/'" pl:title="$group->{data}->{title}">
-          ジャンプリストに追加
-        </a>
-      </copy-button>
-      <li>
-        <a pl:href="'/g/'.$group->{group_id}.'/members'">
-          参加者
-        </a>
-      <li>
-        <a pl:href="'/g/'.$group->{group_id}.'/config'">
-          設定
-        </a>
-    </menu>
-  </gr-popup-menu>
-</t:macro>
 <template-set name=gr-menu-group>
   <template>
     <p><a data-href-template=/g/{group.group_id}/>トップ</a>
@@ -116,35 +87,6 @@
   </template>
 </template-set>
 
-<t:macro name=index-menu t:params="$group $index">
-  <gr-popup-menu>
-    <button type=button>⋁</button>
-    <menu hidden>
-      <li>
-        <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
-          トップ
-        </a>
-      <li><copy-button>
-        <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
-          URLをコピー
-        </a>
-      </copy-button>
-      <li><copy-button type=jump>
-        <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'" pl:title="$index->{title}">
-          ジャンプリストに追加
-        </a>
-      </copy-button>
-      <li>
-        <a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/config'">
-          設定
-        </a>
-      </li>
-      <t:if x="$index->{index_type} == 6 # fileset">
-        <li><a href=/help#filesets>ヘルプ</a>
-      </t:if>
-    </menu>
-  </gr-popup-menu>
-</t:macro>
 <template-set name=gr-menu-index>
   <template>
     <p><a data-href-template=/g/{group.group_id}/i/{index.index_id}/>トップ</a>
@@ -166,27 +108,16 @@
   </template>
 </template-set>
 
-<t:macro name=wiki-menu t:params="$wiki_name">
-  <gr-popup-menu>
-    <button type=button>⋁</button>
-    <menu hidden>
-      <li>
-        <a href>
-          Wikiページ
-        </a>
-      <li><copy-button>
-        <a href>
-          URLをコピー
-        </a>
-      </>
-      <li><copy-button type=jump>
-        <a href pl:title=$wiki_name>
-          ジャンプリストに追加
-        </a>
-      </>
-    </menu>
-  </gr-popup-menu>
-</t:macro>
+<template-set name=gr-menu-wiki>
+  <template>
+    <p><a href>Wikiページ</a>
+    <p><copy-button><a href>URLをコピー</a></copy-button>
+    <p><copy-button type=jump>
+      <a href data-title-field=wiki.name>ジャンプリストに追加</a>
+    </copy-button>
+    <p><a href=/help#wiki target=help>ヘルプ</a>
+  </template>
+</template-set>
 
 <template-set name=page-index>
   <template>
