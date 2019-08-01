@@ -134,12 +134,13 @@ GR.page.setTitle = function (title) {
 GR.page.setSearch = function (args) {
   if (!args) {
     GR._state.isSearchPage = false;
+    GR._state.searchWord = null;
   } else {
     if (GR._state.searchWord === args.q) return;
     GR._state.isSearchPage = true;
     GR._state.searchWord = args.q;
-    GR.page._title ();
   }
+  GR.page._title ();
 }; // GR.page._setSearch
 
 GR.page._title = function () {
@@ -2893,6 +2894,10 @@ GR.navigate.go = function (u, args) {
         if (path.substring (0, prefix.length) === prefix) {
           path = path.substring (prefix.length);
 
+          if (path === '') {
+            return ['group', 'index', {}];
+          }
+
           var m = path.match (/^(search|config|members)$/);
           if (m) return ['group', m[1], {
             q: url.searchParams.get ('q'),
@@ -3047,12 +3052,12 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         title.unshift (params.index.title);
       }
       if (contentTitle !== '') title.unshift (contentTitle);
-      GR.page.setTitle (title.join (' - '));
       if (params.search) {
         GR.page.setSearch (params.search);
       } else {
         GR.page.setSearch (null);
       }
+      GR.page.setTitle (title.join (' - '));
       return GR.theme.set (params.theme);
     });
   }).then (_ => {
