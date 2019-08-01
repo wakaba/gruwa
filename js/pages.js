@@ -2844,12 +2844,23 @@ GR.navigate.go = function (u, args) {
     }
     return ['external', url];
   }).then (_ => {
+    if (GR._state.currentNavigate) {
+      GR._state.currentNavigate.abort ();
+      delete GR._state.currentNavigate;
+    }
     if (_[0] === 'group') {
+      var ac = new AbortController;
+      var nav = GR._state.currentNavigate = {
+        abort: () => ac.abort (),
+      };
       return GR.navigate._show (_[1], _[2], {
         url: url,
         replace: args.replace,
         reload: args.reload,
         status: status,
+        signal1: args.signal || (new AbortController).signal,
+        signal2: ac.signal,
+        thisNavigate: nav,
       });
     } else if (_[0] === 'fragment') {
       status.grStop ();
@@ -2867,9 +2878,7 @@ GR.navigate.go = function (u, args) {
 
 GR.navigate._show = function (pageName, pageArgs, opts) {
   // Assert: pageName is valid
-  // XXX abort / ongoing
-  // XXX 404
-  // XXX revision
+  // XXX revision test / session timeout / account changed / 50[234]
   var pushed = false;
   return $getTemplateSet ('page-' + pageName).then (ts => {
     var params = {};
@@ -2878,7 +2887,11 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
     if (pageArgs.indexId) {
       wait.push (GR.index.info (pageArgs.indexId).then (_ => params.index = _));
     }
+    // XXX abort wait by opts.signal[12]
     return Promise.all (wait).then (_ => {
+      if (opts.signal1.aborted || opts.signal2.aborted) {
+        throw new DOMException ('Navigation request aborted', 'AbortError');
+      }
       if (opts.url) {
         if (opts.reload) {
           //
@@ -2890,6 +2903,8 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       }
       pushed = true;
     }).then (_ => {
+      if (GR._state.currentNavigate !== opts.thisNavigate) return;
+      
       params.title = params.group.title;
       params.url = '/g/' + params.group.group_id + '/';
       params.theme = params.group.theme;
@@ -2966,9 +2981,21 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       return GR.theme.set (params.theme);
     });
   }).then (_ => {
+    if (GR._state.currentNavigate !== opts.thisNavigate) return;
     document.documentElement.scrollTop = 0; // XXX restore
     opts.status.grStop ();
-  }, e => { 
+    delete GR._state.currentNavigate;
+  }, e => {
+    if (GR._state.currentNavigate !== opts.thisNavigate) {
+      if (e && e.name === 'AbortError') {
+        console.log ("Navigation to <"+url+"> canceled");
+        return;
+      } else {
+        console.log ("Navigation to <"+url+"> canceled and errored");
+        throw e;
+      }
+    }
+    
     if (!pushed && opts.url) {
       if (opts.reload) {
         //
@@ -2981,7 +3008,12 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
     document.querySelectorAll ('page-main').forEach (_ => {
       _.textContent = '';
     });
-    opts.status.grAbort (e);
+    if (e && e.name === 'AbortError') {
+      opts.status.grStop ();
+    } else {
+      opts.status.grThrow (e);
+    }
+    delete GR._state.currentNavigate;
   });
 }; // _show
 
@@ -3008,12 +3040,12 @@ defineElement ({
       clearTimeout (this.grTimer);
       document.documentElement.removeAttribute ('data-navigating');
     }, // grStop
-    grAbort: function (e) {
+    grThrow: function (e) {
       this.grAS.end ({error: e});
       clearTimeout (this.grTimer);
       this.hidden = false;
       document.documentElement.removeAttribute ('data-navigating');
-    }, // grAbort
+    }, // grThrow
   },
 }); // <gr-navigate-status>
 
