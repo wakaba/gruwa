@@ -2,66 +2,16 @@
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-theme="$group->{data}->{theme}">
 <head>
-  <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
-    検索
-  </t:include>
+  <t:include path=_group_head.html.tm m:group=$group m:app=$app />
 
 <body>
-
-  <section class=page>
-    <header>
-      <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
-      <m:group-menu m:group=$group />
-    </header>
-
-    <section>
-      <header class=section>
-        <h1>検索</>
-        <gr-popup-menu>
-          <button type=button>⋁</>
-          <menu hidden>
-            <li><copy-button>
-              <a href>URLをコピー</a>
-            </copy-button>
-            <li><copy-button type=jump>
-              <a href>ジャンプリストに追加</a>
-            </copy-button>
-            <li><a href=/help#search target=help>ヘルプ</a>
-          </menu>
-        </gr-popup-menu>
-      </header>
-
-      <gr-list-container src=o/search.json key=objects pl:param-q="$app->text_param ('q')" class=object-search>
-        <form method=get action=search class=search-form data-pjax=search?q={q}>
-          <input type=search name=q pl:value="$app->text_param ('q')">
-          <button type=submit>検索</button>
-        </form>
-
-        <p hidden class=search-wiki_name-link><strong>Wiki</strong>:
-        <a href data-href-template=wiki/{name} data-field=name></a></p>
-
-        <p><strong>記事</strong>:</p>
-
-        <template>
-          <a href data-href-template=o/{object_id}/>
-            <time data-field=timestamp data-format=date />
-            <strong data-field=title data-empty=■></strong>
-            <time data-field=updated />
-            <search-snippet data-field=snippet />
-          </a>
-        </template>
-        <list-main/>
-        <list-is-empty hidden>
-          <p>一致する記事は見つかりませんでした。
-        </list-is-empty>
-        <gr-action-status hidden stage-load=読み込み中... />
-        <p class=operations>
-          <button type=button class=next-page-button hidden>もっと昔</button>
-      </gr-list-container>
-
-    </section>
-  </section>
+  <header class=page>
+    <h1><a href=./ data-href-field=url data-field=title><t:text value="$group->{data}->{title}"></a></h1>
+    <gr-menu type=group />
+  </header>
+  <page-main/>
   <t:include path=_common.html.tm m:app=$app />
+  <gr-navigate/>
 
 <!--
 
