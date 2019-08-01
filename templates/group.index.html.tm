@@ -46,17 +46,6 @@
       </gr-list-container>
     </section>
 
-    <gr-list-container listitemtype=object key=objects
-        pl:src-index_id="$group->{data}->{default_wiki_index_id}"
-        src-wiki_name=GroupTop>
-      <template class=object>
-        <main><iframe data-data-field=body /></main>
-      </template>
-
-      <list-main></list-main>
-
-      <gr-action-status hidden stage-load=読み込み中... />
-    </gr-list-container>
   </section>
 
   <!-- Necessary for checkboxes -->
