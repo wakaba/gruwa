@@ -124,6 +124,32 @@ GR._myinfo = function () {
   return GR._state.updateMyInfo || GR._updateMyInfo ();
 }; // GR._myinfo
 
+GR.page = {};
+
+GR.page.setTitle = function (title) {
+  GR._state.title = title;
+  GR.page._title ();
+}; // GR.page.setTitle
+
+GR.page.setSearch = function (args) {
+  if (!args) {
+    GR._state.isSearchPage = false;
+  } else {
+    if (GR._state.searchWord === args.q) return;
+    GR._state.isSearchPage = true;
+    GR._state.searchWord = args.q;
+    GR.page._title ();
+  }
+}; // GR.page._setSearch
+
+GR.page._title = function () {
+  if (GR._state.searchWord) {
+    document.title = GR._state.searchWord + ' - ' + GR._state.title;
+  } else {
+    document.title = GR._state.title;
+  }
+}; // GR.page._title
+
 GR.account = {};
 
 GR.account.info = function () {
@@ -2297,6 +2323,12 @@ function upgradeForm (form) {
   e.pcHandler = function (opts) {
     if (!this.hasAttribute ('src')) return {};
     var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/' + this.getAttribute ('src');
+    if (this.hasAttribute ('src-search')) {
+      if (GR._state.searchWord) {
+        url += /\?/.test (url) ? '&' : '?';
+        url += 'q=' + encodeURIComponent (GR._state.searchWord);
+      }
+    }
     if (opts.ref) {
       url += /\?/.test (url) ? '&' : '?';
       url += 'ref=' + encodeURIComponent (opts.ref);
@@ -2311,10 +2343,11 @@ function upgradeForm (form) {
     }).then ((res) => res.json ()).then ((json) => {
       if (!this.hasAttribute ('key')) throw new Error ("|key| is not specified");
       json = json || {};
+      var hasNext = json.next_ref && opts.ref !== json.next_ref; // backcompat
       return {
         data: json[this.getAttribute ('key')],
         prev: {ref: json.prev_ref, has: json.has_prev, limit: opts.limit},
-        next: {ref: json.next_ref, has: json.has_next, limit: opts.limit},
+        next: {ref: json.next_ref, has: json.has_next || hasNext, limit: opts.limit},
       };
     });
   };
@@ -2384,6 +2417,39 @@ defineElement ({
     }, // grToggleEditable
   },
 }); // <gr-editable-tr>
+
+defineElement ({
+  name: 'form',
+  is: 'gr-search',
+  props: {
+    pcInit: function () {
+      this.onsubmit = (ev) => {
+        this.grSearch ();
+        return false;
+      };
+    }, // pcInit
+    grSearch: function () {
+      var q = this.elements.q.value;
+      var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/search?q=' + encodeURIComponent (q);
+      return GR.navigate.go (url, {});
+    }, // grSearch
+  },
+});
+
+defineElement ({
+  name: 'gr-search-wiki-name',
+  props: {
+    pcInit: function () {
+      var word = (GR._state.searchWord || '').replace (/^\s+/, '').replace (/\s+$/, '');
+      if (word.match (/^\S+$/)) {
+        this.hidden = false;
+        $fill (this, {name: word});
+      } else {
+        this.hidden = true;
+      }      
+    }, // pcInit
+  },
+}); // <gr-search-wiki-name>
 
 function upgradeListControl (control) {
   control._selectedValues = [];
@@ -2827,8 +2893,9 @@ GR.navigate.go = function (u, args) {
         if (path.substring (0, prefix.length) === prefix) {
           path = path.substring (prefix.length);
 
-          var m = path.match (/^(config|members)$/);
+          var m = path.match (/^(search|config|members)$/);
           if (m) return ['group', m[1], {
+            q: url.searchParams.get ('q'),
           }];
 
           m = path.match (/^i\/([0-9]+)\/(config)$/);
@@ -2886,6 +2953,9 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
     wait.push (GR.group.info ().then (_ => params.group = _));
     if (pageArgs.indexId) {
       wait.push (GR.index.info (pageArgs.indexId).then (_ => params.index = _));
+    }
+    if (pageName === 'search') {
+      params.search = {q: pageArgs.q || ''};
     }
     // XXX abort wait by opts.signal[12]
     return Promise.all (wait).then (_ => {
@@ -2977,7 +3047,12 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         title.unshift (params.index.title);
       }
       if (contentTitle !== '') title.unshift (contentTitle);
-      document.title = title.join (' - ');
+      GR.page.setTitle (title.join (' - '));
+      if (params.search) {
+        GR.page.setSearch (params.search);
+      } else {
+        GR.page.setSearch (null);
+      }
       return GR.theme.set (params.theme);
     });
   }).then (_ => {

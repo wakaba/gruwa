@@ -83,13 +83,18 @@ gr-nav-panel a:not(:hover):not(:focus):not(:active) {
   text-decoration: none;
 }
 
-gr-nav-panel > details form:not([hidden]) {
-  display: flex;
-  padding: 0;
+gr-nav-panel form {
+  padding: .4em;
 }
 
-gr-nav-panel form > input {
-  flex-grow: 1;
+gr-nav-panel input[type=search],
+gr-nav-panel button.search-button {
+  padding: .1em;
+}
+
+gr-nav-panel button:not(:hover):not(:focus):not(:active) {
+  color: inherit;
+  background: transparent;
 }
 
 header.cover h1 {
@@ -111,60 +116,49 @@ nav.cover {
   text-align: center;
 }
 
-header.common,
-header.group {
+header.common {
   display: table;
   width: 100%;
   background: var(--dark-background-color);
   color: var(--dark-color);
 }
 
-header.common ~ *,
-header.group ~ * {
+header.common ~ * {
   margin-top: 1rem;
 }
 
-header.common > header-area,
-header.group > header-area {
+header.common > header-area {
   display: table-cell;
   padding: .2em .5em;
   font-size: 90%;
 }
 
-header.common > header-area + header-area,
-header.group > header-area + header-area {
+header.common > header-area + header-area {
   text-align: right;
 }
 
 
-header.common > header-area > a,
-header.group > header-area > a {
+header.common > header-area > a {
   color: inherit;
   background: transparent;
   text-decoration: none;
 }
 
 header.common > header-area > a:hover,
-header.group > header-area > a:hover,
-header.common > header-area > a:active,
-header.group > header-area > a:active {
+header.common > header-area > a:active {
   text-decoration: underline;
 }
 
 header.common > header-area > gr-popup-menu > button:not([hidden]):hover,
-header.group > header-area > gr-popup-menu > button:not([hidden]):hover,
 header.common > header-area > gr-popup-menu > button:not([hidden]):active,
-header.group > header-area > gr-popup-menu > button:not([hidden]):active,
-header.common > header-area > gr-popup-menu > button:not([hidden]):focus,
-header.group > header-area > gr-popup-menu > button:not([hidden]):focus {
+header.common > header-area > gr-popup-menu > button:not([hidden]):focus {
   border-color: transparent;
   color: inherit;
   background-color: transparent;
   text-decoration: underline;
 }
 
-header.common > header-area > gr-popup-menu > button::after,
-header.group > header-area > gr-popup-menu > button::after {
+header.common > header-area > gr-popup-menu > button::after {
   display: inline-block;
   content: "⋁";
   margin-left: .5em;
@@ -172,14 +166,11 @@ header.group > header-area > gr-popup-menu > button::after {
   text-decoration: none;
 }
 
-header.common > header-area > hgroup,
-header.group > header-area > hgroup {
+header.common > header-area > hgroup {
   display: inline-block;
 }
 
-header.common > header-area > hgroup > h1,
-header.group > header-area > hgroup > h1,
-header.group > header-area > hgroup > h2 {
+header.common > header-area > hgroup > h1 {
   display: inline;
   margin: 0;
   padding: 0;
@@ -187,31 +178,16 @@ header.group > header-area > hgroup > h2 {
   font-weight: normal;
 }
 
-header.group > header-area > hgroup > h1::after {
-  content: " :: ";
-}
-
-header.common > header-area > hgroup > * a,
-header.group > header-area > hgroup > * a {
+header.common > header-area > hgroup > * a {
   color: inherit;
   background: transparent;
   text-decoration: none;  
 }
 
-header.common > header-area > hgroup > h1 > a,
-header.group > header-area > hgroup > h1 > a {
+header.common > header-area > hgroup > h1 > a {
   display: inline-block;
   font-family: cursive;
   font-style: italic;
-}
-
-header.group .search-form {
-  display: inline-block;
-  margin: 0;
-  border-style: none;
-  padding: 0;
-  background: transparent;
-  color: inherit;
 }
 
 section.page {
@@ -697,71 +673,59 @@ gr-list-container[key=groups] td.desc {
   min-width: 10em;
 }
 
-gr-list-container .search-form {
-  margin: 0;
-  margin-bottom: 1em;
-  border-style: none;
+page-main form[is=gr-search] {
+  margin: 1em;
   padding: 0;
 }
 
-gr-list-container .search-form input[type=search] {
-  width: 90%;
-}
-
-gr-list-container .search-form button {
-  padding: .1em .5em;
+page-main form[is=gr-search] .search-button {
   min-width: 5em;
-}
-
-gr-list-container.object-search list-main {
-  display: block;
-  margin-bottom: 1em;
-}
-
-gr-list-container.object-search list-item {
-  display: block;
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-}
-
-gr-list-container.object-search list-item:nth-child(2n) {
-  background-color: var(--light-2-background-color);
-  color: var(--light-2-color);
-}
-
-gr-list-container.object-search list-item > a {
-  display: block;
   padding: .5em;
-  background: transparent;
-  color: inherit;
-  text-decoration: none;
 }
 
-gr-list-container.object-search list-item > a:link strong {
-  background-color: var(--link-background-color);
-  color: var(--link-color);
-}
-
-gr-list-container.object-search list-item > a:visited strong {
-  background-color: var(--visited-background-color);
-  color: var(--visited-color);
-}
-
-gr-list-container.object-search list-item > a:hover strong,
-gr-list-container.object-search list-item > a:active strong {
-  background-color: var(--hover-background-color);
-  color: var(--hover-color);
-  text-decoration: underline;
-}
-
-gr-list-container.object-search search-snippet {
+.search-result:not([hidden]) {
   display: block;
-  margin: .5rem .3rem 0 ;
-  border-radius: .1rem;
-  padding: .5rem;
+}
+
+.search-result list-item:not([hidden]) {
+  display: block;
+  margin: 0 0 1em 0;
+}
+
+.search-result list-item:hover {
+  outline: 1px dotted var(--accented-border-color);
+}
+
+.search-result list-item > a:not([hidden]) {
+  display: flex;
+  padding: .5em;
+}
+
+.search-result list-item > a cite {
+  flex-grow: 1;
+  font-weight: bolder;
+  font-style: normal;
+}
+
+.search-result list-item > a time {
   font-size: 90%;
-  background-color: var(--main-background-color);
-  color: var(--main-color);
+}
+
+.search-result .object-summary {
+  margin: 0;
+  padding: .5em;
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+  line-height: 1.3;
+}
+
+.search-result .object-summary > *:not([hidden]) {
+  display: block;
+  font-size: 80%;
+}
+
+.search-result .object-summary > *:last-child {
+  text-align: right;
 }
 
 .todo-list list-main {

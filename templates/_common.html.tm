@@ -41,9 +41,9 @@
         <gr-group>
           <p><a data-href-template=/g/{group_id}/>トップ</a>
           <p class=if-has-default-index><a data-href-template=/g/{group_id}/i/{member.default_index_id}/>自分の日記</a>
-          <form method=get data-action-template=/g/{group_id}/search class=search-form>
+          <form is=gr-search method=get action=search>
             <input type=search name=q required placeholder=グループ内検索>
-            <button type=submit>検索</button>
+            <button type=submit class=search-button>検索</button>
           </form>
         </gr-group>
       </details>
@@ -187,6 +187,68 @@
     </menu>
   </gr-popup-menu>
 </t:macro>
+
+<template-set name=page-search>
+  <template title=検索>
+    <section>
+      <header class=section>
+        <h1>検索</h1>
+        <a href=/help#search target=help>ヘルプ</a>
+        <popup-menu>
+          <button type=button title=メニュー>
+            <button-label>
+              メニュー
+            </button-label>
+          </button>
+          <menu-main>
+            <p><copy-button>
+              <a href>URLをコピー</a>
+            </copy-button>
+            <p><copy-button type=jump>
+              <a href>ジャンプリストに追加</a>
+            </copy-button>
+          </menu-main>
+        </popup-menu>
+      </header>
+
+      <form is=gr-search method=get action=search>
+        <input type=search name=q data-field=search.q>
+        <button type=submit class=search-button>検索</button>
+      </form>
+      
+      <list-container loader=groupLoader src=o/search.json src-search class=search-result key=objects>
+
+        <gr-search-wiki-name hidden>
+          <list-item>
+            <a href data-href-template=wiki/{name}>Wiki:
+              <cite data-field=name data-empty=■ />
+            </a>
+          </list-item>
+        </gr-search-wiki-name>
+
+        <template>
+          <a href data-href-template=o/{object_id}/>
+            <cite data-field=title data-empty=■></cite>
+            <time data-field=timestamp data-format=date></time>
+          </a>
+          <p class=object-summary>
+            <gr-search-snippet data-field=snippet></gr-search-snippet>
+            <span>更新: <time data-field=updated></time></span>
+        </template>
+        <list-main></list-main>
+        <list-is-empty hidden>
+          <p>一致する記事は見つかりませんでした。</p>
+        </list-is-empty>
+        <action-status hidden stage-loader=読み込み中...></action-status>
+        <p class=operations>
+          <button type=button class=list-next>もっと昔</button>
+        </p>
+      </list-container>
+
+    </section>
+
+  </template>
+</template-set>
   
 <template-set name=page-config>
   <template title=設定>

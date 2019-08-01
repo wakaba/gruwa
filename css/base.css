@@ -364,27 +364,6 @@ gr-editable-tr form:not([hidden]) {
   display: contents;
 }
 
-.config {
-  margin: 0;
-  width: 90%;
-}
-
-.config th {
-  width: 20%;
-  text-align: right;
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-}
-
-.config th:nth-child(2n) {
-  background-color: var(--light-2-background-color);
-  color: var(--light-2-color);
-}
-
-.config th, .config td {
-  padding: .4em .8em;
-}
-
 .operations {
   margin: 0;
   direction: rtl;
@@ -399,7 +378,8 @@ gr-editable-tr form:not([hidden]) {
   direction: ltr;
 }
 
-input:not([type]) {
+input:not([type]),
+input[type=search] {
   box-sizing: border-box;
   width: 100%;
   border: dotted 1px;
@@ -588,6 +568,58 @@ button:enabled {
   color: #eee;
 }
 
+.search-button {
+  -webkit-appearance: none;
+  border: dotted 1px;
+  border-color: var(--accented-border-color);
+  box-sizing: border-box;
+  padding: .3em;
+  color: var(--link-color);
+  background-color: var(--link-background-color);
+}
+
+.search-button:hover,
+.search-button:active,
+.search-button:focus {
+  color: var(--hover-color);
+  background-color: var(--hover-background-color);
+}
+
+.config {
+  margin: 0;
+  width: 90%;
+}
+
+.config th {
+  width: 20%;
+  text-align: right;
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+}
+
+.config th:nth-child(2n) {
+  background-color: var(--light-2-background-color);
+  color: var(--light-2-color);
+}
+
+.config th, .config td {
+  padding: .4em .8em;
+}
+
+form[is=gr-search]:not([hidden]) {
+  display: flex;
+  border-style: none;
+}
+
+form[is=gr-search] input {
+  flex-grow: 1;
+  width: auto;
+}
+
+form[is=gr-search] button {
+  margin-left: 1px;
+}
+
 a:link {
   color: var(--link-color);
   background-color: var(--link-background-color);
@@ -648,6 +680,7 @@ list-container > action-status:not([hidden]),
 gr-list-container > gr-action-status:not([hidden]) {
   display: block;
   margin: 2em auto;
+  padding: 1em;
   max-width: 30em;
 }
 
@@ -772,7 +805,7 @@ gr-popup-menu > button:not([hidden]) {
   font-size: 100%;
 }
 
-gr-menu > popup-menu > button {
+popup-menu > button {
   -webkit-appearance: none;
   border: none;
   padding: .5em;
@@ -783,23 +816,23 @@ gr-menu > popup-menu > button {
   background-color: var(--link-background-color);
 }
 
-gr-menu > popup-menu[open] > button {
+popup-menu[open] > button {
   background-color: var(--light-1-background-color);
   color: var(--light-1-color);
 }
 
-gr-menu > popup-menu > button:hover,
-gr-menu > popup-menu > button:focus,
-gr-menu > popup-menu > button:active {
+popup-menu > button:hover,
+popup-menu > button:focus,
+popup-menu > button:active {
   color: var(--hover-color);
   background-color: var(--hover-background-color);
 }
 
-gr-menu > popup-menu > button::after {
+popup-menu > button::after {
   content: "\0025BC";
 }
 
-gr-menu > popup-menu > button > button-label {
+popup-menu > button > button-label {
   position: absolute;
   visibility: hidden;
   overflow: hidden;

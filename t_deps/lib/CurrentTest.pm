@@ -559,7 +559,7 @@ sub create_browser ($$$) {
     return $self->b_set_account ($name, $opts->{account})
         if defined $opts->{account};
   })->then (sub {
-    return $self->b_go ($name, $opts->{url}, fragment => $opts->{fragment})
+    return $self->b_go ($name, $opts->{url}, params => $opts->{params}, fragment => $opts->{fragment})
         if defined $opts->{url};
   });
 } # create_browser
@@ -575,7 +575,11 @@ sub b_go ($$$;%) {
     $url = join '/', map { percent_encode_c $_ } '', @$url;
   }
   $url .= '#' . $args{fragment} if defined $args{fragment};
-  return $self->b ($name)->go ($self->resolve ($url));
+  $url = $self->resolve ($url);
+  if (defined $args{params}) {
+    $url->set_query_params ($args{params});
+  }
+  return $self->b ($name)->go ($url);
 } # b_go
 
 sub b_set_account ($$$) {
