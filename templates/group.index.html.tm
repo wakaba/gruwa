@@ -2,65 +2,16 @@
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-theme="$group->{data}->{theme}">
 <head>
-  <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
-    トップ
-  </t:include>
+  <t:include path=_group_head.html.tm m:group=$group m:app=$app />
 
 <body>
-  <!-- XXX -->
+  <header class=page>
+    <h1><a href=./ data-href-field=url data-field=title><t:text value="$group->{data}->{title}"></a></h1>
+    <gr-menu type=group />
+  </header>
+  <page-main/>
   <t:include path=_common.html.tm m:app=$app />
-  
-  <section class=page>
-    <header>
-      <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
-      <m:group-menu m:group=$group />
-    </header>
-
-    <section>
-      <h1>最近の更新</>
-
-      <gr-list-container src=i/list.json?index_type=1&index_type=2&index_type=3 key=index_list sortkey=updated class=index-list>
-        <template>
-          <p>
-            <a href data-href-template="i/{index_id}/#{updated}">
-              <time data-field=updated />
-              <strong data-field=title></strong>
-            </a>
-            <gr-list-container
-                data-src-template="o/get.json?index_id={index_id}&limit=5"
-                data-parent-template=i/{index_id}/
-                data-context-template={index_type}
-                key=objects sortkey=timestamp,created>
-              <template>
-                <a href data-href-template="o/{object_id}/"
-                    data-2-href-template={PARENT}wiki/{title}#{updated}>
-                  <strong data-field=title data-empty=■ />
-                  (<time data-field=updated data-format=ambtime />)
-                </a>
-              </template>
-              <list-main/>
-            </gr-list-container>
-        </template>
-        <list-main/>
-        <gr-action-status hidden stage-load=読み込み中... />
-      </gr-list-container>
-    </section>
-
-    <gr-list-container listitemtype=object key=objects
-        pl:src-index_id="$group->{data}->{default_wiki_index_id}"
-        src-wiki_name=GroupTop>
-      <template class=object>
-        <main><iframe data-data-field=body /></main>
-      </template>
-
-      <list-main></list-main>
-
-      <gr-action-status hidden stage-load=読み込み中... />
-    </gr-list-container>
-  </section>
-
-  <!-- Necessary for checkboxes -->
-  <t:include path=_object_editor.html.tm />
+  <gr-navigate/>
 
 <!--
 
