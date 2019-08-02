@@ -174,6 +174,18 @@ GR.index.info = function (indexId) {
   return gFetch ('i/'+indexId+'/info.json', {});
 }; // GR.group.info
 
+GR.wiki = {};
+
+GR.wiki.url = function (indexId, wikiName) {
+  var group = GR._state.group;
+  if (!group) throw new DOMException ('Group info not found', 'InvalidStateError');
+  if (indexId === group.default_wiki_index_id) {
+    return '/g/'+group.group_id+'/wiki/'+encodeURIComponent (wikiName);
+  } else {
+    return '/g/'+group.group_id+'/i/'+indexId+'/wiki/'+encodeURIComponent (wikiName);
+  }
+}; // GR.wiki.url
+
 defineElement ({
   name: 'gr-account',
   fill: 'contentattribute',
@@ -237,7 +249,7 @@ defineElement ({
         } else if (type === 'wiki') {
           var indexId = this.getAttribute ('indexid');
           var wikiName = this.getAttribute ('wikiname');
-          obj.wiki = {name: wikiName};
+          obj.wiki = {name: wikiName, url: GR.wiki.url (indexId, wikiName)};
           return Promise.all ([
             ts,
             $getTemplateSet ('gr-menu-wiki'),
@@ -2934,7 +2946,7 @@ GR.navigate.go = function (u, args) {
             try {
               n = decodeURIComponent (m[2]);
             } catch (e) { }
-            return ['group', 'index-index', {
+            return ['group', 'wiki', {
               indexId: m[1],
               wikiName: n,
             }];
@@ -2946,7 +2958,7 @@ GR.navigate.go = function (u, args) {
             try {
               n = decodeURIComponent (m[1]);
             } catch (e) { }
-            return ['group', 'index-index', {
+            return ['group', 'wiki', {
               wikiName: n,
             }];
           }
@@ -3003,18 +3015,44 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
   return $getTemplateSet ('page-' + pageName).then (ts => {
     var params = {};
     var wait = [];
-    wait.push (GR.group.info ().then (_ => params.group = _));
-    if (pageArgs.indexId) {
-      wait.push (GR.index.info (pageArgs.indexId).then (_ => params.index = _));
-    }
+    var setGI = GR.group.info ().then (_ => params.group = _);
+    wait.push (setGI);
     if (pageName === 'search') {
       params.search = {q: pageArgs.q || ''};
+    }
+    if (pageName === 'wiki') {
+      params.wiki = {name: pageArgs.wikiName};
+    }
+    if (pageArgs.indexId) {
+      wait.push (GR.index.info (pageArgs.indexId).then (_ => params.index = _));
+    } else if (params.wiki) {
+      wait.push (setGI.then (() => {
+        if (!params.group.default_wiki_index_id) {
+          throw new DOMException ('The group has no default wiki', 'InvalidStateError');
+        }
+        return GR.index.info (params.group.default_wiki_index_id).then (_ => params.index = _);
+      }));
     }
     // XXX abort wait by opts.signal[12]
     return Promise.all (wait).then (_ => {
       if (opts.signal1.aborted || opts.signal2.aborted) {
         throw new DOMException ('Navigation request aborted', 'AbortError');
       }
+
+      if (params.wiki) {
+        params.wiki.url = GR.wiki.url (params.index.index_id, params.wiki.name);
+        if (opts.url) {
+          var url = new URL (params.wiki.url, location.href);
+          url.search = opts.url.search;
+          url.fragment = opts.url.fragment;
+          if (opts.reload && !opts.popstate && opts.url.href !== url.href) {
+            opts.url = url;
+            delete opts.reload;
+            opts.replace = true;
+          }
+        }
+      }
+
       if (opts.url) {
         if (opts.reload) {
           //
@@ -3036,6 +3074,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         params.url += 'i/' + params.index.index_id + '/';
         params.title = params.index.title;
       }
+      
       document.querySelectorAll ('body > header.page').forEach (_ => {
         $fill (_, params);
 
@@ -3092,12 +3131,22 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           }
         }
 
+        if (params.wiki) {
+          div.querySelectorAll ('gr-menu[type=wiki]').forEach (_ => {
+            _.setAttribute ('indexid', params.index.index_id);
+            _.setAttribute ('wikiname', params.wiki.name);
+          });
+        }
+
         _.textContent = '';
         while (div.firstChild) _.appendChild (div.firstChild);
       });
       var title = [params.group.title];
       if (params.index) {
         title.unshift (params.index.title);
+      }
+      if (params.wiki) {
+        title.unshift (params.wiki.name);
       }
       if (contentTitle !== '') title.unshift (contentTitle);
       if (params.search) {
@@ -3182,7 +3231,10 @@ defineElement ({
   props: {
     pcInit: function () {
       if (!GR.navigate.enabled) GR.navigate._init ();
-      GR.navigate.go (location.href, {reload: true});
+      GR.navigate.go (location.href, {
+        reload: true,
+        popstate: this.hasAttribute ('popstate'),
+      });
       this.remove ();
     }, // pcInit
   },
@@ -3190,6 +3242,7 @@ defineElement ({
 
 addEventListener ('popstate', ev => {
   var nav = document.createElement ('gr-navigate');
+  nav.setAttribute ('popstate', '');
   document.body.appendChild (nav);
 });
 

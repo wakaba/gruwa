@@ -43,6 +43,12 @@ Test {
       return {
         title: document.title,
         url: location.pathname,
+        headerTitle: document.querySelector ('header.page h1').textContent,
+        headerURL: document.querySelector ('header.page a').pathname,
+        headerLink: document.querySelector ('header.page gr-menu a').pathname,
+        sectionTitle: document.querySelector ('header.section h1').textContent,
+        sectionURL: document.querySelector ('header.section a').pathname,
+        sectionLink: document.querySelector ('header.section gr-menu a').pathname,
       };
     });
   })->then (sub {
@@ -51,10 +57,16 @@ Test {
     test {
       use utf8;
       is $values->{title}, $current->o ('t3') . ' - ' . $current->o ('t2') . ' - ' . $current->o ('t1');
-      is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/wiki/' . percent_encode_c $current->o ('t3');
+      is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/wiki/' . percent_encode_c $current->o ('t3');
+      is $values->{headerTitle}, $current->o ('t2');
+      is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
+      is $values->{headerLink}, $values->{headerURL};
+      is $values->{sectionTitle}, $current->o ('t3');
+      is $values->{sectionURL}, $values->{url};
+      is $values->{sectionLink}, $values->{url};
     } $current->c;
   });
-} n => 2, name => ['initial load (wiki name)'], browser => 1;
+} n => 8, name => ['initial load (wiki name)'], browser => 1;
 
 Test {
   my $current = shift;

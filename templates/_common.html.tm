@@ -110,10 +110,12 @@
 
 <template-set name=gr-menu-wiki>
   <template>
-    <p><a href>Wikiページ</a>
-    <p><copy-button><a href>URLをコピー</a></copy-button>
+    <p><a data-href-field=wiki.url>Wikiページ</a>
+    <p><copy-button>
+      <a data-href-field=wiki.url>URLをコピー</a>
+    </copy-button>
     <p><copy-button type=jump>
-      <a href data-title-field=wiki.name>ジャンプリストに追加</a>
+      <a data-href-field=wiki.url data-title-field=wiki.name>ジャンプリストに追加</a>
     </copy-button>
     <p><a href=/help#wiki target=help>ヘルプ</a>
   </template>
@@ -661,7 +663,7 @@
         <p class=operations>
           <input type=hidden name=is_default value=1>
           <button type=submit class=save-button>設定する</>
-          <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
+          <action-status hidden stage-saver=保存中... ok=保存しました。 />
       </form>
 
       <p data-gr-if-default-wiki>この Wiki は<a href=/help#default-wiki-index rel=help>グループの Wiki</a> です。</p>
@@ -670,7 +672,7 @@
         <p class=operations>
           <input type=hidden name=default_wiki_index_id data-field=index.index_id>
           <button type=submit class=save-button>設定する</>
-          <gr-action-status hidden stage-fetch=保存中... ok=保存しました。 />
+          <action-status hidden stage-saver=保存中... ok=保存しました。 />
       </form>
 
       <p data-gr-if-index-type=3>ラベルやマイルストーンは、<a href=../../config>グループ設定</a>から作成できます。
