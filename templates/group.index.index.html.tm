@@ -3,7 +3,8 @@
     pl:data-index="defined $index ? $index->{index_id} : undef"
     pl:data-theme="(defined $index && defined $index->{options}->{theme})
                        ? $index->{options}->{theme}
-                       : $group->{data}->{theme}">
+                       : $group->{data}->{theme}"
+    data-navigating>
 <head>
   <t:include path=_group_head.html.tm m:group=$group m:account=$account m:app=$app>
     <t:if x="defined $object">
@@ -24,10 +25,18 @@
 
 <body>
   <!-- XXX beforeunload -->
+  <header class=page>
+    <h1><a href=./ data-href-field=url data-field=title><t:text value="$group->{data}->{title}"></a></h1>
+    <gr-menu type=group />
+  </header>
+  <page-main/>
 
   <!-- XXX -->
   <t:include path=_common.html.tm m:app=$app />
 
+<template-set name=page-index-index>
+  <template>
+  
   <section class=page>
     <header>
       <t:if x="defined $wiki_name">
@@ -491,6 +500,8 @@
       </footer>
     </t:if>
   </section>
+  </template>
+</template-set>
 
   <template class=body-template id=object-ref-template>
     <a href pl:data-href-template="'/g/'.$group->{group_id}.'/o/{object_id}/'">
@@ -511,6 +522,8 @@
   </template>
 
   <t:include path=_object_editor.html.tm />
+
+  <gr-navigate/>
 
 <!--
 

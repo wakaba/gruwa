@@ -2913,10 +2913,43 @@ GR.navigate.go = function (u, args) {
             q: url.searchParams.get ('q'),
           }];
 
+          m = path.match (/^o\/([0-9]+)\/$/);
+          if (m) return ['group', 'index-index', {
+            objectId: m[1],
+          }];
+
+          m = path.match (/^i\/([0-9]+)\/$/);
+          if (m) return ['group', 'index-index', {
+            indexId: m[1],
+          }];
+
           m = path.match (/^i\/([0-9]+)\/(config)$/);
           if (m) return ['group', 'index-' + m[2], {
             indexId: m[1],
           }];
+
+          m = path.match (/^i\/([0-9]+)\/wiki\/([^\/]+)$/);
+          if (m) {
+            var n;
+            try {
+              n = decodeURIComponent (m[2]);
+            } catch (e) { }
+            return ['group', 'index-index', {
+              indexId: m[1],
+              wikiName: n,
+            }];
+          }
+
+          m = path.match (/^wiki\/([^\/]+)$/);
+          if (m) {
+            var n;
+            try {
+              n = decodeURIComponent (m[1]);
+            } catch (e) { }
+            return ['group', 'index-index', {
+              wikiName: n,
+            }];
+          }
 
           return ['site', url];
         } else {
@@ -2948,11 +2981,16 @@ GR.navigate.go = function (u, args) {
       status.grStop ();
       location.hash = _[1].hash;
     } else { // external or site
-      status.grStop ();
-      if (args.reload) {
-        location.replace (_[1]);
+      if (location.href === _[1].href) {
+        var e = new Error ('Failed to navigate to URL <'+_[1]+'>');
+        status.grThrow (e);
       } else {
-        location.href = _[1];
+        status.grStop ();
+        if (args.reload) {
+          location.replace (_[1]);
+        } else {
+          location.href = _[1];
+        }
       }
     }
   });
