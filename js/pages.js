@@ -734,7 +734,8 @@ function fillFields (contextEl, rootEl, el, object, opts) {
           var item = document.createElement ('index-list-item');
           item.appendChild (template.content.cloneNode (true));
           fillFields (item, item, item, object, {});
-          item.classList.toggle ('this-index', object.index_id == document.documentElement.getAttribute ('data-index'));
+          //XXX
+          //item.classList.toggle ('this-index', object.index_id == document.documentElement.getAttribute ('data-index'));
           field.appendChild (item);
         });
       });

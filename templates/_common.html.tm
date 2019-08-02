@@ -679,6 +679,783 @@
     </section>
   </template>
 </template-set>
+
+<template-set name=page-index-index templateselector=selectIndexIndexTemplate>
+  <template><!-- default / wiki -->
+
+    <gr-list-container key=objects sortkey=updated src-limit=100>
+        <template>
+          <p><a data-href-template={GROUP}/i/{INDEX_ID}/wiki/{title}#{object_id}>
+            <strong data-data-field=title data-empty=■ />
+            <time data-field=created data-format=ambtime />
+            (<time data-field=updated data-format=ambtime /> 編集)
+          </a></p>
+        </template>
+
+          <article class="object new" data-gr-if-index-type=2><!-- wiki -->
+            <p class=operations>
+              <button type=button class=edit-button>新しい記事を書く</button>
+          </article>
+        <template id=index-list-item-template data-name>
+          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
+        </template>
+        <template id=account-list-item-template data-name>
+          <account-name data-field=account_id />
+        </template>
+
+        <list-main></list-main>
+
+      <gr-action-status hidden stage-load=読み込み中... />
+        <p class="operations pager">
+          <button type=button class=next-page-button hidden>もっと昔</button>
+      <run-action name=installPrependNewObjects />
+    </gr-list-container>
+  </template><!-- default -->
+  <template data-name=blog>
+  
+    <gr-list-container key=objects grouped=1 listitemtype=object>
+        <template class=object>
+          <header>
+            <div class=edit-by-dblclick>
+              <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
+            </div>
+            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+            <gr-popup-menu>
+              <button type=button>⋁</button>
+              <menu hidden>
+                <li><a data-href-template={GROUP}/o/{object_id}/>記事</a>
+                <li><copy-button>
+                  <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                </>
+                <li><copy-button type=jump>
+                  <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                </>
+                <li><button type=button class=edit-button>編集</button>
+              </menu>
+            </gr-popup-menu>
+          </header>
+          <main><iframe data-data-field=body /></main>
+          <footer>
+            <p>
+              <gr-action-status hidden
+                  stage-edit=保存中...
+                  ok=保存しました />
+              <span data-if-data-non-empty-field=assigned_account_ids>
+                担当者:
+                <account-list data-data-field=assigned_account_ids />
+              </span>
+              <index-list data-data-field=index_ids />
+              <time data-field=created data-format=ambtime />
+              (<time data-field=updated data-format=ambtime /> 編集)
+          </footer>
+
+          <article-comments>
+
+            <gr-list-container class=comment-list
+                data-src-template=o/get.json?parent_object_id={object_id}&limit=5&with_data=1
+                key=objects sortkey=timestamp,created prepend
+                template-selector=object>
+              <template>
+                <article itemscope itemtype=http://schema.org/Comment>
+                  <header>
+                    <if-defined data-if-data-field=author_name hidden>
+                      <user-name>
+                        <span data-data-field=author_name />
+                        <if-defined data-if-data-field=author_hatena_id hidden>
+                          <hatena-user>
+                            <img data-src-template=https://cdn.www.st-hatena.com/users/{data.author_hatena_id:2}/{data.author_hatena_id}/profile.gif referrerpolicy=no-referrer alt>
+                            <span data-data-field=author_hatena_id />
+                          </hatena-user>
+                        </if-defined>
+                      </user-name>
+                    </if-defined>
+
+                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
+                      <time data-field=timestamp data-format=ambtime />
+                      (<time data-field=updated data-format=ambtime />)
+                    </a>
+                  </header>
+                  <main><iframe data-data-field=body /></main>
+                </article>
+              </template>
+              <template data-name=close class=change-action>
+                <p><!-- XXX が -->閉じました。
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=reopen class=change-action>
+                <p><!-- XXX が -->開き直しました。
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=changed class=change-action>
+                <p><!-- XXX が -->
+                変更しました。
+                <!--
+                <index-list data-field=data.body_data.new.index_ids />
+                を追加しました。
+
+                <index-list data-field=data.body_data.old.index_ids />
+                を削除しました。
+
+                <index-list data-field=data.body_data.new.assigned_account_ids />
+                に割り当てました。
+
+                <index-list data-field=data.body_data.old.assigned_account_ids />
+                への割当を削除しました。
+                -->
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=trackback class=trackback>
+                <time data-field=created data-format=ambtime />にこの記事が参照されました。
+                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
+              </template>
+              <p class="operations pager">
+                <button type=button class=next-page-button hidden>もっと昔</button>
+              </p>
+              <gr-action-status hidden stage-load=読み込み中... />
+              <list-main/>
+            </gr-list-container>
+
+          <details class=actions>
+            <summary>コメントを書く</summary>
+
+            <form action=javascript: data-action=o/create.json
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent"
+                data-child-form>
+              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
+              <textarea data-edit-created-object data-name=body required></textarea>
+              <p class=operations>
+                <button type=submit class=save-button>投稿する</>
+
+                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
+                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
+                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
+
+                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
+                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
+                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
+
+                <gr-action-status hidden
+                    stage-fetch=作成中...
+                    stage-editcreatedobject_fetch=保存中...
+                    stage-editobject_fetch=状態を変更中...
+                    stage-showcreatedobjectincommentlist=読み込み中...
+                    ok=投稿しました />
+            </form>
+          </details>
+
+          </article-comments>
+        </template>
+
+          <article class="object new">
+            <p class=operations>
+              <button type=button class=edit-button>新しい記事を書く</button>
+          </article>
+
+        <template id=index-list-item-template data-name>
+          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
+        </template>
+        <template id=account-list-item-template data-name>
+          <account-name data-field=account_id />
+        </template>
+
+        <list-main></list-main>
+
+      <gr-action-status hidden stage-load=読み込み中... />
+        <p class="operations pager">
+          <button type=button class=next-page-button hidden>もっと昔</button>
+      <run-action name=installPrependNewObjects />
+    </gr-list-container>
+  </template><!-- blog -->
+  <template data-name=todos>
+    <section>
+      <header class=section data-gr-if-index-type="4 5"><!-- label milestone -->
+        <h1><a data-href-template=/g/{group.group_id}/i/{index.index_id}/ data-field=index.title data-empty=■ /></h1>
+        <gr-menu type=index />
+      </header>
+      
+      <gr-list-container key=objects sortkey=updated src-limit=100 query class=todo-list>
+        <template>
+          <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+          <p class=main-line>
+            <a data-href-template={GROUP}/o/{object_id}/>
+              <span data-data-field=title data-empty=■ />
+            </a>
+          <p class=info-line>
+            <checkbox-count data-if-data-field=all_checkbox_count>
+              <span>
+                <count-value data-data-field=checked_checkbox_count data-empty=0 /> /
+                <count-value data-data-field=all_checkbox_count />
+              </span>
+              <progress data-data-field=checked_checkbox_count data-max-data-field=all_checkbox_count />
+            </checkbox-count>
+            <time data-field=created data-format=ambtime />
+            (<time data-field=updated data-format=ambtime /> 編集)
+            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=マイルストーン />
+            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "4"}]' title=ラベル />
+            <account-list data-data-field=assigned_account_ids title=担当者 />
+        </template>
+
+          <article class="object new" data-gr-if-index-type=3><!-- todos -->
+            <p class=operations>
+              <button type=button class=edit-button data-focus-title>新しい TODO</button>
+          </article>
+
+        <menu>
+          <list-query>
+            <label><input type=radio name=todo value=open> 未完了</label>
+            <label><input type=radio name=todo value=closed> 完了済</label>
+            <label><input type=radio name=todo value=all> すべて</label>
+
+            <list-control name=index_id key=index_ids list=index-list>
+              <template data-name=view>
+                <list-item-label data-data-field=title data-color-data-field=color />
+              </template>
+              <template data-name=edit>
+                <label data-color-data-field=color>
+                  <input type=checkbox data-data-field=index_id data-checked-field=selected>
+                  <span data-data-field=title></span>
+                </label>
+              </template>
+              <template data-name=edit-milestone>
+                <label data-color-data-field=color>
+                  <input type=radio name=MILESTONE data-data-field=index_id data-checked-field=selected>
+                  <span data-data-field=title></span>
+                </label>
+              </template>
+              <template data-name=edit-milestone-clear>
+                <label>
+                  <input type=radio name=MILESTONE value checked>
+                  (制約なし)
+                </label>
+              </template>
+
+              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' data-empty=(マイルストーン制約なし) />
+              <gr-popup-menu>
+                <button type=button title=選択>...</button>
+                <menu hidden>
+                  <form action=javascript:>
+                    <list-control-list editable template=edit-milestone clear-template=edit-milestone-clear filters='[{"key": ["data", "index_type"], "value": "5"}]' />
+                  </form>
+                </menu>
+              </gr-popup-menu>
+
+              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "4"}]' data-empty=(ラベル制約なし) />
+              <gr-popup-menu>
+                <button type=button title=選択>...</button>
+                <menu hidden>
+                  <list-control-list editable template=edit filters='[{"key": ["data", "index_type"], "value": "4"}]' />
+                </menu>
+              </gr-popup-menu>
+            </list-control>
+
+            <list-control name=assigned_account_id key=assigned_account_ids list=member-list>
+              <template data-name=view>
+                <list-item-label data-data-account-field=name />
+              </template>
+              <template data-name=edit>
+                <label>
+                  <input type=radio name=ONE data-data-field=account_id data-checked-field=selected>
+                  <span data-data-account-field=name></span>
+                </label>
+              </template>
+              <template data-name=edit-clear>
+                <label>
+                  <input type=radio name=ONE value checked>
+                  (制約なし)
+                </label>
+              </template>
+
+              <list-control-list template=view data-empty=(担当者制約なし) />
+              <gr-popup-menu>
+                <button type=button title=変更>...</button>
+                <menu hidden>
+                  <form action=javascript:>
+                    <list-control-list editable template=edit clear-template=edit-clear />
+                  </form>
+                </menu>
+              </gr-popup-menu>
+            </list-control>
+          </list-query>
+
+          <button type=button class=reload-button hidden>再読込</button>
+        </menu>
+
+        <template id=index-list-item-template data-name>
+          <a data-href-template=./?index={index_id} data-field=title data-color-field=color class=label-index></a>
+        </template>
+        <template id=account-list-item-template data-name>
+          <a data-href-template=./?assigned={account_id}><account-name data-field=account_id /></a>
+        </template>
+
+        <list-main/>
+
+      <gr-action-status hidden stage-load=読み込み中... />
+        <p class="operations pager">
+          <button type=button class=next-page-button hidden>もっと昔</button>
+      <run-action name=installPrependNewObjects />
+      </gr-list-container>
+    </section>
+  </template><!-- todos -->
+  <template data-name=fileset>
+    <section>
+      <header class=section>
+        <h1><a data-href-template=/g/{group.group_id}/i/{index.index_id}/ data-field=index.title data-empty=■ /></h1>
+        <gr-menu type=index />
+      </header>
+
+      <gr-list-container key=objects sortkey=created src-limit=100>
+          <template data-gr-if-index-subtype=image>
+            <gr-popup-menu>
+              <button type=button>⋁</button>
+                <menu hidden>
+                  <li><copy-button>
+                    <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
+                  </>
+              </menu>
+            </gr-popup-menu>
+            <figure>
+              <a data-href-template={GROUP}/o/{object_id}/image data-title-data-field=title>
+                <img src data-src-template={GROUP}/o/{object_id}/image>
+              </a>
+              <figcaption>
+                <code data-data-field=file_name></code>
+                <unit-number data-data-field=file_size type=bytes />
+                <code data-data-field=mime_type />
+                <a data-href-template={GROUP}/o/{object_id}/>
+                  <time data-field=timestamp data-format=ambtime />
+                </a>
+              </figcaption>
+            </figure>
+          </template>
+          <template data-gr-if-index-subtype=file>
+            <gr-popup-menu>
+              <button type=button>⋁</button>
+                <menu hidden>
+                  <li><copy-button>
+                    <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
+                  </>
+              </menu>
+            </gr-popup-menu>
+            <p class=main-line>
+              <a data-href-template={GROUP}/o/{object_id}/file download>
+                <span data-data-field=title data-empty=■ />
+                <code data-data-field=file_name></code>
+              </a>
+            <p class=info-line>
+              <unit-number data-data-field=file_size type=bytes />
+              <code data-data-field=mime_type />
+              <a data-href-template={GROUP}/o/{object_id}/>
+                <time data-field=timestamp data-format=ambtime />
+              </a>
+          </template>
+
+          <form action=javascript: method=post data-form-type=uploader>
+            <gr-list-container type=table>
+              <template>
+                <td class=file-name><code data-data-field=file_name />
+                <td class=file-size><unit-number data-data-field=file_size type=bytes />
+                <td class=progress><gr-action-status hidden
+                        stage-create=作成中...
+                        stage-upload=アップロード中...
+                        stage-close=保存中...
+                        stage-show=読み込み中...
+                        ok=アップロード完了 />
+              </template>
+              <table>
+                <thead>
+                  <tr>
+                    <th class=file-name>ファイル名
+                    <th class=file-size>サイズ
+                    <th class=progress>進捗
+                <tbody>
+              </table>
+            </gr-list-container>
+            <p class=operations>
+                <input type=file name=file multiple hidden accept=image/* data-gr-if-index-subtype=image>
+                <button type=button name=upload-button class=edit-button data-gr-if-index-subtype=image>画像をアップロード...</button>
+                <input type=file name=file multiple hidden data-gr-if-index-subtype=file>
+                <button type=button name=upload-button class=edit-button data-gr-if-index-subtype=file>ファイルをアップロード...</button>
+          </form>
+
+        <template id=index-list-item-template data-name>
+          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
+        </template>
+        <template id=account-list-item-template data-name>
+          <account-name data-field=account_id />
+        </template>
+
+        <list-main></list-main>
+
+      <gr-action-status hidden stage-load=読み込み中... />
+        <p class="operations pager">
+          <button type=button class=next-page-button hidden>もっと昔</button>
+      <run-action name=installPrependNewObjects />
+    </gr-list-container>
+  </template><!-- fileset -->
+</template-set>
+
+<template-set name=page-object-index>
+  <template>
+    <section>
+      <header class=section>
+        <h1><time data-field=object.timestamp data-format=date /></h1>
+      </header>
+    
+      <gr-list-container key=objects listitemtype=object>
+        <template class=object>
+          <header>
+            <div class=edit-by-dblclick>
+              <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
+            </div>
+            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+            <gr-popup-menu>
+              <button type=button>⋁</button>
+              <menu hidden>
+                <li><a data-href-template={GROUP}/o/{object_id}/>記事</a>
+                <li><copy-button>
+                  <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                </>
+                <li><copy-button type=jump>
+                  <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                </>
+                <li><button type=button class=edit-button>編集</button>
+              </menu>
+            </gr-popup-menu>
+          </header>
+          <main><iframe data-data-field=body /></main>
+          <footer>
+            <p>
+              <gr-action-status hidden
+                  stage-edit=保存中...
+                  ok=保存しました />
+              <span data-if-data-non-empty-field=assigned_account_ids>
+                担当者:
+                <account-list data-data-field=assigned_account_ids />
+              </span>
+              <index-list data-data-field=index_ids />
+              <time data-field=created data-format=ambtime />
+              (<time data-field=updated data-format=ambtime /> 編集)
+          </footer>
+
+          <article-comments>
+
+            <gr-list-container class=comment-list
+                data-src-template=o/get.json?parent_object_id={object_id}&limit=30&with_data=1
+                key=objects sortkey=timestamp,created prepend
+                template-selector=object>
+              <template>
+                <article itemscope itemtype=http://schema.org/Comment>
+                  <header>
+                    <if-defined data-if-data-field=author_name hidden>
+                      <user-name>
+                        <span data-data-field=author_name />
+                        <if-defined data-if-data-field=author_hatena_id hidden>
+                          <hatena-user>
+                            <img data-src-template=https://cdn.www.st-hatena.com/users/{data.author_hatena_id:2}/{data.author_hatena_id}/profile.gif referrerpolicy=no-referrer alt>
+                            <span data-data-field=author_hatena_id />
+                          </hatena-user>
+                        </if-defined>
+                      </user-name>
+                    </if-defined>
+
+                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
+                      <time data-field=timestamp data-format=ambtime />
+                      (<time data-field=updated data-format=ambtime />)
+                    </a>
+                  </header>
+                  <main><iframe data-data-field=body /></main>
+                </article>
+              </template>
+              <template data-name=close class=change-action>
+                <p><!-- XXX が -->閉じました。
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=reopen class=change-action>
+                <p><!-- XXX が -->開き直しました。
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=changed class=change-action>
+                <p><!-- XXX が -->
+                変更しました。
+                <!--
+                <index-list data-field=data.body_data.new.index_ids />
+                を追加しました。
+
+                <index-list data-field=data.body_data.old.index_ids />
+                を削除しました。
+
+                <index-list data-field=data.body_data.new.assigned_account_ids />
+                に割り当てました。
+
+                <index-list data-field=data.body_data.old.assigned_account_ids />
+                への割当を削除しました。
+                -->
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=trackback class=trackback>
+                <time data-field=created data-format=ambtime />にこの記事が参照されました。
+                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
+              </template>
+              <p class="operations pager">
+                <button type=button class=next-page-button hidden>もっと昔</button>
+              </p>
+              <gr-action-status hidden stage-load=読み込み中... />
+              <list-main/>
+            </gr-list-container>
+
+          <details class=actions>
+            <summary>コメントを書く</summary>
+
+            <form action=javascript: data-action=o/create.json
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent"
+                data-child-form>
+              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
+              <textarea data-edit-created-object data-name=body required></textarea>
+              <p class=operations>
+                <button type=submit class=save-button>投稿する</>
+
+                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
+                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
+                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
+
+                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
+                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
+                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
+
+                <gr-action-status hidden
+                    stage-fetch=作成中...
+                    stage-editcreatedobject_fetch=保存中...
+                    stage-editobject_fetch=状態を変更中...
+                    stage-showcreatedobjectincommentlist=読み込み中...
+                    ok=投稿しました />
+            </form>
+          </details>
+
+          </article-comments>
+        </template>
+
+        <template id=index-list-item-template data-name>
+          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
+        </template>
+        <template id=account-list-item-template data-name>
+          <account-name data-field=account_id />
+        </template>
+
+        <list-main></list-main>
+        <gr-action-status hidden stage-load=読み込み中... />
+      </gr-list-container>
+    </section>
+  </template>
+</template-set>
+
+<template-set name=page-wiki>
+  <template>
+    <section>
+      <header class=section>
+        <h1><a data-href-field=wiki.url data-field=wiki.name data-empty=■ /></h1>
+        <gr-menu type=wiki />
+      </header>
+
+      <gr-list-container key=objects sortkey=created listitemtype=object>
+        <template class=object>
+          <header>
+            <div class=edit-by-dblclick>
+              <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
+            </div>
+            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+            <gr-popup-menu>
+              <button type=button>⋁</button>
+              <menu hidden>
+                <li><a data-href-template={GROUP}/o/{object_id}/>記事</a>
+                <li><copy-button>
+                  <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                </>
+                <li><copy-button type=jump>
+                  <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                </>
+                <li><button type=button class=edit-button>編集</button>
+              </menu>
+            </gr-popup-menu>
+          </header>
+          <main><iframe data-data-field=body /></main>
+          <footer>
+            <p>
+              <gr-action-status hidden
+                  stage-edit=保存中...
+                  ok=保存しました />
+              <span data-if-data-non-empty-field=assigned_account_ids>
+                担当者:
+                <account-list data-data-field=assigned_account_ids />
+              </span>
+              <index-list data-data-field=index_ids />
+              <time data-field=created data-format=ambtime />
+              (<time data-field=updated data-format=ambtime /> 編集)
+          </footer>
+
+          <article-comments>
+
+            <gr-list-container class=comment-list
+                data-src-template=o/get.json?parent_object_id={object_id}&limit=30&with_data=1
+                key=objects sortkey=timestamp,created prepend
+                template-selector=object>
+              <template>
+                <article itemscope itemtype=http://schema.org/Comment>
+                  <header>
+                    <if-defined data-if-data-field=author_name hidden>
+                      <user-name>
+                        <span data-data-field=author_name />
+                        <if-defined data-if-data-field=author_hatena_id hidden>
+                          <hatena-user>
+                            <img data-src-template=https://cdn.www.st-hatena.com/users/{data.author_hatena_id:2}/{data.author_hatena_id}/profile.gif referrerpolicy=no-referrer alt>
+                            <span data-data-field=author_hatena_id />
+                          </hatena-user>
+                        </if-defined>
+                      </user-name>
+                    </if-defined>
+
+                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
+                      <time data-field=timestamp data-format=ambtime />
+                      (<time data-field=updated data-format=ambtime />)
+                    </a>
+                  </header>
+                  <main><iframe data-data-field=body /></main>
+                </article>
+              </template>
+              <template data-name=close class=change-action>
+                <p><!-- XXX が -->閉じました。
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=reopen class=change-action>
+                <p><!-- XXX が -->開き直しました。
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=changed class=change-action>
+                <p><!-- XXX が -->
+                変更しました。
+                <!--
+                <index-list data-field=data.body_data.new.index_ids />
+                を追加しました。
+
+                <index-list data-field=data.body_data.old.index_ids />
+                を削除しました。
+
+                <index-list data-field=data.body_data.new.assigned_account_ids />
+                に割り当てました。
+
+                <index-list data-field=data.body_data.old.assigned_account_ids />
+                への割当を削除しました。
+                -->
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=trackback class=trackback>
+                <time data-field=created data-format=ambtime />にこの記事が参照されました。
+                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
+              </template>
+              <p class="operations pager">
+                <button type=button class=next-page-button hidden>もっと昔</button>
+              </p>
+              <gr-action-status hidden stage-load=読み込み中... />
+              <list-main/>
+            </gr-list-container>
+
+          <details class=actions>
+            <summary>コメントを書く</summary>
+
+            <form action=javascript: data-action=o/create.json
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent"
+                data-child-form>
+              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
+              <textarea data-edit-created-object data-name=body required></textarea>
+              <p class=operations>
+                <button type=submit class=save-button>投稿する</>
+
+                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
+                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
+                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
+
+                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
+                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
+                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
+
+                <gr-action-status hidden
+                    stage-fetch=作成中...
+                    stage-editcreatedobject_fetch=保存中...
+                    stage-editobject_fetch=状態を変更中...
+                    stage-showcreatedobjectincommentlist=読み込み中...
+                    ok=投稿しました />
+            </form>
+          </details>
+
+          </article-comments>
+        </template>
+
+        <template id=index-list-item-template data-name>
+          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
+        </template>
+        <template id=account-list-item-template data-name>
+          <account-name data-field=account_id />
+        </template>
+
+        <list-main></list-main>
+
+        <list-is-empty hidden>
+          <p>記事はまだありません。</p>
+
+          <article class="object new">
+            <p class=operations>
+              <button type=button class=edit-button>記事を書く</button>
+          </article>
+        </list-is-empty>
+
+        <gr-action-status hidden stage-load=読み込み中... />
+        <run-action name=installPrependNewObjects />
+      </gr-list-container>
+
+      <article-comments>
+
+        <gr-list-container class=comment-list
+            data-src-template=o/get.json?index_id={index.index_id}&parent_wiki_name={wiki.name}&limit=30&with_data=1
+            key=objects sortkey=timestamp,created prepend
+            template-selector=object>
+          <template />
+          <template data-name=trackback class=trackback>
+            <time data-field=created data-format=ambtime />にこのWikiページが参照されました。
+            <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
+          </template>
+          <p class="operations pager">
+            <button type=button class=next-page-button hidden>もっと昔</button>
+          </p>
+          <gr-action-status hidden stage-load=読み込み中... />
+          <list-main/>
+        </gr-list-container>
+      </article-comments>
+
+      <footer>
+        <p><a data-href-template=/g/{group.group_id}/search?q={url:wiki.name}>「<bdi data-field=wiki.name />」を含む記事を検索する</a></p>
+      </footer>
+    </section>
+  </template>
+</template-set>
+
+  <template class=body-template id=object-ref-template>
+    <a href data-href-template={GROUP}/o/{object_id}/>
+      <ref-header>
+        <gr-enum-value data-field=data.todo_state text-1=未完了 text-2=完了済 />
+        <cite data-field=data.title data-empty=■ />
+        <time data-field=created />
+      </ref-header>
+      <body-snippet data-field=snippet />
+    </a>
+  </template>
+  <template class=body-template id=hatena-star-template>
+    <a href data-href-template=https://profile.hatena.ne.jp/{name}/ referrerpolicy=no-referrer data-title-template=" {name} {quote}" data-class-template=star-type-{type}>
+      <span>★</span><!--
+      --><img data-src-template=https://cdn1.www.st-hatena.com/users/{name2}/{name}/profile.gif data-alt-template={name} referrerpolicy=no-referrer class=hatena-user-icon><!--
+      --><star-count data-field=count data-class-template=star-count-{count} />
+    </a>
+  </template>
+
+  <t:include path=_object_editor.html.tm />
     
 <!--
 
