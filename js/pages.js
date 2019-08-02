@@ -172,7 +172,21 @@ GR.index = {};
 GR.index.info = function (indexId) {
   // XXX cache
   return gFetch ('i/'+indexId+'/info.json', {});
-}; // GR.group.info
+}; // GR.index.info
+
+GR.object = {};
+
+GR.object.get = function (objectId) {
+  // XXX cache
+  return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (json => {
+    var object = json.objects[objectId];
+    if (object) {
+      return object;
+    } else {
+      throw new Error ('Object not found');
+    }
+  });
+}; // GR.object.get
 
 GR.wiki = {};
 
@@ -2926,7 +2940,7 @@ GR.navigate.go = function (u, args) {
           }];
 
           m = path.match (/^o\/([0-9]+)\/$/);
-          if (m) return ['group', 'index-index', {
+          if (m) return ['group', 'object-index', {
             objectId: m[1],
           }];
 
@@ -3031,6 +3045,15 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           throw new DOMException ('The group has no default wiki', 'InvalidStateError');
         }
         return GR.index.info (params.group.default_wiki_index_id).then (_ => params.index = _);
+      }));
+    }
+    if (pageArgs.objectId) {
+      wait.push (GR.object.get (pageArgs.objectId).then (_ => params.object = _).then (() => {
+        // XXX use first index_type=[123] index
+        var indexId = Object.keys (params.object.data.index_ids || {})[0];
+        if (indexId) {
+          return GR.index.info (indexId).then (_ => params.index = _);
+        }
       }));
     }
     // XXX abort wait by opts.signal[12]
@@ -3138,6 +3161,16 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           });
         }
 
+        // XXX
+        if (pageName === 'object-index') {
+          var list = div.querySelector ('gr-list-container[key=objects]');
+          list.setAttribute ('src-object_id', params.object.object_id);
+        } else if (pageName === 'wiki') {
+          var list = div.querySelector ('gr-list-container[key=objects]');
+          list.setAttribute ('src-index_id', params.index.index_id);
+          list.setAttribute ('src-wiki_name', params.wiki.name);
+        }
+
         _.textContent = '';
         while (div.firstChild) _.appendChild (div.firstChild);
       });
@@ -3147,6 +3180,8 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       }
       if (params.wiki) {
         title.unshift (params.wiki.name);
+      } else if (params.object) {
+        title.unshift (params.object.data.title);
       }
       if (contentTitle !== '') title.unshift (contentTitle);
       if (params.search) {
