@@ -34,44 +34,10 @@
   <!-- XXX -->
   <t:include path=_common.html.tm m:app=$app />
 
-<template-set name=page-index-index>
-  <template>
-  
-  <section class=page>
-    <header>
-      <t:if x="defined $index">
-        <h1><a pl:href="'/g/'.$group->{group_id}.'/i/'.$index->{index_id}.'/'">
-          <t:text value="$index->{title}">
-        </a></h1>
-        <gr-menu type=index pl:indexid="$index->{index_id}" />
-      <t:else>
-        <h1><a pl:href="'/g/'.$group->{group_id}.'/'">
-          <t:text value="$group->{data}->{title}">
-        </a></h1>
-        <gr-menu type=group />
-      </t:if>
-    </header>
+<template-set name=page-index-index templateselector=selectIndexIndexTemplate>
+  <template><!-- default / wiki -->
 
-    <gr-list-container key=objects>
-      <t:if x="defined $object">
-        <t:attr name="'src-object_id'" value="$object->{object_id}">
-      <t:elsif x="defined $index">
-        <t:attr name="'src-index_id'" value="$index->{index_id}">
-      </t:if>
-        <t:if x="defined $index and $index->{index_type} == 1 # blog">
-          <t:attr name="'grouped'" value=1>
-        <t:elsif x="defined $index and $index->{index_type} == 2 # wiki">
-          <t:attr name="'sortkey'" value="'updated'">
-        <t:elsif x="defined $index and
-                    ($index->{index_type} == 3 or # todo
-                     $index->{index_type} == 4 or # label
-                     $index->{index_type} == 5) # milestone">
-          <t:attr name="'sortkey'" value="'updated'">
-        <t:else>
-          <t:attr name="'sortkey'" value="'created'">
-        </t:if>
-      <t:if x="defined $index and $index->{index_type} == 2 # wiki">
-        <t:attr name="'src-limit'" value=100>
+    <gr-list-container key=objects sortkey=updated src-limit=100>
         <template>
           <p><a data-href-template={GROUP}/i/{INDEX_ID}/wiki/{title}#{object_id}>
             <strong data-data-field=title data-empty=■ />
@@ -79,87 +45,29 @@
             (<time data-field=updated data-format=ambtime /> 編集)
           </a></p>
         </template>
-      <t:elsif x="defined $index and
-                  ($index->{index_type} == 3 or # todo
-                   $index->{index_type} == 4 or # label
-                   $index->{index_type} == 5) # milestone">
-        <t:attr name="'src-limit'" value=100>
-        <t:attr name="'query'" value="''">
-        <t:class name="'todo-list'">
-        <template>
-          <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
-          <p class=main-line>
-            <a data-href-template={GROUP}/o/{object_id}/>
-              <span data-data-field=title data-empty=■ />
-            </a>
-          <p class=info-line>
-            <checkbox-count data-if-data-field=all_checkbox_count>
-              <span>
-                <count-value data-data-field=checked_checkbox_count data-empty=0 /> /
-                <count-value data-data-field=all_checkbox_count />
-              </span>
-              <progress data-data-field=checked_checkbox_count data-max-data-field=all_checkbox_count />
-            </checkbox-count>
-            <time data-field=created data-format=ambtime />
-            (<time data-field=updated data-format=ambtime /> 編集)
-            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=マイルストーン />
-            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "4"}]' title=ラベル />
-            <account-list data-data-field=assigned_account_ids title=担当者 />
+
+          <article class="object new" data-gr-if-index-type=2><!-- wiki -->
+            <p class=operations>
+              <button type=button class=edit-button>新しい記事を書く</button>
+          </article>
+        <template id=index-list-item-template data-name>
+          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
-      <t:elsif x="defined $index and
-                  $index->{index_type} == 6 # fileset">
-        <t:attr name="'src-limit'" value=100>
-        <t:if x="($index->{options}->{subtype} // '') eq 'image'">
-          <t:class name="'image-list'">
-          <template>
-            <gr-popup-menu>
-              <button type=button>⋁</button>
-                <menu hidden>
-                  <li><copy-button>
-                    <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
-                  </>
-              </menu>
-            </gr-popup-menu>
-            <figure>
-              <a data-href-template={GROUP}/o/{object_id}/image data-title-data-field=title>
-                <img src data-src-template={GROUP}/o/{object_id}/image>
-              </a>
-              <figcaption>
-                <code data-data-field=file_name></code>
-                <unit-number data-data-field=file_size type=bytes />
-                <code data-data-field=mime_type />
-                <a data-href-template={GROUP}/o/{object_id}/>
-                  <time data-field=timestamp data-format=ambtime />
-                </a>
-              </figcaption>
-            </figure>
-          </template>
-        <t:else>
-          <t:class name="'file-list'">
-          <template>
-            <gr-popup-menu>
-              <button type=button>⋁</button>
-                <menu hidden>
-                  <li><copy-button>
-                    <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
-                  </>
-              </menu>
-            </gr-popup-menu>
-            <p class=main-line>
-              <a data-href-template={GROUP}/o/{object_id}/file download>
-                <span data-data-field=title data-empty=■ />
-                <code data-data-field=file_name></code>
-              </a>
-            <p class=info-line>
-              <unit-number data-data-field=file_size type=bytes />
-              <code data-data-field=mime_type />
-              <a data-href-template={GROUP}/o/{object_id}/>
-                <time data-field=timestamp data-format=ambtime />
-              </a>
-          </template>
-        </t:if>
-      <t:else><!-- index_type == 1 (blog), object permalink -->
-        <t:attr name="'listitemtype'" value="'object'">
+        <template id=account-list-item-template data-name>
+          <account-name data-field=account_id />
+        </template>
+
+        <list-main></list-main>
+
+      <gr-action-status hidden stage-load=読み込み中... />
+        <p class="operations pager">
+          <button type=button class=next-page-button hidden>もっと昔</button>
+      <run-action name=installPrependNewObjects />
+    </gr-list-container>
+  </template><!-- default -->
+  <template data-name=blog>
+  
+    <gr-list-container key=objects grouped=1 listitemtype=object>
         <template class=object>
           <header>
             <div class=edit-by-dblclick>
@@ -198,7 +106,7 @@
           <article-comments>
 
             <gr-list-container class=comment-list
-                pl:data-src-template="'o/get.json?parent_object_id={object_id}&limit='.(defined $object ? 30 : 5).'&with_data=1'"
+                data-src-template=o/get.json?parent_object_id={object_id}&limit=5&with_data=1
                 key=objects sortkey=timestamp,created prepend
                 template-selector=object>
               <template>
@@ -291,59 +199,61 @@
 
           </article-comments>
         </template>
-      </t:if>
 
-      <t:if x="defined $index and
-               not defined $object">
-        <t:if x="$index->{index_type} == 1 or # blob
-                 $index->{index_type} == 2 # wiki">
           <article class="object new">
             <p class=operations>
               <button type=button class=edit-button>新しい記事を書く</button>
           </article>
-        <t:elsif x="$index->{index_type} == 3 # todo">
-          <article class="object new">
+
+        <template id=index-list-item-template data-name>
+          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
+        </template>
+        <template id=account-list-item-template data-name>
+          <account-name data-field=account_id />
+        </template>
+
+        <list-main></list-main>
+
+      <gr-action-status hidden stage-load=読み込み中... />
+        <p class="operations pager">
+          <button type=button class=next-page-button hidden>もっと昔</button>
+      <run-action name=installPrependNewObjects />
+    </gr-list-container>
+  </template><!-- blog -->
+  <template data-name=todos>
+    <section>
+      <header class=section data-gr-if-index-type="4 5"><!-- label milestone -->
+        <h1><a data-href-template=/g/{group.group_id}/i/{index.index_id}/ data-field=index.title data-empty=■ /></h1>
+        <gr-menu type=index />
+      </header>
+      
+      <gr-list-container key=objects sortkey=updated src-limit=100 query class=todo-list>
+        <template>
+          <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+          <p class=main-line>
+            <a data-href-template={GROUP}/o/{object_id}/>
+              <span data-data-field=title data-empty=■ />
+            </a>
+          <p class=info-line>
+            <checkbox-count data-if-data-field=all_checkbox_count>
+              <span>
+                <count-value data-data-field=checked_checkbox_count data-empty=0 /> /
+                <count-value data-data-field=all_checkbox_count />
+              </span>
+              <progress data-data-field=checked_checkbox_count data-max-data-field=all_checkbox_count />
+            </checkbox-count>
+            <time data-field=created data-format=ambtime />
+            (<time data-field=updated data-format=ambtime /> 編集)
+            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=マイルストーン />
+            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "4"}]' title=ラベル />
+            <account-list data-data-field=assigned_account_ids title=担当者 />
+        </template>
+
+          <article class="object new" data-gr-if-index-type=3><!-- todos -->
             <p class=operations>
               <button type=button class=edit-button data-focus-title>新しい TODO</button>
           </article>
-        <t:elsif x="$index->{index_type} == 6 # fileset">
-          <form action=javascript: method=post data-form-type=uploader pl:data-context="$index->{index_id}">
-            <gr-list-container type=table>
-              <template>
-                <td class=file-name><code data-data-field=file_name />
-                <td class=file-size><unit-number data-data-field=file_size type=bytes />
-                <td class=progress><gr-action-status hidden
-                        stage-create=作成中...
-                        stage-upload=アップロード中...
-                        stage-close=保存中...
-                        stage-show=読み込み中...
-                        ok=アップロード完了 />
-              </template>
-              <table>
-                <thead>
-                  <tr>
-                    <th class=file-name>ファイル名
-                    <th class=file-size>サイズ
-                    <th class=progress>進捗
-                <tbody>
-              </table>
-            </gr-list-container>
-            <p class=operations>
-              <t:if x="($index->{options}->{subtype} // '') eq 'image'">
-                <input type=file name=file multiple hidden accept=image/*>
-                <button type=button name=upload-button class=edit-button>画像をアップロード...</button>
-              <t:else>
-                <input type=file name=file multiple hidden>
-                <button type=button name=upload-button class=edit-button>ファイルをアップロード...</button>
-              </t:if>
-          </form>
-        </t:if>
-      </t:if>
 
-      <t:if x="defined $index and
-               ($index->{index_type} == 3 or # todo
-                $index->{index_type} == 4 or # label
-                $index->{index_type} == 5) # milestone">
         <menu>
           <list-query>
             <label><input type=radio name=todo value=open> 未完了</label>
@@ -432,7 +342,95 @@
         </template>
 
         <list-main/>
-      <t:else>
+
+      <gr-action-status hidden stage-load=読み込み中... />
+        <p class="operations pager">
+          <button type=button class=next-page-button hidden>もっと昔</button>
+      <run-action name=installPrependNewObjects />
+      </gr-list-container>
+    </section>
+  </template><!-- todos -->
+  <template data-name=fileset>
+    <section>
+      <header class=section>
+        <h1><a data-href-template=/g/{group.group_id}/i/{index.index_id}/ data-field=index.title data-empty=■ /></h1>
+        <gr-menu type=index />
+      </header>
+
+      <gr-list-container key=objects sortkey=created src-limit=100>
+          <template data-gr-if-index-subtype=image>
+            <gr-popup-menu>
+              <button type=button>⋁</button>
+                <menu hidden>
+                  <li><copy-button>
+                    <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
+                  </>
+              </menu>
+            </gr-popup-menu>
+            <figure>
+              <a data-href-template={GROUP}/o/{object_id}/image data-title-data-field=title>
+                <img src data-src-template={GROUP}/o/{object_id}/image>
+              </a>
+              <figcaption>
+                <code data-data-field=file_name></code>
+                <unit-number data-data-field=file_size type=bytes />
+                <code data-data-field=mime_type />
+                <a data-href-template={GROUP}/o/{object_id}/>
+                  <time data-field=timestamp data-format=ambtime />
+                </a>
+              </figcaption>
+            </figure>
+          </template>
+          <template data-gr-if-index-subtype=file>
+            <gr-popup-menu>
+              <button type=button>⋁</button>
+                <menu hidden>
+                  <li><copy-button>
+                    <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
+                  </>
+              </menu>
+            </gr-popup-menu>
+            <p class=main-line>
+              <a data-href-template={GROUP}/o/{object_id}/file download>
+                <span data-data-field=title data-empty=■ />
+                <code data-data-field=file_name></code>
+              </a>
+            <p class=info-line>
+              <unit-number data-data-field=file_size type=bytes />
+              <code data-data-field=mime_type />
+              <a data-href-template={GROUP}/o/{object_id}/>
+                <time data-field=timestamp data-format=ambtime />
+              </a>
+          </template>
+
+          <form action=javascript: method=post data-form-type=uploader>
+            <gr-list-container type=table>
+              <template>
+                <td class=file-name><code data-data-field=file_name />
+                <td class=file-size><unit-number data-data-field=file_size type=bytes />
+                <td class=progress><gr-action-status hidden
+                        stage-create=作成中...
+                        stage-upload=アップロード中...
+                        stage-close=保存中...
+                        stage-show=読み込み中...
+                        ok=アップロード完了 />
+              </template>
+              <table>
+                <thead>
+                  <tr>
+                    <th class=file-name>ファイル名
+                    <th class=file-size>サイズ
+                    <th class=progress>進捗
+                <tbody>
+              </table>
+            </gr-list-container>
+            <p class=operations>
+                <input type=file name=file multiple hidden accept=image/* data-gr-if-index-subtype=image>
+                <button type=button name=upload-button class=edit-button data-gr-if-index-subtype=image>画像をアップロード...</button>
+                <input type=file name=file multiple hidden data-gr-if-index-subtype=file>
+                <button type=button name=upload-button class=edit-button data-gr-if-index-subtype=file>ファイルをアップロード...</button>
+          </form>
+
         <template id=index-list-item-template data-name>
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
@@ -441,15 +439,13 @@
         </template>
 
         <list-main></list-main>
-      </t:if>
 
       <gr-action-status hidden stage-load=読み込み中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       <run-action name=installPrependNewObjects />
     </gr-list-container>
-  </section>
-  </template>
+  </template><!-- fileset -->
 </template-set>
 
 <template-set name=page-object-index>
@@ -498,7 +494,7 @@
           <article-comments>
 
             <gr-list-container class=comment-list
-                pl:data-src-template="'o/get.json?parent_object_id={object_id}&limit='.(defined $object ? 30 : 5).'&with_data=1'"
+                data-src-template=o/get.json?parent_object_id={object_id}&limit=30&with_data=1
                 key=objects sortkey=timestamp,created prepend
                 template-selector=object>
               <template>
@@ -796,7 +792,7 @@
 </template-set>
 
   <template class=body-template id=object-ref-template>
-    <a href pl:data-href-template="'/g/'.$group->{group_id}.'/o/{object_id}/'">
+    <a href data-href-template={GROUP}/o/{object_id}/>
       <ref-header>
         <gr-enum-value data-field=data.todo_state text-1=未完了 text-2=完了済 />
         <cite data-field=data.title data-empty=■ />

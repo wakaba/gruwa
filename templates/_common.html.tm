@@ -326,7 +326,7 @@
             を作成します。 (この操作は取り消せません。)
           </section-intro>
 
-          <form is=save-data data-saver=groupSaver method=post action=action=i/create.json
+          <form is=save-data data-saver=groupSaver method=post action=i/create.json
               data-next=groupGo:i/{index_id}/config>
             <table class=config>
               <tbody>

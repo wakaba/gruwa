@@ -188,6 +188,7 @@ sub run ($%) {
         }
 
         $data->{wd_local_url} = $self->local_url ('wd');
+        $data->{artifacts_path} = $self->artifacts_path (undef);
 
         my $rev_path = $RootPath->child ('rev');
         return Promised::File->new_from_path ($rev_path)->read_byte_string->then (sub {

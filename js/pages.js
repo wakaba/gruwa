@@ -3130,6 +3130,9 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           div.querySelectorAll ('[data-gr-if-index-type]:not([data-gr-if-index-type~="'+params.index.index_type+'"])').forEach (_ => {
             _.remove ();
           });
+          div.querySelectorAll ('[data-gr-if-index-subtype]:not([data-gr-if-index-subtype~="'+params.index.subtype+'"])').forEach (_ => {
+            _.remove ();
+          });
 
           var isDefaultIndex = params.index.index_id == params.group.member.default_index_id;
           if (isDefaultIndex) {
@@ -3152,6 +3155,10 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
               _.remove ();
             });
           }
+
+          div.querySelectorAll ('gr-menu[type=index]').forEach (_ => {
+            _.setAttribute ('indexid', params.index.index_id);
+          });
         }
 
         if (params.wiki) {
@@ -3169,6 +3176,17 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           var list = div.querySelector ('gr-list-container[key=objects]');
           list.setAttribute ('src-index_id', params.index.index_id);
           list.setAttribute ('src-wiki_name', params.wiki.name);
+        } else if (pageName === 'index-index') {
+          var list = div.querySelector ('gr-list-container[key=objects]');
+          list.setAttribute ('src-index_id', params.index.index_id);
+          if (params.index.subtype === 'image') {
+            list.setAttribute ('class', 'image-list');
+          } else if (params.index.subtype === 'file') {
+            list.setAttribute ('class', 'file-list');
+          }
+          div.querySelectorAll ('[data-form-type=uploader]').forEach (_ => {
+            _.setAttribute ('data-context', params.index.index_id);
+          });
         }
 
         _.textContent = '';
@@ -3228,6 +3246,28 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
     delete GR._state.currentNavigate;
   });
 }; // _show
+
+(() => {
+  
+  var e = document.createElementNS ('data:,pc', 'templateselector');
+  e.setAttribute ('name', 'selectIndexIndexTemplate');
+  e.pcHandler = function (templates, obj) {
+    console.log(obj);
+    if (obj.index.index_type == 1 /* blog */) {
+      return templates.blog;
+    } else if (obj.index.index_type == 3 /* todos */ ||
+               obj.index.index_type == 4 /* label */ ||
+               obj.index.index_type == 5 /* milestone */) {
+      return templates.todos;
+    } else if (obj.index.index_type == 6 /* fileset */) {
+      return templates.fileset;
+    } else {
+      return templates[""];
+    }
+  }; // selectIndexIndexTemplate
+  document.head.appendChild (e);
+
+}) ();
 
 defineElement ({
   name: 'gr-navigate-status',
