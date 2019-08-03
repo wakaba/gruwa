@@ -55,6 +55,10 @@
 
     <gr-navigate-status>
       <action-status stage-loading=読込中... />
+      <gr-error message="The group has no default wiki" hidden>
+        <a href=/help#default-wiki-index target=help>グループの Wiki</a>
+        が設定されていません。
+      </gr-error>
     </gr-navigate-status>
 
 <template-set name=gr-menu>

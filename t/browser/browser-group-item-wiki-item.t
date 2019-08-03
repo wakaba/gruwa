@@ -114,6 +114,40 @@ Test {
   });
 } n => 2, name => ['initial load (wiki name, no object)'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'], title => $current->generate_text (t1 => {}),
+      theme => 'red',
+    }],
+    [i1 => index => {
+      account => 'a1', group => 'g1',
+      title => $current->generate_text (t2 => {}),
+      index_type => 2, # wiki
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'wiki', $current->generate_text ('t2' => {})],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-error:not([hidden])',
+      html => '#default-wiki-index',
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['no group wiki'], browser => 1;
+
 RUN;
 
 =head1 LICENSE

@@ -123,6 +123,35 @@ Test {
   });
 } n => 6, name => ['initial load (blog object)'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'], title => $current->generate_text (t1 => {}),
+      theme => 'red',
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', 5235244, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-navigate-status',
+      text => 'Object not found',
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['object not found'], browser => 1;
+
 RUN;
 
 =head1 LICENSE

@@ -16,7 +16,7 @@ Test {
     return $current->are_errors (
       ['POST', ['i', $current->o ('i1')->{index_id}, 'edit.json'], {title => "\x{667}"}, group => 'g1', account => 'a1'],
       [
-        {path => ['i', '435444', ''], status => 404},
+        {path => ['i', '435444', 'edit.json'], status => 404},
         {group => 'g2', status => 404},
         {account => undef, status => 403},
         {account => '', status => 403},

@@ -196,11 +196,14 @@
     <section id=wikis>
       <h1>Wiki</h1>
 
-      <p>グループ内に Wiki を作ることができます。
+      <p>グループ内に <dfn id=wiki><ruby>Wiki<rt>ウィキ</ruby></dfn>
+      を作ることができます。
 
       <hr>
 
-      <p>グループ内の Wiki のうちの1つを「<dfn id=default-wiki-index>グループの Wiki</dfn>」に選ぶことができます。
+      <p>グループ内の Wiki のうちの1つを
+      「<dfn id=default-wiki-index>グループの Wiki</dfn>」
+      に選ぶことができます。
       グループの Wiki は、グループ内の Wiki 名リンクのリンク先となります。
 
       <p>グループの Wiki の選択は、 Wiki の設定ページから行えます。

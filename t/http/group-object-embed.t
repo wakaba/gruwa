@@ -19,7 +19,7 @@ Test {
       ['GET', ['o', $current->o ('o1')->{object_id}, 'embed'], {}, group => $current->o ('g1'), account => 'a1'],
       [
         {group => $current->o ('g2'), status => 404},
-        {path => ['o', '5325253333', ''], status => 404},
+        {path => ['o', '5325253333', 'embed'], status => 404},
         {account => '', status => 403},
         {account => undef, status => 302},
       ],

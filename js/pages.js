@@ -3286,6 +3286,8 @@ defineElement ({
       var as = this.grAS = this.pcActionStatus ();
       as.start ({stages: ['loading']});
       as.stageStart ('loading');
+
+      this.querySelectorAll ('gr-error').forEach (_ => _.hidden = true);
     }, // grStart
     grStop: function () {
       this.grAS.end ({ok: true});
@@ -3294,7 +3296,21 @@ defineElement ({
       document.documentElement.removeAttribute ('data-navigating');
     }, // grStop
     grThrow: function (e) {
-      this.grAS.end ({error: e});
+      var found = false;
+      this.querySelectorAll ('gr-error').forEach (_ => {
+        if (_.getAttribute ('message') === e.message) {
+          found = true;
+          _.hidden = false;
+        } else {
+          _.hidden = true;
+        }
+      });
+
+      if (found) {
+        this.grAS.end ({ok: true});
+      } else {
+        this.grAS.end ({error: e});
+      }
       clearTimeout (this.grTimer);
       this.hidden = false;
       document.documentElement.removeAttribute ('data-navigating');
