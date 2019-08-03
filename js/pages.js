@@ -2909,16 +2909,30 @@ GR.navigate._init = function () {
       ev.preventDefault ();
     }
   });
-  GR.navigate.enabled = true;
   history.scrollRestoration = "manual";
+  GR.navigate.enabled = true;
+  GR._state.navigateInitiated = performance.now ();
 }; // GR.navigate._init
+
+GR.navigate.avail = function () {
+  if (!GR.navigate.enabled) return false;
+
+  var elapsed = performance.now () - GR._state.navigateInitiated;
+  if (elapsed > 10*60*60*1000) {
+    return false;
+  }
+
+  // XXX revision test / account changed
+  
+  return true;
+}; // GR.navigate.avail
 
 GR.navigate.go = function (u, args) {
   var url = new URL (u, location.href);
   var status = document.querySelector ('gr-navigate-status');
   status.grStart (url);
   return Promise.resolve ().then (() => {
-    if (GR.navigate.enabled &&
+    if (GR.navigate.avail () &&
         url.origin === location.origin) {
       if (!args.reload &&
           url.pathname === location.pathname &&
@@ -3025,7 +3039,6 @@ GR.navigate.go = function (u, args) {
 
 GR.navigate._show = function (pageName, pageArgs, opts) {
   // Assert: pageName is valid
-  // XXX revision test / session timeout / account changed / 50[234]
   var pushed = false;
   return $getTemplateSet ('page-' + pageName).then (ts => {
     var params = {};
