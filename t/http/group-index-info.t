@@ -14,18 +14,6 @@ Test {
     return $current->create_index (i1 => {group => 'g1', account => 'a1', title => "\x{900}", index_type => 5});
   })->then (sub {
     return $current->are_errors (
-      ['GET', ['i', $current->o ('i1')->{index_id}, ''], {}, group => 'g1', account => 'a1'],
-      [
-        {path => ['i', '435444', ''], status => 404},
-        {group => 'g2', status => 404},
-        {account => undef, status => 302},
-        {account => '', status => 403},
-      ],
-    );
-  })->then (sub {
-    return $current->get_html (['i', $current->o ('i1')->{index_id}, ''], {}, group => 'g1', account => 'a1');
-  })->then (sub {
-    return $current->are_errors (
       ['GET', ['i', $current->o ('i1')->{index_id}, 'info.json'], {}, group => 'g1', account => 'a1'],
       [
         {path => ['i', '435444', 'info.json'], status => 404},
@@ -50,7 +38,7 @@ Test {
       like $result->{res}->body_bytes, qr{"index_id"\s*:\s*"};
     } $current->c;
   });
-} n => 11, name => 'info';
+} n => 10, name => 'info';
 
 Test {
   my $current = shift;
@@ -60,8 +48,6 @@ Test {
     return $current->create_group (g2 => {members => ['a1']});
   })->then (sub {
     return $current->create_index (i1 => {group => 'g1', account => 'a1', title => "\x{900}", index_type => 6, subtype => 'file'});
-  })->then (sub {
-    return $current->get_html (['i', $current->o ('i1')->{index_id}, ''], {}, group => 'g1', account => 'a1');
   })->then (sub {
     return $current->get_json (['i', $current->o ('i1')->{index_id}, 'info.json'], {}, group => 'g1', account => 'a1');
   })->then (sub {
@@ -89,8 +75,6 @@ Test {
   })->then (sub {
     return $current->create_index (i1 => {group => 'g1', account => 'a1', title => "\x{900}", index_type => 6, subtype => 'image'});
   })->then (sub {
-    return $current->get_html (['i', $current->o ('i1')->{index_id}, ''], {}, group => 'g1', account => 'a1');
-  })->then (sub {
     return $current->get_json (['i', $current->o ('i1')->{index_id}, 'info.json'], {}, group => 'g1', account => 'a1');
   })->then (sub {
     my $result = $_[0];
@@ -112,7 +96,7 @@ RUN;
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -125,6 +109,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

@@ -177,6 +177,31 @@ sub main ($$$$$) {
 
 sub group ($$$$) {
   my ($class, $app, $path, $opts) = @_;
+
+  if (
+    (@$path == 3 and {
+      '' => 1,         # /g/{group_id}/
+      'search' => 1,   # /g/{group_id}/search
+      'config' => 1,   # /g/{group_id}/config
+      'members' => 1,  # /g/{group_id}/members
+    }->{$path->[2]}) or
+    (@$path == 5 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
+      '' => 1,         # /g/{group_id}/i/{index_id}/
+      'config' => 1,   # /g/{group_id}/i/{index_id}/config
+    }->{$path->[4]}) or
+    (@$path == 5 and $path->[2] eq 'o' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
+      '' => 1,         # /g/{group_id}/o/{object_id}/
+    }->{$path->[4]}) or
+    # /g/{group_id}/wiki/{wiki_name}
+    (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or
+    # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
+    (@$path == 6 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'wiki' and length $path->[5])
+  ) {
+    return temma $app, 'group.index.html.tm', {
+      group => $opts->{group},
+    };
+  }
+  
   my $db = $opts->{db};
 
   if (@$path >= 4 and $path->[2] eq 'i') {
@@ -189,21 +214,7 @@ sub group ($$$$) {
     return $class->group_object ($app, $path, $opts);
   }
 
-  if (@$path == 4 and $path->[2] eq 'wiki') {
-    # /g/{group_id}/wiki/{wiki_name}
-    return get_index ($db, $path->[1], $opts->{group}->{data}->{default_wiki_index_id})->then (sub {
-      return $class->group_wiki ($app, $opts, $_[0], $path->[3]);
-    });
-  }
-
-  if (@$path == 3 and $path->[2] eq '') {
-    # /g/{group_id}/
-    return temma $app, 'group.index.html.tm', {
-      account => $opts->{account},
-      group => $opts->{group},
-      group_member => $opts->{group_member},
-    };
-  } elsif (@$path == 3 and $path->[2] eq 'info.json') {
+  if (@$path == 3 and $path->[2] eq 'info.json') {
     # /g/{group_id}/info.json
     my $g = $opts->{group};
     return json $app, {
@@ -240,26 +251,8 @@ sub group ($$$$) {
     };
   }
 
-  if (@$path == 3 and $path->[2] eq 'search') {
-    # /g/{}/search
-    return temma $app, 'group.search.html.tm', {
-      account => $opts->{account},
-      group => $opts->{group},
-      group_member => $opts->{group_member},
-    };
-  }
-
   if ($path->[2] eq 'members') {
     return $class->group_members ($app, $path, $opts);
-  }
-
-  if (@$path == 3 and $path->[2] eq 'config') {
-    # /g/{}/config
-    return temma $app, 'group.config.html.tm', {
-      account => $opts->{account},
-      group => $opts->{group},
-      group_member => $opts->{group_member},
-    };
   }
 
   if (@$path == 3 and $path->[2] eq 'edit.json') {
@@ -407,15 +400,6 @@ sub group ($$$$) {
 
 sub group_members ($$$$) {
   my ($class, $app, $path, $opts) = @_;
-
-  if (@$path == 3) {
-    # /g/{}/members
-    return temma $app, 'group.members.html.tm', {
-      account => $opts->{account},
-      group => $opts->{group},
-      group_member => $opts->{group_member},
-    };
-  }
 
   if (@$path == 5 and
       $path->[3] eq 'invitations' and
@@ -710,15 +694,7 @@ sub group_index ($$$$) {
       my $index = $_[0];
       return $app->throw_error (404, reason_phrase => 'Index not found')
           unless defined $index;
-      if (@$path == 5 and $path->[4] eq '') {
-        # /g/{group_id}/i/{index_id}/
-        return temma $app, 'group.index.index.html.tm', {
-          account => $opts->{account},
-          group => $opts->{group},
-          group_member => $opts->{group_member},
-          index => $index,
-        };
-      } elsif (@$path == 5 and $path->[4] eq 'info.json') {
+      if (@$path == 5 and $path->[4] eq 'info.json') {
         # /g/{group_id}/i/{index_id}/info.json
         return json $app, {
           group_id => $path->[1],
@@ -806,17 +782,6 @@ sub group_index ($$$$) {
         return Promise->all (\@p)->then (sub {
           return json $app, {};
         });
-      } elsif (@$path == 5 and $path->[4] eq 'config') {
-        # /g/{group_id}/i/{index_id}/config
-        return temma $app, 'group.index.config.html.tm', {
-          account => $opts->{account},
-          group => $opts->{group},
-          group_member => $opts->{group_member},
-          index => $index,
-        };
-      } elsif (@$path == 6 and $path->[4] eq 'wiki') {
-        # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
-        return $class->group_wiki ($app, $opts, $index, $path->[5]);
       } else {
         return $app->throw_error (404);
       }
@@ -1021,41 +986,7 @@ sub group_object ($$$$) {
           unless defined $object;
       $object->{data} = Dongry::Type->parse ('json', $object->{data});
 
-      if (@$path == 5 and $path->[4] eq '') {
-        # /g/{group_id}/o/{object_id}/
-        if ($object->{user_status} != 1 or # open
-            $object->{owner_status} != 1) { # open
-          return $app->throw_error (410, reason_phrase => 'Object not found');
-        }
-
-        return Promise->resolve->then (sub {
-          my $index_ids = [map { Dongry::Type->serialize ('text', $_) }
-                           keys %{$object->{data}->{index_ids} || {}}];
-          if (@$index_ids) {
-            return $db->select ('index', {
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
-              index_id => {-in => $index_ids},
-              index_type => {-in => [1, 2, 3]}, # blog wiki todo
-              user_status => 1, # open
-              owner_status => 1, # open
-            }, fields => ['index_id', 'title', 'options'], limit => 1)->then (sub {
-              my $index = $_[0]->first // return undef;
-              $index->{title} = Dongry::Type->parse ('text', $index->{title});
-              $index->{options} = Dongry::Type->parse ('json', $index->{options});
-              return $index;
-            });
-          }
-          return undef;
-        })->then (sub {
-          return temma $app, 'group.index.index.html.tm', {
-            account => $opts->{account},
-            group => $opts->{group},
-            group_member => $opts->{group_member},
-            object => $object,
-            index => $_[0],
-          };
-        });
-      } elsif (@$path == 5 and $path->[4] eq 'embed') {
+      if (@$path == 5 and $path->[4] eq 'embed') {
         # /g/{group_id}/o/{object_id}/embed
         if ($object->{user_status} != 1 or # open
             $object->{owner_status} != 1) { # open
@@ -2076,30 +2007,6 @@ sub group_object ($$$$) {
 
   return $app->throw_error (404);
 } # group_object
-
-sub group_wiki ($$$$$) {
-  my ($class, $app, $opts, $index, $wiki_name) = @_;
-  return $app->throw_error (404) unless defined $index;
-
-  # /g/{group_id}/wiki/{wiki_name}
-  # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
-
-  if (@{$app->path_segments} == 6 and
-      defined $opts->{group}->{data}->{default_wiki_index_id} and
-      $index->{index_id} == $opts->{group}->{data}->{default_wiki_index_id}) {
-    return $app->throw_redirect ('/g/'.(Web::URL::Encoding::percent_encode_c $opts->{group}->{group_id}).'/wiki/'.(Web::URL::Encoding::percent_encode_c $wiki_name));
-  }
-
-  return temma $app, 'group.index.index.html.tm', {
-    account => $opts->{account},
-    group => $opts->{group},
-    group_member => $opts->{group_member},
-    index => $index,
-    wiki_name => $wiki_name,
-  };
-
-  #return $app->throw_error (404);
-} # group_wiki
 
 sub invitation ($$$$) {
   my ($self, $app, $path, $acall) = @_;

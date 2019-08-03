@@ -1,4 +1,4 @@
-<html t:params="$group $account $group_member $app"
+<html t:params="$group $app"
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-theme="$group->{data}->{theme}">
 <head>
