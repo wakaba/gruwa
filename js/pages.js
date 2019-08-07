@@ -2905,7 +2905,7 @@ GR.navigate._init = function () {
         (n.protocol === 'https:' || n.protocol === 'http:') &&
         n.target === '' &&
         !n.is) {
-      GR.navigate.go (n.href, {});
+      GR.navigate.go (n.href, {ping: n.ping});
       ev.preventDefault ();
     }
   });
@@ -3004,11 +3004,19 @@ GR.navigate.go = function (u, args) {
       GR._state.currentNavigate.abort ();
       delete GR._state.currentNavigate;
     }
+    var sendPing = () => {
+      if (args.ping) {
+        args.ping.split (/\s+/).forEach (_ => {
+          navigator.sendBeacon (_);
+        });
+      }
+    }; // sendPing
     if (_[0] === 'group') {
       var ac = new AbortController;
       var nav = GR._state.currentNavigate = {
         abort: () => ac.abort (),
       };
+      Promise.resolve.then (sendPing);
       return GR.navigate._show (_[1], _[2], {
         url: url,
         replace: args.replace,
@@ -3021,6 +3029,7 @@ GR.navigate.go = function (u, args) {
     } else if (_[0] === 'fragment') {
       status.grStop ();
       location.hash = _[1].hash;
+      sendPing ();
     } else { // external or site
       if (location.href === _[1].href) {
         var e = new Error ('Failed to navigate to URL <'+_[1]+'>');
@@ -3032,6 +3041,7 @@ GR.navigate.go = function (u, args) {
         } else {
           location.href = _[1];
         }
+        sendPing ();
       }
     }
   });
