@@ -39,6 +39,14 @@ Test {
       text => $current->o ('t3'), # object title (wiki name)
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.section gr-menu a',
+    });
+  })->then (sub {
     return $current->b (1)->execute (q{
       return {
         title: document.title,

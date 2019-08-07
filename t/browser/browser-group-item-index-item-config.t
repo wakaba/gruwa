@@ -28,6 +28,10 @@ Test {
       selector => 'html:not([data-navigating])',
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-menu[type=index] a[href*="/i/"][href$="/config"]',
+    });
+  })->then (sub {
     return $current->b (1)->execute (q{
       return {
         config_url: document.querySelector ('gr-menu[type=index] menu-main a[href$="/config"]').pathname,

@@ -34,6 +34,14 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.section gr-menu a',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('t3'), # object title (wiki name)
     });
@@ -140,6 +148,14 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.section gr-menu a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
