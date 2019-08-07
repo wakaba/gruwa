@@ -204,6 +204,8 @@ header.page,
 section.page > header {
   display: flex;
   align-items: center;
+  flex-direction: column;
+  justify-content: space-between;
   margin: 0 0 1em 0;
   border-style: var(--pageheader-border-style);
   border-width: var(--pageheader-border-width);
@@ -216,16 +218,27 @@ section.page > header {
   text-align: var(--pageheader-align);
 }
 
+header.page > a {
+  align-self: start;
+  margin-left: 1em;
+  font-weight: bolder;
+}
+
+header.page > a:not(:hover):not(:active):not(:focus) {
+  color: inherit;
+  background: transparent;
+  text-decoration: none;
+}
+
 header.page > h1,
 section.page > header > h1 {
   margin: 0;
   font-size: 160%;
   text-shadow: 2px 2px var(--light-1-shadow-color);
-  flex-grow: 1;
 }
 
 header.page > gr-menu {
-  margin-top: 3em;
+  margin-right: 1em;
   align-self: flex-end;
 }
 

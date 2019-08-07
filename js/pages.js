@@ -172,7 +172,33 @@ GR.index = {};
 GR.index.info = function (indexId) {
   // XXX cache
   return gFetch ('i/'+indexId+'/info.json', {});
-}; // GR.group.info
+}; // GR.index.info
+
+GR.object = {};
+
+GR.object.get = function (objectId) {
+  // XXX cache
+  return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (json => {
+    var object = json.objects[objectId];
+    if (object) {
+      return object;
+    } else {
+      throw new Error ('Object not found');
+    }
+  });
+}; // GR.object.get
+
+GR.wiki = {};
+
+GR.wiki.url = function (indexId, wikiName) {
+  var group = GR._state.group;
+  if (!group) throw new DOMException ('Group info not found', 'InvalidStateError');
+  if (indexId === group.default_wiki_index_id) {
+    return '/g/'+group.group_id+'/wiki/'+encodeURIComponent (wikiName);
+  } else {
+    return '/g/'+group.group_id+'/i/'+indexId+'/wiki/'+encodeURIComponent (wikiName);
+  }
+}; // GR.wiki.url
 
 defineElement ({
   name: 'gr-account',
@@ -237,7 +263,7 @@ defineElement ({
         } else if (type === 'wiki') {
           var indexId = this.getAttribute ('indexid');
           var wikiName = this.getAttribute ('wikiname');
-          obj.wiki = {name: wikiName};
+          obj.wiki = {name: wikiName, url: GR.wiki.url (indexId, wikiName)};
           return Promise.all ([
             ts,
             $getTemplateSet ('gr-menu-wiki'),
@@ -708,7 +734,8 @@ function fillFields (contextEl, rootEl, el, object, opts) {
           var item = document.createElement ('index-list-item');
           item.appendChild (template.content.cloneNode (true));
           fillFields (item, item, item, object, {});
-          item.classList.toggle ('this-index', object.index_id == document.documentElement.getAttribute ('data-index'));
+          //XXX
+          //item.classList.toggle ('this-index', object.index_id == document.documentElement.getAttribute ('data-index'));
           field.appendChild (item);
         });
       });
@@ -2878,20 +2905,34 @@ GR.navigate._init = function () {
         (n.protocol === 'https:' || n.protocol === 'http:') &&
         n.target === '' &&
         !n.is) {
-      GR.navigate.go (n.href, {});
+      GR.navigate.go (n.href, {ping: n.ping});
       ev.preventDefault ();
     }
   });
-  GR.navigate.enabled = true;
   history.scrollRestoration = "manual";
+  GR.navigate.enabled = true;
+  GR._state.navigateInitiated = performance.now ();
 }; // GR.navigate._init
+
+GR.navigate.avail = function () {
+  if (!GR.navigate.enabled) return false;
+
+  var elapsed = performance.now () - GR._state.navigateInitiated;
+  if (elapsed > 10*60*60*1000) {
+    return false;
+  }
+
+  // XXX revision test / account changed
+  
+  return true;
+}; // GR.navigate.avail
 
 GR.navigate.go = function (u, args) {
   var url = new URL (u, location.href);
   var status = document.querySelector ('gr-navigate-status');
   status.grStart (url);
   return Promise.resolve ().then (() => {
-    if (GR.navigate.enabled &&
+    if (GR.navigate.avail () &&
         url.origin === location.origin) {
       if (!args.reload &&
           url.pathname === location.pathname &&
@@ -2913,10 +2954,43 @@ GR.navigate.go = function (u, args) {
             q: url.searchParams.get ('q'),
           }];
 
+          m = path.match (/^o\/([0-9]+)\/$/);
+          if (m) return ['group', 'object-index', {
+            objectId: m[1],
+          }];
+
+          m = path.match (/^i\/([0-9]+)\/$/);
+          if (m) return ['group', 'index-index', {
+            indexId: m[1],
+          }];
+
           m = path.match (/^i\/([0-9]+)\/(config)$/);
           if (m) return ['group', 'index-' + m[2], {
             indexId: m[1],
           }];
+
+          m = path.match (/^i\/([0-9]+)\/wiki\/([^\/]+)$/);
+          if (m) {
+            var n;
+            try {
+              n = decodeURIComponent (m[2]);
+            } catch (e) { }
+            return ['group', 'wiki', {
+              indexId: m[1],
+              wikiName: n,
+            }];
+          }
+
+          m = path.match (/^wiki\/([^\/]+)$/);
+          if (m) {
+            var n;
+            try {
+              n = decodeURIComponent (m[1]);
+            } catch (e) { }
+            return ['group', 'wiki', {
+              wikiName: n,
+            }];
+          }
 
           return ['site', url];
         } else {
@@ -2930,11 +3004,19 @@ GR.navigate.go = function (u, args) {
       GR._state.currentNavigate.abort ();
       delete GR._state.currentNavigate;
     }
+    var sendPing = () => {
+      if (args.ping) {
+        args.ping.split (/\s+/).forEach (_ => {
+          navigator.sendBeacon (_);
+        });
+      }
+    }; // sendPing
     if (_[0] === 'group') {
       var ac = new AbortController;
       var nav = GR._state.currentNavigate = {
         abort: () => ac.abort (),
       };
+      Promise.resolve ().then (sendPing);
       return GR.navigate._show (_[1], _[2], {
         url: url,
         replace: args.replace,
@@ -2947,12 +3029,19 @@ GR.navigate.go = function (u, args) {
     } else if (_[0] === 'fragment') {
       status.grStop ();
       location.hash = _[1].hash;
+      sendPing ();
     } else { // external or site
-      status.grStop ();
-      if (args.reload) {
-        location.replace (_[1]);
+      if (location.href === _[1].href) {
+        var e = new Error ('Failed to navigate to URL <'+_[1]+'>');
+        status.grThrow (e);
       } else {
-        location.href = _[1];
+        status.grStop ();
+        if (args.reload) {
+          location.replace (_[1]);
+        } else {
+          location.href = _[1];
+        }
+        sendPing ();
       }
     }
   });
@@ -2960,23 +3049,57 @@ GR.navigate.go = function (u, args) {
 
 GR.navigate._show = function (pageName, pageArgs, opts) {
   // Assert: pageName is valid
-  // XXX revision test / session timeout / account changed / 50[234]
   var pushed = false;
   return $getTemplateSet ('page-' + pageName).then (ts => {
     var params = {};
     var wait = [];
-    wait.push (GR.group.info ().then (_ => params.group = _));
-    if (pageArgs.indexId) {
-      wait.push (GR.index.info (pageArgs.indexId).then (_ => params.index = _));
-    }
+    var setGI = GR.group.info ().then (_ => params.group = _);
+    wait.push (setGI);
     if (pageName === 'search') {
       params.search = {q: pageArgs.q || ''};
+    }
+    if (pageName === 'wiki') {
+      params.wiki = {name: pageArgs.wikiName};
+    }
+    if (pageArgs.indexId) {
+      wait.push (GR.index.info (pageArgs.indexId).then (_ => params.index = _));
+    } else if (params.wiki) {
+      wait.push (setGI.then (() => {
+        if (!params.group.default_wiki_index_id) {
+          throw new DOMException ('The group has no default wiki', 'InvalidStateError');
+        }
+        return GR.index.info (params.group.default_wiki_index_id).then (_ => params.index = _);
+      }));
+    }
+    if (pageArgs.objectId) {
+      wait.push (GR.object.get (pageArgs.objectId).then (_ => params.object = _).then (() => {
+        // XXX use first index_type=[123] index
+        var indexId = Object.keys (params.object.data.index_ids || {})[0];
+        if (indexId) {
+          return GR.index.info (indexId).then (_ => params.index = _);
+        }
+      }));
     }
     // XXX abort wait by opts.signal[12]
     return Promise.all (wait).then (_ => {
       if (opts.signal1.aborted || opts.signal2.aborted) {
         throw new DOMException ('Navigation request aborted', 'AbortError');
       }
+
+      if (params.wiki) {
+        params.wiki.url = GR.wiki.url (params.index.index_id, params.wiki.name);
+        if (opts.url) {
+          var url = new URL (params.wiki.url, location.href);
+          url.search = opts.url.search;
+          url.fragment = opts.url.fragment;
+          if (opts.reload && !opts.popstate && opts.url.href !== url.href) {
+            opts.url = url;
+            delete opts.reload;
+            opts.replace = true;
+          }
+        }
+      }
+
       if (opts.url) {
         if (opts.reload) {
           //
@@ -2998,6 +3121,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         params.url += 'i/' + params.index.index_id + '/';
         params.title = params.index.title;
       }
+      
       document.querySelectorAll ('body > header.page').forEach (_ => {
         $fill (_, params);
 
@@ -3005,8 +3129,10 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         if (params.index && params.index.theme) {
           menu.setAttribute ('type', 'index');
           menu.setAttribute ('indexid', params.index.index_id);
+          _.querySelector ('header.page > a').style.visibility = 'visible';
         } else {
           menu.setAttribute ('type', 'group');
+          _.querySelector ('header.page > a').style.visibility = 'hidden';
         }
       });
       var contentTitle = '';
@@ -3028,6 +3154,9 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
 
         if (params.index) {
           div.querySelectorAll ('[data-gr-if-index-type]:not([data-gr-if-index-type~="'+params.index.index_type+'"])').forEach (_ => {
+            _.remove ();
+          });
+          div.querySelectorAll ('[data-gr-if-index-subtype]:not([data-gr-if-index-subtype~="'+params.index.subtype+'"])').forEach (_ => {
             _.remove ();
           });
 
@@ -3052,6 +3181,38 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
               _.remove ();
             });
           }
+
+          div.querySelectorAll ('gr-menu[type=index]').forEach (_ => {
+            _.setAttribute ('indexid', params.index.index_id);
+          });
+        }
+
+        if (params.wiki) {
+          div.querySelectorAll ('gr-menu[type=wiki]').forEach (_ => {
+            _.setAttribute ('indexid', params.index.index_id);
+            _.setAttribute ('wikiname', params.wiki.name);
+          });
+        }
+
+        // XXX
+        if (pageName === 'object-index') {
+          var list = div.querySelector ('gr-list-container[key=objects]');
+          list.setAttribute ('src-object_id', params.object.object_id);
+        } else if (pageName === 'wiki') {
+          var list = div.querySelector ('gr-list-container[key=objects]');
+          list.setAttribute ('src-index_id', params.index.index_id);
+          list.setAttribute ('src-wiki_name', params.wiki.name);
+        } else if (pageName === 'index-index') {
+          var list = div.querySelector ('gr-list-container[key=objects]');
+          list.setAttribute ('src-index_id', params.index.index_id);
+          if (params.index.subtype === 'image') {
+            list.setAttribute ('class', 'image-list');
+          } else if (params.index.subtype === 'file') {
+            list.setAttribute ('class', 'file-list');
+          }
+          div.querySelectorAll ('[data-form-type=uploader]').forEach (_ => {
+            _.setAttribute ('data-context', params.index.index_id);
+          });
         }
 
         _.textContent = '';
@@ -3060,6 +3221,11 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       var title = [params.group.title];
       if (params.index) {
         title.unshift (params.index.title);
+      }
+      if (params.wiki) {
+        title.unshift (params.wiki.name);
+      } else if (params.object) {
+        title.unshift (params.object.data.title);
       }
       if (contentTitle !== '') title.unshift (contentTitle);
       if (params.search) {
@@ -3107,6 +3273,28 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
   });
 }; // _show
 
+(() => {
+  
+  var e = document.createElementNS ('data:,pc', 'templateselector');
+  e.setAttribute ('name', 'selectIndexIndexTemplate');
+  e.pcHandler = function (templates, obj) {
+    console.log(obj);
+    if (obj.index.index_type == 1 /* blog */) {
+      return templates.blog;
+    } else if (obj.index.index_type == 3 /* todos */ ||
+               obj.index.index_type == 4 /* label */ ||
+               obj.index.index_type == 5 /* milestone */) {
+      return templates.todos;
+    } else if (obj.index.index_type == 6 /* fileset */) {
+      return templates.fileset;
+    } else {
+      return templates[""];
+    }
+  }; // selectIndexIndexTemplate
+  document.head.appendChild (e);
+
+}) ();
+
 defineElement ({
   name: 'gr-navigate-status',
   pcActionStatus: true,
@@ -3123,6 +3311,8 @@ defineElement ({
       var as = this.grAS = this.pcActionStatus ();
       as.start ({stages: ['loading']});
       as.stageStart ('loading');
+
+      this.querySelectorAll ('gr-error').forEach (_ => _.hidden = true);
     }, // grStart
     grStop: function () {
       this.grAS.end ({ok: true});
@@ -3131,7 +3321,21 @@ defineElement ({
       document.documentElement.removeAttribute ('data-navigating');
     }, // grStop
     grThrow: function (e) {
-      this.grAS.end ({error: e});
+      var found = false;
+      this.querySelectorAll ('gr-error').forEach (_ => {
+        if (_.getAttribute ('message') === e.message) {
+          found = true;
+          _.hidden = false;
+        } else {
+          _.hidden = true;
+        }
+      });
+
+      if (found) {
+        this.grAS.end ({ok: true});
+      } else {
+        this.grAS.end ({error: e});
+      }
       clearTimeout (this.grTimer);
       this.hidden = false;
       document.documentElement.removeAttribute ('data-navigating');
@@ -3144,7 +3348,10 @@ defineElement ({
   props: {
     pcInit: function () {
       if (!GR.navigate.enabled) GR.navigate._init ();
-      GR.navigate.go (location.href, {reload: true});
+      GR.navigate.go (location.href, {
+        reload: true,
+        popstate: this.hasAttribute ('popstate'),
+      });
       this.remove ();
     }, // pcInit
   },
@@ -3152,6 +3359,7 @@ defineElement ({
 
 addEventListener ('popstate', ev => {
   var nav = document.createElement ('gr-navigate');
+  nav.setAttribute ('popstate', '');
   document.body.appendChild (nav);
 });
 

@@ -347,7 +347,7 @@ sub create_object ($$$) {
       $param{edit_index_id} = 1;
     }
     for my $key (qw(timestamp body_type user_status owner_status
-                    title body)) {
+                    title body todo_state)) {
       $param{$key} = $opts->{$key} if defined $opts->{$key};
     }
     if (defined $opts->{parent_object}) {
@@ -597,11 +597,11 @@ sub b_wait ($$$) {
   my $i = 0;
   return promised_wait_until {
     return Promise->resolve->then (sub {
-      #return $self->b_screenshot ($name, $for->{name} // $for->{selector})
-      #    if $i++ > 5;
+      return $self->b_screenshot ($name, $for->{name} // $for->{selector})
+          if $i++ > 5;
     })->then (sub {
-      #return $self->b_save_source ($name, $for->{name} // $for->{selector})
-      #    if $i++ > 5;
+      return $self->b_save_source ($name, $for->{name} // $for->{selector})
+          if $i++ > 5;
     })->then (sub {
       return Promise->all ([
         (defined $for->{element} ? Promise->resolve ([1, $for->{element}]) : defined $for->{selector} ? $self->b ($name)->execute (q{
@@ -639,6 +639,14 @@ sub b_wait ($$$) {
               return $res->json->{value} =~ /\Q@{[$for->{text}]}\E/;
             });
           })->then (sub {
+            return $_[0] if not $_[0] or not defined $for->{html};
+            return $self->b ($name)->execute (q{
+              return arguments[0].outerHTML;
+            }, [$selected])->then (sub {
+              my $res = $_[0];
+              return $res->json->{value} =~ /\Q@{[$for->{html}]}\E/;
+            });
+          })->then (sub {
             return $_[0] if not $_[0] or not $for->{disabled};
             return $self->b ($name)->execute (q{
               return arguments[0].disabled;
@@ -672,6 +680,44 @@ sub b_wait ($$$) {
     });
   } timeout => 60*2;
 } # b_wait
+
+sub b_screenshot ($$$) {
+  my ($self, $name, $hint) = @_;
+  return $self->b ($name)->screenshot->then (sub {
+    return $self->save_artifact ($_[0], [$name, 'screenshot', ref $hint eq 'ARRAY' ? @$hint : $hint], 'png');
+  });
+} # b_screenshot
+
+sub b_save_source ($$$) {
+  my ($self, $name, $hint) = @_;
+  return $self->b ($name)->execute (q{
+    return document.documentElement.outerHTML;
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $self->save_artifact
+        (encode_web_utf8 $_[0]->json->{value},
+         [$name, 'source', ref $hint eq 'ARRAY' ? @$hint : $hint], 'html');
+  });
+} # b_save_source
+
+sub save_artifact ($$$$) {
+  my ($self, $data, $name, $ext) = @_;
+  $name = [
+    $self->{test_script_path},
+    $self->c->test_name,
+    map { ref $_ eq 'ARRAY' ? @$_ : $_ } @$name,
+  ];
+  $name = join '-', map {
+    my $v = $_ // '';
+    $v =~ s/[^A-Za-z0-9_]/_/g;
+    $v;
+  } @$name;
+  my $path = $self->{server_data}->{artifacts_path}->child ($name . '.' . $ext);
+  warn "Save artifact file |$path|...\n";
+  my $file = Promised::File->new_from_path ($path);
+  return $file->write_byte_string ($data);
+} # save_artifact
 
 # XXX WD
 sub b_is_hidden ($$$) {

@@ -485,14 +485,22 @@ License along with this program, see <https://www.gnu.org/licenses/>.
   }; // $fill
 
   $fill.string = function (s, object) {
-    return s.replace (/\{([\w.]+)\}/g, function (_, n) {
+    return s.replace (/\{(?:(url):|)([\w.]+)\}/g, function (_, t, n) {
       var name = n.split (/\./);
       var value = object;
       for (var i = 0; i < name.length; i++) {
         value = value[name[i]];
         if (value == null) break;
       }
-      return value;
+      if (t === 'url') {
+        try {
+          return encodeURIComponent (value);
+        } catch (e) {
+          return encodeURIComponent ("\uFFFD");
+        }
+      } else {
+        return value;
+      }
     });
   }; // $fill.string
 

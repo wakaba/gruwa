@@ -178,6 +178,7 @@ html[data-theme=black] {
 
 body {
   margin: 0;
+  word-break: break-word;
 }
 
 section:not([hidden]) {
@@ -744,6 +745,11 @@ gr-navigate-status:not([hidden]) {
 
 gr-navigate-status progress:not([hidden]) {
   margin-bottom: 0;
+}
+
+gr-error {
+  background-color: var(--error-background-color);
+  color: var(--error-color);
 }
 
 hr {

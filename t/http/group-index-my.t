@@ -36,7 +36,7 @@ Test {
         is_default => 1,
       }, group => 'g1', account => 'a1'],
       [
-        {path => ['i', '435444', ''], status => 404},
+        {path => ['i', '435444', 'my.json'], status => 404},
         {group => 'g2', status => 404},
         {account => undef, status => 403},
         {account => '', status => 403},

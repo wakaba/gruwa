@@ -25,6 +25,7 @@ our @EXPORT = grep { not /^\$/ }
     @Web::URL::Encoding::EXPORT;
 
 my $RootPath = path (__FILE__)->parent->parent->parent;
+my $TestScriptPath = path ($0)->relative ($RootPath->child ('t'));
 
 our $ServerData;
 my $NeedBrowser;
@@ -38,6 +39,7 @@ sub Test (&;%) {
     my $current = CurrentTest->new ({
       context => shift,
       server_data => $ServerData,
+      test_script_path => $TestScriptPath,
     });
     Promise->resolve ($current)->then ($code)->catch (sub {
       my $error = $_[0];

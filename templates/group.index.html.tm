@@ -1,4 +1,4 @@
-<html t:params="$group $account $group_member $app"
+<html t:params="$group $app"
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-theme="$group->{data}->{theme}">
 <head>
@@ -6,7 +6,10 @@
 
 <body>
   <header class=page>
-    <h1><a href=./ data-href-field=url data-field=title><t:text value="$group->{data}->{title}"></a></h1>
+    <a href data-href-template=/g/{group.group_id}/ rel=top data-field=group.title data-empty=■>
+      <t:text value="$group->{data}->{title}">
+    </a>
+    <h1><a href=./ data-href-field=url data-field=title data-empty=■><t:text value="$group->{data}->{title}"></a></h1>
     <gr-menu type=group />
   </header>
   <page-main/>

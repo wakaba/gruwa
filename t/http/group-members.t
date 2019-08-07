@@ -9,37 +9,6 @@ Test {
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_account (a2 => {});
   })->then (sub {
-    return $current->create_group (g1 => {title => "a\x{500}", owner => 'a1', members => ['a2']});
-  })->then (sub {
-    return $current->are_errors (
-      ['GET', ['g', $current->o ('g1')->{group_id}, 'members'], {}, account => 'a1'],
-      [
-        {path => ['g', int rand 10000, 'members'], status => 404},
-        {account => '', status => 403},
-        {account => undef, status => 302},
-      ],
-    );
-  })->then (sub {
-    return $current->get_html (['g', $current->o ('g1')->{group_id}, 'members'], {}, account => 'a1');
-  })->then (sub {
-    my $result = $_[0];
-    test {
-      ok 1;
-    } $current->c;
-    return $current->get_html (['g', $current->o ('g1')->{group_id}, 'members'], {}, account => 'a2');
-  })->then (sub {
-    my $result = $_[0];
-    test {
-      ok 1;
-    } $current->c;
-  });
-} n => 3, name => '/g/{}/members';
-
-Test {
-  my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->create_account (a2 => {});
-  })->then (sub {
     return $current->create_group (g1 => {});
   })->then (sub {
     return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
@@ -365,7 +334,7 @@ RUN;
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
