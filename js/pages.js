@@ -3119,8 +3119,10 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         if (params.index && params.index.theme) {
           menu.setAttribute ('type', 'index');
           menu.setAttribute ('indexid', params.index.index_id);
+          _.querySelector ('header.page > a').style.visibility = 'visible';
         } else {
           menu.setAttribute ('type', 'group');
+          _.querySelector ('header.page > a').style.visibility = 'hidden';
         }
       });
       var contentTitle = '';
