@@ -44,7 +44,7 @@ Test {
         title: document.title,
         url: location.pathname,
         headerTitle: document.querySelector ('header.page h1').textContent,
-        headerURL: document.querySelector ('header.page a').pathname,
+        headerURL: document.querySelector ('header.page h1 a').pathname,
         headerLink: document.querySelector ('header.page gr-menu a').pathname,
         sectionTitle: document.querySelector ('header.section h1').textContent,
         sectionURL: document.querySelector ('header.section a').pathname,
