@@ -3016,7 +3016,7 @@ GR.navigate.go = function (u, args) {
       var nav = GR._state.currentNavigate = {
         abort: () => ac.abort (),
       };
-      Promise.resolve.then (sendPing);
+      Promise.resolve ().then (sendPing);
       return GR.navigate._show (_[1], _[2], {
         url: url,
         replace: args.replace,
