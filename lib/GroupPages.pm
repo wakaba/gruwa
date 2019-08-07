@@ -971,38 +971,9 @@ sub _write_object_trackbacks ($$$$$$$) {
   });
 } # _write_object_trackbacks
 
-sub group_object ($$$$) {
-  my ($class, $app, $path, $opts) = @_;
-  my $db = $opts->{db};
+sub edit_object ($$$$$$$) {
+  my ($opts, $db, $group_id, $object_id, $object, $app, $path) = @_;
 
-  if (@$path >= 4 and $path->[3] =~ /\A[0-9]+\z/) {
-    # /g/{group_id}/o/{object_id}
-    return $db->select ('object', {
-      group_id => Dongry::Type->serialize ('text', $path->[1]),
-      object_id => Dongry::Type->serialize ('text', $path->[3]),
-    }, fields => ['object_id', 'data', 'owner_status', 'user_status'])->then (sub {
-      my $object = $_[0]->first;
-      return $app->throw_error (404, reason_phrase => 'Object not found')
-          unless defined $object;
-      $object->{data} = Dongry::Type->parse ('json', $object->{data});
-
-      if (@$path == 5 and $path->[4] eq 'embed') {
-        # /g/{group_id}/o/{object_id}/embed
-        if ($object->{user_status} != 1 or # open
-            $object->{owner_status} != 1) { # open
-          return $app->throw_error (410, reason_phrase => 'Object not found');
-        }
-
-        return temma $app, 'group.object.embed.html.tm', {
-          account => $opts->{account},
-          group => $opts->{group},
-          group_member => $opts->{group_member},
-          object => $object,
-        };
-      } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
-        # /g/{group_id}/o/{object_id}/edit.json
-        $app->requires_request_method ({POST => 1});
-        $app->requires_same_origin;
 
         my $changes = {};
         my $reactions = {};
@@ -1559,10 +1530,47 @@ sub group_object ($$$$) {
             });
           }
         })->then (sub {
-          return json $app, {
+          return {
             object_revision_id => ''.$object->{data}->{object_revision_id},
           } if keys %{$changes->{fields}};
-          return json $app, {};
+          return {};
+        });
+} # edit_object
+
+sub group_object ($$$$) {
+  my ($class, $app, $path, $opts) = @_;
+  my $db = $opts->{db};
+
+  if (@$path >= 4 and $path->[3] =~ /\A[0-9]+\z/) {
+    # /g/{group_id}/o/{object_id}
+    return $db->select ('object', {
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+      object_id => Dongry::Type->serialize ('text', $path->[3]),
+    }, fields => ['object_id', 'data', 'owner_status', 'user_status'])->then (sub {
+      my $object = $_[0]->first;
+      return $app->throw_error (404, reason_phrase => 'Object not found')
+          unless defined $object;
+      $object->{data} = Dongry::Type->parse ('json', $object->{data});
+
+      if (@$path == 5 and $path->[4] eq 'embed') {
+        # /g/{group_id}/o/{object_id}/embed
+        if ($object->{user_status} != 1 or # open
+            $object->{owner_status} != 1) { # open
+          return $app->throw_error (410, reason_phrase => 'Object not found');
+        }
+
+        return temma $app, 'group.object.embed.html.tm', {
+          account => $opts->{account},
+          group => $opts->{group},
+          group_member => $opts->{group_member},
+          object => $object,
+        };
+      } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
+        # /g/{group_id}/o/{object_id}/edit.json
+        $app->requires_request_method ({POST => 1});
+        $app->requires_same_origin;
+        return edit_object ($opts, $db, $path->[1], $path->[3], $object, $app, $path)->then (sub {
+          return json $app, $_[0];
         });
       } elsif (@$path == 5 and
                ($path->[4] eq 'file' or $path->[4] eq 'image')) {
