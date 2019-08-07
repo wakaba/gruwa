@@ -971,66 +971,37 @@ sub _write_object_trackbacks ($$$$$$$) {
   });
 } # _write_object_trackbacks
 
-sub edit_object ($$$$) {
-  my ($opts, $db, $object, $app) = @_;
+sub edit_object ($$$$$) {
+  my ($opts, $db, $object, $edits, $app) = @_;
   my $group_id = Dongry::Type->serialize ('text', $opts->{group}->{group_id});
 
+  my $changes = {};
+  my $reactions = {};
+  my $trackbacks = {};
+  my $trackback_count = 0;
 
-        my $changes = {};
-        my $reactions = {};
-        my $trackbacks = {};
-        my $trackback_count = 0;
-        for my $key (qw(title body body_source file_name
-                        author_name author_hatena_id author_bb_username
-                        assignee_bb_username
-                        todo_bb_priority todo_bb_kind todo_bb_state
-                        parent_section_id)) {
-          my $value = $app->text_param ($key);
-          if (defined $value) {
-            $object->{data}->{$key} = $value;
-            $changes->{fields}->{$key} = 1;
-          }
-        }
-        for my $key (qw(timestamp body_type body_source_type
-                        user_status owner_status
-                        todo_state file_size file_closed)) {
-          my $value = $app->bare_param ($key);
-          if (defined $value) {
-            my $old = $object->{data}->{$key} || 0;
-            if ($old != $value) {
-              if ($key eq 'todo_state') {
-                $reactions->{old}->{$key} = $old;
-                $reactions->{new}->{$key} = $value;
-              }
-              $object->{data}->{$key} = 0+$value;
-              $changes->{fields}->{$key} = 1;
-            }
-          }
-        }
-        for my $key (qw(mime_type)) {
-          my $value = $app->text_param ($key);
-          if (defined $value) {
-            my $type = Web::MIME::Type->parse_web_mime_type ($value);
-            if (defined $type) {
-              $object->{data}->{$key} = $type->as_valid_mime_type;
-              $changes->{fields}->{$key} = 1;
-            }
-          }
-        }
-        {
-          my $value = $app->bare_param ('body_data');
-          if (defined $value) {
-            $value = json_bytes2perl $value;
-            if (defined $value and ref $value eq 'HASH') {
-              $object->{data}->{body_data} = $value;
-              $changes->{fields}->{body_data} = 1;
-            }
-          }
-        }
-        if ($object->{data}->{file_closed}) {
-          delete $object->{data}->{upload_token};
-        }
-        # XXX owner_status only can be changed by group owners
+  for my $key (qw(
+    title body body_source file_name author_name author_hatena_id
+    author_bb_username assignee_bb_username todo_bb_priority
+    todo_bb_kind todo_bb_state parent_section_id
+    timestamp body_type body_source_type user_status owner_status
+    todo_state file_size file_closed
+    mime_type
+    body_data
+  )) {
+    if (defined $edits->{$key}) {
+      if ($key eq 'todo_state') {
+        $reactions->{old}->{$key} = $object->{data}->{$key} || 0;
+        $reactions->{new}->{$key} = $edits->{$key};
+      }
+      $object->{data}->{$key} = $edits->{$key};
+      $changes->{fields}->{$key} = 1;
+    }
+  }
+  if ($object->{data}->{file_closed}) {
+    delete $object->{data}->{upload_token};
+  }
+  # XXX owner_status only can be changed by group owners
 
         my $search_data;
         if ($changes->{fields}->{title} or
@@ -1149,118 +1120,116 @@ sub edit_object ($$$$) {
           } # $url
         } # title/body modified
 
-        if ($app->bare_param ('edit_assigned_account_id')) {
-          my $ids = $app->bare_param_list ('assigned_account_id');
-          my $new = {map { $_ => 1 } @$ids};
-          my $old = {%{$object->{data}->{assigned_account_ids} || {}}};
-          my $changed;
-          for (keys %$new) {
-            unless (delete $old->{$_}) {
-              $reactions->{new}->{assigned_account_ids}->{$_} = 1;
-              $changed = 1;
+  if (defined $edits->{assigned_account_ids}) {
+    my $new = $edits->{assigned_account_ids};
+    my $old = {%{$object->{data}->{assigned_account_ids} || {}}};
+    my $changed;
+    for (keys %$new) {
+      unless (delete $old->{$_}) {
+        $reactions->{new}->{assigned_account_ids}->{$_} = 1;
+        $changed = 1;
+      }
+    }
+    for (keys %$old) {
+      $reactions->{old}->{assigned_account_ids}->{$_} = 1;
+      $changed = 1;
+    }
+    if ($changed) {
+      $object->{data}->{assigned_account_ids} = $new;
+      $changes->{fields}->{assigned_account_ids} = 1;
+    }
+  } # assigned_account_ids
+
+  my $time = time;
+  return Promise->resolve->then (sub {
+    my $value = $edits->{parent_object_id};
+    return unless defined $value;
+    my $old = $object->{data}->{parent_object_id} || 0;
+    return if $old == $value;
+    if ($value) {
+      return $db->select ('object', {
+        group_id => $group_id,
+        object_id => $value,
+      }, fields => ['thread_id'])->then (sub {
+        my $v = $_[0]->first;
+        die [404, 'Bad |parent_object_id|'] unless defined $v;
+        $object->{data}->{parent_object_id} = ''.$value;
+        $changes->{fields}->{parent_object_id} = 1;
+        if ($v->{thread_id} != $object->{data}->{thread_id}) {
+          $object->{data}->{thread_id} = ''.$v->{thread_id};
+          $changes->{fields}->{thread_id} = 1;
+        }
+        die [409, 'Bad |parent_object_id|']
+            if (my $x = $object->{data}->{thread_id}) == $object->{object_id} ||
+               (my $y = $object->{data}->{parent_object_id}) == $object->{object_id};
+      });
+    } else {
+      delete $object->{data}->{parent_object_id};
+      $changes->{fields}->{parent_object_id} = 1;
+      $changes->{fields}->{thread_id} = 1;
+      $object->{data}->{thread_id} = ''.$object->{object_id};
+    }
+  })->then (sub {
+    my $index_ids = $edits->{index_ids};
+    return unless defined $index_ids;
+    
+    ## Note that, even when |$changes->{fields}->{timestamp}| or
+    ## |$changes->{fields}->{title}| is true, `index_object`'s
+    ## `updated` is not updated...
+
+    my $new = {map { $_ => 1 } @$index_ids};
+    my $old = {%{$object->{data}->{index_ids} or {}}};
+    my $changed;
+    my @new_id;
+    for (keys %$new) {
+      unless (delete $old->{$_}) {
+        $reactions->{new}->{index_ids}->{$_} = 1;
+        $changed = 1;
+        push @new_id, $_;
+      }
+    }
+    for (keys %$old) {
+      $reactions->{old}->{index_ids}->{$_} = 1;
+      $changed = 1;
+    }
+
+    return unless $changed or $changes->{fields}->{timestamp};
+
+    $object->{data}->{index_ids} = $new;
+    $changes->{fields}->{index_ids} = 1;
+
+    my $index_id_to_type = {};
+    return Promise->resolve->then (sub {
+      return unless @new_id;
+      return $db->select ('index', {
+        group_id => $group_id,
+        index_id => {-in => \@new_id},
+        owner_status => 1, # open
+        user_status => 1, # open
+      }, fields => ['index_id', 'index_type'])->then (sub {
+        $index_id_to_type = {map {
+          $_->{index_id} => $_->{index_type};
+        } @{$_[0]->all}};
+        for (@new_id) {
+          die [400, 'Bad |index_id| ('.$_.')']
+              unless exists $index_id_to_type->{$_};
+          if ($index_id_to_type->{$_} == 3) { # todo
+            unless (defined $object->{data}->{todo_state}) {
+              $object->{data}->{todo_state} = 1; # open
+              $changes->{fields}->{todo_state} = 1;
             }
-          }
-          for (keys %$old) {
-            $reactions->{old}->{assigned_account_ids}->{$_} = 1;
-            $changed = 1;
-          }
-          if ($changed) {
-            $object->{data}->{assigned_account_ids} = $new;
-            $changes->{fields}->{assigned_account_ids} = 1;
           }
         }
-
-        my $time = time;
-        return Promise->resolve->then (sub {
-          my $value = $app->bare_param ('parent_object_id');
-          return unless defined $value;
-          my $old = $object->{data}->{parent_object_id} || 0;
-          return if $old == $value;
-          if ($value) {
-            return $db->select ('object', {
-              group_id => $group_id,
-              object_id => $value,
-            }, fields => ['thread_id'])->then (sub {
-              my $v = $_[0]->first;
-              return $app->throw_error
-                  (404, reason_phrase => 'Bad |parent_object_id|')
-                      unless defined $v;
-              $object->{data}->{parent_object_id} = ''.$value;
-              $changes->{fields}->{parent_object_id} = 1;
-              if ($v->{thread_id} != $object->{data}->{thread_id}) {
-                $object->{data}->{thread_id} = ''.$v->{thread_id};
-                $changes->{fields}->{thread_id} = 1;
-              }
-              return $app->throw_error (409, reason_phrase => 'Bad |parent_object_id|')
-                  if (my $x = $object->{data}->{thread_id}) == $object->{object_id} ||
-                     (my $y = $object->{data}->{parent_object_id}) == $object->{object_id};
-            });
-          } else {
-            delete $object->{data}->{parent_object_id};
-            $changes->{fields}->{parent_object_id} = 1;
-            $changes->{fields}->{thread_id} = 1;
-            $object->{data}->{thread_id} = ''.$object->{object_id};
-          }
-        })->then (sub {
-          return unless $app->bare_param ('edit_index_id');
-          ## Note that, even when |$changes->{fields}->{timestamp}| or
-          ## |$changes->{fields}->{title}| is true, `index_object`'s
-          ## `updated` is not updated...
-
-          my $index_ids = $app->bare_param_list ('index_id');
-          my $new = {map { $_ => 1 } @$index_ids};
-          my $old = {%{$object->{data}->{index_ids} or {}}};
-          my $changed;
-          my @new_id;
-          for (keys %$new) {
-            unless (delete $old->{$_}) {
-              $reactions->{new}->{index_ids}->{$_} = 1;
-              $changed = 1;
-              push @new_id, $_;
-            }
-          }
-          for (keys %$old) {
-            $reactions->{old}->{index_ids}->{$_} = 1;
-            $changed = 1;
-          }
-
-          return unless $changed or $changes->{fields}->{timestamp};
-
-          $object->{data}->{index_ids} = $new;
-          $changes->{fields}->{index_ids} = 1;
-
-          my $index_id_to_type = {};
-          return Promise->resolve->then (sub {
-            return unless @new_id;
-            return $db->select ('index', {
-              group_id => $group_id,
-              index_id => {-in => \@new_id},
-              owner_status => 1, # open
-              user_status => 1, # open
-            }, fields => ['index_id', 'index_type'])->then (sub {
-              $index_id_to_type = {map {
-                $_->{index_id} => $_->{index_type};
-              } @{$_[0]->all}};
-              for (@new_id) {
-                return $app->throw_error (400, reason_phrase => 'Bad |index_id| ('.$_.')')
-                    unless exists $index_id_to_type->{$_};
-                if ($index_id_to_type->{$_} == 3) { # todo
-                  unless (defined $object->{data}->{todo_state}) {
-                    $object->{data}->{todo_state} = 1; # open
-                    $changes->{fields}->{todo_state} = 1;
-                  }
-                }
-              }
-            });
+      });
 
     ## Before this line, don't write anything to the database.
     ## After this line, don't throw without completing the edit.
 
-          })->then (sub {
-            if (@$index_ids) {
-              my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $object->{data}->{title});
-              return Promise->all ([
-                $db->insert ('index_object', [map {
+    })->then (sub {
+      if (@$index_ids) {
+        my $wiki_name_key = sha1_hex +Dongry::Type->serialize ('text', $object->{data}->{title});
+        return Promise->all ([
+          $db->insert ('index_object', [map {
                   +{
                     group_id => $group_id,
                     index_id => $_,
@@ -1292,6 +1261,8 @@ sub edit_object ($$$$) {
 
           my $sdata;
           my $rev_data = {changes => $changes};
+
+          ## Revision metadata (for importing)
           for my $key (qw(timestamp)) {
             my $v = $app->bare_param ('revision_' . $key);
             $rev_data->{$key} = 0+$v if defined $v;
@@ -1300,6 +1271,7 @@ sub edit_object ($$$$) {
             my $v = $app->text_param ('revision_' . $key);
             $rev_data->{$key} = $v if defined $v;
           }
+          
           return $db->execute ('select uuid_short() as uuid')->then (sub {
             $object->{data}->{object_revision_id} = ''.$_[0]->first->{uuid};
           })->then (sub {
@@ -1472,6 +1444,7 @@ sub edit_object ($$$$) {
             });
           });
         })->then (sub {
+          ## Source metadata (for importing)
           my $ts = $app->bare_param ('source_timestamp');
           my $rev_ts = $app->bare_param ('source_rev_timestamp');
           my $sha = $app->bare_param ('source_sha');
@@ -1569,8 +1542,58 @@ sub group_object ($$$$) {
         # /g/{group_id}/o/{object_id}/edit.json
         $app->requires_request_method ({POST => 1});
         $app->requires_same_origin;
-        return edit_object ($opts, $db, $object, $app)->then (sub {
+        my $edits = {};
+        for my $key (qw(title body body_source file_name
+                        author_name author_hatena_id author_bb_username
+                        assignee_bb_username
+                        todo_bb_priority todo_bb_kind todo_bb_state
+                        parent_section_id)) {
+          my $value = $app->text_param ($key);
+          $edits->{$key} = $value if defined $value;
+        }
+        for my $key (qw(timestamp body_type body_source_type
+                        user_status owner_status
+                        todo_state file_size file_closed)) {
+          my $value = $app->bare_param ($key);
+          if (defined $value) {
+            my $old = $object->{data}->{$key} || 0;
+            $edits->{$key} = 0+$value if $old != $value;
+          }
+        }
+        for my $key (qw(mime_type)) {
+          my $value = $app->text_param ($key);
+          if (defined $value) {
+            my $type = Web::MIME::Type->parse_web_mime_type ($value);
+            if (defined $type) {
+              $edits->{$key} = $type->as_valid_mime_type;
+            }
+          }
+        }
+        {
+          my $value = $app->bare_param ('body_data');
+          if (defined $value) {
+            $value = json_bytes2perl $value;
+            if (defined $value and ref $value eq 'HASH') {
+              $edits->{body_data} = $value;
+            }
+          }
+        }
+        if ($app->bare_param ('edit_assigned_account_id')) {
+          my $ids = $app->bare_param_list ('assigned_account_id');
+          $edits->{assigned_account_ids} = {map { $_ => 1 } @$ids};
+        }
+        $edits->{parent_object_id} = $app->bare_param ('parent_object_id'); # or undef
+        if ($app->bare_param ('edit_index_id')) {
+          $edits->{index_ids} = $app->bare_param_list ('index_id');
+        }
+        return edit_object ($opts, $db, $object, $edits, $app)->then (sub {
           return json $app, $_[0];
+        })->catch (sub {
+          my $e = $_[0];
+          if (defined $e and ref $e eq 'ARRAY') {
+            return $app->throw_error ($e->[0], reason_phrase => $e->[1]);
+          }
+          die $e;
         });
       } elsif (@$path == 5 and
                ($path->[4] eq 'file' or $path->[4] eq 'image')) {
