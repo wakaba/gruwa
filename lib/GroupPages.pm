@@ -971,8 +971,9 @@ sub _write_object_trackbacks ($$$$$$$) {
   });
 } # _write_object_trackbacks
 
-sub edit_object ($$$$$$$) {
-  my ($opts, $db, $group_id, $object_id, $object, $app, $path) = @_;
+sub edit_object ($$$$) {
+  my ($opts, $db, $object, $app) = @_;
+  my $group_id = Dongry::Type->serialize ('text', $opts->{group}->{group_id});
 
 
         my $changes = {};
@@ -1177,7 +1178,7 @@ sub edit_object ($$$$$$$) {
           return if $old == $value;
           if ($value) {
             return $db->select ('object', {
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              group_id => $group_id,
               object_id => $value,
             }, fields => ['thread_id'])->then (sub {
               my $v = $_[0]->first;
@@ -1232,7 +1233,7 @@ sub edit_object ($$$$$$$) {
           return Promise->resolve->then (sub {
             return unless @new_id;
             return $db->select ('index', {
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              group_id => $group_id,
               index_id => {-in => \@new_id},
               owner_status => 1, # open
               user_status => 1, # open
@@ -1261,9 +1262,9 @@ sub edit_object ($$$$$$$) {
               return Promise->all ([
                 $db->insert ('index_object', [map {
                   +{
-                    group_id => Dongry::Type->serialize ('text', $path->[1]),
+                    group_id => $group_id,
                     index_id => $_,
-                    object_id => Dongry::Type->serialize ('text', $path->[3]),
+                    object_id => ''.$object->{object_id},
                     created => $time,
                     timestamp => $object->{data}->{timestamp},
                     wiki_name_key => $wiki_name_key,
@@ -1273,15 +1274,15 @@ sub edit_object ($$$$$$$) {
                   wiki_name_key => $db->bare_sql_fragment ('values(`wiki_name_key`)'),
                 }),
                 $db->delete ('index_object', {
-                  group_id => Dongry::Type->serialize ('text', $path->[1]),
+                  group_id => $group_id,
                   index_id => {-not_in => $index_ids},
-                  object_id => Dongry::Type->serialize ('text', $path->[3]),
+                  object_id => ''.$object->{object_id},
                 }),
               ]);
             } else { # no $index_ids
               return $db->delete ('index_object', {
-                group_id => Dongry::Type->serialize ('text', $path->[1]),
-                object_id => Dongry::Type->serialize ('text', $path->[3]),
+                group_id => $group_id,
+                object_id => ''.$object->{object_id},
               });
             }
           });
@@ -1305,11 +1306,11 @@ sub edit_object ($$$$$$$) {
             return unless keys %$reactions;
             $reactions->{object_revision_id} = $object->{data}->{object_revision_id};
             return create_object ($db, 
-              group_id => $path->[1],
+              group_id => $group_id,
               author_account_id => $opts->{account}->{account_id},
               body_type => 3, # data
               body_data => $reactions,
-              parent_object_id => $path->[3],
+              parent_object_id => $object->{object_id},
               thread_id => $object->{data}->{thread_id},
             );
           })->then (sub {
@@ -1325,7 +1326,7 @@ sub edit_object ($$$$$$$) {
             return unless keys %$from_imported;
 
             return $db->select ('imported', {
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              group_id => $group_id,
               source_page_sha => {-in => [map {
                 sha1_hex (Dongry::Type->serialize ('text', $_));
               } keys %$from_imported]},
@@ -1352,7 +1353,7 @@ sub edit_object ($$$$$$$) {
             ## For future imports or url bookmakrs
             return $db->insert ('url_ref', [map {
               +{
-                group_id => Dongry::Type->serialize ('text', $path->[1]),
+                group_id => $group_id,
                 source_id => ''.$object->{object_id},
                 dest_url => Dongry::Type->serialize ('text', $_),
                 dest_url_sha => sha1_hex (Dongry::Type->serialize ('text', $_)),
@@ -1363,7 +1364,7 @@ sub edit_object ($$$$$$$) {
           })->then (sub {
             return _write_object_trackbacks (
               $db,
-              $path->[1],
+              $group_id,
               [keys %{$trackbacks->{objects} or {}}],
               $opts->{account}->{account_id},
               $object->{object_id},
@@ -1376,7 +1377,6 @@ sub edit_object ($$$$$$$) {
             );
           })->then (sub {
             return unless keys %{$trackbacks->{wiki_names} or {}};
-            my $group_id = Dongry::Type->serialize ('text', $path->[1]);
             my @x;
             return $db->select ('index', {
               group_id => $group_id,
@@ -1390,7 +1390,7 @@ sub edit_object ($$$$$$$) {
                 return promised_map {
                   my $wiki_name = $_[0];
                   return create_object ($db,
-                    group_id => $path->[1],
+                    group_id => $group_id,
                     author_account_id => $opts->{account}->{account_id},
                     body_type => 3, # data
                     body_data => {
@@ -1418,8 +1418,8 @@ sub edit_object ($$$$$$$) {
           })->then (sub {
             $sdata = Dongry::Type->serialize ('json', $object->{data});
             return $db->insert ('object_revision', [{
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
-              object_id => Dongry::Type->serialize ('text', $path->[3]),
+              group_id => $group_id,
+              object_id => ''.$object->{object_id},
               data => $sdata,
 
               object_revision_id => $object->{data}->{object_revision_id},
@@ -1452,20 +1452,20 @@ sub edit_object ($$$$$$$) {
                   if $changes->{fields}->{$key};
             }
             return $db->update ('object', $update, where => {
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
-              object_id => Dongry::Type->serialize ('text', $path->[3]),
+              group_id => $group_id,
+              object_id => ''.$object->{object_id},
             });
           })->then (sub {
             return $opts->{acall}->(['group', 'touch'], {
               context_key => $app->config->{accounts}->{context} . ':group',
-              group_id => $path->[1],
+              group_id => $group_id,
             })->();
           })->then (sub {
             return unless keys %{$object->{data}->{index_ids} or {}};
             return $db->update ('index', {
               updated => $time,
             }, where => {
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              group_id => $group_id,
               index_id => {-in => [map {
                 Dongry::Type->serialize ('text', $_);
               } keys %{$object->{data}->{index_ids} or {}}]},
@@ -1499,7 +1499,7 @@ sub edit_object ($$$$$$$) {
           # XXX
           if (defined $ss and defined $sp) {
             return $db->insert ('imported', [{
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              group_id => $group_id,
               source_site => $ss,
               source_site_sha => (sha1_hex $ss),
               source_page => $sp,
@@ -1507,7 +1507,7 @@ sub edit_object ($$$$$$$) {
               created => $time,
               updated => $time,
               type => 2, # object
-              dest_id => Dongry::Type->serialize ('text', $path->[3]),
+              dest_id => ''.$object->{object_id},
               sync_info => Dongry::Type->serialize ('json', $info),
             }], duplicate => {
               source_site => $db->bare_sql_fragment ('values(`source_site`)'),
@@ -1524,9 +1524,9 @@ sub edit_object ($$$$$$$) {
               sync_info => Dongry::Type->serialize ('json', $info),
               updated => $time,
             }, where => {
-              group_id => Dongry::Type->serialize ('text', $path->[1]),
+              group_id => $group_id,
               type => 2, # object
-              dest_id => Dongry::Type->serialize ('text', $path->[3]),
+              dest_id => ''.$object->{object_id},
             });
           }
         })->then (sub {
@@ -1569,7 +1569,7 @@ sub group_object ($$$$) {
         # /g/{group_id}/o/{object_id}/edit.json
         $app->requires_request_method ({POST => 1});
         $app->requires_same_origin;
-        return edit_object ($opts, $db, $path->[1], $path->[3], $object, $app, $path)->then (sub {
+        return edit_object ($opts, $db, $object, $app)->then (sub {
           return json $app, $_[0];
         });
       } elsif (@$path == 5 and
