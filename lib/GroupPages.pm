@@ -152,6 +152,71 @@ sub _write_object_trackbacks ($$$$$$$) {
   });
 } # _write_object_trackbacks
 
+sub get_import_source ($) {
+  my $page = shift;
+
+  my $url = $page->stringify_without_fragment;
+  my $suffix = $page->fragment;
+  $suffix = defined $suffix ? '#' . $suffix : '';
+
+  my $urls = [];
+  if ($page->host->to_ascii =~ /\.g\.hatena\.ne\.jp$/) {
+    $url =~ s/^http:/https:/;
+
+    if ($url =~ m{^(https://[^/]+/files/[^/]+/[^/]+)\.([A-Za-z0-9_-]+)$}) {
+      $url = $1;
+      my $is_image = {
+        png => 1, gif => 1, jpg => 1, # jpeg jpe
+        bmp => 1, ico => 1, cur => 1,
+      }->{lc $2};
+      $suffix = $is_image ? 'image' : 'file';
+    } elsif ($url =~ m{^https://[^/]+/files/[^/]+/[^/]+$}) {
+      $suffix = 'file';
+    } elsif ($url =~ m{^(https://[^/]+/[^/]+/[0-9]+)/([^/]+)$}) {
+      $url = $1;
+      $suffix = '#' . $2;
+    }
+    push @$urls, $url;
+    my $url2 = $url;
+    $url2 =~ s{^(https://[^/]+/)hatena-ex-}{$1};
+    my $url3 = $url2;
+    $url3 =~ s{^(https://[^/]+/)}{$1hatena-ex-};
+    push @$urls, $url2 if $url ne $url2;
+    push @$urls, $url3 if $url ne $url3;
+  } else {
+    push @$urls, $url;
+  }
+
+  return ($urls, $suffix);
+} # get_import_source
+
+sub source_urls ($) {
+  my $app = $_[0];
+
+  my $source_url = $app->text_param ('source_page');
+  if (defined $source_url) {
+    $source_url = Web::URL->parse_string ($source_url);
+    return $app->throw_error (400, reason_phrase => 'Bad |source_page|')
+        if not defined $source_url or
+           not $source_url->is_http_s;
+  }
+
+  my $source_site_url = $app->text_param ('source_site');
+  if (defined $source_site_url) {
+    $source_site_url = Web::URL->parse_string ($source_site_url);
+    return $app->throw_error (400, reason_phrase => 'Bad |source_site|')
+        if not defined $source_site_url or
+           not $source_site_url->is_http_s;
+  }
+  return $app->throw_error (400, reason_phrase => 'Bad |source_site|')
+      if (defined $source_url and not defined $source_site_url) or
+         (not defined $source_url and defined $source_site_url) or
+         (defined $source_url and defined $source_site_url and
+          not $source_url->get_origin->same_origin_as ($source_site_url->get_origin));
+
+  return ($source_site_url, $source_url);
+} # source_urls
+
 sub edit_object ($$$$$) {
   my ($opts, $db, $object, $edits, $app) = @_;
   my $group_id = Dongry::Type->serialize ('text', $opts->{group}->{group_id});
@@ -769,44 +834,6 @@ sub create ($$$$) {
   });
 } # create
 
-sub get_import_source ($) {
-  my $page = shift;
-
-  my $url = $page->stringify_without_fragment;
-  my $suffix = $page->fragment;
-  $suffix = defined $suffix ? '#' . $suffix : '';
-
-  my $urls = [];
-  if ($page->host->to_ascii =~ /\.g\.hatena\.ne\.jp$/) {
-    $url =~ s/^http:/https:/;
-
-    if ($url =~ m{^(https://[^/]+/files/[^/]+/[^/]+)\.([A-Za-z0-9_-]+)$}) {
-      $url = $1;
-      my $is_image = {
-        png => 1, gif => 1, jpg => 1, # jpeg jpe
-        bmp => 1, ico => 1, cur => 1,
-      }->{lc $2};
-      $suffix = $is_image ? 'image' : 'file';
-    } elsif ($url =~ m{^https://[^/]+/files/[^/]+/[^/]+$}) {
-      $suffix = 'file';
-    } elsif ($url =~ m{^(https://[^/]+/[^/]+/[0-9]+)/([^/]+)$}) {
-      $url = $1;
-      $suffix = '#' . $2;
-    }
-    push @$urls, $url;
-    my $url2 = $url;
-    $url2 =~ s{^(https://[^/]+/)hatena-ex-}{$1};
-    my $url3 = $url2;
-    $url3 =~ s{^(https://[^/]+/)}{$1hatena-ex-};
-    push @$urls, $url2 if $url ne $url2;
-    push @$urls, $url3 if $url ne $url3;
-  } else {
-    push @$urls, $url;
-  }
-
-  return ($urls, $suffix);
-} # get_import_source
-
 sub main ($$$$$) {
   my ($class, $app, $path, $db, $acall) = @_;
   # /g/{group_id}/...
@@ -1347,33 +1374,6 @@ sub group_members_list ($$$$) {
       });
   });
 } # group_members_list
-
-sub source_urls ($) {
-  my $app = $_[0];
-
-  my $source_url = $app->text_param ('source_page');
-  if (defined $source_url) {
-    $source_url = Web::URL->parse_string ($source_url);
-    return $app->throw_error (400, reason_phrase => 'Bad |source_page|')
-        if not defined $source_url or
-           not $source_url->is_http_s;
-  }
-
-  my $source_site_url = $app->text_param ('source_site');
-  if (defined $source_site_url) {
-    $source_site_url = Web::URL->parse_string ($source_site_url);
-    return $app->throw_error (400, reason_phrase => 'Bad |source_site|')
-        if not defined $source_site_url or
-           not $source_site_url->is_http_s;
-  }
-  return $app->throw_error (400, reason_phrase => 'Bad |source_site|')
-      if (defined $source_url and not defined $source_site_url) or
-         (not defined $source_url and defined $source_site_url) or
-         (defined $source_url and defined $source_site_url and
-          not $source_url->get_origin->same_origin_as ($source_site_url->get_origin));
-
-  return ($source_site_url, $source_url);
-} # source_urls
 
 sub group_index ($$$$) {
   my ($class, $app, $path, $opts) = @_;
