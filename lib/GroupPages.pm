@@ -1411,6 +1411,7 @@ sub group_index ($$$$) {
 
   if (@$path >= 4 and $path->[3] =~ /\A[0-9]+\z/) {
     # /g/{group_id}/i/{index_id}
+    # racy!
     return get_index ($db, $path->[1], $path->[3])->then (sub {
       my $index = $_[0];
       return $app->throw_error (404, reason_phrase => 'Index not found')
@@ -1431,18 +1432,23 @@ sub group_index ($$$$) {
             ## 5 milestone
             ## 6 fileset
           theme => $index->{options}->{theme},
-          color => $index->{options}->{color},
-          deadline => $index->{options}->{deadline},
-          subtype => $index->{options}->{subtype},
+          color => $index->{options}->{color}, # or undef
+          deadline => $index->{options}->{deadline}, # or undef
+          subtype => $index->{options}->{subtype}, # or undef
+          object_id => $index->{options}->{object_id}, # or undef
         };
       } elsif (@$path == 5 and $path->[4] eq 'edit.json') {
         # /g/{group_id}/i/{index_id}/edit.json
         $app->requires_request_method ({POST => 1});
         $app->requires_same_origin;
-        my %update = (updated => time);
+        my $time = time;
+        my %update;
+        my $dd = {};
         my $title = $app->text_param ('title') // '';
-        $update{title} = Dongry::Type->serialize ('text', $title)
-            if length $title;
+        if (length $title) {
+          $update{title} = Dongry::Type->serialize ('text', $title);
+          $dd->{title} = $title;
+        }
         my $options = $index->{options};
         my $options_modified;
         for my $key (qw(theme color)) {
@@ -1450,6 +1456,7 @@ sub group_index ($$$$) {
           if (length $value) {
             $options->{$key} = $value;
             $options_modified = 1;
+            $dd->{$key} = $value;
           }
         }
         {
@@ -1459,28 +1466,65 @@ sub group_index ($$$$) {
             $parser->onerror (sub { });
             my $dt = $parser->parse_date_string ($value);
             if (defined $dt) {
+              $dd->{deadline} =
               $options->{deadline} = $dt->to_unix_number;
             } else {
               delete $options->{deadline};
+              $dd->{deadline} = undef;
             }
             $options_modified = 1;
           }
         }
-        if ($options_modified) {
-          $update{options} = Dongry::Type->serialize ('json', $options);
-          # XXX need transaction for editing options :-<
-        }
         my $index_type = $app->bare_param ('index_type');
         if (defined $index_type) {
+          $dd->{index_type} =
           $update{index_type} = 0+$index_type;
         }
         return Promise->resolve->then (sub {
-          return unless 1 < keys %update;
-          return $db->update ('index', \%update, where => {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            index_id => Dongry::Type->serialize ('text', $path->[3]),
-          });
-          # XXX logging
+          return unless $options_modified or keys %update;
+          if (defined $options->{object_id}) {
+            return $db->select ('object', {
+              group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
+              object_id => Dongry::Type->serialize ('text', $options->{object_id}),
+            }, fields => ['object_id', 'data'])->then (sub {
+              my $object = $_[0]->first;
+              die "Object |$options->{object_id}| not found"
+                  unless defined $object;
+              $object->{data} = Dongry::Type->parse ('json', $object->{data});
+              return $object;
+            });
+          } else {
+            ## Backcompat: Indexes created before 2019-08 update might
+            ## not have index object.
+            return create_object ($db,
+              group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
+              author_account_id => $opts->{account}->{account_id},
+              body_type => 3, # data
+              body_data => {},
+              now => $time,
+            )->then (sub {
+              my $result = $_[0];
+              $options->{object_id} = $result->{object_id};
+              $options_modified = 1;
+              return $result->{object};
+            });
+          }
+        })->then (sub {
+          my $object = $_[0];
+          if ($options_modified) {
+            $update{options} = Dongry::Type->serialize ('json', $options);
+          }
+          return unless keys %update;
+          $update{updated} = $time;
+          return Promise->all ([
+            $db->update ('index', \%update, where => {
+              group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
+              index_id => Dongry::Type->serialize ('text', $index->{index_id}),
+            }),
+            edit_object ($opts, $db, $object, {
+              body_data_delta => $dd,
+            }, $app),
+          ]);
         })->then (sub {
           return json $app, {};
         });
@@ -1514,20 +1558,25 @@ sub group_index ($$$$) {
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
 
+    my $dd = {};
     my $title = $app->text_param ('title') // '';
     return $app->throw_error (400, reason_phrase => 'Bad |title|')
         unless length $title;
+    $dd->{title} = $title;
 
     my ($source_site_url, $source_page_url) = source_urls $app;
 
     my $time = time;
     return $db->execute ('select uuid_short() as uuid')->then (sub {
       my $index_id = $_[0]->first->{uuid};
+      my $group_id = Dongry::Type->serialize ('text', $opts->{group}->{group_id});
       my $index_type = 0+($app->bare_param ('index_type') || 0);
       my $options = {};
       if ($index_type == 1 or $index_type == 2 or $index_type == 3) {
+        $dd->{theme} =
         $options->{theme} = $app->text_param ('theme') // 'green';
       } elsif ($index_type == 4) {
+        $dd->{color} =
         $options->{color} = sprintf '#%02X%02X%02X',
             int rand 256,
             int rand 256,
@@ -1535,22 +1584,31 @@ sub group_index ($$$$) {
       }
       my $subtype = $app->bare_param ('subtype');
       $options->{subtype} = $subtype if defined $subtype;
-      return $db->insert ('index', [{
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-        index_id => $index_id,
-        title => Dongry::Type->serialize ('text', $title),
-        created => $time,
-        updated => $time,
-        owner_status => 1, # open
-        user_status => 1, # open
-        index_type => $index_type,
-        options => Dongry::Type->serialize ('json', $options),
-      }])->then (sub {
+      return create_object ($db,
+        group_id => $group_id,
+        author_account_id => $opts->{account}->{account_id},
+        body_type => 3, # data
+        body_data => $dd,
+      )->then (sub {
+        my $result = $_[0];
+        $options->{object_id} = $result->{object}->{object_id};
+        return $db->insert ('index', [{
+          group_id => $group_id,
+          index_id => $index_id,
+          title => Dongry::Type->serialize ('text', $title),
+          created => $time,
+          updated => $time,
+          owner_status => 1, # open
+          user_status => 1, # open
+          index_type => $index_type,
+          options => Dongry::Type->serialize ('json', $options),
+        }]);
+      })->then (sub {
         return unless defined $source_site_url;
         my $page = Dongry::Type->serialize ('text', $source_page_url->stringify);
         my $site = Dongry::Type->serialize ('text', $source_site_url->stringify);
         return $db->insert ('imported', [{
-          group_id => Dongry::Type->serialize ('text', $path->[1]),
+          group_id => $group_id,
           source_page_sha => sha1_hex ($page),
           source_page => $page,
           source_site_sha => sha1_hex ($site),
@@ -1573,8 +1631,7 @@ sub group_index ($$$$) {
           group_id => $path->[1],
           index_id => ''.$index_id,
         };
-        # XXX logging
-        # touch group
+        # XXX touch group
       });
     });
   }

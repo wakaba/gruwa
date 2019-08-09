@@ -189,6 +189,40 @@ Test {
   });
 } n => 2, name => 'create with theme';
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {owner => 'a1'}],
+  )->then (sub {
+    return $current->post_json (['i', 'create.json'], {
+      title => $current->generate_text (t1 => {}),
+      theme => 'blue',
+      index_type => 2,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    $current->set_o (i1 => $result->{json});
+    return $current->get_json (['info.json'], {}, account => 'a1', group => 'g1', index => 'i1');
+  })->then (sub {
+    my $result = $_[0];
+    $current->set_o (oid1 => $result->{json}->{object_id});
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('oid1'),
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    my $obj = $result->{json}->{objects}->{$current->o ('oid1')};
+    test {
+      ok $obj->{data}->{object_revision_id};
+      is $obj->{data}->{body_type}, 3;
+      is $obj->{data}->{body_data}->{title}, $current->o ('t1');
+      is $obj->{data}->{body_data}->{theme}, 'blue';
+    } $current->c;
+  });
+} n => 4, name => 'group index object';
+
 RUN;
 
 =head1 LICENSE

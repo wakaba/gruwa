@@ -40,6 +40,11 @@ sub get_html ($$;$%) {
         ? ('g', $self->_get_o ($args{group})->{group_id})
         : ()
     ),
+    (
+      defined $args{index}
+        ? ('i', $self->_get_o ($args{index})->{index_id})
+        : ()
+    ),
     @$path,
   ];
   my $cookies = {%{$args{cookies} or {}}};
@@ -69,6 +74,11 @@ sub get_json ($$;$%) {
     (
       defined $args{group}
         ? ('g', $self->_get_o ($args{group})->{group_id})
+        : ()
+    ),
+    (
+      defined $args{index}
+        ? ('i', $self->_get_o ($args{index})->{index_id})
         : ()
     ),
     @$path,
@@ -103,6 +113,11 @@ sub get_file ($$;$%) {
         ? ('g', $self->_get_o ($args{group})->{group_id})
         : ()
     ),
+    (
+      defined $args{index}
+        ? ('i', $self->_get_o ($args{index})->{index_id})
+        : ()
+    ),
     @$path,
   ];
   my $cookies = {%{$args{cookies} or {}}};
@@ -131,6 +146,11 @@ sub get_redirect ($$;$%) {
         ? ('g', $self->_get_o ($args{group})->{group_id})
         : ()
     ),
+    (
+      defined $args{index}
+        ? ('i', $self->_get_o ($args{index})->{index_id})
+        : ()
+    ),
     @$path,
   ];
   my $cookies = {%{$args{cookies} or {}}};
@@ -157,6 +177,11 @@ sub post_json ($$$;%) {
     (
       defined $args{group}
         ? ('g', $self->_get_o ($args{group})->{group_id})
+        : ()
+    ),
+    (
+      defined $args{index}
+        ? ('i', $self->_get_o ($args{index})->{index_id})
         : ()
     ),
     @$path,
@@ -193,6 +218,11 @@ sub post_redirect ($$$;%) {
     (
       defined $args{group}
         ? ('g', $self->_get_o ($args{group})->{group_id})
+        : ()
+    ),
+    (
+      defined $args{index}
+        ? ('i', $self->_get_o ($args{index})->{index_id})
         : ()
     ),
     @$path,
