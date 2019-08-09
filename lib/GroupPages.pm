@@ -846,7 +846,7 @@ sub main ($$$$$) {
     # XXX
     admin_status => 1,
     owner_status => 1,
-    with_group_data => ['title', 'theme', 'default_wiki_index_id', 'object_id'],
+    with_group_data => ['title', 'theme', 'default_wiki_index_id', 'object_id', 'icon_object_id'],
     with_group_member_data => ['default_index_id'],
   })->(sub {
     my $account_data = $_[0];
@@ -932,6 +932,7 @@ sub group ($$$$) {
       theme => $g->{data}->{theme},
       default_wiki_index_id => $g->{data}->{default_wiki_index_id}, # or undef
       object_id => $g->{data}->{object_id}, # or undef
+      icon_object_id => $g->{data}->{icon_object_id}, # or undef
     };
   } elsif (@$path == 3 and $path->[2] eq 'myinfo.json') {
     # /g/{group_id}/myinfo.json
@@ -997,6 +998,19 @@ sub group ($$$$) {
         push @name, 'default_wiki_index_id';
         push @value, $wiki_id;
         $dd->{default_wiki_index_id} = $wiki_id;
+      });
+    })->then (sub {
+      my $icon_id = $app->bare_param ('icon_object_id');
+      return unless defined $icon_id;
+      return $db->select ('object', {
+        group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
+        object_id => $icon_id,
+      }, fields => ['object_id'])->then (sub {
+        return $app->throw_error (400, reason_phrase => 'Bad |object_id|')
+            unless $_[0]->first;
+        push @name, 'icon_object_id';
+        push @value, $icon_id;
+        $dd->{icon_object_id} = $icon_id;
       });
     })->then (sub {
       return unless @name;
@@ -1141,6 +1155,15 @@ sub group ($$$$) {
       group => $opts->{group},
       group_member => $opts->{group_member},
     };
+  }
+
+  if (@$path == 3 and $path->[2] eq 'icon') {
+    # /g/{}/icon
+    my $id = $opts->{group}->{data}->{icon_object_id};
+    $app->http->add_response_header
+        ('Cache-Control' => 'private,max-age=108000');
+    my $url = defined $id ? "o/$id/image" : "/favicon.ico";
+    return $app->send_redirect ($url);
   }
   
   return $app->throw_error (404);

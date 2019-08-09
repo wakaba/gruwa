@@ -46,9 +46,10 @@ Test {
       is $result->{json}->{default_wiki_index_id}, undef;
       is $result->{json}->{theme}, 'red';
       like $result->{res}->body_bytes, qr{"object_id"\s*:\s*"};
+      is $result->{json}->{icon_object_id}, undef;
     } $current->c;
   });
-} n => 12, name => '/g/{}/info.json';
+} n => 13, name => '/g/{}/info.json';
 
 RUN;
 

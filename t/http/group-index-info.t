@@ -36,9 +36,10 @@ Test {
       is $result->{json}->{updated}, $result->{json}->{created};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
       like $result->{res}->body_bytes, qr{"index_id"\s*:\s*"};
+      like $result->{res}->body_bytes, qr{"object_id"\s*:\s*"};
     } $current->c;
   });
-} n => 10, name => 'info';
+} n => 11, name => 'info';
 
 Test {
   my $current = shift;
