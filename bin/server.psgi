@@ -135,7 +135,7 @@ return sub {
         if (@$path == 2 and
             $path->[0] eq 'g' and $path->[1] eq 'create.json') {
           # /g/create.json
-          return GroupPages->create ($app, $acall);
+          return GroupPages->create ($app, $db, $acall);
         }
 
         if (@$path == 1 and $path->[0] eq 'dashboard') {

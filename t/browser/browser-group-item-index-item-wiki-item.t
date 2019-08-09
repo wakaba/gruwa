@@ -34,11 +34,11 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.page gr-menu a',
+      selector => 'header.page gr-menu[type=index] a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.section gr-menu a',
+      selector => 'header.section gr-menu[type=wiki] a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
@@ -151,11 +151,11 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.page gr-menu a',
+      selector => 'header.page gr-menu[type=index] a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.section gr-menu a',
+      selector => 'header.section gr-menu[type=wiki] a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
