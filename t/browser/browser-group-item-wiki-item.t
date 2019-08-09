@@ -40,11 +40,11 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.page gr-menu a',
+      selector => 'header.page gr-menu a[href*="/i/"]',
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.section gr-menu a',
+      selector => 'header.section gr-menu a[href*="/wiki"]',
     });
   })->then (sub {
     return $current->b (1)->execute (q{

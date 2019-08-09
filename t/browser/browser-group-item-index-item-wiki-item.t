@@ -34,11 +34,11 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.page gr-menu[type=index] a',
+      selector => 'header.page gr-menu[href*="/i/"] a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.section gr-menu[type=wiki] a',
+      selector => 'header.section gr-menu[href*="/wiki"] a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
