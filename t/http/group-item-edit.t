@@ -177,6 +177,51 @@ Test {
   });
 } n => 5, name => 'group object';
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {owners => ['a1']}],
+    [o1 => object => {group => 'g1', account => 'a1'}],
+  )->then (sub {
+    return $current->post_json (['edit.json'], {
+      icon_object_id => $current->o ('o1')->{object_id},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->are_errors (
+      ['POST', ['edit.json'], {
+        icon_object_id => rand,
+      }, account => 'a1', group => 'g1'],
+      [
+        {params => {icon_object_id => rand}, status => 400},
+        {params => {icon_object_id => 0}, status => 400},
+        {params => {icon_object_id => "abc"}, status => 400},
+      ],
+    );
+  })->then (sub {
+    return $current->get_json (['info.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    $current->set_o (oid1 => $result->{json}->{object_id});
+    test {
+      is $result->{json}->{icon_object_id}, $current->o ('o1')->{object_id};
+      like $result->{res}->body_bytes, qr{"icon_object_id"\s*:\s*"};
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('oid1'),
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    my $obj = $result->{json}->{objects}->{$current->o ('oid1')};
+    test {
+      is $obj->{data}->{body_type}, 3;
+      is $obj->{data}->{body_data}->{icon_object_id}, $current->o ('o1')->{object_id};
+      like $result->{res}->body_bytes, qr{"icon_object_id"\s*:\s*"};
+    } $current->c;
+  });
+} n => 6, name => 'icon object';
+
 RUN;
 
 =head1 LICENSE
