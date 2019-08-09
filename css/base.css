@@ -1041,6 +1041,13 @@ iframe.embed {
   height: 2rem;
 }
 
+.icon {
+  width: 3em;
+  height: 3em;
+  margin: 3px;
+  vertical-align: middle;
+}
+
 user-name hatena-user {
   font-size: 80%;
 }

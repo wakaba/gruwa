@@ -167,6 +167,24 @@ GR.group.info = function () {
   });
 }; // GR.group.info
 
+(() => {
+  
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'reloadGroupInfo');
+  e.pcHandler = function (args) {
+    return Promise.all ([
+      GR._updateMyInfo (),
+      gFetch ('icon', {reload: true, ignoreError: true}),
+    ]).then (() => {
+      document.querySelectorAll ('head link[rel~=icon]').forEach (_ => {
+        _.href += '?' + Math.random ();
+      });
+    });
+  }; // reloadGroupInfo
+  document.head.appendChild (e);
+
+}) ();
+
 GR.index = {};
 
 GR.index.info = function (indexId) {
@@ -386,16 +404,24 @@ function gFetch (pathquery, opts) {
         document.head.removeChild (meta);
       });
     } else {
-      return fetch (url, {
+      var fo = {
         credentials: "same-origin",
         method: method,
         body: body,
         referrerPolicy: 'origin',
-      }).then (function (res) {
+      };
+      if (opts.reload) fo.cache = "reload";
+      var ff = fetch (url, fo).then (function (res) {
         if (res.status !== 200) throw res;
         if (opts.asStage) opts.as.stageEnd (opts.asStage);
         return res.json ();
       });
+      if (opts.ignoreError) {
+        ff = ff.catch (e => {
+          console.log (e);
+        });
+      }
+      return ff;
     }
   });
 } // gFetch
@@ -1924,6 +1950,7 @@ function uploadFile (file, data, as) {
     return gFetch ('o/' + data.object_id + '/edit.json', {post: true, formData: fd2});
   }).then (function () {
     as.stageEnd ("close");
+    return {object_id: data.object_id};
   });
 } // uploadFile
 
@@ -2455,6 +2482,77 @@ defineElement ({
     }, // grToggleEditable
   },
 }); // <gr-editable-tr>
+
+defineElement ({
+  name: 'gr-icon-editor',
+  props: {
+    pcInit: function () {
+      this.setAttribute ('formcontrol', '');
+      this.querySelectorAll ('.generate-icon-button').forEach (_ => {
+        _.onclick = (ev) => this.grGenerate (ev.target);
+      });
+      this.querySelectorAll ('.reset-icon-button').forEach (_ => {
+        _.onclick = (ev) => this.grSetImage (null);
+      });
+    }, // pcInit
+    grGenerate: function (e) {
+      var defs = [
+        {name: 'dark'},
+        {name: 'light-1'},
+        {name: 'light-2'},
+      ];
+      var def = defs[Math.floor (defs.length * Math.random ())];
+      var bgs = ['●', '■', '★', '▲', '▼', '\u25B6', '\u25C0'];
+      var bg = bgs[Math.floor (bgs.length * Math.random ())];
+      var text = document.querySelector (e.getAttribute ('data-text-selector')).value;
+      text = text.substring (Math.floor (text.length * Math.random ())).substring (0, 1);
+      var style = getComputedStyle (document.documentElement);
+      var canvas = document.createElement ('canvas');
+      canvas.width = 160;
+      canvas.height = 160;
+      var ctx = canvas.getContext ('2d');
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center';
+      ctx.font = '160px sans-serif';
+      ctx.fillStyle = style.getPropertyValue ('--'+def.name+'-background-color');
+      ctx.fillText (bg, 80, 80);
+      ctx.font = '80px ' + style.getPropertyValue ('font-family');
+      ctx.fillStyle = style.getPropertyValue ('--'+def.name+'-color');
+      ctx.fillText (text, 80, 80);
+      this.grSetImage (canvas);
+    }, // grGenerate
+    grSetImage: function (obj) {
+      if (obj) {
+        this.grImageObject = obj;
+        this.querySelectorAll ('img').forEach (_ => _.src = obj.toDataURL ());
+        return;
+      }
+      
+      return GR.group.info ().then (group => {
+        url = '/g/' + group.group_id + '/icon';
+        this.querySelectorAll ('img').forEach (_ => _.src = url);
+        delete this.grImageObject;
+      });
+    }, // grSetURL
+    pcModifyFormData: function (fd) {
+      var name = this.getAttribute ('name');
+      if (!name) return;
+      if (this.grImageObject) {
+        return new Promise (ok => {
+          this.grImageObject.toBlob (ok);
+        }).then ((blob) => {
+          var nullAs = getActionStatus (null);
+          nullAs.start ({stages: []});
+          return uploadFile (blob, {
+            mime_type: 'image/png',
+          }, nullAs);
+        }).then (obj => {
+          fd.append (name, obj.object_id);
+        });
+      }
+    }, // pcModifyFormData
+  },
+}); // <gr-icon-editor>
 
 defineElement ({
   name: 'form',
