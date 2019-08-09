@@ -12,6 +12,7 @@ Test {
     [a3 => account => {}],
     [g1 => group => {
       title => $current->generate_text (t1 => {}),
+      theme => 'red',
       owner => 'a1',
       members => ['a3'],
     }],
@@ -43,10 +44,11 @@ Test {
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
       is $result->{json}->{title}, $current->o ('t1');
       is $result->{json}->{default_wiki_index_id}, undef;
-      is $result->{json}->{theme}, 'green';
+      is $result->{json}->{theme}, 'red';
+      like $result->{res}->body_bytes, qr{"object_id"\s*:\s*"};
     } $current->c;
   });
-} n => 11, name => '/g/{}/info.json';
+} n => 12, name => '/g/{}/info.json';
 
 RUN;
 

@@ -49,6 +49,7 @@ my @TokenAlpha = ('0'..'9','A'..'Z','a'..'z');
 sub create_object ($%) {
   my ($db, %args) = @_;
   my $time = $args{now} || time;
+  my $obj = {};
   return $db->execute ('select uuid_short() as uuid1,
                                uuid_short() as uuid2')->then (sub {
     my $ids = $_[0]->first;
@@ -57,6 +58,8 @@ sub create_object ($%) {
                 object_revision_id => ''.$ids->{uuid2},
                 user_status => 1, # open
                 owner_status => 1}; # open
+    $obj->{object_id} = $object_id;
+    $obj->{data} = $data;
     my $rev_data = {changes => {action => 'new'}};
     ## This does not touch `group`.
 
@@ -111,7 +114,8 @@ sub create_object ($%) {
     })->then (sub {
       return {object_id => $object_id,
               object_revision_id => $data->{object_revision_id},
-              upload_token => $data->{upload_token}};
+              upload_token => $data->{upload_token},
+              object => $obj};
     });
   });
 } # create_object
@@ -179,6 +183,23 @@ sub edit_object ($$$$$) {
     delete $object->{data}->{upload_token};
   }
   # XXX owner_status only can be changed by group owners
+  if (defined $edits->{body_data_delta}) {
+    for my $key (keys %{$edits->{body_data_delta}}) {
+      my $value = $edits->{body_data_delta}->{$key};
+      if (defined $value) {
+        if (not defined $object->{data}->{body_data}->{$key} or
+            not $object->{data}->{body_data}->{$key} eq $value) {
+          $object->{data}->{body_data}->{$key} = $value;
+          $changes->{fields}->{body_data} = 1;
+        }
+      } else { # no new value
+        if (defined $object->{data}->{body_data}->{$key}) {
+          delete $object->{data}->{body_data}->{$key};
+          $changes->{fields}->{body_data} = 1;
+        }
+      }
+    }
+  }
 
         my $search_data;
         if ($changes->{fields}->{title} or
@@ -687,8 +708,8 @@ sub edit_object ($$$$$) {
         });
 } # edit_object
 
-sub create ($$$) {
-  my ($class, $app, $acall) = @_;
+sub create ($$$$) {
+  my ($class, $app, $db, $acall) = @_;
 
   # /g/create.json
   $app->requires_request_method ({POST => 1});
@@ -713,12 +734,23 @@ sub create ($$$) {
       admin_status => 1, # open
     })->(sub {
       $group_id = $_[0]->{group_id};
-      return $acall->(['group', 'data'], {
-        context_key => $app->config->{accounts}->{context} . ':group',
+    })->then (sub {
+      return create_object ($db,
         group_id => $group_id,
-        name => ['title', 'theme'],
-        value => [$title, 'green'],
-      })->();
+        author_account_id => $account_data->{account_id},
+        body_type => 3, # data
+        body_data => {
+          title => $title,
+        },
+      )->then (sub {
+        my $result = $_[0];
+        return $acall->(['group', 'data'], {
+          context_key => $app->config->{accounts}->{context} . ':group',
+          group_id => $group_id,
+          name => ['title', 'theme', 'object_id'],
+          value => [$title, 'green', $result->{object_id}],
+        })->();
+      });
     })->then (sub {
       return $acall->(['group', 'member', 'status'], {
         context_key => $app->config->{accounts}->{context} . ':group',
@@ -729,8 +761,7 @@ sub create ($$$) {
         owner_status => 1, # open
       })->();
     })->then (sub {
-      # XXX group log
-      #     ipaddr
+      # XXX ipaddr logging
       return json $app, {
         group_id => $group_id,
       };
@@ -788,7 +819,7 @@ sub main ($$$$$) {
     # XXX
     admin_status => 1,
     owner_status => 1,
-    with_group_data => ['title', 'theme', 'default_wiki_index_id'],
+    with_group_data => ['title', 'theme', 'default_wiki_index_id', 'object_id'],
     with_group_member_data => ['default_index_id'],
   })->(sub {
     my $account_data = $_[0];
@@ -872,7 +903,8 @@ sub group ($$$$) {
       created => $g->{created},
       updated => $g->{updated},
       theme => $g->{data}->{theme},
-      default_wiki_index_id => $g->{data}->{default_wiki_index_id},
+      default_wiki_index_id => $g->{data}->{default_wiki_index_id}, # or undef
+      object_id => $g->{data}->{object_id}, # or undef
     };
   } elsif (@$path == 3 and $path->[2] eq 'myinfo.json') {
     # /g/{group_id}/myinfo.json
@@ -906,25 +938,29 @@ sub group ($$$$) {
 
   if (@$path == 3 and $path->[2] eq 'edit.json') {
     # /g/{group_id}/edit.json
+    # racy!
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
     my @name;
     my @value;
     my $title = $app->text_param ('title') // '';
+    my $dd = {};
     if (length $title) {
       push @name, 'title';
       push @value, $title;
+      $dd->{title} = $title;
     }
     my $theme = $app->text_param ('theme') // '';
     if (length $theme) {
       push @name, 'theme';
       push @value, $theme;
+      $dd->{theme} = $theme;
     }
     return Promise->resolve->then (sub {
       my $wiki_id = $app->bare_param ('default_wiki_index_id');
       return unless defined $wiki_id;
       return $db->select ('index', {
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
+        group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
         index_id => $wiki_id,
         user_status => 1, # open
         owner_status => 1, # open
@@ -933,20 +969,56 @@ sub group ($$$$) {
             unless $_[0]->first;
         push @name, 'default_wiki_index_id';
         push @value, $wiki_id;
+        $dd->{default_wiki_index_id} = $wiki_id;
       });
     })->then (sub {
-      return $opts->{acall}->(['group', 'data'], {
-        context_key => $app->config->{accounts}->{context} . ':group',
-        group_id => $path->[1],
-        name => \@name,
-        value => \@value,
-      })->();
-      # XXX logging
+      return unless @name;
+      if (defined $opts->{group}->{data}->{object_id}) {
+        return $db->select ('object', {
+          group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
+          object_id => Dongry::Type->serialize ('text', $opts->{group}->{data}->{object_id}),
+        }, fields => ['object_id', 'data'])->then (sub {
+          my $object = $_[0]->first;
+          die "Object |$opts->{group}->{data}->{object_id}| not found"
+              unless defined $object;
+          $object->{data} = Dongry::Type->parse ('json', $object->{data});
+          return $object;
+        });
+      } else {
+        ## Backcompat: Groups created before 2019-08 update might not
+        ## have group object.
+        return create_object ($db,
+          group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
+          author_account_id => $opts->{account}->{account_id},
+          body_type => 3, # data
+          body_data => {},
+        )->then (sub {
+          my $result = $_[0];
+          $opts->{group}->{data}->{object_id} = $result->{object_id};
+          push @name, 'object_id';
+          push @value, $result->{object_id};
+          return $result->{object};
+        });
+      }
+    })->then (sub {
+      return unless @name;
+      my $object = $_[0];
+      return Promise->all ([
+        $opts->{acall}->(['group', 'data'], {
+          context_key => $app->config->{accounts}->{context} . ':group',
+          group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
+          name => \@name,
+          value => \@value,
+        })->(),
+        edit_object ($opts, $db, $object, {
+          body_data_delta => $dd,
+        }, $app),
+      ]);
     })->then (sub {
       return unless @name;
       return $opts->{acall}->(['group', 'touch'], {
         context_key => $app->config->{accounts}->{context} . ':group',
-        group_id => $path->[1],
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
       }); # XXX ->()
     })->then (sub {
       return json $app, {};
