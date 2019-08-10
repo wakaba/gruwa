@@ -63,8 +63,9 @@ gr-nav-panel > details form {
   color: var(--light-1-color);
 }
 
-gr-nav-panel > details hr {
-  margin: 0;
+gr-nav-panel .icon {
+  width: 1em;
+  height: 1em;
 }
 
 gr-nav-panel gr-group:not([hidden]) {
@@ -684,6 +685,11 @@ gr-list-container[key=groups] td.member_type {
 
 gr-list-container[key=groups] td.desc {
   min-width: 10em;
+}
+
+gr-list-container[key=groups] .icon {
+  width: 2em;
+  height: 2em;
 }
 
 page-main form[is=gr-search] {

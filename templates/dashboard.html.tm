@@ -24,6 +24,7 @@
       <template>
         <th>
           <a href data-href-template="/g/{group_id}/">
+            <img data-src-template=/g/{group_id}/icon alt class=icon>
             <span data-field=title data-empty=(未参加グループ) />
           </a>
         <td class=member_type>

@@ -23,18 +23,17 @@
           </gr-account>
         </summary>
         <p><a href=/dashboard>ダッシュボード</a></p>
-        <hr>
         <gr-list-container src=/jump/list.json key=items>
           <template>
             <p><a href data-href-template={URL} data-ping-template=/jump/ping.json?url={HREF} data-field=label></a>
           </template>
           <list-main/>
         </gr-list-container>
-        <p><a href=/jump>ジャンプリストの編集</></li>
       </details>
       <details open>
         <summary>
           <gr-group>
+            <img data-src-template=/g/{group_id}/icon class=icon alt>
             <gr-group-name data-field=title data-filling>グループ</>
           </gr-group>
         </summary>
@@ -232,7 +231,7 @@
         <a href=/help#config target=help>ヘルプ</a>
       </header>
 
-      <form is=save-data data-saver=groupSaver method=post action=edit.json id=edit-form>
+      <form is=save-data data-saver=groupSaver method=post action=edit.json id=edit-form data-next=reloadGroupInfo>
         <!-- XXX data-next=update group info -->
         <table class=config>
           <tbody>
@@ -255,6 +254,21 @@
                     </small>
                   </gr-theme-info>
                 </gr-select-theme>
+            <tr>
+              <th>アイコン
+              <td>
+                <gr-icon-editor name=icon_object_id>
+                  <figure>
+                    <img src=icon class=icon>
+                  </figure>
+                  <button type=button class=generate-icon-button
+                      data-text-selector="input[name=title]">
+                    自動生成
+                  </button>
+                  <button type=button class=reset-icon-button>
+                    編集前に戻す
+                  </button>
+                </gr-icon-editor>
         </table>
         <p class=operations>
           <button type=submit class=save-button data-enable-by-fill>保存する</>

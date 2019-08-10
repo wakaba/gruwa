@@ -21,6 +21,7 @@
 <script pl:src="'/js/pages.js?r='.$app->rev" async />
 <link rel=preload as=style pl:href="'/css/body.css?r='.$app->rev" class=body-css>
 <link rel=preload as=script pl:href="'/js/body.js?r='.$app->rev" class=body-js>
+<link rel=icon pl:href="'/g/'.$group->{group_id}.'/icon'">
 
 <!--
 

@@ -130,6 +130,16 @@
                 <a href=#todos>TODO リスト</a>
               <td>
                 所属する<a href=#objects>記事</a>ページなどの表示に使う<a href=#themes>配色</a>です。
+            <tr>
+              <th>アイコン
+              <td>
+                <a href=#groups>グループ</a>
+              <td>
+                名前と共に表示されるアイコンです。
+
+                <div class=notes>
+                  <p>アイコンは<a href=#groups>グループ</a>内の<a href=#objects>記事</a>として保存されます。
+                </div>
         </table>
 
         <p id=group-config-create><a href=#groups>グループ</a>の<a href=#config>設定</a>ページでは、

@@ -41,6 +41,10 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a[href*="/i/"]',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('t4'), # object title
     });
@@ -109,6 +113,10 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a[href*="/i/"]',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('t4'), # object title
     });
@@ -173,6 +181,10 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a[href*="/i/"]',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('t4'), # object title
     });
@@ -234,6 +246,10 @@ Test {
     return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('t3'), # index title
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
@@ -307,6 +323,10 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('t4'), # object title
     });
@@ -377,6 +397,10 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'page-main',
       html => $current->o ('o1')->{object_id},
     });
@@ -444,6 +468,10 @@ Test {
     return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('t3'), # index title
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
