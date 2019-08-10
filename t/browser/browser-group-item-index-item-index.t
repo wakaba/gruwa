@@ -249,7 +249,7 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.page gr-menu a[href*="/i/"]',
+      selector => 'header.page gr-menu a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
@@ -323,7 +323,7 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.page gr-menu a[href*="/i/"]',
+      selector => 'header.page gr-menu a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
@@ -397,7 +397,7 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.page gr-menu a[href*="/i/"]',
+      selector => 'header.page gr-menu a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
@@ -471,7 +471,7 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.page gr-menu a[href*="/i/"]',
+      selector => 'header.page gr-menu a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
