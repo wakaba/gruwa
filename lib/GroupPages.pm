@@ -826,6 +826,14 @@ sub create ($$$$) {
         owner_status => 1, # open
       })->();
     })->then (sub {
+      return $acall->(['group', 'member', 'data'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $group_id,
+        account_id => $account_data->{account_id},
+        name => 'name',
+        value => $account_data->{name},
+      })->();
+    })->then (sub {
       # XXX ipaddr logging
       return json $app, {
         group_id => $group_id,
@@ -2280,6 +2288,8 @@ sub invitation ($$$$) {
 
         context_key => $app->config->{accounts}->{context} . ':group',
         group_id => $path->[1],
+
+        with_group_member_data => ['name'],
       })->(sub {
         my $account_data = $_[0];
         return $app->throw_error (403, reason_phrase => 'No user account')
@@ -2309,6 +2319,14 @@ sub invitation ($$$$) {
             user_status => 1, # open
             owner_status => $account_data->{group_membership}->{owner_status} || 1, # open
           })->(sub {
+            return $acall->(['group', 'member', 'data'], {
+              context_key => $app->config->{accounts}->{context} . ':group',
+              group_id => $account_data->{group}->{group_id},
+              account_id => $account_data->{account_id},
+              name => 'name',
+              value => $account_data->{name},
+            })->() unless defined $account_data->{group_membership}->{data}->{name};
+          })->then (sub {
             return $app->send_redirect ("/g/$account_data->{group}->{group_id}/");
           });
         }, sub {

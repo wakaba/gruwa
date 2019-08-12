@@ -119,9 +119,12 @@ Test {
 
 Test {
   my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->create_account (a2 => {});
-  })->then (sub {
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {
+      name => $current->generate_text (a2name => {}),
+    }],
+  )->then (sub {
     return $current->create_group (g1 => {owner => 'a1'});
   })->then (sub {
     return $current->create_group (g2 => {owner => 'a1'});
@@ -167,6 +170,7 @@ Test {
       is $data->{user_status}, 1; # open
       is $data->{owner_status}, 1; # open
       is $data->{member_type}, 1; # normal
+      is $data->{name}, $current->o ('a2name');
     } $current->c;
     return $current->get_json (['members', 'invitations', 'list.json'], {
     }, account => 'a1', group => 'g1');
@@ -189,7 +193,7 @@ Test {
       ok $inv2->{used} > $inv2->{created};
     } $current->c;
   });
-} n => 18, name => 'POST a new invitation';
+} n => 19, name => 'POST a new invitation';
 
 Test {
   my $current = shift;
@@ -308,12 +312,19 @@ Test {
 
 Test {
   my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->create_account (a2 => {});
-  })->then (sub {
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {
+      name => $current->generate_text (t1 => {}),
+    }],
+  )->then (sub {
     return $current->create_group (g1 => {owner => 'a1', members => ['a2']});
   })->then (sub {
     return $current->create_invitation (i1 => {group => 'g1', account => 'a1', member_type => 2}); # owner
+  })->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, account => 'a2', group => 'g1');
   })->then (sub {
     return $current->post_redirect (['invitation',
       $current->o ('g1')->{group_id},
@@ -334,6 +345,7 @@ Test {
       is $data->{user_status}, 1; # open
       is $data->{owner_status}, 1; # open
       is $data->{member_type}, 2; # owner
+      is $data->{name}, $current->o ('t2'), 'not changed';
     } $current->c;
     return $current->get_json (['members', 'invitations', 'list.json'], {
     }, account => 'a1', group => 'g1');
@@ -358,7 +370,7 @@ Test {
       ok $inv2->{used} > $inv2->{created};
     } $current->c;
   });
-} n => 19, name => 'POST normal member upgraded to owner';
+} n => 20, name => 'POST normal member upgraded to owner';
 
 Test {
   my $current = shift;
@@ -522,7 +534,7 @@ RUN;
 
 =head1 LICENSE
 
-Copyright 2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2017-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
