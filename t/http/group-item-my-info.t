@@ -20,7 +20,7 @@ Test {
     }],
   )->then (sub {
     return $current->are_errors (
-      ['GET', ['g', $current->o ('g1')->{group_id}, 'myinfo.json'], {}, account => 'a1'],
+      ['GET', ['g', $current->o ('g1')->{group_id}, 'my', 'info.json'], {}, account => 'a1'],
       [
         {path => ['g', int rand 10000, 'info.json'], status => 404},
         {account => '', status => 403},
@@ -30,7 +30,7 @@ Test {
   })->then (sub {
     return promised_for {
       my $account = shift;
-      return $current->get_json (['g', $current->o ('g1')->{group_id}, 'myinfo.json'], {}, account => $account)->then (sub {
+      return $current->get_json (['g', $current->o ('g1')->{group_id}, 'my', 'info.json'], {}, account => $account)->then (sub {
         my $result = $_[0];
         test {
           my $acc = $result->{json}->{account};
@@ -50,7 +50,7 @@ Test {
       });
     } ['a1', 'a3'];
   });
-} n => 1+2*10, name => '/g/{}/myinfo.json';
+} n => 1+2*10, name => '/g/{}/my/info.json';
 
 Test {
   my $current = shift;
@@ -63,7 +63,7 @@ Test {
       is_default => 1,
     }, account => 'a1', group => 'g1');
   })->then (sub {
-    return $current->get_json (['myinfo.json'], {
+    return $current->get_json (['my', 'info.json'], {
     }, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
@@ -92,6 +92,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

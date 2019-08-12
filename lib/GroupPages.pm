@@ -836,6 +836,63 @@ sub create ($$$$) {
 
 sub main ($$$$$) {
   my ($class, $app, $path, $db, $acall) = @_;
+
+  if (
+    (@$path == 3 and {
+      '' => 1,         # /g/{group_id}/
+      'search' => 1,   # /g/{group_id}/search
+      'config' => 1,   # /g/{group_id}/config
+      'members' => 1,  # /g/{group_id}/members
+    }->{$path->[2]}) or
+    (@$path == 5 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
+      '' => 1,         # /g/{group_id}/i/{index_id}/
+      'config' => 1,   # /g/{group_id}/i/{index_id}/config
+    }->{$path->[4]}) or
+    (@$path == 5 and $path->[2] eq 'o' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
+      '' => 1,         # /g/{group_id}/o/{object_id}/
+    }->{$path->[4]}) or
+    # /g/{group_id}/wiki/{wiki_name}
+    (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or
+    # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
+    (@$path == 6 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'wiki' and length $path->[5])
+  ) {
+    return $acall->(['info'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+
+      context_key => $app->config->{accounts}->{context} . ':group',
+      group_id => $path->[1],
+
+      admin_status => 1,
+      owner_status => 1,
+      with_group_data => ['title', 'theme'],
+    })->(sub {
+      my $account_data = $_[0];
+      unless (defined $account_data->{account_id}) {
+        my $this_url = Web::URL->parse_string ($app->http->url->stringify);
+        my $url = Web::URL->parse_string (q</account/login>, $this_url);
+        $url->set_query_params ({next => $this_url->stringify});
+        return $app->send_redirect ($url->stringify);
+      }
+
+      my $group = $account_data->{group};
+      return $app->throw_error (404, reason_phrase => 'Group not found')
+          unless defined $group;
+
+      my $membership = $account_data->{group_membership};
+      return $app->throw_error (403, reason_phrase => 'Not a group member')
+          if not defined $membership or
+             not ($membership->{member_type} == 1 or # member
+                  $membership->{member_type} == 2) or # owner
+             $membership->{user_status} != 1 or # open
+             $membership->{owner_status} != 1; # open
+
+      return temma $app, 'group.index.html.tm', {
+        group => $group,
+      };
+    });
+  }
+  
   # /g/{group_id}/...
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
@@ -847,7 +904,7 @@ sub main ($$$$$) {
     admin_status => 1,
     owner_status => 1,
     with_group_data => ['title', 'theme', 'default_wiki_index_id', 'object_id', 'icon_object_id'],
-    with_group_member_data => ['default_index_id'],
+    with_group_member_data => ['name', 'default_index_id'],
   })->(sub {
     my $account_data = $_[0];
     unless (defined $account_data->{account_id}) {
@@ -884,30 +941,6 @@ sub main ($$$$$) {
 
 sub group ($$$$) {
   my ($class, $app, $path, $opts) = @_;
-
-  if (
-    (@$path == 3 and {
-      '' => 1,         # /g/{group_id}/
-      'search' => 1,   # /g/{group_id}/search
-      'config' => 1,   # /g/{group_id}/config
-      'members' => 1,  # /g/{group_id}/members
-    }->{$path->[2]}) or
-    (@$path == 5 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
-      '' => 1,         # /g/{group_id}/i/{index_id}/
-      'config' => 1,   # /g/{group_id}/i/{index_id}/config
-    }->{$path->[4]}) or
-    (@$path == 5 and $path->[2] eq 'o' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
-      '' => 1,         # /g/{group_id}/o/{object_id}/
-    }->{$path->[4]}) or
-    # /g/{group_id}/wiki/{wiki_name}
-    (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or
-    # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
-    (@$path == 6 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'wiki' and length $path->[5])
-  ) {
-    return temma $app, 'group.index.html.tm', {
-      group => $opts->{group},
-    };
-  }
   
   my $db = $opts->{db};
 
@@ -934,33 +967,11 @@ sub group ($$$$) {
       object_id => $g->{data}->{object_id}, # or undef
       icon_object_id => $g->{data}->{icon_object_id}, # or undef
     };
-  } elsif (@$path == 3 and $path->[2] eq 'myinfo.json') {
-    # /g/{group_id}/myinfo.json
-    my $acc = $opts->{account};
-    my $g = $opts->{group};
-    my $gm = $opts->{group_member};
-    return json $app, {
-      account => {
-        account_id => ''.$acc->{account_id},
-        name => $acc->{name},
-      },
-      group => {
-        group_id => ''.$g->{group_id},
-        title => $g->{data}->{title},
-        created => $g->{created},
-        updated => $g->{updated},
-        theme => $g->{data}->{theme},
-        default_wiki_index_id => $g->{data}->{default_wiki_index_id},
-      },
-      group_member => {
-        theme => $gm->{data}->{theme},
-        member_type => $gm->{member_type},
-        default_index_id => $gm->{data}->{default_index_id},
-      },
-    };
   }
 
-  if ($path->[2] eq 'members') {
+  if ($path->[2] eq 'my') {
+    return $class->group_my ($app, $path, $opts);
+  } elsif ($path->[2] eq 'members') {
     return $class->group_members ($app, $path, $opts);
   }
 
@@ -1169,6 +1180,65 @@ sub group ($$$$) {
   return $app->throw_error (404);
 } # group
 
+sub group_my ($$$$) {
+  my ($class, $app, $path, $opts) = @_;
+
+  if (@$path == 4 and $path->[3] eq 'info.json') {
+    # /g/{group_id}/my/info.json
+    my $acc = $opts->{account};
+    my $g = $opts->{group};
+    my $gm = $opts->{group_member};
+    return json $app, {
+      account => {
+        account_id => ''.$acc->{account_id},
+        name => $gm->{data}->{name} // $acc->{name},
+      },
+      group => {
+        group_id => ''.$g->{group_id},
+        title => $g->{data}->{title},
+        created => $g->{created},
+        updated => $g->{updated},
+        theme => $g->{data}->{theme},
+        default_wiki_index_id => $g->{data}->{default_wiki_index_id},
+      },
+      group_member => {
+        theme => $gm->{data}->{theme},
+        member_type => $gm->{member_type},
+        default_index_id => $gm->{data}->{default_index_id},
+      },
+    };
+  } elsif (@$path == 4 and $path->[3] eq 'edit.json') {
+    # /g/{group_id}/my/edit.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+
+    my $names = [];
+    my $values = [];
+
+    my $name = $app->text_param ('name');
+    if (defined $name and length $name) {
+      push @$names, 'name';
+      push @$values, $name;
+    }
+
+    ## Name changes are not logged.
+    return Promise->resolve->then (sub {
+      return unless @$names;
+      return $opts->{acall}->(['group', 'member', 'data'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $opts->{group}->{group_id},
+        account_id => $opts->{account}->{account_id},
+        name => $names,
+        value => $values,
+      })->();
+    })->then (sub {
+      return json $app, {};
+    });
+  }
+
+  return $app->throw_error (404);
+} # group_my
+
 sub group_members ($$$$) {
   my ($class, $app, $path, $opts) = @_;
 
@@ -1344,6 +1414,7 @@ sub group_members_list ($$$$) {
     # XXX
     group_admin_status => 1,
     group_owner_status => 1,
+    with_group_member_data => ['name'],
   })->(sub {
     my $account_data = $_[0];
 
@@ -1372,13 +1443,14 @@ sub group_members_list ($$$$) {
           user_status => $membership->{user_status} || 0,
           default_index_id => undef,
           desc => '',
+          name => $membership->{data}->{name} // $account_data->{account_id},
         },
       }} unless $is_member;
 
       return $acall->(['group', 'members'], {
         context_key => $app->config->{accounts}->{context} . ':group',
         group_id => $group_id,
-        with_data => ['default_index_id', 'desc'],
+        with_data => ['name', 'default_index_id', 'desc'],
         ref => $app->text_param ('ref'),
       })->(sub {
         my $members = {map {
@@ -1389,6 +1461,7 @@ sub group_members_list ($$$$) {
             user_status => $_->{user_status},
             default_index_id => ($_->{data}->{default_index_id} ? $_->{data}->{default_index_id} : undef),
             desc => $_->{data}->{desc} // '',
+            name => $_->{data}->{name} // ''.$_->{account_id},
           };
         } values %{$_[0]->{memberships}}};
         return json $app, {members => $members,
