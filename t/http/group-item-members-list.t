@@ -50,11 +50,50 @@ Test {
   });
 } n => 5, name => 'group member owner_status 2';
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [g1 => group => {owners => ['a1'], members => ['a2']}],
+  )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text ('namea1' => {}),
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text ('namea2' => {}),
+    }, account => 'a2', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['members', 'list.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $mem1 = $result->{json}->{members}->{$current->o ('a1')->{account_id}};
+      is $mem1->{name}, $current->o ('namea1');
+      my $mem2 = $result->{json}->{members}->{$current->o ('a2')->{account_id}};
+      is $mem2->{name}, $current->o ('namea2');
+    } $current->c;
+    return $current->post_json (['members', 'status.json'], {
+      account_id => $current->o ('a2')->{account_id},
+      owner_status => 2, # closed
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->get_json (['members', 'list.json'], {}, account => 'a2', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $mem2 = $result->{json}->{members}->{$current->o ('a2')->{account_id}};
+      is $mem2->{name}, $current->o ('namea2');
+    } $current->c, name => 'closed member still can see their own name';
+  });
+} n => 3, name => 'explicit account name';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2017-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

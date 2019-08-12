@@ -847,7 +847,7 @@ sub main ($$$$$) {
     admin_status => 1,
     owner_status => 1,
     with_group_data => ['title', 'theme', 'default_wiki_index_id', 'object_id', 'icon_object_id'],
-    with_group_member_data => ['default_index_id'],
+    with_group_member_data => ['name', 'default_index_id'],
   })->(sub {
     my $account_data = $_[0];
     unless (defined $account_data->{account_id}) {
@@ -934,33 +934,11 @@ sub group ($$$$) {
       object_id => $g->{data}->{object_id}, # or undef
       icon_object_id => $g->{data}->{icon_object_id}, # or undef
     };
-  } elsif (@$path == 3 and $path->[2] eq 'myinfo.json') {
-    # /g/{group_id}/myinfo.json
-    my $acc = $opts->{account};
-    my $g = $opts->{group};
-    my $gm = $opts->{group_member};
-    return json $app, {
-      account => {
-        account_id => ''.$acc->{account_id},
-        name => $acc->{name},
-      },
-      group => {
-        group_id => ''.$g->{group_id},
-        title => $g->{data}->{title},
-        created => $g->{created},
-        updated => $g->{updated},
-        theme => $g->{data}->{theme},
-        default_wiki_index_id => $g->{data}->{default_wiki_index_id},
-      },
-      group_member => {
-        theme => $gm->{data}->{theme},
-        member_type => $gm->{member_type},
-        default_index_id => $gm->{data}->{default_index_id},
-      },
-    };
   }
 
-  if ($path->[2] eq 'members') {
+  if ($path->[2] eq 'my') {
+    return $class->group_my ($app, $path, $opts);
+  } elsif ($path->[2] eq 'members') {
     return $class->group_members ($app, $path, $opts);
   }
 
@@ -1169,6 +1147,65 @@ sub group ($$$$) {
   return $app->throw_error (404);
 } # group
 
+sub group_my ($$$$) {
+  my ($class, $app, $path, $opts) = @_;
+
+  if (@$path == 4 and $path->[3] eq 'info.json') {
+    # /g/{group_id}/my/info.json
+    my $acc = $opts->{account};
+    my $g = $opts->{group};
+    my $gm = $opts->{group_member};
+    return json $app, {
+      account => {
+        account_id => ''.$acc->{account_id},
+        name => $gm->{data}->{name} // $acc->{name},
+      },
+      group => {
+        group_id => ''.$g->{group_id},
+        title => $g->{data}->{title},
+        created => $g->{created},
+        updated => $g->{updated},
+        theme => $g->{data}->{theme},
+        default_wiki_index_id => $g->{data}->{default_wiki_index_id},
+      },
+      group_member => {
+        theme => $gm->{data}->{theme},
+        member_type => $gm->{member_type},
+        default_index_id => $gm->{data}->{default_index_id},
+      },
+    };
+  } elsif (@$path == 4 and $path->[3] eq 'edit.json') {
+    # /g/{group_id}/my/edit.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+
+    my $names = [];
+    my $values = [];
+
+    my $name = $app->text_param ('name');
+    if (defined $name and length $name) {
+      push @$names, 'name';
+      push @$values, $name;
+    }
+
+    ## Name changes are not logged.
+    return Promise->resolve->then (sub {
+      return unless @$names;
+      return $opts->{acall}->(['group', 'member', 'data'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $opts->{group}->{group_id},
+        account_id => $opts->{account}->{account_id},
+        name => $names,
+        value => $values,
+      })->();
+    })->then (sub {
+      return json $app, {};
+    });
+  }
+
+  return $app->throw_error (404);
+} # group_my
+
 sub group_members ($$$$) {
   my ($class, $app, $path, $opts) = @_;
 
@@ -1344,6 +1381,7 @@ sub group_members_list ($$$$) {
     # XXX
     group_admin_status => 1,
     group_owner_status => 1,
+    with_group_member_data => ['name'],
   })->(sub {
     my $account_data = $_[0];
 
@@ -1372,13 +1410,14 @@ sub group_members_list ($$$$) {
           user_status => $membership->{user_status} || 0,
           default_index_id => undef,
           desc => '',
+          name => $membership->{data}->{name} // $account_data->{account_id},
         },
       }} unless $is_member;
 
       return $acall->(['group', 'members'], {
         context_key => $app->config->{accounts}->{context} . ':group',
         group_id => $group_id,
-        with_data => ['default_index_id', 'desc'],
+        with_data => ['name', 'default_index_id', 'desc'],
         ref => $app->text_param ('ref'),
       })->(sub {
         my $members = {map {
@@ -1389,6 +1428,7 @@ sub group_members_list ($$$$) {
             user_status => $_->{user_status},
             default_index_id => ($_->{data}->{default_index_id} ? $_->{data}->{default_index_id} : undef),
             desc => $_->{data}->{desc} // '',
+            name => $_->{data}->{name} // ''.$_->{account_id},
           };
         } values %{$_[0]->{memberships}}};
         return json $app, {members => $members,

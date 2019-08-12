@@ -106,7 +106,7 @@ defineElement ({
 GR._state = {};
 
 GR._updateMyInfo = function () {
-  return GR._state.updateMyInfo = gFetch ('myinfo.json', {}).then (json => {
+  return GR._state.updateMyInfo = gFetch ('my/info.json', {}).then (json => {
     var oldAccount = GR._state.account || {};
     GR._state.account = json.account;
     GR._state.group = json.group;
