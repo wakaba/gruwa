@@ -26,6 +26,11 @@
     <section id=groups>
       <h1>グループ</h1>
 
+      <p>Gruwa のほとんどの機能は<dfn>グループ</dfn>に属しています。
+      <a href=#groups>グループ</a>は、
+      1人以上で利用できます。どのような人の集まりでも構いませんが、
+      比較的少人数で互いに信頼関係が構築された関係を想定しています。
+      
       <p><a href=#groups>グループ</a>には次の機能があります。
 
       <ul>
@@ -40,16 +45,24 @@
       <section id=group-members>
         <h1>参加者</h1>
 
-        <p><a href=#groups>グループ</a>の<dfn>参加者</dfn>は、
-        <a href=#owner>所有者</a>と<dfn id=normal-member>一般参加者</dfn>にわかれます。
-        <dfn id=owner>所有者</dfn>は、
-        <a href=#groups>グループ</a>の<a href=#group-members>参加者</a>を管理できます。
-        その他のほとんどの操作は、
-        <a href=#owner>所有者</a>も<a href=#normal-member>一般参加者</a>も行えます。
+        <p><a href=#groups>グループ</a>を使うには、
+        まず<a href=#groups>グループ</a>の<dfn>参加者</dfn>となる必要があります。
 
-        <p><a href=#groups>グループ</a>の<a href=#group-members>参加者</a>の管理するには、
+        <p><a href=#groups>グループ</a>の<a href=#group-members>参加者</a>には<a href=#owner>所有者</a>と<a href=#normal-member>一般参加者</a>の
+        2種別があります。
+        作成者は<a href=#groups>グループ</a>の<a href=#owner>所有者</a>となります。
+        <dfn id=owner>所有者</dfn>は<a href=#group-members>参加者</a>を管理できるので、
+        新しい<a href=#group-members>参加者</a>を追加したり、
+        種別を変更したりできます。
+
+        <p><a href=#group-members>参加者</a>管理以外のほとんどの操作は、
+        <dfn id=normal-member>一般参加者</dfn>を含むすべての<a href=#group-members>参加者</a>が行えます。
+
+        <hr>
+        
+        <p><a href=#group-members>参加者</a>の一覧は、
         <a href=#groups>グループ</a>の<a href=#menu>メニュー</a>の
-        「参加者」を開いてください。
+        「参加者」から見ることができます。
 
         <p>「参加者一覧」には、
         すべての<a href=#group-members>参加者</a>が表示されます。
@@ -163,7 +176,7 @@
         <a href=#blogs>日記</a>、
         <a href=#wiki>Wiki</a>、
         <a href=#todos>TODO リスト</a>は、
-        <a href=#group>設定</a>から「配色」 (デザインテーマ) を変更できます。グループの配色は、
+        <a href=#config>設定</a>から「配色」 (デザインテーマ) を変更できます。グループの配色は、
         <a href=#blogs>日記</a>、
         <a href=#wiki>Wiki</a>、
         <a href=#todos>TODO リスト</a>以外のページに適用されます。
@@ -352,14 +365,12 @@
     <section id=accounts>
       <h1>利用者アカウント</h1>
 
-      <p>Gruwa の利用者アカウントは、数値 ID で識別されます。
-      このアカウントIDは、64ビット符号無し整数です。
-      一旦割り当てられたアカウントIDは、他のアカウントに再利用されません。
+      <p>Gruwa の利用者には、それぞれの<dfn>利用者アカウント</dfn>が発行されます。
+      <a href=#accounts>利用者アカウント</a>には他のサービスのアカウントを使ってログインできます。
 
-      <p>アカウントには利用者自身が名前を登録できます。
-      この名前はグループのメンバー一覧などで使われます。
-
-      <p>名前は全グループ共通であり、公開情報として扱われます。
+      <p><a href=#accounts>利用者アカウント</a>には、
+      <a href=#group>グループ</a>ごとの<dfn id=account-name>名前</dfn>を設定できます。
+      <a href=#account-name>名前</a>は<a href=#group-members>参加者</a>一覧などで使われます。
     </section>
 
     <section id=jump>

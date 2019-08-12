@@ -173,40 +173,11 @@ sub dashboard ($$$) {
   return temma $app, 'dashboard.html.tm', {account => $account_data};
 } # dashboard
 
-sub user ($$$$) {
-  my ($class, $app, $path, $acall) = @_;
-
-  if (@$path == 2 and $path->[1] eq 'info.json') {
-    # /u/info.json
-    return $acall->(['profiles'], {
-      account_id => $app->bare_param_list ('account_id')->to_a,
-      user_status => 1, # ACCOUNT_STATUS_ENABLED,
-      admin_status => 1, # ACCOUNT_STATUS_ENABLED,
-      #terms_version
-      #with_linked => ['id', 'name'],
-      with_data => ['name'],
-    })->(sub {
-      my $json = $_[0];
-      return json $app, {accounts => {map {
-        my $account = $json->{accounts}->{$_};
-        my $name = $account->{name} // '';
-        $name = $account->{account_id} unless length $name;
-        $_ => {
-          account_id => ''.$account->{account_id},
-          name => $name,
-        };
-      } keys %{$json->{accounts}}}};
-    });
-  } # /u/info.json
-
-  return $app->throw_error (404);
-} # user
-
 1;
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -219,6 +190,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

@@ -192,10 +192,6 @@ return sub {
           # /account (except for /account/info.json)
           return AccountPages->main ($app, $path, $acall);
         }
-        if ($path->[0] eq 'u') {
-          # /u
-          return AccountPages->user ($app, $path, $acall);
-        }
 
         if ($path->[0] eq 'import') {
           # /import

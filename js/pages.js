@@ -106,6 +106,8 @@ defineElement ({
 GR._state = {};
 
 GR._updateMyInfo = function () {
+  delete GR._state.getMembers;
+  // Cached until updated by reloadGroupInfo
   return GR._state.updateMyInfo = gFetch ('my/info.json', {}).then (json => {
     var oldAccount = GR._state.account || {};
     GR._state.account = json.account;
@@ -117,6 +119,7 @@ GR._updateMyInfo = function () {
     }
   });
   // XXX if 403
+  // XXX update gr-nav-panel, if necessary
 }; // GR._updateMyInfo
 // XXX auto _updateMyInfo
 
@@ -159,6 +162,12 @@ GR.account.info = function () {
   });
 }; // GR.account.info
 
+GR.account.get = function (accountId) {
+  return GR.group._members ().then (members => {
+    return members[accountId];
+  });
+}; // GR.account.get
+
 GR.group = {};
 
 GR.group.info = function () {
@@ -167,7 +176,40 @@ GR.group.info = function () {
   });
 }; // GR.group.info
 
+GR.group._members = function () {
+  // Cached until updated by reloadGroupInfo
+  if (GR._state.getMembers) return GR._state.getMembers;
+  
+  var map = {};
+  var get = (ref) => {
+    var r = '';
+    if (ref) r = '?ref=' + encodeURIComponent (ref);
+    return gFetch ('members/list.json' + r, {}).then (json => {
+      Object.values (json.members).forEach (_ => {
+        map[_.account_id] = _;
+      });
+      if (json.has_next) {
+        return get (json.next_ref);
+      }
+    });
+  }; // get
+  return GR._state.getMembers = get (null).then (_ => {
+    return map;
+  });
+}; // GR.group._members
+
 (() => {
+
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'groupMembersLoader');
+  e.pcHandler = function (opts) {
+    return GR.group._members ().then (members => {
+      return {
+        data: members,
+      };
+    });
+  };
+  document.head.appendChild (e);
   
   var e = document.createElementNS ('data:,pc', 'formsaved');
   e.setAttribute ('name', 'reloadGroupInfo');
@@ -228,7 +270,7 @@ defineElement ({
           $fill (this, account);
         });
       } else if (this.hasAttribute ('value')) {
-        return $with ('account', {accountId: this.getAttribute ('value')}).then ((account) => {
+        return GR.account.get (this.getAttribute ('value')).then (account => {
           $fill (this, account);
         });
       }
@@ -593,9 +635,8 @@ function fillFields (contextEl, rootEl, el, object, opts) {
           field.parentNode.setAttribute ('data-value', value);
         }
       }
-    } else if (field.localName === 'account-name') {
-      field.setAttribute ('account_id', value);
-      field.textContent = value;
+    } else if (field.localName === 'gr-account-name') {
+      field.setAttribute ('value', value);
     } else if (field.localName === 'object-ref') {
       field.setAttribute ('value', value);
       field.hidden = false;
@@ -1453,7 +1494,7 @@ function upgradeList (el) {
           var key = object[itemKey];
           list[key] = object;
           if (mergeAccounts) {
-            w.push ($with ('account', {accountId: key}).then (function (account) {
+            w.push (GR.account.get (key).then (function (account) {
               object.account = account || {name: key};
             }));
           }
@@ -1707,23 +1748,6 @@ function upgradeList (el) {
       };
     });
   }
-
-  $$c (el, '.search-form').forEach (function (form) {
-    form.onsubmit = function () {
-      Array.prototype.forEach.call (form.elements, function (e) {
-        if (e.name) el.setAttribute ('param-' + e.name, e.value);
-      });
-      el.clearObjects ();
-      el.load ();
-      var url = form.getAttribute ('data-pjax');
-      if (url) {
-        history.replaceState (null, null, url.replace (/\{([A-Za-z0-9]+)\}/g, function (_, n) {
-          return form.elements[n].value;
-        }));
-      }
-      return false;
-    };
-  });
 } // upgradeList
 
 function editObject (article, object, opts) {
@@ -2757,51 +2781,6 @@ function copyText (s) {
   e.parentNode.removeChild (e);
 } // copyText
 
-(function () {
-  var accountData = {};
-  var waiting = {};
-  var timer = null;
-
-  $with.register ('account', function (opts) {
-    var id = opts.accountId;
-    var entry = accountData[id];
-    if (!entry) {
-      entry = accountData[id] = new Promise (function (x, y) { waiting[id] = [x, y] });
-
-      clearTimeout (timer);
-      timer = setTimeout (function () {
-        var ids = waiting;
-        waiting = {};
-        var fd = new FormData;
-        Object.keys (ids).forEach (function (id) {
-          fd.append ('account_id', id);
-        });
-        fetch ('/u/info.json', {method: 'POST', body: fd}).then (function (res) {
-          if (res.status !== 200) throw res;
-          return res.json ();
-        }).then (function (json) {
-          Object.keys (ids).forEach (function (id) {
-            ids[id][0] (json.accounts[id]); // or undefined
-          });
-        }, function (error) {
-          Object.values (ids).forEach (function (_) { _[1] (error) });
-        });
-      }, 500);
-    }
-    return entry;
-  }); // $with ('account')
-}) ();
-
-function upgradeAccountName (e) {
-  e.setAttribute ('loading', '');
-  $with ('account', {accountId: e.getAttribute ('account_id')}).then (function (account) {
-    e.textContent = account.name;
-    e.removeAttribute ('loading');
-  }, function (error) {
-    console.log (error); // XXX
-  });
-} // upgradeAccountName
-
 function upgradeObjectRef (e) {
   var objectId = e.getAttribute ('value');
   if (!objectId) return;
@@ -2943,12 +2922,6 @@ Formatter.hatena = function (source) {
       } else if (x.localName) {
         $$ (x, 'gr-list-container').forEach (upgradeList);
       }
-      if (x.localName === 'account-name' &&
-          x.hasAttribute ('account_id')) {
-        upgradeAccountName (x);
-      } else if (x.localName) {
-        $$ (x, 'account-name[account_id]').forEach (upgradeAccountName);
-      }
       if (x.localName === 'form') {
         upgradeForm (x);
       } else if (x.localName) {
@@ -2984,7 +2957,6 @@ Formatter.hatena = function (source) {
 })).observe (document.documentElement, {childList: true, subtree: true});
 $$ (document, 'gr-list-container').forEach (upgradeList);
 $$ (document, 'form').forEach (upgradeForm);
-$$ (document, 'account-name[account_id]').forEach (upgradeAccountName);
 $$ (document, 'gr-popup-menu').forEach (upgradePopupMenu);
 $$ (document, 'copy-button').forEach (upgradeCopyButton);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
@@ -3090,6 +3062,16 @@ GR.navigate.go = function (u, args) {
             }];
           }
 
+          m = path.match (/^account\/([0-9]+)\/$/);
+          if (m) return ['group', 'account-index', {
+            accountId: m[1],
+          }];
+
+          m = path.match (/^my\/(config)$/);
+          if (m) return ['group', 'my-config', {
+            myAccount: true,
+          }];
+
           return ['site', url];
         } else {
           return ['site', url];
@@ -3177,6 +3159,14 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           return GR.index.info (indexId).then (_ => params.index = _);
         }
       }));
+    }
+    if (pageArgs.accountId) {
+      wait.push (GR.account.get (pageArgs.accountId).then (_ => {
+        if (!_) throw new DOMException ('Account not found', 'InvalidStateError');
+        params.account = _;
+      }));
+    } else if (pageArgs.myAccount) {
+      wait.push (GR.account.info ().then (_ => params.account = _));
     }
     // XXX abort wait by opts.signal[12]
     return Promise.all (wait).then (_ => {

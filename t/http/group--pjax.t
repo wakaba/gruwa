@@ -10,6 +10,7 @@ for my $path (
   ['config'],
   ['search'],
   ['wiki', rand],
+  ['my', 'config'],
 ) {
   Test {
     my $current = shift;
@@ -86,6 +87,46 @@ for my $path (
       } $current->c;
     });
   } n => 2, name => ['i', 425533, @$path];
+}
+
+for my $path (
+  [''],
+) {
+  Test {
+    my $current = shift;
+    return $current->create (
+      [a1 => account => {}],
+      [a2 => account => {}],
+      [g1 => group => {
+        title => $current->generate_text (t1 => {}),
+        owner => 'a1',
+        members => ['a2'],
+      }],
+    )->then (sub {
+      return $current->are_errors (
+        ['GET', ['g', $current->o ('g1')->{group_id}, 'account', 425533, @$path], {}, account => 'a1'],
+        [
+          {path => ['g', int rand 10000, 'account', 425533, @$path],
+           name => 'Group not found', status => 404},
+          {path => ['g', 0 . $current->o ('g1')->{group_id}, 'account', 425533, @$path],
+           name => 'Leading zero', status => 404},
+          {path => ['g', $current->o ('g1')->{group_id}, 'account', '0425533', @$path],
+           name => 'Leading zero', status => 404},
+          {account => '', status => 403, name => 'Not a member'},
+          {account => undef, status => 302, name => 'No account'},
+        ],
+      );
+    })->then (sub {
+      return promised_for {
+        my $account = shift;
+        return $current->get_html (['account', 425533, @$path], {}, account => $account, group => 'g1');
+      } ['a1', 'a2'];
+    })->then (sub {
+      test {
+        ok 1;
+      } $current->c;
+    });
+  } n => 2, name => ['account', 425533, @$path];
 }
 
 for my $path (
