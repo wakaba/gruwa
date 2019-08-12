@@ -836,6 +836,63 @@ sub create ($$$$) {
 
 sub main ($$$$$) {
   my ($class, $app, $path, $db, $acall) = @_;
+
+  if (
+    (@$path == 3 and {
+      '' => 1,         # /g/{group_id}/
+      'search' => 1,   # /g/{group_id}/search
+      'config' => 1,   # /g/{group_id}/config
+      'members' => 1,  # /g/{group_id}/members
+    }->{$path->[2]}) or
+    (@$path == 5 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
+      '' => 1,         # /g/{group_id}/i/{index_id}/
+      'config' => 1,   # /g/{group_id}/i/{index_id}/config
+    }->{$path->[4]}) or
+    (@$path == 5 and $path->[2] eq 'o' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
+      '' => 1,         # /g/{group_id}/o/{object_id}/
+    }->{$path->[4]}) or
+    # /g/{group_id}/wiki/{wiki_name}
+    (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or
+    # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
+    (@$path == 6 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'wiki' and length $path->[5])
+  ) {
+    return $acall->(['info'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+
+      context_key => $app->config->{accounts}->{context} . ':group',
+      group_id => $path->[1],
+
+      admin_status => 1,
+      owner_status => 1,
+      with_group_data => ['title', 'theme'],
+    })->(sub {
+      my $account_data = $_[0];
+      unless (defined $account_data->{account_id}) {
+        my $this_url = Web::URL->parse_string ($app->http->url->stringify);
+        my $url = Web::URL->parse_string (q</account/login>, $this_url);
+        $url->set_query_params ({next => $this_url->stringify});
+        return $app->send_redirect ($url->stringify);
+      }
+
+      my $group = $account_data->{group};
+      return $app->throw_error (404, reason_phrase => 'Group not found')
+          unless defined $group;
+
+      my $membership = $account_data->{group_membership};
+      return $app->throw_error (403, reason_phrase => 'Not a group member')
+          if not defined $membership or
+             not ($membership->{member_type} == 1 or # member
+                  $membership->{member_type} == 2) or # owner
+             $membership->{user_status} != 1 or # open
+             $membership->{owner_status} != 1; # open
+
+      return temma $app, 'group.index.html.tm', {
+        group => $group,
+      };
+    });
+  }
+  
   # /g/{group_id}/...
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
@@ -884,30 +941,6 @@ sub main ($$$$$) {
 
 sub group ($$$$) {
   my ($class, $app, $path, $opts) = @_;
-
-  if (
-    (@$path == 3 and {
-      '' => 1,         # /g/{group_id}/
-      'search' => 1,   # /g/{group_id}/search
-      'config' => 1,   # /g/{group_id}/config
-      'members' => 1,  # /g/{group_id}/members
-    }->{$path->[2]}) or
-    (@$path == 5 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
-      '' => 1,         # /g/{group_id}/i/{index_id}/
-      'config' => 1,   # /g/{group_id}/i/{index_id}/config
-    }->{$path->[4]}) or
-    (@$path == 5 and $path->[2] eq 'o' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
-      '' => 1,         # /g/{group_id}/o/{object_id}/
-    }->{$path->[4]}) or
-    # /g/{group_id}/wiki/{wiki_name}
-    (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or
-    # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
-    (@$path == 6 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'wiki' and length $path->[5])
-  ) {
-    return temma $app, 'group.index.html.tm', {
-      group => $opts->{group},
-    };
-  }
   
   my $db = $opts->{db};
 
