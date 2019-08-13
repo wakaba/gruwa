@@ -401,6 +401,10 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'header.section gr-menu a',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'page-main',
       html => $current->o ('o1')->{object_id},
     });
@@ -472,6 +476,10 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'header.page gr-menu a',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.section gr-menu a',
     });
   })->then (sub {
     return $current->b_wait (1 => {

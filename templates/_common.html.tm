@@ -438,6 +438,12 @@
 
       <p>他のサービスからこのグループに<a href=import>データをインポート</a>できます。
     </section>
+
+    <section>
+      <h1>参加者の管理</h1>
+
+      <p>このグループの<a href=members>参加者を追加、変更</a>できます。
+    </section>
   </template>
 </template-set>
 
@@ -450,11 +456,13 @@
         <a href=/help#group-members target=help>ヘルプ</a>
       </header>
 
-      <list-container loader=groupLoader type=table src=members/list.json key=members class=main-table>
+      <list-container loader=groupMembersLoader type=table class=main-table>
         <template>
           <th>
             <gr-account data-field=account_id>
-              <gr-account-name data-field=name data-filling>アカウント</gr-account-name/>
+              <a data-href-template=account/{account_id}/>
+                <gr-account-name data-field=name data-filling>アカウント</gr-account-name>
+              </a>
             </gr-account>
             <input type=hidden name=account_id data-field=account_id>
           <td>
@@ -476,7 +484,7 @@
             <input name=desc data-field=desc class=if-editable hidden>
           <td class=operations>
             <gr-editable-tr owneronly>
-              <form is=save-data data-saver=groupSaver method=post action=members/status.json>
+              <form is=save-data data-saver=groupSaver method=post action=members/status.json data-next=reloadGroupInfo>
                 <button type=button class="edit-button if-not-editable">編集</>
                 <button type=submit class="if-editable save-button" hidden>保存</>
                 <action-status hidden stage-saver=保存中... ok=保存しました。 />
@@ -497,6 +505,8 @@
         </table>
         <action-status hidden stage-loader=読み込み中... />
       </list-container>
+
+      <p><a href=my/config>自分の参加者設定を変更</a>
     </section>
 
     <section id=invite>
@@ -552,7 +562,7 @@
       <gr-list-container type=table src=members/invitations/list.json key=invitations sortkey=created class=main-table id=invitations-list data-gr-if-group-owner>
           <template>
             <td><a data-href-field=invitation_url><time data-field=created /></a>
-            <td><account-name data-field=author_account_id />
+            <td><gr-account-name data-field=author_account_id />
             <td><gr-enum-value data-field=invitation_data.member_type text-1=一般参加者 text-2=所有者 />
             <td><time data-field=expires>
             <td>
@@ -567,7 +577,7 @@
               </only-if>
             <td>
               <only-if data-field=user_account_id cond="!=0" hidden>
-                <account-name data-field=user_account_id />
+                <gr-account-name data-field=user_account_id />
               </only-if>
               <only-if data-field=user_account_id cond="==0" hidden>
                 -
@@ -718,7 +728,7 @@
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
         <template id=account-list-item-template data-name>
-          <account-name data-field=account_id />
+          <gr-account-name data-field=account_id />
         </template>
 
         <list-main></list-main>
@@ -873,7 +883,7 @@
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
         <template id=account-list-item-template data-name>
-          <account-name data-field=account_id />
+          <gr-account-name data-field=account_id />
         </template>
 
         <list-main></list-main>
@@ -1002,7 +1012,7 @@
           <a data-href-template=./?index={index_id} data-field=title data-color-field=color class=label-index></a>
         </template>
         <template id=account-list-item-template data-name>
-          <a data-href-template=./?assigned={account_id}><account-name data-field=account_id /></a>
+          <a data-href-template=./?assigned={account_id}><gr-account-name data-field=account_id /></a>
         </template>
 
         <list-main/>
@@ -1099,7 +1109,7 @@
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
         <template id=account-list-item-template data-name>
-          <account-name data-field=account_id />
+          <gr-account-name data-field=account_id />
         </template>
 
         <list-main></list-main>
@@ -1256,7 +1266,7 @@
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
         <template id=account-list-item-template data-name>
-          <account-name data-field=account_id />
+          <gr-account-name data-field=account_id />
         </template>
 
         <list-main></list-main>
@@ -1411,7 +1421,7 @@
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
         <template id=account-list-item-template data-name>
-          <account-name data-field=account_id />
+          <gr-account-name data-field=account_id />
         </template>
 
         <list-main></list-main>
@@ -1474,7 +1484,79 @@
   </template>
 
   <t:include path=_object_editor.html.tm />
-    
+  
+<template-set name=page-account-index>
+  <template>
+    <section>
+      <header class=section>
+        <h1 data-field=account.name data-empty=■></h1>
+        <popup-menu>
+          <button type=button title=メニュー>
+            <button-label>
+              メニュー
+            </button-label>
+          </button>
+          <menu-main>
+            <p><copy-button>
+              <a href>URLをコピー</a>
+            </copy-button>
+            <p><copy-button type=jump>
+              <a href>ジャンプリストに追加</a>
+            </copy-button>
+          </menu-main>
+        </popup-menu>
+      </header>
+        <table class=config>
+          <tbody>
+            <tr>
+              <th>名前
+              <td><bdi data-field=account.name />
+            <tr>
+              <th>種別
+              <td>
+                <enum-value data-field=account.member_type
+                    label-1=一般参加者
+                    label-2=所有者  />
+            <tr>
+              <th>参加承認
+              <td>
+                <enum-value data-field=account.owner_status
+                    label-1=承認済 label-2=未承認 />
+        </table>
+    </section>
+  </template>
+</template-set>
+  
+<template-set name=page-my-config>
+  <template title=グループ参加者設定>
+    <section>
+      <header class=section>
+        <h1>グループ参加者設定</h1>
+        <a href=/help#config target=help>ヘルプ</a>
+      </header>
+      <form is=save-data data-saver=groupSaver method=post data-action-template=my/edit.json id=edit-form data-next=reloadGroupInfo>
+        <table class=config>
+          <tbody>
+            <tr>
+              <th><label for=edit-name>名前</>
+              <td><input name=name data-field=account.name id=edit-name required>
+            <tr>
+              <th>種別
+              <td>
+                <enum-value data-field=group.member.member_type
+                    label-1=一般参加者
+                    label-2=所有者  />
+        </table>
+        <p class=operations>
+          <button type=submit class=save-button>保存する</>
+          <action-status hidden stage-saver=保存中... ok=保存しました。 />
+      </form>
+
+      <p><a href=/jump>ジャンプリストの編集</a>
+    </section>
+  </template>
+</template-set>
+
 <!--
 
 Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.

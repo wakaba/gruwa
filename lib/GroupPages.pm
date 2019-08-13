@@ -826,6 +826,14 @@ sub create ($$$$) {
         owner_status => 1, # open
       })->();
     })->then (sub {
+      return $acall->(['group', 'member', 'data'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $group_id,
+        account_id => $account_data->{account_id},
+        name => 'name',
+        value => $account_data->{name},
+      })->();
+    })->then (sub {
       # XXX ipaddr logging
       return json $app, {
         group_id => $group_id,
@@ -844,6 +852,9 @@ sub main ($$$$$) {
       'config' => 1,   # /g/{group_id}/config
       'members' => 1,  # /g/{group_id}/members
     }->{$path->[2]}) or
+    (@$path == 4 and $path->[2] eq 'my' and {
+      'config' => 1,   # /g/{group_id}/my/config
+    }->{$path->[3]}) or
     (@$path == 5 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
       '' => 1,         # /g/{group_id}/i/{index_id}/
       'config' => 1,   # /g/{group_id}/i/{index_id}/config
@@ -854,7 +865,10 @@ sub main ($$$$$) {
     # /g/{group_id}/wiki/{wiki_name}
     (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or
     # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
-    (@$path == 6 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'wiki' and length $path->[5])
+    (@$path == 6 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'wiki' and length $path->[5]) or
+    (@$path == 5 and $path->[2] eq 'account' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
+      '' => 1,         # /g/{group_id}/account/{index_id}/
+    }->{$path->[4]})
   ) {
     return $acall->(['info'], {
       sk_context => $app->config->{accounts}->{context},
@@ -2280,6 +2294,8 @@ sub invitation ($$$$) {
 
         context_key => $app->config->{accounts}->{context} . ':group',
         group_id => $path->[1],
+
+        with_group_member_data => ['name'],
       })->(sub {
         my $account_data = $_[0];
         return $app->throw_error (403, reason_phrase => 'No user account')
@@ -2309,6 +2325,14 @@ sub invitation ($$$$) {
             user_status => 1, # open
             owner_status => $account_data->{group_membership}->{owner_status} || 1, # open
           })->(sub {
+            return $acall->(['group', 'member', 'data'], {
+              context_key => $app->config->{accounts}->{context} . ':group',
+              group_id => $account_data->{group}->{group_id},
+              account_id => $account_data->{account_id},
+              name => 'name',
+              value => $account_data->{name},
+            })->() unless defined $account_data->{group_membership}->{data}->{name};
+          })->then (sub {
             return $app->send_redirect ("/g/$account_data->{group}->{group_id}/");
           });
         }, sub {

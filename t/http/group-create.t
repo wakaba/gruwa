@@ -6,12 +6,17 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
+  return $current->create (
+    [a1 => account => {
+      name => $current->generate_text (t1 => {}),
+    }],
+  )->then (sub {
     return $current->post_json (['g', 'create.json'], {
       title => "\x{4000}ab ",
     }, account => 'a1');
   })->then (sub {
     my $result = $_[0];
+    $current->set_o (g1 => $result->{json});
     test {
       is $result->{status}, 200;
       ok $result->{json}->{group_id};
@@ -23,8 +28,19 @@ Test {
     test {
       is $g->{title}, "\x{4000}ab ";
     } $current->c;
+    return $current->get_json (['members', 'list.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{members}}, 1;
+      my $member = $result->{json}->{members}->{$current->o ('a1')->{account_id}};
+      is $member->{member_type}, 2, "owner";
+      is $member->{user_status}, 1, "open";
+      is $member->{owner_status}, 1, "open";
+      is $member->{name}, $current->o ('t1');
+    } $current->c, name => 'Initial members';
   });
-} n => 4, name => '/g/create.json';
+} n => 9, name => '/g/create.json';
 
 Test {
   my $current = shift;
