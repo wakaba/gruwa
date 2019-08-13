@@ -7,13 +7,15 @@ use Tests;
 Test {
   my $current = shift;
   return $current->create (
-    [a1 => account => {
-      name => $current->generate_text (t2 => {}),
-    }],
+    [a1 => account => {}],
     [g1 => group => {
       members => ['a1'],
     }],
   )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
     return $current->create_browser (1 => {
       url => ['g', $current->o ('g1')->{group_id}, 'members'],
       account => 'a1',
@@ -52,13 +54,15 @@ Test {
 Test {
   my $current = shift;
   return $current->create (
-    [a1 => account => {
-      name => $current->generate_text (t2 => {}),
-    }],
+    [a1 => account => {}],
     [g1 => group => {
       owners => ['a1'],
     }],
   )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
     return $current->create_browser (1 => {
       url => ['g', $current->o ('g1')->{group_id}, 'members'],
       account => 'a1',
@@ -95,16 +99,16 @@ Test {
 Test {
   my $current = shift;
   return $current->create (
-    [a1 => account => {
-      name => $current->generate_text (t1 => {}),
-    }],
-    [a2 => account => {
-      name => $current->generate_text (t2 => {}),
-    }],
+    [a1 => account => {}],
+    [a2 => account => {}],
     [g1 => group => {
       owners => ['a1'], members => ['a2'],
     }],
   )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
     return $current->create_browser (1 => {
       url => ['g', $current->o ('g1')->{group_id}, 'members'],
       account => 'a1',
