@@ -970,21 +970,6 @@ sub group ($$$$) {
     return $class->group_object ($app, $path, $opts);
   }
 
-  if (@$path == 3 and $path->[2] eq 'info.json') {
-    # /g/{group_id}/info.json
-    my $g = $opts->{group};
-    return json $app, {
-      group_id => ''.$g->{group_id},
-      title => $g->{data}->{title},
-      created => $g->{created},
-      updated => $g->{updated},
-      theme => $g->{data}->{theme},
-      default_wiki_index_id => $g->{data}->{default_wiki_index_id}, # or undef
-      object_id => $g->{data}->{object_id}, # or undef
-      icon_object_id => $g->{data}->{icon_object_id}, # or undef
-    };
-  }
-
   if ($path->[2] eq 'my') {
     return $class->group_my ($app, $path, $opts);
   } elsif ($path->[2] eq 'members') {
@@ -1217,6 +1202,7 @@ sub group_my ($$$$) {
         updated => $g->{updated},
         theme => $g->{data}->{theme},
         default_wiki_index_id => $g->{data}->{default_wiki_index_id}, # or undef
+        object_id => $g->{data}->{object_id}, # or undef
         icon_object_id => $g->{data}->{icon_object_id}, # or undef
       },
       group_member => {

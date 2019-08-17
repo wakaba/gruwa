@@ -22,9 +22,9 @@ Test {
       ok $result->{json}->{group_id};
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
     } $current->c;
-    return $current->group ($result->{json}, account => 'a1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
-    my $g = $_[0];
+    my $g = $_[0]->{json}->{group};
     test {
       is $g->{title}, "\x{4000}ab ";
     } $current->c;
@@ -71,10 +71,10 @@ Test {
   })->then (sub {
     my $result = $_[0];
     $current->set_o (g1 => $result->{json});
-    return $current->get_json (['info.json'], {}, account => 'a1', group => 'g1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
-    $current->set_o (oid1 => $result->{json}->{object_id});
+    $current->set_o (oid1 => $result->{json}->{group}->{object_id});
     return $current->get_json (['o', 'get.json'], {
       object_id => $current->o ('oid1'),
       with_data => 1,
