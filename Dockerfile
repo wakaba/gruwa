@@ -10,6 +10,7 @@ ADD modules/ /app/modules/
 ADD templates/ /app/templates/
 ADD css/ /app/css/
 ADD js/ /app/js/
+ADD images/ /app/images/
 ADD themes.json /app/themes.json
 ADD rev /app/rev
 
