@@ -37,6 +37,7 @@ Test {
           is $acc->{account_id}, $current->o ($account)->{account_id};
           like $result->{res}->body_bytes, qr{"account_id"\s*:\s*"};
           is $acc->{name}, $current->o ($account.'name');
+          is $acc->{icon_object_id}, undef;
           my $g = $result->{json}->{group};
           is $g->{group_id}, $current->o ('g1')->{group_id};
           like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
@@ -50,7 +51,7 @@ Test {
       });
     } ['a1', 'a3'];
   });
-} n => 1+2*10, name => '/g/{}/my/info.json';
+} n => 1+2*11, name => '/g/{}/my/info.json';
 
 Test {
   my $current = shift;
