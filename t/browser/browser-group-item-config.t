@@ -96,11 +96,11 @@ Test {
       selector => 'form[action="edit.json"] button[type=submit]:enabled',
     });
   })->then (sub {
-    return $current->get_json (['info.json'], {}, group => 'g1', account => 'a1');
+    return $current->get_json (['my', 'info.json'], {}, group => 'g1', account => 'a1');
   })->then (sub {
     my $result = $_[0];
     test {
-      my $g = $result->{json};
+      my $g = $result->{json}->{group};
       is $g->{title}, $current->o ('t1');
       is $g->{theme}, 'red';
     } $current->c;

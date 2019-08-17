@@ -152,6 +152,9 @@
 
                 <div class=notes>
                   <p>アイコンは<a href=#groups>グループ</a>内の<a href=#objects>記事</a>として保存されます。
+
+                  <p>アイコンが変更されてから反映されるまで、
+                  時間がかかることがあります。
                 </div>
         </table>
 
@@ -369,8 +372,15 @@
       <a href=#accounts>利用者アカウント</a>には他のサービスのアカウントを使ってログインできます。
 
       <p><a href=#accounts>利用者アカウント</a>には、
-      <a href=#group>グループ</a>ごとの<dfn id=account-name>名前</dfn>を設定できます。
-      <a href=#account-name>名前</a>は<a href=#group-members>参加者</a>一覧などで使われます。
+      <a href=#group>グループ</a>ごとの<dfn id=account-name>名前</dfn>と<dfn id=account-icon>アイコン</dfn>を設定できます。
+      <a href=#account-name>名前</a>と<a href=#account-icon>アイコン</a>は<a href=#group-members>参加者</a>一覧などで使われます。
+
+      <div class=notes>
+        <p><a href=#account-icon>アイコン</a>は<a href=#groups>グループ</a>内の<a href=#objects>記事</a>として保存されます。
+
+        <p><a href=#account-icon>アイコン</a>が変更されてから反映されるまで、
+        時間がかかることがあります。
+      </div>
     </section>
 
     <section id=jump>

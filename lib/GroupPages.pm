@@ -917,8 +917,10 @@ sub main ($$$$$) {
     # XXX
     admin_status => 1,
     owner_status => 1,
-    with_group_data => ['title', 'theme', 'default_wiki_index_id', 'object_id', 'icon_object_id'],
-    with_group_member_data => ['name', 'default_index_id'],
+    with_group_data => ['title', 'theme', 'default_wiki_index_id',
+                        'object_id', 'icon_object_id'],
+    with_group_member_data => ['name', 'default_index_id',
+                               'icon_object_id'],
   })->(sub {
     my $account_data = $_[0];
     unless (defined $account_data->{account_id}) {
@@ -966,21 +968,6 @@ sub group ($$$$) {
   if (@$path >= 4 and $path->[2] eq 'o') {
     # /g/{group_id}/o/...
     return $class->group_object ($app, $path, $opts);
-  }
-
-  if (@$path == 3 and $path->[2] eq 'info.json') {
-    # /g/{group_id}/info.json
-    my $g = $opts->{group};
-    return json $app, {
-      group_id => ''.$g->{group_id},
-      title => $g->{data}->{title},
-      created => $g->{created},
-      updated => $g->{updated},
-      theme => $g->{data}->{theme},
-      default_wiki_index_id => $g->{data}->{default_wiki_index_id}, # or undef
-      object_id => $g->{data}->{object_id}, # or undef
-      icon_object_id => $g->{data}->{icon_object_id}, # or undef
-    };
   }
 
   if ($path->[2] eq 'my') {
@@ -1190,6 +1177,25 @@ sub group ($$$$) {
     my $url = defined $id ? "o/$id/image" : "/favicon.ico";
     return $app->send_redirect ($url);
   }
+
+  if (@$path == 5 and $path->[2] eq 'account' and
+      $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'icon') {
+    # /g/{}/account/{account_id}/icon
+    return $opts->{acall}->(['group', 'members'], {
+      context_key => $app->config->{accounts}->{context} . ':group',
+      group_id => $opts->{group}->{group_id},
+      with_data => ['icon_object_id'],
+      account_id => $path->[3],
+    })->(sub {
+      my $json = $_[0];
+      my $gm = $json->{memberships}->{$path->[3]};
+      my $id = $gm->{data}->{icon_object_id}; # or undef
+      $app->http->add_response_header
+          ('Cache-Control' => 'private,max-age=108000');
+      my $url = defined $id ? "../../o/$id/image" : "/images/person.svg";
+      return $app->send_redirect ($url);
+    });
+  }
   
   return $app->throw_error (404);
 } # group
@@ -1206,6 +1212,7 @@ sub group_my ($$$$) {
       account => {
         account_id => ''.$acc->{account_id},
         name => $gm->{data}->{name} // $acc->{name},
+        icon_object_id => $gm->{data}->{icon_object_id}, # or undef
       },
       group => {
         group_id => ''.$g->{group_id},
@@ -1213,12 +1220,14 @@ sub group_my ($$$$) {
         created => $g->{created},
         updated => $g->{updated},
         theme => $g->{data}->{theme},
-        default_wiki_index_id => $g->{data}->{default_wiki_index_id},
+        default_wiki_index_id => $g->{data}->{default_wiki_index_id}, # or undef
+        object_id => $g->{data}->{object_id}, # or undef
+        icon_object_id => $g->{data}->{icon_object_id}, # or undef
       },
       group_member => {
         theme => $gm->{data}->{theme},
         member_type => $gm->{member_type},
-        default_index_id => $gm->{data}->{default_index_id},
+        default_index_id => $gm->{data}->{default_index_id}, # or undef
       },
     };
   } elsif (@$path == 4 and $path->[3] eq 'edit.json') {
@@ -1228,15 +1237,29 @@ sub group_my ($$$$) {
 
     my $names = [];
     my $values = [];
+    my $waits = [];
 
-    my $name = $app->text_param ('name');
-    if (defined $name and length $name) {
+    my $name = $app->text_param ('name') // '';
+    if (length $name) {
       push @$names, 'name';
       push @$values, $name;
     }
 
-    ## Name changes are not logged.
-    return Promise->resolve->then (sub {
+    my $icon_id = $app->bare_param ('icon_object_id') // '';
+    if (length $icon_id) {
+      push @$waits, $opts->{db}->select ('object', {
+        group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
+        object_id => $icon_id,
+      }, fields => ['object_id'])->then (sub {
+        return $app->throw_error (400, reason_phrase => 'Bad |object_id|')
+            unless $_[0]->first;
+        push @$names, 'icon_object_id';
+        push @$values, $icon_id;
+      });
+    }
+
+    ## Changes are not logged.
+    return Promise->all ($waits)->then (sub {
       return unless @$names;
       return $opts->{acall}->(['group', 'member', 'data'], {
         context_key => $app->config->{accounts}->{context} . ':group',

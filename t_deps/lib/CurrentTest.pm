@@ -321,13 +321,6 @@ sub create_group ($$$) {
   });
 } # create_group
 
-sub group ($$;%) {
-  my ($self, $group, %args) = @_;
-  return $self->get_json (['g', $group->{group_id}, 'info.json'], {}, account => $args{account})->then (sub {
-    return $_[0]->{json};
-  });
-} # group
-
 sub create_index ($$$) {
   my ($self, $name, $opts) = @_;
   return $self->post_json (['i', 'create.json'], {

@@ -46,6 +46,37 @@ Test {
   });
 } n => 1+2*1, name => '/g/{}/my/edit.json name';
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      owner => 'a1',
+    }],
+    [o1 => object => {account => 'a1', group => 'g1'}],
+  )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      icon_object_id => $current->o ('o1')->{object_id},
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->are_errors (
+      ['POST', ['my', 'edit.json'], {}, account => 'a1', group => 'g1'],
+      [
+        {params => {icon_object_id => 41253}, status => 400},
+      ],
+    );
+  })->then (sub {
+    return $current->get_json (['my', 'info.json'], {
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{json}->{account}->{icon_object_id}, $current->o ('o1')->{object_id};
+      like $result->{res}->body_bytes, qr{"icon_object_id"\s*:\s*"};
+    } $current->c;
+  });
+} n => 3, name => 'edit icon_object_id';
+
 RUN;
 
 =head1 LICENSE

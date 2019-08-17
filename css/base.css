@@ -761,6 +761,14 @@ dfn {
   font-weight: bolder;
 }
 
+gr-account a:not(:hover):not(:active):not(:focus) {
+  text-decoration: none;
+}
+
+gr-account a gr-account-name {
+  text-decoration: underline;
+}
+
 gr-account-name[data-filling],
 gr-group-name[data-filling],
 account-name[loading] {
@@ -1046,6 +1054,17 @@ iframe.embed {
   height: 3em;
   margin: 3px;
   vertical-align: middle;
+}
+
+h1 .icon {
+  width: 1.3em;
+  height: 1.3em;
+}
+
+th .icon,
+td .icon {
+  width: 1.5em;
+  height: 1.5em;
 }
 
 user-name hatena-user {

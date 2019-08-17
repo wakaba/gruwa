@@ -23,9 +23,9 @@ Test {
   })->then (sub {
     return $current->post_json (['edit.json'], {title => "\x{666}"}, group => 'g1', account => 'a1');
   })->then (sub {
-    return $current->group ($current->o ('g1'), account => 'a1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
-    my $group = $_[0];
+    my $group = $_[0]->{json}->{group};
     test {
       is $group->{title}, "\x{666}";
       ok $group->{updated} > $group->{created};
@@ -40,9 +40,9 @@ Test {
   })->then (sub {
     return $current->post_json (['edit.json'], {title => ""}, group => 'g1', account => 'a1');
   })->then (sub {
-    return $current->group ($current->o ('g1'), account => 'a1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
-    my $group = $_[0];
+    my $group = $_[0]->{json}->{group};
     test {
       is $group->{title}, "\x{900}";
       is $group->{updated}, $group->{created};
@@ -57,9 +57,9 @@ Test {
   })->then (sub {
     return $current->post_json (['edit.json'], {title => undef}, group => 'g1', account => 'a1');
   })->then (sub {
-    return $current->group ($current->o ('g1'), account => 'a1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
-    my $group = $_[0];
+    my $group = $_[0]->{json}->{group};
     test {
       is $group->{title}, "\x{900}";
       is $group->{updated}, $group->{created};
@@ -74,18 +74,18 @@ Test {
   })->then (sub {
     return $current->post_json (['edit.json'], {theme => ''}, group => 'g1', account => 'a1');
   })->then (sub {
-    return $current->group ($current->o ('g1'), account => 'a1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
-    my $group = $_[0];
+    my $group = $_[0]->{json}->{group};
     test {
       is $group->{theme}, 'green';
       is $group->{updated}, $group->{created};
     } $current->c;
     return $current->post_json (['edit.json'], {theme => 'red'}, group => 'g1', account => 'a1');
   })->then (sub {
-    return $current->group ($current->o ('g1'), account => 'a1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
-    my $group = $_[0];
+    my $group = $_[0]->{json}->{group};
     test {
       is $group->{theme}, 'red';
       ok $group->{updated} > $group->{created};
@@ -117,9 +117,9 @@ Test {
       default_wiki_index_id => $current->o ('i1')->{index_id},
     }, group => 'g1', account => 'a1');
   })->then (sub {
-    return $current->group ($current->o ('g1'), account => 'a1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
-    my $group = $_[0];
+    my $group = $_[0]->{json}->{group};
     test {
       is $group->{default_wiki_index_id}, $current->o ('i1')->{index_id};
       ok $group->{updated} > $group->{created};
@@ -138,10 +138,10 @@ Test {
       theme => 'red',
     }, account => 'a1', group => 'g1');
   })->then (sub {
-    return $current->get_json (['info.json'], {}, account => 'a1', group => 'g1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
-    $current->set_o (oid1 => $result->{json}->{object_id});
+    $current->set_o (oid1 => $result->{json}->{group}->{object_id});
     return $current->get_json (['o', 'get.json'], {
       object_id => $current->o ('oid1'),
       with_data => 1,
@@ -154,11 +154,12 @@ Test {
       title => $current->generate_text (t2 => {}),
     }, account => 'a1', group => 'g1');
   })->then (sub {
-    return $current->get_json (['info.json'], {}, account => 'a1', group => 'g1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
-      is $result->{json}->{object_id}, $current->o ('oid1'), 'group object unchanged';
+      is $result->{json}->{group}->{object_id}, $current->o ('oid1'),
+         'group object unchanged';
     } $current->c;
     return $current->get_json (['o', 'get.json'], {
       object_id => $current->o ('oid1'),
@@ -199,12 +200,12 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->get_json (['info.json'], {}, account => 'a1', group => 'g1');
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
-    $current->set_o (oid1 => $result->{json}->{object_id});
+    $current->set_o (oid1 => $result->{json}->{group}->{object_id});
     test {
-      is $result->{json}->{icon_object_id}, $current->o ('o1')->{object_id};
+      is $result->{json}->{group}->{icon_object_id}, $current->o ('o1')->{object_id};
       like $result->{res}->body_bytes, qr{"icon_object_id"\s*:\s*"};
     } $current->c;
     return $current->get_json (['o', 'get.json'], {

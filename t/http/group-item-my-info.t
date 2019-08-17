@@ -7,6 +7,53 @@ use Tests;
 Test {
   my $current = shift;
   return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [a3 => account => {}],
+    [g1 => group => {
+      title => $current->generate_text (t1 => {}),
+      theme => 'red',
+      owner => 'a1',
+      members => ['a3'],
+    }],
+  )->then (sub {
+    return $current->are_errors (
+      ['GET', ['g', $current->o ('g1')->{group_id}, 'my', 'info.json'], {}, account => 'a1'],
+      [
+        {path => ['g', int rand 10000, 'my', 'info.json'], status => 404},
+        {account => '', status => 403},
+        {account => undef, status => 403},
+      ],
+    );
+  })->then (sub {
+    return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $g = $result->{json}->{group};
+      is $g->{group_id}, $current->o ('g1')->{group_id};
+      like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
+      is $g->{title}, $current->o ('t1');
+    } $current->c;
+    return $current->get_json (['my', 'info.json'], {}, account => 'a3', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $g = $result->{json}->{group};
+      is $g->{group_id}, $current->o ('g1')->{group_id};
+      like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
+      is $g->{title}, $current->o ('t1');
+      is $g->{default_wiki_index_id}, undef;
+      is $g->{theme}, 'red';
+      like $result->{res}->body_bytes, qr{"object_id"\s*:\s*"};
+      is $g->{icon_object_id}, undef;
+    } $current->c;
+  });
+} n => 11, name => '/g/{}/my/info.json';
+
+Test {
+  my $current = shift;
+  return $current->create (
     [a1 => account => {
       name => $current->generate_text ('a1name' => {}),
     }],
@@ -22,7 +69,7 @@ Test {
     return $current->are_errors (
       ['GET', ['g', $current->o ('g1')->{group_id}, 'my', 'info.json'], {}, account => 'a1'],
       [
-        {path => ['g', int rand 10000, 'info.json'], status => 404},
+        {path => ['g', int rand 10000, 'my', 'info.json'], status => 404},
         {account => '', status => 403},
         {account => undef, status => 403},
       ],
@@ -37,6 +84,7 @@ Test {
           is $acc->{account_id}, $current->o ($account)->{account_id};
           like $result->{res}->body_bytes, qr{"account_id"\s*:\s*"};
           is $acc->{name}, $current->o ($account.'name');
+          is $acc->{icon_object_id}, undef;
           my $g = $result->{json}->{group};
           is $g->{group_id}, $current->o ('g1')->{group_id};
           like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
@@ -50,7 +98,7 @@ Test {
       });
     } ['a1', 'a3'];
   });
-} n => 1+2*10, name => '/g/{}/my/info.json';
+} n => 1+2*11, name => '/g/{}/my/info.json';
 
 Test {
   my $current = shift;
