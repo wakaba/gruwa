@@ -19,6 +19,7 @@
       <details open>
         <summary>
           <gr-account self>
+            <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
             <gr-account-name data-field=name data-filling>アカウント</>
           </gr-account>
         </summary>
@@ -461,6 +462,7 @@
           <th>
             <gr-account data-field=account_id>
               <a data-href-template=account/{account_id}/>
+                <img data-src-template=account/{account_id}/icon class=icon alt>
                 <gr-account-name data-field=name data-filling>アカウント</gr-account-name>
               </a>
             </gr-account>
@@ -562,25 +564,30 @@
       <gr-list-container type=table src=members/invitations/list.json key=invitations sortkey=created class=main-table id=invitations-list data-gr-if-group-owner>
           <template>
             <td><a data-href-field=invitation_url><time data-field=created /></a>
-            <td><gr-account-name data-field=author_account_id />
+            <td>
+              <gr-account data-field=author_account_id>
+                <a data-href-template=account/{account_id}/>
+                  <img data-src-template=account/{account_id}/icon class=icon alt>
+                  <gr-account-name data-field=name data-empty=■ />
+                </a>
+              </gr-account>
             <td><gr-enum-value data-field=invitation_data.member_type text-1=一般参加者 text-2=所有者 />
             <td><time data-field=expires>
             <td>
               <only-if data-field=used cond="!=0" hidden>
-                <time data-field=used />
+                <p><gr-account data-field=user_account_id>
+                  <a data-href-template=account/{account_id}/>
+                    <img data-src-template=account/{account_id}/icon class=icon alt>
+                    <gr-account-name data-field=name data-empty=■ />
+                  </a>
+                </gr-account>
+                <p><time data-field=used />
               </only-if>
               <only-if data-field=used cond="==0" hidden>
                 <form method=post action=javascript: data-data-action-template=members/invitations/{invitation_key}/invalidate.json data-next=reloadList:invitations-list>
                   <gr-action-status hidden stage-fetch=変更中... />
                   <button type=submit class=delete-button>無効にする</>
                 </form>
-              </only-if>
-            <td>
-              <only-if data-field=user_account_id cond="!=0" hidden>
-                <gr-account-name data-field=user_account_id />
-              </only-if>
-              <only-if data-field=user_account_id cond="==0" hidden>
-                -
               </only-if>
           </template>
           <table>
@@ -590,8 +597,7 @@
                 <th>発行者
                 <th>種別
                 <th>有効期限
-                <th>利用日
-                <th>利用者
+                <th>利用
             <tbody>
           </table>
           <list-is-empty hidden>
@@ -1489,7 +1495,10 @@
   <template>
     <section>
       <header class=section>
-        <h1 data-field=account.name data-empty=■></h1>
+        <h1>
+          <img src=icon class=icon alt>
+          <bdi data-field=account.name data-empty=■ />
+        </h1>
         <popup-menu>
           <button type=button title=メニュー>
             <button-label>
@@ -1512,7 +1521,7 @@
               <th>名前
               <td>
                 <img src=icon class=icon alt>
-                <bdi data-field=account.name />
+                <bdi data-field=account.name data-empty=■ />
             <tr>
               <th>種別
               <td>

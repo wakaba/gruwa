@@ -111,6 +111,7 @@ GR._updateMyInfo = function () {
   return GR._state.updateMyInfo = gFetch ('my/info.json', {}).then (json => {
     var oldAccount = GR._state.account || {};
     GR._state.account = json.account;
+    GR._state.account.group_id = json.group.group_id;
     GR._state.group = json.group;
     GR._state.group.member = json.group_member;
 
@@ -642,7 +643,7 @@ function fillFields (contextEl, rootEl, el, object, opts) {
           field.parentNode.setAttribute ('data-value', value);
         }
       }
-    } else if (field.localName === 'gr-account-name') {
+    } else if (field.localName === 'gr-account') {
       field.setAttribute ('value', value);
     } else if (field.localName === 'object-ref') {
       field.setAttribute ('value', value);

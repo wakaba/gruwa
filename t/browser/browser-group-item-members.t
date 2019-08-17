@@ -167,6 +167,42 @@ Test {
   });
 } n => 3, name => ['edit member desc'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {name => $current->generate_text (t1 => {})}],
+    [a2 => account => {name => $current->generate_text (t2 => {})}],
+    [g1 => group => {
+      owners => ['a1'],
+    }],
+    [i1 => invitation => {group => 'g1', account => 'a1'}],
+  )->then (sub {
+    return $current->post_redirect (['invitation',
+      $current->o ('g1')->{group_id},
+      $current->o ('i1')->{invitation_key},
+    ''], {}, account => 'a2');
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'members'],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#invitations table',
+      text => $current->o ('t1'),
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#invitations table',
+      text => $current->o ('t2'),
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['invitations'], browser => 1;
+
 RUN;
 
 =head1 LICENSE
