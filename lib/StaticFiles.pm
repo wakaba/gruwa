@@ -49,6 +49,11 @@ sub main ($$$) {
     return static $app, [$path->[0], $path->[1]], 'text/javascript;charset=utf-8';
   }
 
+  if (@$path == 2 and
+      $path->[0] eq 'images' and $path->[1] =~ /\A[A-Za-z0-9-]+\.svg\z/) {
+    return static $app, [$path->[0], $path->[1]], 'image/svg+xml;charset=utf-8';
+  }
+
   if (@$path == 2 and $path->[0] eq 'theme' and $path->[1] eq 'list.json') {
     # /theme/list.json
     return static $app, ['themes.json'], 'application/json;charset=utf-8';

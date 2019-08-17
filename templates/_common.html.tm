@@ -1510,7 +1510,9 @@
           <tbody>
             <tr>
               <th>名前
-              <td><bdi data-field=account.name />
+              <td>
+                <img src=icon class=icon alt>
+                <bdi data-field=account.name />
             <tr>
               <th>種別
               <td>
@@ -1546,6 +1548,21 @@
                 <enum-value data-field=group.member.member_type
                     label-1=一般参加者
                     label-2=所有者  />
+            <tr>
+              <th>アイコン
+              <td>
+                <gr-icon-editor name=icon_object_id>
+                  <figure>
+                    <img data-src-template=/g/{group.group_id}/account/{account.account_id}/icon class=icon>
+                  </figure>
+                  <button type=button class=generate-icon-button
+                      data-text-selector="input[name=name]">
+                    自動生成
+                  </button>
+                  <button type=button class=reset-icon-button>
+                    編集前に戻す
+                  </button>
+                </gr-icon-editor>
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>

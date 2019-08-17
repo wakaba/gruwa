@@ -94,7 +94,7 @@ return sub {
           #$path->[0] eq 'favicon.ico' or
           #$path->[0] eq 'manifest.json' or
           $path->[0] eq 'css' or
-          #$path->[0] eq 'images' or
+          $path->[0] eq 'images' or
           $path->[0] eq 'js') {
         return StaticFiles->main ($app, $path);
       }

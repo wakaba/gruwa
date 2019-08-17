@@ -218,8 +218,15 @@ GR.group._members = function () {
       GR._updateMyInfo (),
       gFetch ('icon', {reload: true, ignoreError: true}),
     ]).then (() => {
+      return GR.account.info ();
+    }).then (account => {
+      return gFetch ('account/'+account.account_id+'/icon', {reload: true, ignoreError: true});
+    }).then (() => {
       document.querySelectorAll ('head link[rel~=icon]').forEach (_ => {
         _.href += '?' + Math.random ();
+      });
+      document.querySelectorAll ('img.icon').forEach (_ => {
+        _.src += '?' + Math.random ();
       });
     });
   }; // reloadGroupInfo

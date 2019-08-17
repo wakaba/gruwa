@@ -1177,6 +1177,25 @@ sub group ($$$$) {
     my $url = defined $id ? "o/$id/image" : "/favicon.ico";
     return $app->send_redirect ($url);
   }
+
+  if (@$path == 5 and $path->[2] eq 'account' and
+      $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'icon') {
+    # /g/{}/account/{account_id}/icon
+    return $opts->{acall}->(['group', 'members'], {
+      context_key => $app->config->{accounts}->{context} . ':group',
+      group_id => $opts->{group}->{group_id},
+      with_data => ['icon_object_id'],
+      account_id => $path->[3],
+    })->(sub {
+      my $json = $_[0];
+      my $gm = $json->{memberships}->{$path->[3]};
+      my $id = $gm->{data}->{icon_object_id}; # or undef
+      $app->http->add_response_header
+          ('Cache-Control' => 'private,max-age=108000');
+      my $url = defined $id ? "../../o/$id/image" : "/images/person.svg";
+      return $app->send_redirect ($url);
+    });
+  }
   
   return $app->throw_error (404);
 } # group
