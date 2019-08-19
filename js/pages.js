@@ -731,7 +731,7 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       }
     }));
   });
-  $$c (el, 'form[data-child-form]').forEach (function (field) {
+  $$c (el, 'form[data-child-form], form[data-next~=markAncestorArticleDeleted]').forEach (function (field) {
     field.parentObject = object;
   });
   $$c (el, '[data-parent-template]').forEach (function (field) {
@@ -747,6 +747,11 @@ function fillFields (contextEl, rootEl, el, object, opts) {
   $$c (el, '[data-data-action-template]').forEach (function (field) {
     field.setAttribute ('data-action', field.getAttribute ('data-data-action-template').replace (/\{([^{}]+)\}/g, function (_, k) {
       return encodeURIComponent (object[k]);
+    }));
+  });
+  $$c (el, '[data-action-template]').forEach (function (field) {
+    field.setAttribute ('action', field.getAttribute ('data-action-template').replace (/\{([^{}]+)\}/g, function (_, k) {
+      return object[k];
     }));
   });
   $$c (el, '[data-value-template]').forEach (function (field) {
@@ -1401,6 +1406,13 @@ function upgradeList (el) {
               });
             }
           });
+          // XXX replace by templateselector
+          if (object.user_status == 2) { // deleted
+            item.classList.add ('deleted');
+            item.querySelectorAll ('main').forEach (_ => {
+              _.textContent = '(削除されました。)';
+            });
+          }
         }; // updateView
         item.addEventListener ('objectdataupdate', function (ev) {
           this.updateView ();
@@ -1916,6 +1928,37 @@ function saveObject (article, form, object, opts) {
     });
   });
 } // saveObject
+
+(() => {
+
+  var e = document.createElementNS ('data:,pc', 'saver');
+  e.setAttribute ('name', 'objectSaver');
+  e.pcHandler = function (fd) {
+    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/' + this.getAttribute ('action');
+    return fetch (url, {
+      credentials: 'same-origin',
+      method: 'POST',
+      referrerPolicy: 'same-origin',
+      body: fd,
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+      return res;
+    });
+    // XXX notify object update
+  };
+  document.head.appendChild (e);
+
+  // XXX replace by article reload ()
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'markAncestorArticleDeleted');
+  e.pcHandler = function (args) {
+    var obj = this.parentObject;
+    obj.user_status = 2; // deleted
+    this.dispatchEvent (new Event ('objectdataupdate', {bubbles: true}));
+  }; // markAncestorArticleDeleted
+  document.head.appendChild (e);
+  
+}) ();
 
 function upgradeWithSidebar (e) {
   e.addEventListener ('gruwatogglepanel', function (ev) {

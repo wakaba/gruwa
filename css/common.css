@@ -449,6 +449,15 @@ article.object > main iframe {
   border-style: none;
 }
 
+article.deleted {
+  opacity: 0.3;
+}
+
+article.deleted iframe,
+article.deleted form {
+  pointer-events: none;
+}
+
 with-sidebar:not([hidden]) {
   display: table;
   width: 100%;
