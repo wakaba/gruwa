@@ -918,11 +918,67 @@ Test {
   });
 } n => 1, name => 'with_snippet';
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {owners => ['a1']}],
+    [i1 => index => {group => 'g1', account => 'a1'}],
+    [o1 => object => {group => 'g1', account => 'a1', index => 'i1',
+                      body => $current->generate_text (t1 => {}),
+                      user_status => 1}], # open
+    [o2 => object => {group => 'g1', account => 'a1', index => 'i1',
+                      body => $current->generate_text (t2 => {})}],
+  )->then (sub {
+    return $current->post_json (['o', $current->o ('o2')->{object_id}, 'edit.json'], {
+      user_status => 2, # deleted
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      object_id => [$current->o ('o1')->{object_id},
+                    $current->o ('o2')->{object_id}],
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj1 = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $obj1->{user_status}, 1;
+      is $obj1->{owner_status}, 1;
+      is $obj1->{data}->{user_status}, $obj1->{user_status};
+      is $obj1->{data}->{owner_status}, $obj1->{owner_status};
+      is $obj1->{data}->{body}, $current->o ('t1');
+      my $obj2 = $result->{json}->{objects}->{$current->o ('o2')->{object_id}};
+      is $obj2->{user_status}, 2;
+      is $obj2->{owner_status}, 1;
+      is $obj2->{data}->{user_status}, $obj2->{user_status};
+      is $obj2->{data}->{owner_status}, $obj2->{owner_status};
+      is $obj2->{data}->{body}, undef;
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      index_id => $current->o ('i1')->{index_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj1 = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $obj1->{user_status}, undef;
+      is $obj1->{owner_status}, undef;
+      is $obj1->{data}->{user_status}, 1;
+      is $obj1->{data}->{owner_status}, 1;
+      is $obj1->{data}->{body}, $current->o ('t1');
+      my $obj2 = $result->{json}->{objects}->{$current->o ('o2')->{object_id}};
+      is $obj2, undef;
+    } $current->c;
+  });
+} n => 16, name => 'user_status';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -935,6 +991,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

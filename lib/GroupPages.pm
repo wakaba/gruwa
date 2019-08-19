@@ -226,11 +226,23 @@ sub edit_object ($$$$$) {
   my $trackbacks = {};
   my $trackback_count = 0;
 
+  if (defined $edits->{user_status}) {
+    if ($edits->{user_status} == 2) { # deleted
+      $object->{data} = {
+        user_status => $edits->{user_status},
+        owner_status => $object->{data}->{owner_status},
+        title => ''.$object->{object_id},
+        timestamp => $object->{data}->{timestamp},
+      };
+    }
+    $object->{data}->{user_status} = $edits->{user_status};
+    $changes->{fields}->{user_status} = 1;
+  }
   for my $key (qw(
     title body body_source file_name author_name author_hatena_id
     author_bb_username assignee_bb_username todo_bb_priority
     todo_bb_kind todo_bb_state parent_section_id
-    timestamp body_type body_source_type user_status owner_status
+    timestamp body_type body_source_type
     todo_state file_size file_closed
     mime_type
     body_data
@@ -247,7 +259,6 @@ sub edit_object ($$$$$) {
   if ($object->{data}->{file_closed}) {
     delete $object->{data}->{upload_token};
   }
-  # XXX owner_status only can be changed by group owners
   if (defined $edits->{body_data_delta}) {
     for my $key (keys %{$edits->{body_data_delta}}) {
       my $value = $edits->{body_data_delta}->{$key};
@@ -1814,7 +1825,7 @@ sub group_object ($$$$) {
           $edits->{$key} = $value if defined $value;
         }
         for my $key (qw(timestamp body_type body_source_type
-                        user_status owner_status
+                        user_status
                         todo_state file_size file_closed)) {
           my $value = $app->bare_param ($key);
           if (defined $value) {
@@ -2030,25 +2041,28 @@ sub group_object ($$$$) {
       } else {
         my $list = $app->bare_param_list ('object_id');
         $rev_id = $app->bare_param ('object_revision_id') if @$list == 1;
-        return {object_id => {-in => $list}};
+        return {object_id => {-in => $list},
+                all => 1};
       }
     })->then (sub {
       my $search = $_[0];
       my $order = delete $search->{order}; # or undef
       my $offset = delete $search->{offset}; # or undef
       my $limit = delete $search->{limit}; # or undef
+      my $all = delete $search->{all};
       return [] unless keys %$search;
       return [] if defined $search->{object_id} and
                    defined $search->{object_id}->{-in} and
                    not @{$search->{object_id}->{-in}};
+      unless ($all) {
+        $search->{owner_status} = 1; # open
+        $search->{user_status} = 1; # open
+      }
       return $db->select ('object', {
         group_id => Dongry::Type->serialize ('text', $path->[1]),
         %$search,
-
-        # XXX
-        owner_status => 1,
-        user_status => 1,
       }, fields => ['object_id', 'title', 'timestamp', 'created', 'updated',
+                    ($all ? ('user_status', 'owner_status') : ()),
                     ($app->bare_param ('with_data') ? 'data' : ()),
                     ($app->bare_param ('with_snippet') ? $db->bare_sql_fragment (q{ substring(`search_data`, 1, 600) as `snippet` }) : ())],
         order => $order, # or undef
@@ -2114,6 +2128,8 @@ sub group_object ($$$$) {
               created => $_->{created},
               updated => $_->{updated},
               timestamp => $_->{timestamp},
+              (defined $_->{user_status} ? (user_status => $_->{user_status},
+                                            owner_status => $_->{owner_status}) : ()),
               (defined $_->{data} ? (data => $data) : ()),
               (defined $_->{snippet} ? (snippet => Dongry::Type->parse ('text', $_->{snippet})) : ()),
               (defined $_->{revision_data} ?

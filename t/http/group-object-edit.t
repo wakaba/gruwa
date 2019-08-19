@@ -1136,11 +1136,44 @@ Test {
   });
 } n => 1, name => 'asin: url_ref';
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {owner => 'a1'}],
+    [o1 => object => {account => 'a1', group => 'g1',
+                      title => $current->generate_text (t1 => {})}],
+  )->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      user_status => 2,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $obj->{user_status}, 2;
+      is $obj->{owner_status}, 1, 'default owner status';
+      is $obj->{data}->{user_status}, $obj->{user_status};
+      is $obj->{data}->{owner_status}, $obj->{owner_status};
+      is $obj->{title}, $current->o ('o1')->{object_id};
+      is $obj->{data}->{title}, $obj->{title};
+      is $obj->{data}->{timestamp}, $obj->{timestamp};
+      is $obj->{data}->{body}, undef;
+    } $current->c;
+  });
+} n => 8, name => 'change user_status';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -1153,6 +1186,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut
