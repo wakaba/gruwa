@@ -179,7 +179,6 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'gr-menu[type=group] a[href$="/members"]',
-      shown => 1,
     });
   })->then (sub {
     return $current->b (1)->execute (q{
