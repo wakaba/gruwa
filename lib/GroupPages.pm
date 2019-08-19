@@ -1959,14 +1959,46 @@ sub group_object ($$$$) {
           die $_[0] unless $_[0]->status == 200;
           return json $app, {};
         });
+      } elsif (@$path == 5 and $path->[4] eq 'revisions.json') {
+        # /g/{group_id}/o/{object_id}/revisions.json
+        my $page = Pager::this_page ($app, limit => 10, max_limit => 100);
+        my $where = {
+          group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
+          object_id => Dongry::Type->serialize ('text', $object->{object_id}),
+        };
+        $where->{created} = $page->{value} if defined $page->{value};
+        my $with = $app->bare_param ('with_revision_data');
+        return $db->select ('object_revision', $where, fields => [
+          'object_revision_id',
+          ($with ? ('revision_data') : ()),
+          'author_account_id', 'created',
+          'owner_status', 'user_status',
+          # group_id object_id data
+        ],
+          offset => $page->{offset}, limit => $page->{limit},
+          order => ['created', $page->{order_direction}],
+        )->then (sub {
+          my $items = [map {
+            {
+              object_revision_id => '' . $_->{object_revision_id},
+              author_account_id => '' . $_->{author_account_id},
+              created => $_->{created},
+              ($with ? (revision_data => Dongry::Type->parse ('json', $_->{revision_data})) : ()),
+              user_status => $_->{user_status},
+              owner_status => $_->{owner_status},
+            };
+          } @{$_[0]->all->to_a}];
+          my $next_page = Pager::next_page $page, $items, 'created';
+          return json $app, {items => $items, %$next_page};
+        });
+
+      ## XXX if revision's *_status is changed, save log
+
       } else {
         return $app->throw_error (404);
       }
     });
   }
-
-  # XXX revisions
-  ## XXX if revision's *_status is changed, save log
 
   if (@$path >= 4 and $path->[3] eq 'get.json') {
     # /g/{group_id}/o/get.json

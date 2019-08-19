@@ -197,7 +197,7 @@ Test {
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      location.reload ();
+      setTimeout (() => location.reload (), 0);
     });
   })->then (sub {
     return $current->b_wait (1 => {
