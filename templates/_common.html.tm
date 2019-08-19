@@ -1145,7 +1145,24 @@
       <header class=section>
         <h1><time data-field=object.timestamp data-format=date /></h1>
       </header>
-    
+
+      <big-banner data-gr-if-revision>
+        <p>
+          <gr-account data-field=object.revision_author_account_id>
+            <a data-href-template=/g/{group_id}/account/{account_id}/>
+              <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
+              <gr-account-name data-field=name data-empty=■ />
+            </a>
+          </gr-account>
+          による
+          <time data-field=object.updated />
+          版を表示しています。
+
+        <p class=operations>
+          <a href=./>最新版</a>
+          <a href=revisions>編集履歴</a>
+      </big-banner>
+      
       <gr-list-container key=objects listitemtype=object>
         <template class=object>
           <header>
@@ -1348,7 +1365,10 @@
 
 <template-set name=object-revision>
   <template>
-    <td><time data-field=created />
+    <td>
+      <a data-href-template=./?object_revision_id={object_revision_id}>
+        <time data-field=created />
+      </a>
     <td>
       <gr-account data-field=author_account_id>
         <a data-href-template=../../account/{account_id}/>

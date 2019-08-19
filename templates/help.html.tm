@@ -359,6 +359,11 @@
         <div class=notes>
           <p><a href=#objects>記事</a>への<a href=#comments>コメント</a>や履歴は削除後も残ります。
         </div>
+
+      <p><a href=#objects>記事</a>の<a href=#menu>メニュー</a>から
+      「編集履歴」を選ぶと、<a href=#objects>記事</a>の変更日時、
+      変更者、変更内容が表示されます。
+      変更前の状態を表示することもできます。
     </section>
 
     <section id=search>

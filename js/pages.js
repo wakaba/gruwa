@@ -185,9 +185,14 @@ GR.group._members = function () {
   var get = (ref) => {
     var r = '';
     if (ref) r = '?ref=' + encodeURIComponent (ref);
-    return gFetch ('members/list.json' + r, {}).then (json => {
+    return Promise.all ([
+      gFetch ('members/list.json' + r, {}),
+      GR.group.info (),
+    ]).then (_ => {
+      var [json, group] = _;
       Object.values (json.members).forEach (_ => {
         map[_.account_id] = _;
+        _.group_id = group.group_id;
       });
       if (json.has_next) {
         return get (json.next_ref);
@@ -244,9 +249,9 @@ GR.index.info = function (indexId) {
 
 GR.object = {};
 
-GR.object.get = function (objectId) {
+GR.object.get = function (objectId, objectRevisionId) {
   // XXX cache
-  return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (json => {
+  return gFetch ('o/get.json?with_data=1&object_id=' + objectId + (objectRevisionId ? '&object_revision_id=' + encodeURIComponent (objectRevisionId) : ''), {}).then (json => {
     var object = json.objects[objectId];
     if (object) {
       return object;
@@ -1586,6 +1591,11 @@ function upgradeList (el) {
       if (value) {
         url += /\?/.test (url) ? '&' : '?';
         url += attr.replace (/^src-/, '') + '=' + encodeURIComponent (value);
+        if (attr === 'src-object_id') {
+          var u = new URL (location.href);
+          var rev = u.searchParams.get ('object_revision_id');
+          if (rev) url += '&object_revision_id=' + encodeURIComponent (rev);
+        }
       }
     });
     if (url && url !== "o/get.json?with_data=1") {
@@ -3078,6 +3088,7 @@ GR.navigate.go = function (u, args) {
           m = path.match (/^o\/([0-9]+)\/$/);
           if (m) return ['group', 'object-index', {
             objectId: m[1],
+            objectRevisionId: url.searchParams.get ('object_revision_id') || null,
           }];
 
           m = path.match (/^o\/([0-9]+)\/(revisions)$/);
@@ -3208,7 +3219,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       }));
     }
     if (pageArgs.objectId) {
-      wait.push (GR.object.get (pageArgs.objectId).then (_ => params.object = _).then (() => {
+      wait.push (GR.object.get (pageArgs.objectId, pageArgs.objectRevisionId).then (_ => params.object = _).then (() => {
         // XXX use first index_type=[123] index
         var indexId = Object.keys (params.object.data.index_ids || {})[0];
         if (indexId) {
@@ -3335,6 +3346,12 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           div.querySelectorAll ('gr-menu[type=wiki]').forEach (_ => {
             _.setAttribute ('indexid', params.index.index_id);
             _.setAttribute ('wikiname', params.wiki.name);
+          });
+        }
+
+        if (!pageArgs.objectRevisionId) {
+          div.querySelectorAll ('[data-gr-if-revision]').forEach (_ => {
+            _.remove ();
           });
         }
 

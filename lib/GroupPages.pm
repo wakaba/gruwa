@@ -1824,7 +1824,9 @@ sub group_object ($$$$) {
                         todo_bb_priority todo_bb_kind todo_bb_state
                         parent_section_id)) {
           my $value = $app->text_param ($key);
-          $edits->{$key} = $value if defined $value;
+          $edits->{$key} = $value if defined $value and
+              (not defined $object->{data}->{$key} or
+               not $value eq $object->{data}->{$key});
         }
         for my $key (qw(timestamp body_type body_source_type
                         user_status
