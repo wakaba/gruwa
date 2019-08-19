@@ -1149,6 +1149,7 @@ Test {
     }, group => 'g1', account => 'a1');
   })->then (sub {
     my $result = $_[0];
+    $current->set_o (rev1 => $result->{json}->{object_revision_id});
     return $current->get_json (['o', 'get.json'], {
       object_id => $current->o ('o1')->{object_id},
       with_data => 1,
@@ -1166,8 +1167,28 @@ Test {
       is $obj->{data}->{timestamp}, $obj->{timestamp};
       is $obj->{data}->{body}, undef;
     } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      object_revision_id => $current->o ('rev1'),
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $obj->{user_status}, 2;
+      is $obj->{owner_status}, 1, 'default owner status';
+      is $obj->{data}->{user_status}, $obj->{user_status};
+      is $obj->{data}->{owner_status}, $obj->{owner_status};
+      is $obj->{title}, $current->o ('o1')->{object_id};
+      is $obj->{data}->{title}, $obj->{title};
+      is $obj->{data}->{timestamp}, $obj->{timestamp};
+      is $obj->{data}->{body}, undef;
+      is $obj->{revision_data}->{changes}->{action}, 'delete';
+      ok $obj->{revision_data}->{changes}->{fields}->{user_status};
+    } $current->c;
   });
-} n => 8, name => 'change user_status';
+} n => 18, name => 'change user_status';
 
 RUN;
 

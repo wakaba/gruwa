@@ -234,6 +234,7 @@ sub edit_object ($$$$$) {
         title => ''.$object->{object_id},
         timestamp => $object->{data}->{timestamp},
       };
+      $changes->{action} = 'delete';
     }
     $object->{data}->{user_status} = $edits->{user_status};
     $changes->{fields}->{user_status} = 1;
@@ -674,7 +675,7 @@ sub edit_object ($$$$$) {
               created => $time,
 
               owner_status => $object->{data}->{owner_status},
-              user_status => $object->{data}->{user_status},
+              user_status => 1, # open, not $object->{data}->{user_status},
             }]);
           })->then (sub {
             my $update = {
