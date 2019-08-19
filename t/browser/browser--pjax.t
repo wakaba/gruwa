@@ -179,12 +179,14 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'gr-menu[type=group] a[href$="/members"]',
+      shown => 1,
     });
   })->then (sub {
     return $current->b (1)->execute (q{
       GR._state.navigateInitiated = - 3 * 24*60*60 * 1000; // stale
 
       window.testState = 123445;
+      document.querySelector ('gr-menu[type=group] button').click ();
       document.querySelector ('gr-menu[type=group] a[href$="/members"]').click ();
     });
   })->then (sub {
