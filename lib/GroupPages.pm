@@ -873,6 +873,7 @@ sub main ($$$$$) {
     }->{$path->[4]}) or
     (@$path == 5 and $path->[2] eq 'o' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
       '' => 1,         # /g/{group_id}/o/{object_id}/
+      'revisions' => 1,# /g/{group_id}/o/{object_id}/revisions
     }->{$path->[4]}) or
     # /g/{group_id}/wiki/{wiki_name}
     (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or
@@ -1823,7 +1824,9 @@ sub group_object ($$$$) {
                         todo_bb_priority todo_bb_kind todo_bb_state
                         parent_section_id)) {
           my $value = $app->text_param ($key);
-          $edits->{$key} = $value if defined $value;
+          $edits->{$key} = $value if defined $value and
+              (not defined $object->{data}->{$key} or
+               not $value eq $object->{data}->{$key});
         }
         for my $key (qw(timestamp body_type body_source_type
                         user_status

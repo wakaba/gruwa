@@ -131,6 +131,7 @@ for my $path (
 
 for my $path (
   [''],
+  ['revisions'],
 ) {
   Test {
     my $current = shift;

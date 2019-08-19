@@ -33,6 +33,11 @@ Test {
       text => $current->o ('t4'), # object title
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main big-banner',
+      not => 1,
+    }); # no revision info
+  })->then (sub {
     return $current->b (1)->execute (q{
       return {
         title: document.title,
@@ -209,6 +214,58 @@ Test {
     } $current->c;
   });
 } n => 1, name => ['delete'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a3 => account => {}],
+    [g1 => group => {
+      members => ['a1', 'a3'],
+    }],
+    [o1 => object => {
+      group => 'g1',
+      account => 'a1',
+    }],
+  )->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      title => $current->generate_text (t1 => {}),
+    }, group => 'g1', account => 'a3');
+  })->then (sub {
+    $current->set_o (rev1 => $_[0]->{json});
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      title => $current->generate_text (t2 => {}),
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    $current->set_o (rev2 => $_[0]->{json});
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      params => {
+        object_revision_id => $current->o ('rev1')->{object_revision_id},
+      },
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main article.object header',
+      text => $current->o ('t1'),
+      name => 'rev1 title',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main big-banner',
+      html => $current->o ('a3')->{account_id},
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['object_revision_id'], browser => 1;
 
 RUN;
 
