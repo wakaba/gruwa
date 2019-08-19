@@ -285,9 +285,7 @@ section.page section > h1 {
 
 section section > h1,
 section section > header.section,
-section.page section section > h1,
-section.page section section > header.section,
-section.page article.object > header {
+article.object > header {
   border-style: var(--header2-border-style);
   border-width: var(--header2-border-width);
   border-color: var(--header2-border-color);
@@ -300,9 +298,7 @@ section.page article.object > header {
 }
 
 section section section > h1,
-section section section > header.section,
-section.page section section section > h1,
-section.page section section section > header.section {
+section section section > header.section {
   border-style: var(--header3-border-style);
   border-width: var(--header3-border-width);
   border-color: var(--header3-border-color);
@@ -315,9 +311,7 @@ section.page section section section > header.section {
 }
 
 section section section section > h1,
-section section section section > header.section,
-section.page section section section section > h1,
-section.page section section section section > header.section {
+section section section section > header.section {
   border-style: var(--header4-border-style);
   border-width: var(--header4-border-width);
   border-color: var(--header4-border-color);
@@ -415,8 +409,12 @@ article.object.editing > edit-container header > p {
   padding: 0;
 }
 
-article.object > header {
-  position: relative;
+article.object > header:not([hidden]) {
+  display: flex;
+}
+
+article.object > header > .edit-by-dblclick:not([hidden]) {
+  display: contents;
 }
 
 article.object > header h1 {
@@ -427,6 +425,7 @@ article.object > header h1 {
   color: inherit;
   font-size: 120%;
   line-height: 1.4;
+  flex-grow: 1;
 }
 
 article.object > header h1 a {
@@ -434,11 +433,7 @@ article.object > header h1 a {
   min-width: 5em;
 }
 
-article.object > header gr-popup-menu {
-  position: absolute;
-  top: 0;
-  right: 0;
-  font-size: 90%;
+article.object > header popup-menu {
 }
 
 
