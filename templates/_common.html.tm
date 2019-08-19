@@ -774,6 +774,7 @@
                   <p>
                     <button type=submit class=delete-button>削除</button>
                 </form>
+                <p><a data-href-template={GROUP}/o/{object_id}/revisions>編集履歴</a>
                 <p><a href=/help#objects target=help>ヘルプ</a>
               </menu-main>
             </popup-menu>
@@ -1171,6 +1172,7 @@
                   <input type=hidden name=user_status value=2><!-- deleted -->
                   <p><button type=submit class=delete-button>削除</button>
                 </form>
+                <p><a data-href-template={GROUP}/o/{object_id}/revisions>編集履歴</a>
                 <p><a href=/help#objects target=help>ヘルプ</a>
               </menu-main>
             </popup-menu>
@@ -1301,6 +1303,76 @@
   </template>
 </template-set>
 
+<template-set name=page-object-revisions>
+  <template>
+    <section>
+      <header class=section>
+        <h1><bdi data-field=object.title data-empty=■ />の編集履歴</h1>
+            <popup-menu>
+              <button type=button title=メニュー>
+                <button-label>
+                  メニュー
+                </button-label>
+              </button>
+              <menu-main>
+                <p><a data-href-template=./>記事ページ</a>
+                <p><copy-button>
+                  <a data-href-template=./>URLをコピー</a>
+                </>
+                <p><copy-button type=jump>
+                  <a data-href-template=./ data-title-data-field=title>ジャンプリストに追加</a>
+                </>
+                <!-- XXX edit, delete -->
+                <p><a href=revisions>編集履歴</a>
+                <p><a href=/help#objects target=help>ヘルプ</a>
+              </menu-main>
+            </popup-menu>
+      </header>
+      
+      <list-container loader=groupLoader data-src-template=o/{object.object_id}/revisions.json?with_revision_data=1 key=items template=object-revision type=table class=main-table>
+        <table>
+          <thead>
+            <tr>
+              <th>日時
+              <th>編集者
+              <th>変更点
+          <tbody>
+        </table>
+        <action-status hidden stage-loader=読み込み中...></action-status>
+        <p class=operations>
+          <button type=button class=list-next>もっと昔</button>
+      </list-container>
+    </section>
+  </template>
+</template-set>
+
+<template-set name=object-revision>
+  <template>
+    <td><time data-field=created />
+    <td>
+      <gr-account data-field=author_account_id>
+        <a data-href-template=../../account/{account_id}/>
+          <img data-src-template=../../account/{account_id}/icon class=icon alt>
+          <gr-account-name data-field=name data-empty=■ />
+        </a>
+      </gr-account>
+    <td>
+      <XXX-multi-enum data-field=revision_data.changes.fields
+        label-title=題名
+        label-body=本文
+        label-body_type
+        label-timestamp=日付
+        label-index_ids=所属
+        label-user_status=公開状態
+      />
+      <enum-value data-field=revision_data.changes.action
+          label-new=新規作成
+          label-delete=削除
+          label-undefined />
+  
+  </template>
+</template-set>
+
 <template-set name=page-wiki>
   <template>
     <section>
@@ -1335,6 +1407,7 @@
                   <input type=hidden name=user_status value=2><!-- deleted -->
                   <p><button type=submit class=delete-button>削除</button>
                 </form>
+                <p><a data-href-template={GROUP}/o/{object_id}/revisions>編集履歴</a>
                 <p><a href=/help#objects target=help>ヘルプ</a>
               </menu-main>
             </popup-menu>

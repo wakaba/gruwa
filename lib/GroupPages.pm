@@ -873,6 +873,7 @@ sub main ($$$$$) {
     }->{$path->[4]}) or
     (@$path == 5 and $path->[2] eq 'o' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
       '' => 1,         # /g/{group_id}/o/{object_id}/
+      'revisions' => 1,# /g/{group_id}/o/{object_id}/revisions
     }->{$path->[4]}) or
     # /g/{group_id}/wiki/{wiki_name}
     (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or

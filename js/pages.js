@@ -3080,6 +3080,11 @@ GR.navigate.go = function (u, args) {
             objectId: m[1],
           }];
 
+          m = path.match (/^o\/([0-9]+)\/(revisions)$/);
+          if (m) return ['group', 'object-' + m[2], {
+            objectId: m[1],
+          }];
+
           m = path.match (/^i\/([0-9]+)\/$/);
           if (m) return ['group', 'index-index', {
             indexId: m[1],
@@ -3501,6 +3506,42 @@ addEventListener ('popstate', ev => {
   nav.setAttribute ('popstate', '');
   document.body.appendChild (nav);
 });
+
+defineElement ({
+  name: 'xxx-multi-enum', // XXX
+  fill: 'idlattribute',
+  props: {
+    pcInit: function () {
+      var value = this.value;
+      Object.defineProperty (this, 'value', {
+        get: () => value,
+        set: (newValue) => {
+          value = newValue;
+          this.meRender (value);
+        },
+      });
+      this.meRender (value);
+    },
+    meRender: function (value) {
+      this.textContent = '';
+      var hasPrev = false;
+      for (var k in value) {
+        if (!value[k]) continue;
+        if (hasPrev) {
+          this.appendChild (document.createTextNode (' '));
+        }
+        var e = document.createElement ('XXX-multi-enum-item');
+        var v = this.getAttribute ('label-' + k);
+        if (v === null) v = k;
+        if (v !== '') {
+          e.textContent = v;
+          this.appendChild (e);
+          hasPrev = true;
+        }
+      }
+    }, // meRender
+  },
+}); // <XXX-multi-enum>
 
 /*
 
