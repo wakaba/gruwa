@@ -754,19 +754,23 @@
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
             <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
-            <gr-popup-menu>
-              <button type=button>⋁</button>
-              <menu hidden>
-                <li><a data-href-template={GROUP}/o/{object_id}/>記事</a>
-                <li><copy-button>
+            <popup-menu>
+              <button type=button title=メニュー>
+                <button-label>
+                  メニュー
+                </button-label>
+              </button>
+              <menu-main>
+                <p><a data-href-template={GROUP}/o/{object_id}/>記事ページ</a>
+                <p><copy-button>
                   <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
                 </>
-                <li><copy-button type=jump>
+                <p><copy-button type=jump>
                   <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
                 </>
-                <li><button type=button class=edit-button>編集</button>
-              </menu>
-            </gr-popup-menu>
+                <p><button type=button class=edit-button>編集</button>
+              </menu-main>
+            </popup-menu>
           </header>
           <main><iframe data-data-field=body /></main>
           <footer>
@@ -1142,19 +1146,23 @@
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
             <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
-            <gr-popup-menu>
-              <button type=button>⋁</button>
-              <menu hidden>
-                <li><a data-href-template={GROUP}/o/{object_id}/>記事</a>
-                <li><copy-button>
+            <popup-menu>
+              <button type=button title=メニュー>
+                <button-label>
+                  メニュー
+                </button-label>
+              </button>
+              <menu-main>
+                <p><a data-href-template={GROUP}/o/{object_id}/>記事ページ</a>
+                <p><copy-button>
                   <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
                 </>
-                <li><copy-button type=jump>
+                <p><copy-button type=jump>
                   <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
                 </>
-                <li><button type=button class=edit-button>編集</button>
-              </menu>
-            </gr-popup-menu>
+                <p><button type=button class=edit-button>編集</button>
+              </menu-main>
+            </popup-menu>
           </header>
           <main><iframe data-data-field=body /></main>
           <footer>
@@ -1297,19 +1305,23 @@
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
             <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
-            <gr-popup-menu>
-              <button type=button>⋁</button>
-              <menu hidden>
-                <li><a data-href-template={GROUP}/o/{object_id}/>記事</a>
-                <li><copy-button>
+            <popup-menu>
+              <button type=button title=メニュー>
+                <button-label>
+                  メニュー
+                </button-label>
+              </button>
+              <menu-main>
+                <p><a data-href-template={GROUP}/o/{object_id}/>記事ページ</a>
+                <p><copy-button>
                   <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
                 </>
-                <li><copy-button type=jump>
+                <p><copy-button type=jump>
                   <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
                 </>
-                <li><button type=button class=edit-button>編集</button>
-              </menu>
-            </gr-popup-menu>
+                <p><button type=button class=edit-button>編集</button>
+              </menu-main>
+            </popup-menu>
           </header>
           <main><iframe data-data-field=body /></main>
           <footer>

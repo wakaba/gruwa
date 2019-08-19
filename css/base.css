@@ -510,7 +510,7 @@ button:enabled {
   cursor: pointer;
 }
 
-.edit-button,
+.operations .edit-button,
 .next-page-button {
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -523,12 +523,12 @@ button:enabled {
   background: rgba(236, 236, 255, 0.7);
 }
 
-.edit-button:hover:enabled,
+.operations .edit-button:hover:enabled,
 .next-page-button:hover:enabled {
   background: rgb(236, 236, 255);
 }
 
-.edit-button:disabled,
+.operations .edit-button:disabled,
 .next-page-button:disabled {
   color: gray;
 }
@@ -896,14 +896,21 @@ gr-popup-menu > menu > li > copy-button:not([hidden]) {
   display: block;
 }
 
-popup-menu > menu-main p a:not([hidden]) {
+popup-menu > menu-main p a:not([hidden]),
+popup-menu > menu-main p button:not([hidden]) {
+  -webkit-appearance: none;
   display: block;
+  margin: 0;
+  border: none;
   padding: .5em;
+  width: 100%;
+  box-sizing: border-box;
   font-size: 100%;
   text-decoration: none;
   line-height: 1.0;
   color: inherit;
   background: transparent;
+  text-align: left;
 }
 
 gr-popup-menu > menu > li > a:only-child,
@@ -953,6 +960,9 @@ gr-popup-menu > menu > li > button:only-child:not([hidden]):active {
 popup-menu > menu-main p a:hover,
 popup-menu > menu-main p a:focus,
 popup-menu > menu-main p a:active,
+popup-menu > menu-main p button:hover,
+popup-menu > menu-main p button:focus,
+popup-menu > menu-main p button:active,
 gr-popup-menu > menu > li > button:only-child:not([hidden]):hover,
 gr-popup-menu > menu > li > button:only-child:not([hidden]):active {
   color: var(--hover-color);
