@@ -913,6 +913,10 @@ popup-menu > menu-main p button:not([hidden]) {
   text-align: left;
 }
 
+popup-menu > menu-main form:not([hidden]) {
+  display: contents;
+}
+
 gr-popup-menu > menu > li > a:only-child,
 gr-popup-menu > menu > li > copy-button > a:only-child,
 gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child {

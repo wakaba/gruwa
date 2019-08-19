@@ -185,6 +185,7 @@ Test {
       GR._state.navigateInitiated = - 3 * 24*60*60 * 1000; // stale
 
       window.testState = 123445;
+      document.querySelector ('gr-menu[type=group] button').click ();
       document.querySelector ('gr-menu[type=group] a[href$="/members"]').click ();
     });
   })->then (sub {

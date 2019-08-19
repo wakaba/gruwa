@@ -769,6 +769,12 @@
                   <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
                 </>
                 <p><button type=button class=edit-button>編集</button>
+                <form is=save-data data-saver=objectSaver method=post data-action-template=o/{object_id}/edit.json data-confirm=削除します。 data-next=markAncestorArticleDeleted>
+                  <input type=hidden name=user_status value=2><!-- deleted -->
+                  <p>
+                    <button type=submit class=delete-button>削除</button>
+                </form>
+                <p><a href=/help#objects target=help>ヘルプ</a>
               </menu-main>
             </popup-menu>
           </header>
@@ -1161,6 +1167,11 @@
                   <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
                 </>
                 <p><button type=button class=edit-button>編集</button>
+                <form is=save-data data-saver=objectSaver method=post data-action-template=o/{object_id}/edit.json data-confirm=削除します。 data-next=markAncestorArticleDeleted>
+                  <input type=hidden name=user_status value=2><!-- deleted -->
+                  <p><button type=submit class=delete-button>削除</button>
+                </form>
+                <p><a href=/help#objects target=help>ヘルプ</a>
               </menu-main>
             </popup-menu>
           </header>
@@ -1320,6 +1331,11 @@
                   <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
                 </>
                 <p><button type=button class=edit-button>編集</button>
+                <form is=save-data data-saver=objectSaver method=post data-action-template=o/{object_id}/edit.json data-confirm=削除します。 data-next=markAncestorArticleDeleted>
+                  <input type=hidden name=user_status value=2><!-- deleted -->
+                  <p><button type=submit class=delete-button>削除</button>
+                </form>
+                <p><a href=/help#objects target=help>ヘルプ</a>
               </menu-main>
             </popup-menu>
           </header>
