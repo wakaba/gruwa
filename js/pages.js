@@ -2861,39 +2861,26 @@ function upgradePopupMenu (e) {
   };
 } // upgradePopupMenu
 
-function upgradeCopyButton (e) {
-  $$ (e, 'a').forEach (function (f) {
-    f.onclick = function (ev) {
-      if (e.getAttribute ('type') === 'jump') {
-        var fd = new FormData;
-        if (f.title) fd.append ('label', f.title);
-        fd.append ('url', f.href);
-        gFetch ('/jump/add.json', {post: true, formData: fd}).then (function () {
-          $$ (document, 'gr-list-container[src="/jump/list.json"]').forEach (function (e) {
-            e.clearObjects ();
-            e.load ();
-          });
+defineElement ({
+  name: 'a',
+  is: 'gr-jump-add',
+  props: {
+    pcInit: function () {
+      this.onclick = () => { this.grClick (); return false };
+    }, // pcInit
+    grClick: function () {
+      var fd = new FormData;
+      if (this.title) fd.append ('label', this.title);
+      fd.append ('url', this.href);
+      return gFetch ('/jump/add.json', {post: true, formData: fd}).then (function () {
+        $$ (document, 'gr-list-container[src="/jump/list.json"]').forEach (function (e) {
+          e.clearObjects ();
+          e.load ();
         });
-      } else {
-        copyText (f.href);
-      }
-      ev.stopPropagation ();
-      return false;
-    };
-  });
-} // upgradeCopyButton
-
-function copyText (s) {
-  var e = document.createElement ('temp-text');
-  e.textContent = s;
-  document.body.appendChild (e);
-  var range = document.createRange ();
-  range.selectNode (e);
-  getSelection ().empty ();
-  getSelection ().addRange (range);
-  document.execCommand ('copy')
-  e.parentNode.removeChild (e);
-} // copyText
+      });
+    }, // grClick
+  },
+});
 
 function upgradeObjectRef (e) {
   var objectId = e.getAttribute ('value');
@@ -3046,11 +3033,6 @@ Formatter.hatena = function (source) {
       } else if (x.localName) {
         $$ (x, 'gr-popup-menu').forEach (upgradePopupMenu);
       }
-      if (x.localName === 'copy-button') {
-        upgradeCopyButton (x);
-      } else if (x.localName) {
-        $$ (x, 'copy-button').forEach (upgradeCopyButton);
-      }
       if (x.localName === 'with-sidebar') {
         upgradeWithSidebar (x);
       } else if (x.localName) {
@@ -3072,7 +3054,6 @@ Formatter.hatena = function (source) {
 $$ (document, 'gr-list-container').forEach (upgradeList);
 $$ (document, 'form').forEach (upgradeForm);
 $$ (document, 'gr-popup-menu').forEach (upgradePopupMenu);
-$$ (document, 'copy-button').forEach (upgradeCopyButton);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 $$ (document, 'run-action').forEach (upgradeRunAction);
 $$ (document, 'object-ref').forEach (upgradeObjectRef);
@@ -3088,7 +3069,7 @@ GR.navigate._init = function () {
     if (n &&
         (n.protocol === 'https:' || n.protocol === 'http:') &&
         n.target === '' &&
-        !n.is) {
+        !n.hasAttribute ('is')) {
       GR.navigate.go (n.href, {ping: n.ping});
       ev.preventDefault ();
     }

@@ -945,10 +945,6 @@ gr-popup-menu > menu > gr-list-container > list-main > li:not([hidden]) {
   font-size: 100%;
 }
 
-gr-popup-menu > menu > li > copy-button:not([hidden]) {
-  display: block;
-}
-
 popup-menu > menu-main p a:not([hidden]),
 popup-menu > menu-main p button:not([hidden]) {
   -webkit-appearance: none;
@@ -971,7 +967,6 @@ popup-menu > menu-main form:not([hidden]) {
 }
 
 gr-popup-menu > menu > li > a:only-child,
-gr-popup-menu > menu > li > copy-button > a:only-child,
 gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child {
   display: block;
   padding: .5em;
@@ -983,9 +978,6 @@ gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child {
 gr-popup-menu > menu > li > a:only-child:hover,
 gr-popup-menu > menu > li > a:only-child:active,
 gr-popup-menu > menu > li > a:only-child:focus,
-gr-popup-menu > menu > li > copy-button > a:only-child:hover,
-gr-popup-menu > menu > li > copy-button > a:only-child:active,
-gr-popup-menu > menu > li > copy-button > a:only-child:focus,
 gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child:hover,
 gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child:active,
 gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child:focus {

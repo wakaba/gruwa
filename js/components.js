@@ -839,6 +839,48 @@ License along with this program, see <https://www.gnu.org/licenses/>.
       }, // mbClick
     },
   }); // button[is=mode-button]
+
+  function copyText (s) {
+    var e = document.createElement ('temp-text');
+    e.style.whiteSpace = "pre";
+    e.textContent = s;
+    document.body.appendChild (e);
+    var range = document.createRange ();
+    range.selectNode (e);
+    getSelection ().empty ();
+    getSelection ().addRange (range);
+    document.execCommand ('copy')
+    e.parentNode.removeChild (e);
+  } // copyText
+
+  defineElement ({
+    name: 'a',
+    is: 'copy-url',
+    props: {
+      pcInit: function () {
+        this.onclick = () => { copyText (this.href); return false };
+      }, // pcInit
+    },
+  }); // <a is=copy-url>
+
+  defineElement ({
+    name: 'button',
+    is: 'copy-text-content',
+    props: {
+      pcInit: function () {
+        this.onclick = () => this.pcClick ();
+      }, // pcInit
+      pcClick: function () {
+        var selector = this.getAttribute ('data-selector');
+        var selected = document.querySelector (selector);
+        if (!selected) {
+          throw new Error ("Selector |"+selector+"| does not match any element in the document");
+        }
+
+        copyText (selected.textContent);
+      }, // pcClick
+    },
+  }); // <button is=copy-text-content>
   
   defineElement ({
     name: 'popup-menu',

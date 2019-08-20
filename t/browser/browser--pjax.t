@@ -215,6 +215,108 @@ Test {
   });
 } n => 3, name => ['pjax session timeout'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [i1 => index => {
+      group => 'g1', account => 'a1',
+    }],
+    [o1 => object => {
+      account => 'a1', group => 'g1', index => 'i1',
+      title => $current->generate_text (t1 => {}),
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'i', $current->o ('i1')->{index_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article header popup-menu button',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article header popup-menu button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article header popup-menu a[is=copy-url]',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article header popup-menu a[is=copy-url]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article header popup-menu a[is=copy-url]',
+      not => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return {
+        path: location.pathname,
+      };
+    });
+  })->then (sub {
+    my $values = $_[0]->json->{value};
+    test {
+      is $values->{path}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/', 'not navigated';
+    } $current->c;
+    return $current->b (1)->execute (q{
+      document.querySelector ('article header popup-menu button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article header popup-menu a[is=gr-jump-add]',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article header popup-menu a[is=gr-jump-add]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article header popup-menu a[is=gr-jump-add]',
+      not => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-nav-panel',
+      text => $current->o ('t1'),
+      name => 'label added',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return {
+        path: location.pathname,
+      };
+    });
+  })->then (sub {
+    my $values = $_[0]->json->{value};
+    test {
+      is $values->{path}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/', 'not navigated';
+    } $current->c;
+  });
+} n => 2, name => ['copy button'], browser => 1;
+
 RUN;
 
 =head1 LICENSE
