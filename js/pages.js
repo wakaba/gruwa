@@ -2879,6 +2879,19 @@ defineElement ({
   },
 });
 
+(() => {
+  var e = document.createElementNS ('data:,pc', 'filter');
+  e.setAttribute ('name', 'jumpListFilter');
+  e.pcHandler = function (data) {
+    data.data.forEach (_ => {
+      _.absoluteURL = new URL (_.url, location.href);
+    });
+    return data;
+  };
+  document.head.appendChild (e);
+
+}) ();
+
 function upgradeObjectRef (e) {
   var objectId = e.getAttribute ('value');
   if (!objectId) return;

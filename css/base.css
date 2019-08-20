@@ -852,7 +852,7 @@ todo-state[value="2"] {
 }
 
 gr-menu {
-  min-height: 1em;
+  min-height: 2em;
 }
 
 gr-popup-menu:not([hidden]) {

@@ -26,9 +26,9 @@
           </gr-account>
         </summary>
         <p><a href=/dashboard>ダッシュボード</a></p>
-        <list-container src=/jump/list.json key=items class=jump-list>
+        <list-container src=/jump/list.json key=items class=jump-list filter=jumpListFilter>
           <template>
-            <p><a href data-href-template={url} data-ping-template=/jump/ping.json?url={url:url} data-field=label data-empty=■ data-filled=ping></a>
+            <p><a href data-href-template={url} data-ping-template=/jump/ping.json?url={url:absoluteURL} data-field=label data-empty=■ data-filled=ping></a>
           </template>
           <list-main/>
         </list-container>
