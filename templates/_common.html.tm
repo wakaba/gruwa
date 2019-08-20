@@ -77,14 +77,12 @@
 <template-set name=gr-menu-group>
   <template>
     <p><a data-href-template=/g/{group.group_id}/>トップ</a>
-    <p><copy-button><a data-href-template=/g/{group.group_id}/>
+    <p><a is=copy-url data-href-template=/g/{group.group_id}/>
       URLをコピー
-    </a></copy-button>
-    <p><copy-button type=jump>
-      <a data-href-template=/g/{group.group_id}/ data-title-field=group.title>
-        ジャンプリストに追加
-      </a>
-    </copy-button>
+    </a>
+    <p><a is=gr-jump-add data-href-template=/g/{group.group_id}/ data-title-field=group.title>
+      ジャンプリストに追加
+    </a>
     <p><a data-href-template=/g/{group.group_id}/members>参加者</a>
     <p><a data-href-template=/g/{group.group_id}/config>設定</a>
     <p><a href=/help#groups target=help>ヘルプ</a>
@@ -94,14 +92,12 @@
 <template-set name=gr-menu-index>
   <template>
     <p><a data-href-template=/g/{group.group_id}/i/{index.index_id}/>トップ</a>
-    <p><copy-button><a data-href-template=/g/{group.group_id}/i/{index.index_id}/>
+    <p><a is=copy-url data-href-template=/g/{group.group_id}/i/{index.index_id}/>
       URLをコピー
-    </a></copy-button>
-    <p><copy-button type=jump>
-      <a data-href-template=/g/{group.group_id}/i/{index.index_id}/ data-title-field=index.title>
-        ジャンプリストに追加
-      </a>
-    </copy-button>
+    </a>
+    <p><a is=gr-jump-add data-href-template=/g/{group.group_id}/i/{index.index_id}/ data-title-field=index.title>
+      ジャンプリストに追加
+    </a>
     <p><a data-href-template=/g/{group.group_id}/i/{index.index_id}/config>設定</a>
     <p data-gr-if-index-type=1><a href=/help#blogs target=help>ヘルプ</a>
     <p data-gr-if-index-type=2><a href=/help#wiki target=help>ヘルプ</a>
@@ -115,12 +111,8 @@
 <template-set name=gr-menu-wiki>
   <template>
     <p><a data-href-field=wiki.url>Wikiページ</a>
-    <p><copy-button>
-      <a data-href-field=wiki.url>URLをコピー</a>
-    </copy-button>
-    <p><copy-button type=jump>
-      <a data-href-field=wiki.url data-title-field=wiki.name>ジャンプリストに追加</a>
-    </copy-button>
+    <p><a is=copy-url data-href-field=wiki.url>URLをコピー</a>
+    <p><a is=gr-jump-add data-href-field=wiki.url data-title-field=wiki.name>ジャンプリストに追加</a>
     <p><a href=/help#wiki target=help>ヘルプ</a>
   </template>
 </template-set>
@@ -175,12 +167,8 @@
             </button-label>
           </button>
           <menu-main>
-            <p><copy-button>
-              <a href>URLをコピー</a>
-            </copy-button>
-            <p><copy-button type=jump>
-              <a href>ジャンプリストに追加</a>
-            </copy-button>
+            <p><a is=copy-url href>URLをコピー</a>
+            <p><a is=gr-jump-add href>ジャンプリストに追加</a>
           </menu-main>
         </popup-menu>
       </header>
@@ -762,12 +750,8 @@
               </button>
               <menu-main>
                 <p><a data-href-template={GROUP}/o/{object_id}/>記事ページ</a>
-                <p><copy-button>
-                  <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
-                </>
-                <p><copy-button type=jump>
-                  <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
-                </>
+                <p><a is=copy-url data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                <p><a is=gr-jump-add data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
                 <p><button type=button class=edit-button>編集</button>
                 <form is=save-data data-saver=objectSaver method=post data-action-template=o/{object_id}/edit.json data-confirm=削除します。 data-next=markAncestorArticleDeleted>
                   <input type=hidden name=user_status value=2><!-- deleted -->
@@ -803,17 +787,7 @@
               <template>
                 <article itemscope itemtype=http://schema.org/Comment>
                   <header>
-                    <if-defined data-if-data-field=author_name hidden>
-                      <user-name>
-                        <span data-data-field=author_name />
-                        <if-defined data-if-data-field=author_hatena_id hidden>
-                          <hatena-user>
-                            <img data-src-template=https://cdn.www.st-hatena.com/users/{data.author_hatena_id:2}/{data.author_hatena_id}/profile.gif referrerpolicy=no-referrer alt>
-                            <span data-data-field=author_hatena_id />
-                          </hatena-user>
-                        </if-defined>
-                      </user-name>
-                    </if-defined>
+                    <gr-object-author template=gr-object-author data-field=data />
 
                     <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
                       <time data-field=timestamp data-format=ambtime />
@@ -1053,9 +1027,7 @@
             <gr-popup-menu>
               <button type=button>⋁</button>
                 <menu hidden>
-                  <li><copy-button>
-                    <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
-                  </>
+                  <li><a is=copy-url data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
               </menu>
             </gr-popup-menu>
             <figure>
@@ -1076,9 +1048,7 @@
             <gr-popup-menu>
               <button type=button>⋁</button>
                 <menu hidden>
-                  <li><copy-button>
-                    <a data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
-                  </>
+                  <li><a is=copy-url data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
               </menu>
             </gr-popup-menu>
             <p class=main-line>
@@ -1178,12 +1148,8 @@
               </button>
               <menu-main>
                 <p><a data-href-template={GROUP}/o/{object_id}/>記事ページ</a>
-                <p><copy-button>
-                  <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
-                </>
-                <p><copy-button type=jump>
-                  <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
-                </>
+                <p><a is=copy-url data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                <p><a is=gr-jump-add data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
                 <p><button type=button class=edit-button>編集</button>
                 <form is=save-data data-saver=objectSaver method=post data-action-template=o/{object_id}/edit.json data-confirm=削除します。 data-next=markAncestorArticleDeleted>
                   <input type=hidden name=user_status value=2><!-- deleted -->
@@ -1218,17 +1184,7 @@
               <template>
                 <article itemscope itemtype=http://schema.org/Comment>
                   <header>
-                    <if-defined data-if-data-field=author_name hidden>
-                      <user-name>
-                        <span data-data-field=author_name />
-                        <if-defined data-if-data-field=author_hatena_id hidden>
-                          <hatena-user>
-                            <img data-src-template=https://cdn.www.st-hatena.com/users/{data.author_hatena_id:2}/{data.author_hatena_id}/profile.gif referrerpolicy=no-referrer alt>
-                            <span data-data-field=author_hatena_id />
-                          </hatena-user>
-                        </if-defined>
-                      </user-name>
-                    </if-defined>
+                    <gr-object-author template=gr-object-author data-field=data />
 
                     <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
                       <time data-field=timestamp data-format=ambtime />
@@ -1333,12 +1289,8 @@
               </button>
               <menu-main>
                 <p><a data-href-template=./>記事ページ</a>
-                <p><copy-button>
-                  <a data-href-template=./>URLをコピー</a>
-                </>
-                <p><copy-button type=jump>
-                  <a data-href-template=./ data-title-data-field=title>ジャンプリストに追加</a>
-                </>
+                <p><a is=copy-url data-href-template=./>URLをコピー</a>
+                <p><a is=gr-jump-add data-href-template=./ data-title-data-field=title>ジャンプリストに追加</a>
                 <!-- XXX edit, delete -->
                 <p><a href=revisions>編集履歴</a>
                 <p><a href=/help#objects target=help>ヘルプ</a>
@@ -1416,12 +1368,8 @@
               </button>
               <menu-main>
                 <p><a data-href-template={GROUP}/o/{object_id}/>記事ページ</a>
-                <p><copy-button>
-                  <a data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
-                </>
-                <p><copy-button type=jump>
-                  <a data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
-                </>
+                <p><a is=copy-url data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                <p><a is=gr-jump-add data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
                 <p><button type=button class=edit-button>編集</button>
                 <form is=save-data data-saver=objectSaver method=post data-action-template=o/{object_id}/edit.json data-confirm=削除します。 data-next=markAncestorArticleDeleted>
                   <input type=hidden name=user_status value=2><!-- deleted -->
@@ -1456,17 +1404,7 @@
               <template>
                 <article itemscope itemtype=http://schema.org/Comment>
                   <header>
-                    <if-defined data-if-data-field=author_name hidden>
-                      <user-name>
-                        <span data-data-field=author_name />
-                        <if-defined data-if-data-field=author_hatena_id hidden>
-                          <hatena-user>
-                            <img data-src-template=https://cdn.www.st-hatena.com/users/{data.author_hatena_id:2}/{data.author_hatena_id}/profile.gif referrerpolicy=no-referrer alt>
-                            <span data-data-field=author_hatena_id />
-                          </hatena-user>
-                        </if-defined>
-                      </user-name>
-                    </if-defined>
+                    <gr-object-author template=gr-object-author data-field=data />
 
                     <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
                       <time data-field=timestamp data-format=ambtime />
@@ -1610,6 +1548,27 @@
     </a>
   </template>
 
+<template-set name=gr-object-author templateselector=gr-object-author>
+  <template/>
+  <template data-name=account>
+    <gr-account data-field=author_account_id>
+      <a data-href-template=/g/{group_id}/account/{account_id}/>
+        <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
+        <gr-account-name data-field=name data-empty=■ />
+      </a>
+    </gr-account>
+  </template>
+  <template data-name=hatenaguest>
+    <gr-person><bdi data-field=author_name /></gr-person>
+  </template>
+  <template data-name=hatenauser>
+    <gr-person hatena>
+      <img data-src-template=https://cdn.www.st-hatena.com/users/{author_hatena_id_2}/{author_hatena_id}/profile.gif referrerpolicy=no-referrer class=icon alt>
+      <code>id:<span data-field=author_hatena_id /></code>
+    </gr-person>
+  </template>
+</template-set>
+  
   <t:include path=_object_editor.html.tm />
   
 <template-set name=page-account-index>
@@ -1627,12 +1586,8 @@
             </button-label>
           </button>
           <menu-main>
-            <p><copy-button>
-              <a href>URLをコピー</a>
-            </copy-button>
-            <p><copy-button type=jump>
-              <a href>ジャンプリストに追加</a>
-            </copy-button>
+            <p><a href is=copy-url>URLをコピー</a>
+            <p><a href is=gr-jump-add>ジャンプリストに追加</a>
           </menu-main>
         </popup-menu>
       </header>

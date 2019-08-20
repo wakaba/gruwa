@@ -650,6 +650,8 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       }
     } else if (field.localName === 'gr-account') {
       field.setAttribute ('value', value);
+    } else if (field.localName === 'gr-object-author') {
+      field.value = value;
     } else if (field.localName === 'object-ref') {
       field.setAttribute ('value', value);
       field.hidden = false;
@@ -1968,7 +1970,58 @@ function saveObject (article, form, object, opts) {
   }; // markAncestorArticleDeleted
   document.head.appendChild (e);
   
+  var e = document.createElementNS ('data:,pc', 'templateselector');
+  e.setAttribute ('name', 'gr-object-author');
+  e.pcHandler = function (templates, obj) {
+    if (obj.author_hatena_id) {
+      return templates.hatenauser;
+    } else if (obj.author_name) {
+      return templates.hatenaguest;
+    } else if (obj.author_account_id) {
+      return templates.account;
+    } else {
+      return templates[""];
+    }
+  }; // gr-object-author
+  document.head.appendChild (e);
+  
 }) ();
+
+defineElement ({
+  name: 'gr-object-author',
+  fill: 'idlattribute',
+  templateSet: true,
+  props: {
+    pcInit: function () {
+      this.grValue = this.value;
+      if (this.grValue) Promise.resolve ().then (() => this.grSetValue ());
+      Object.defineProperty (this, 'value', {
+        set: function (v) {
+          this.grValue = v;
+          Promise.resolve ().then (() => this.grSetValue ());
+        },
+      });
+      
+      this.addEventListener ('pctemplatesetupdated', (ev) => {
+        this.grTemplateSet = ev.pcTemplateSet;
+        Promise.resolve ().then (() => this.grSetValue ());
+      });
+    }, // pcInit
+    grSetValue: function () {
+      if (!this.grTemplateSet || !this.grValue) return;
+
+      var v = this.grValue;
+      if (v.author_hatena_id) {
+        v.author_hatena_id_2 = v.author_hatena_id.substring (0, 2);
+      }
+
+      var tm = this.grTemplateSet;
+      var e = tm.createFromTemplate ('div', v);
+      this.textContent = '';
+      while (e.firstChild) this.appendChild (e.firstChild);
+    }, // grSetValue
+  },
+}); // <gr-object-author>
 
 function upgradeWithSidebar (e) {
   e.addEventListener ('gruwatogglepanel', function (ev) {
@@ -2808,39 +2861,26 @@ function upgradePopupMenu (e) {
   };
 } // upgradePopupMenu
 
-function upgradeCopyButton (e) {
-  $$ (e, 'a').forEach (function (f) {
-    f.onclick = function (ev) {
-      if (e.getAttribute ('type') === 'jump') {
-        var fd = new FormData;
-        if (f.title) fd.append ('label', f.title);
-        fd.append ('url', f.href);
-        gFetch ('/jump/add.json', {post: true, formData: fd}).then (function () {
-          $$ (document, 'gr-list-container[src="/jump/list.json"]').forEach (function (e) {
-            e.clearObjects ();
-            e.load ();
-          });
+defineElement ({
+  name: 'a',
+  is: 'gr-jump-add',
+  props: {
+    pcInit: function () {
+      this.onclick = () => { this.grClick (); return false };
+    }, // pcInit
+    grClick: function () {
+      var fd = new FormData;
+      if (this.title) fd.append ('label', this.title);
+      fd.append ('url', this.href);
+      return gFetch ('/jump/add.json', {post: true, formData: fd}).then (function () {
+        $$ (document, 'gr-list-container[src="/jump/list.json"]').forEach (function (e) {
+          e.clearObjects ();
+          e.load ();
         });
-      } else {
-        copyText (f.href);
-      }
-      ev.stopPropagation ();
-      return false;
-    };
-  });
-} // upgradeCopyButton
-
-function copyText (s) {
-  var e = document.createElement ('temp-text');
-  e.textContent = s;
-  document.body.appendChild (e);
-  var range = document.createRange ();
-  range.selectNode (e);
-  getSelection ().empty ();
-  getSelection ().addRange (range);
-  document.execCommand ('copy')
-  e.parentNode.removeChild (e);
-} // copyText
+      });
+    }, // grClick
+  },
+});
 
 function upgradeObjectRef (e) {
   var objectId = e.getAttribute ('value');
@@ -2993,11 +3033,6 @@ Formatter.hatena = function (source) {
       } else if (x.localName) {
         $$ (x, 'gr-popup-menu').forEach (upgradePopupMenu);
       }
-      if (x.localName === 'copy-button') {
-        upgradeCopyButton (x);
-      } else if (x.localName) {
-        $$ (x, 'copy-button').forEach (upgradeCopyButton);
-      }
       if (x.localName === 'with-sidebar') {
         upgradeWithSidebar (x);
       } else if (x.localName) {
@@ -3019,7 +3054,6 @@ Formatter.hatena = function (source) {
 $$ (document, 'gr-list-container').forEach (upgradeList);
 $$ (document, 'form').forEach (upgradeForm);
 $$ (document, 'gr-popup-menu').forEach (upgradePopupMenu);
-$$ (document, 'copy-button').forEach (upgradeCopyButton);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
 $$ (document, 'run-action').forEach (upgradeRunAction);
 $$ (document, 'object-ref').forEach (upgradeObjectRef);
@@ -3035,7 +3069,7 @@ GR.navigate._init = function () {
     if (n &&
         (n.protocol === 'https:' || n.protocol === 'http:') &&
         n.target === '' &&
-        !n.is) {
+        !n.hasAttribute ('is')) {
       GR.navigate.go (n.href, {ping: n.ping});
       ev.preventDefault ();
     }
@@ -3439,7 +3473,6 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
   var e = document.createElementNS ('data:,pc', 'templateselector');
   e.setAttribute ('name', 'selectIndexIndexTemplate');
   e.pcHandler = function (templates, obj) {
-    console.log(obj);
     if (obj.index.index_type == 1 /* blog */) {
       return templates.blog;
     } else if (obj.index.index_type == 3 /* todos */ ||
