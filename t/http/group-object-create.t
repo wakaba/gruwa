@@ -36,9 +36,13 @@ Test {
       like $result->{res}->body_bytes, qr{"object_revision_id"\s*:\s*"};
     } $current->c;
     $current->set_o (o1 => $result->{json});
-    return $current->object ($current->o ('o1'), account => 'a1');
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
   })->then (sub {
-    my $obj = $_[0];
+    my $result = $_[0];
+    my $obj = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
     test {
       is $obj->{group_id}, $current->o ('g1')->{group_id};
       is $obj->{title}, '';
@@ -48,6 +52,8 @@ Test {
       ok $obj->{created};
       is $obj->{updated}, $obj->{created};
       is $obj->{timestamp}, $obj->{created};
+      is $obj->{data}->{author_account_id}, $current->o ('a1')->{account_id};
+      like $result->{res}->body_bytes, qr{"author_account_id"\s*:\s*"};
     } $current->c;
     return $current->object ($current->o ('o1'), account => 'a1', revision => 1);
   })->then (sub {
@@ -64,7 +70,7 @@ Test {
       is $obj->{revision_author_account_id}, $current->o ('a1')->{account_id};
     } $current->c;
   });
-} n => 25, name => 'create object';
+} n => 27, name => 'create object';
 
 Test {
   my $current = shift;
@@ -139,8 +145,18 @@ Test {
       is $item->{dest_id}, $current->o ('o1')->{object_id};
       is $item->{sync_info}->{timestamp}, 626464433;
     } $current->c;
+    return $current->post_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $obj->{data}->{author_account_id}, undef;
+    } $current->c;
   });
-} n => 15, name => 'create with source';
+} n => 16, name => 'create with source';
 
 Test {
   my $current = shift;

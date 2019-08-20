@@ -58,6 +58,8 @@ sub create_object ($%) {
                 object_revision_id => ''.$ids->{uuid2},
                 user_status => 1, # open
                 owner_status => 1}; # open
+    $data->{author_account_id} = ''.$args{author_account_id}
+        unless $args{import};
     $obj->{object_id} = $object_id;
     $obj->{data} = $data;
     my $rev_data = {changes => {action => 'new'}};
@@ -2277,7 +2279,8 @@ sub group_object ($$$$) {
       author_account_id => $opts->{account}->{account_id},
       ($app->bare_param ('is_file') ? (
         body_type => 4, # file
-      ) : ())
+      ) : ()),
+      import => defined $source_page_url,
     )->then (sub {
       my $result = $_[0];
       return Promise->resolve->then (sub {
