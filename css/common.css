@@ -647,9 +647,21 @@ gr-list-container[key=objects] > list-is-empty > p {
   background-color: var(--light-1-background-color);
 }
 
-.comment-list article > header user-name {
+.comment-list article > header gr-person,
+.comment-list article > header gr-account {
   margin-right: 0.5em;
-  font-size: 150%;
+  font-size: 100%;
+}
+
+.comment-list article > header gr-person,
+.comment-list article > header gr-account gr-account-name {
+  font-weight: bolder;
+}
+
+.comment-list article > header gr-person .icon,
+.comment-list article > header gr-account .icon {
+  width: 2em;
+  height: 2em;
 }
 
 .comment-list article > header .timestamp {

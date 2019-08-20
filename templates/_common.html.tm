@@ -803,17 +803,7 @@
               <template>
                 <article itemscope itemtype=http://schema.org/Comment>
                   <header>
-                    <if-defined data-if-data-field=author_name hidden>
-                      <user-name>
-                        <span data-data-field=author_name />
-                        <if-defined data-if-data-field=author_hatena_id hidden>
-                          <hatena-user>
-                            <img data-src-template=https://cdn.www.st-hatena.com/users/{data.author_hatena_id:2}/{data.author_hatena_id}/profile.gif referrerpolicy=no-referrer alt>
-                            <span data-data-field=author_hatena_id />
-                          </hatena-user>
-                        </if-defined>
-                      </user-name>
-                    </if-defined>
+                    <gr-object-author template=gr-object-author data-field=data />
 
                     <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
                       <time data-field=timestamp data-format=ambtime />
@@ -1218,17 +1208,7 @@
               <template>
                 <article itemscope itemtype=http://schema.org/Comment>
                   <header>
-                    <if-defined data-if-data-field=author_name hidden>
-                      <user-name>
-                        <span data-data-field=author_name />
-                        <if-defined data-if-data-field=author_hatena_id hidden>
-                          <hatena-user>
-                            <img data-src-template=https://cdn.www.st-hatena.com/users/{data.author_hatena_id:2}/{data.author_hatena_id}/profile.gif referrerpolicy=no-referrer alt>
-                            <span data-data-field=author_hatena_id />
-                          </hatena-user>
-                        </if-defined>
-                      </user-name>
-                    </if-defined>
+                    <gr-object-author template=gr-object-author data-field=data />
 
                     <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
                       <time data-field=timestamp data-format=ambtime />
@@ -1456,17 +1436,7 @@
               <template>
                 <article itemscope itemtype=http://schema.org/Comment>
                   <header>
-                    <if-defined data-if-data-field=author_name hidden>
-                      <user-name>
-                        <span data-data-field=author_name />
-                        <if-defined data-if-data-field=author_hatena_id hidden>
-                          <hatena-user>
-                            <img data-src-template=https://cdn.www.st-hatena.com/users/{data.author_hatena_id:2}/{data.author_hatena_id}/profile.gif referrerpolicy=no-referrer alt>
-                            <span data-data-field=author_hatena_id />
-                          </hatena-user>
-                        </if-defined>
-                      </user-name>
-                    </if-defined>
+                    <gr-object-author template=gr-object-author data-field=data />
 
                     <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
                       <time data-field=timestamp data-format=ambtime />
@@ -1610,6 +1580,27 @@
     </a>
   </template>
 
+<template-set name=gr-object-author templateselector=gr-object-author>
+  <template/>
+  <template data-name=account>
+    <gr-account data-field=author_account_id>
+      <a data-href-template=/g/{group_id}/account/{account_id}/>
+        <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
+        <gr-account-name data-field=name data-empty=■ />
+      </a>
+    </gr-account>
+  </template>
+  <template data-name=hatenaguest>
+    <gr-person><bdi data-field=author_name /></gr-person>
+  </template>
+  <template data-name=hatenauser>
+    <gr-person hatena>
+      <img data-src-template=https://cdn.www.st-hatena.com/users/{author_hatena_id_2}/{author_hatena_id}/profile.gif referrerpolicy=no-referrer class=icon alt>
+      <code>id:<span data-field=author_hatena_id /></code>
+    </gr-person>
+  </template>
+</template-set>
+  
   <t:include path=_object_editor.html.tm />
   
 <template-set name=page-account-index>

@@ -650,6 +650,8 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       }
     } else if (field.localName === 'gr-account') {
       field.setAttribute ('value', value);
+    } else if (field.localName === 'gr-object-author') {
+      field.value = value;
     } else if (field.localName === 'object-ref') {
       field.setAttribute ('value', value);
       field.hidden = false;
@@ -1968,7 +1970,58 @@ function saveObject (article, form, object, opts) {
   }; // markAncestorArticleDeleted
   document.head.appendChild (e);
   
+  var e = document.createElementNS ('data:,pc', 'templateselector');
+  e.setAttribute ('name', 'gr-object-author');
+  e.pcHandler = function (templates, obj) {
+    if (obj.author_hatena_id) {
+      return templates.hatenauser;
+    } else if (obj.author_name) {
+      return templates.hatenaguest;
+    } else if (obj.author_account_id) {
+      return templates.account;
+    } else {
+      return templates[""];
+    }
+  }; // gr-object-author
+  document.head.appendChild (e);
+  
 }) ();
+
+defineElement ({
+  name: 'gr-object-author',
+  fill: 'idlattribute',
+  templateSet: true,
+  props: {
+    pcInit: function () {
+      this.grValue = this.value;
+      if (this.grValue) Promise.resolve ().then (() => this.grSetValue ());
+      Object.defineProperty (this, 'value', {
+        set: function (v) {
+          this.grValue = v;
+          Promise.resolve ().then (() => this.grSetValue ());
+        },
+      });
+      
+      this.addEventListener ('pctemplatesetupdated', (ev) => {
+        this.grTemplateSet = ev.pcTemplateSet;
+        Promise.resolve ().then (() => this.grSetValue ());
+      });
+    }, // pcInit
+    grSetValue: function () {
+      if (!this.grTemplateSet || !this.grValue) return;
+
+      var v = this.grValue;
+      if (v.author_hatena_id) {
+        v.author_hatena_id_2 = v.author_hatena_id.substring (0, 2);
+      }
+
+      var tm = this.grTemplateSet;
+      var e = tm.createFromTemplate ('div', v);
+      this.textContent = '';
+      while (e.firstChild) this.appendChild (e.firstChild);
+    }, // grSetValue
+  },
+}); // <gr-object-author>
 
 function upgradeWithSidebar (e) {
   e.addEventListener ('gruwatogglepanel', function (ev) {
@@ -3439,7 +3492,6 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
   var e = document.createElementNS ('data:,pc', 'templateselector');
   e.setAttribute ('name', 'selectIndexIndexTemplate');
   e.pcHandler = function (templates, obj) {
-    console.log(obj);
     if (obj.index.index_type == 1 /* blog */) {
       return templates.blog;
     } else if (obj.index.index_type == 3 /* todos */ ||
