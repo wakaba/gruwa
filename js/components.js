@@ -482,6 +482,27 @@ License along with this program, see <https://www.gnu.org/licenses/>.
         f.setAttribute (n, $fill.string (f.getAttribute ('data-'+n+'-template'), object));
       }); // [data-*-template]
     }); // filledAttributes
+    root.querySelectorAll ('[data-filled]').forEach (f => {
+      var attrs = f.getAttribute ('data-filled').split (/\s+/);
+      attrs.forEach (n => {
+        if (f.hasAttribute ('data-'+n+'-field')) {
+          var name = f.getAttribute ('data-'+n+'-field').split (/\./);
+          var value = object;
+          for (var i = 0; i < name.length; i++) {
+            value = value[name[i]];
+            if (value == null) break;
+          }
+          if (value) {
+            f.setAttribute (n, value);
+          } else {
+            f.removeAttribute (n);
+          }
+        }
+        if (f.hasAttribute ('data-'+n+'-template')) {
+          f.setAttribute (n, $fill.string (f.getAttribute ('data-'+n+'-template'), object));
+        }
+      });
+    });
   }; // $fill
 
   $fill.string = function (s, object) {

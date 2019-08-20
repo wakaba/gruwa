@@ -26,12 +26,12 @@
           </gr-account>
         </summary>
         <p><a href=/dashboard>ダッシュボード</a></p>
-        <gr-list-container src=/jump/list.json key=items>
+        <list-container src=/jump/list.json key=items class=jump-list>
           <template>
-            <p><a href data-href-template={URL} data-ping-template=/jump/ping.json?url={HREF} data-field=label></a>
+            <p><a href data-href-template={url} data-ping-template=/jump/ping.json?url={url:url} data-field=label data-empty=■ data-filled=ping></a>
           </template>
           <list-main/>
-        </gr-list-container>
+        </list-container>
       </details>
       <details open>
         <summary>
