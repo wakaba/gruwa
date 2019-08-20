@@ -70,8 +70,8 @@
 
         </section-intro>
           
-        <script src=/js/sha1.js />
-        <script src=/js/import.js />
+        <script pl:src="'/js/sha1.js?r='.$app->rev" />
+        <script pl:src="'/js/import.js?r='.$app->rev" />
     <gr-list-container loader=import key=sources type=table id=import-list class=main-table>
       <p class=buttons>
         <button type=button class=reload-button>再読込</button>

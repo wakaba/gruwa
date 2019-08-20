@@ -748,18 +748,31 @@ Importer.run = function (sourceId, statusContainer, opts) {
 
   var importDayComments = function (group, imported, site, parentObjectId, comments) {
     return $promised.forEach (function (c) {
-      var current = imported[c.url];
+      var page = c.url;
+      var sourceSha = sha1 (["", c.body].join ("\n"));
+      var current = imported[page];
       if (current && current.type == 2 /* object */) {
         if (current.sync_info.source_type === 'html' ||
             (current.sync_info.source_type === 'export' && c.source === 'export')) {
-          return Promise.resolve ();
+          // Comments imported before R1/8/20 update does not have
+          // |source_sha|.  They have broken |body| data (HTML |br|
+          // elements were ignored).
+          if (current.sync_info.source_sha === sourceSha) {
+            return Promise.resolve ();
+          }
         }
       }
 
-      var fd = new FormData;
-      fd.append ('source_site', site);
-      fd.append ('source_page', c.url);
-      return gFetch ('o/create.json', {post: true, formData: fd}).then (function (json) {
+      return Promise.resolve ().then (() => {
+        if (imported[page] && imported[page].type == 2 /* object */) {
+          return {object_id: imported[page].dest_id};
+        }
+
+        var fd = new FormData;
+        fd.append ('source_site', site);
+        fd.append ('source_page', page);
+        return gFetch ('o/create.json', {post: true, formData: fd});
+      }).then (function (json) {
         var fd = new FormData;
         fd.append ('parent_object_id', parentObjectId);
         fd.append ('timestamp', c.timestamp);
@@ -773,6 +786,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           fd.append ('author_hatena_id', c.author.url_name);
           fd.append ('revision_author_hatena_id', c.author.url_name);
         }
+        fd.append ('source_source_sha', sourceSha);
         fd.append ('source_type', c.source);
         return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
       });
@@ -1587,7 +1601,7 @@ Importer.HatenaGroup.prototype.diaryDay = function (url) {
       e.src = e.src;
     });
 
-    var comments = $$ (div, '.comment .commentshort').map (function (e) {
+    var comments = $$ (div, '.comment .commentshort p').map (function (e) {
       var comment = {author: {}, source: 'html'};
 
       var user = e.querySelector ('.commentator');
@@ -1601,8 +1615,10 @@ Importer.HatenaGroup.prototype.diaryDay = function (url) {
       var ts = e.querySelector ('.timestamp a');
       comment.url = ts.href.replace (/^http:/, 'https:');
       comment.timestamp = ts.name.replace (/^c/, '');
-      comment.body = e.querySelector ('.commentbody').textContent;
-
+      var body = e.querySelector ('.commentbody');
+      body.querySelectorAll ('br').forEach (_ => _.textContent = "\n");
+      comment.body = body.textContent;
+      
       return comment;
     });
 
