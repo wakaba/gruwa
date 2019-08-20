@@ -12,7 +12,9 @@
           }
         });
         document.querySelector ('gr-nav-panel').focus ();
-      ">三</button>
+      " title=メニュー>
+        <button-label>メニュー</button-label>
+      </button>
     </gr-nav-button>
     
     <gr-nav-panel tabindex=0>
@@ -159,7 +161,6 @@
     <section>
       <header class=section>
         <h1>検索</h1>
-        <a href=/help#search target=help>ヘルプ</a>
         <popup-menu>
           <button type=button title=メニュー>
             <button-label>
@@ -169,6 +170,7 @@
           <menu-main>
             <p><a is=copy-url href>URLをコピー</a>
             <p><a is=gr-jump-add href>ジャンプリストに追加</a>
+            <p><a href=/help#search target=help>ヘルプ</a>
           </menu-main>
         </popup-menu>
       </header>

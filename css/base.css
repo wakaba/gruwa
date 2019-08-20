@@ -334,6 +334,7 @@ tab-set > section.active > h1 {
 summary {
   padding: .3em;
   cursor: pointer;
+  font-weight: bolder;
 }
 
 summary:active,
@@ -851,7 +852,7 @@ todo-state[value="2"] {
 }
 
 gr-menu {
-
+  min-height: 1em;
 }
 
 gr-popup-menu:not([hidden]) {
@@ -915,48 +916,140 @@ gr-popup-menu > button:not([hidden]):focus {
   background-color: var(--accented-background-color);
 }
 
+gr-nav-button:not([hidden]) {
+  position: fixed;
+  display: block;
+  top: .5em;
+  right: .5em;
+  margin: 0 ! important; /* XXX */
+  z-index: 1000001;
+}
+
+gr-nav-button > button:not([hidden]) {
+  display: block;
+  -webkit-appearance: none;
+  border: 1px solid;
+  border-color: var(--menu-border-color);
+  padding: 0.3em;
+  min-width: 1.7em;
+  min-height: 1.7em;
+  line-height: 1.0;
+  font-size: 150%;
+  background: var(--menu-background-color);
+  color: var(--menu-color);
+  box-shadow: 1px 1px var(--menu-shadow-color);
+}
+
+gr-nav-button > button:not(:hover):not(:focus):not(:active) {
+  opacity: 0.7;
+}
+
+gr-nav-button > button::before {
+  content: "三";
+}
+
+gr-nav-button[active] > button::before {
+  content: "×";
+}
+
+gr-nav-button > button button-label {
+  visibility: hidden;
+  position: absolute;
+}
+
 gr-popup-menu > menu:not([hidden]) {
   position: absolute;
   right: 0;
   display: block;
   margin: 0;
 }
-
+  
 popup-menu > menu-main,
-gr-popup-menu > menu:not([hidden]) {
-  z-index: 10;
+gr-popup-menu > menu:not([hidden]),
+gr-nav-panel {
   border: 1px solid;
   border-color: var(--menu-border-color);
   padding: 0;
   background-color: var(--menu-background-color);
   color: var(--menu-color);
-  min-width: 10rem;
   text-align: left;
   box-shadow: 1px 1px var(--menu-shadow-color);
   font-size: 95%;
+}
+
+popup-menu > menu-main,
+gr-popup-menu > menu:not([hidden]) {
+  z-index: 10;
+  min-width: 10rem;
+}
+
+gr-nav-panel:not([hidden]) {
+  display: block;
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 20em;
+  max-width: 100%;
+  bottom: 0;
+  overflow: auto;
+  margin: 0 ! important; /* XXX */
+  z-index: 1000000;
+}
+
+gr-nav-panel:not([active]) {
+  display: none;
+}
+
+gr-nav-panel > details + details {
+  margin-top: 2px;
+  border-style: solid none none none;
+  border-width: 1px;
+  border-color: var(--menu-border-color);
+  padding-top: 2px;
 }
 
 popup-menu > menu-main p:not([hidden]),
 gr-popup-menu > menu > li:not([hidden]),
 gr-popup-menu > menu > gr-list-container > list-main > li:not([hidden]) {
   display: block;
-  margin: 0;
+  margin: 2px;
   padding: 0;
   font-size: 100%;
 }
 
-popup-menu > menu-main p a:not([hidden]),
-popup-menu > menu-main p button:not([hidden]) {
+gr-nav-panel p {
+  margin: 2px;
+  padding: 0;
+}
+
+gr-nav-panel form {
+  margin: 2px;
+}
+
+gr-nav-panel summary:not([hidden]),
+gr-nav-panel a:not([hidden]) {
+  display: block;
+}
+
+gr-nav-panel summary,
+gr-nav-panel a,
+gr-nav-panel form {
+  padding: .4em;
+  line-height: 1.5;
+}
+
+menu-main p a:not([hidden]),
+menu-main p button:not([hidden]) {
   -webkit-appearance: none;
   display: block;
   margin: 0;
   border: none;
-  padding: .5em;
+  padding: .4em;
   width: 100%;
   box-sizing: border-box;
   font-size: 100%;
   text-decoration: none;
-  line-height: 1.0;
+  line-height: 1.5;
   color: inherit;
   background: transparent;
   text-align: left;
@@ -969,7 +1062,7 @@ popup-menu > menu-main form:not([hidden]) {
 gr-popup-menu > menu > li > a:only-child,
 gr-popup-menu > menu > gr-list-container > list-main > li > a:only-child {
   display: block;
-  padding: .5em;
+  padding: .4em;
   font-size: 100%;
   text-decoration: none;
   line-height: 1.0;
@@ -1018,16 +1111,29 @@ gr-popup-menu > menu > li > button:only-child:not([hidden]):active {
   background-color: var(--hover-background-color);
 }
 
-gr-popup-menu > menu > hr {
-  visibility: visible;
-  border-size: 1px;
-  border-style: solid none none none;
-  border-color: var(--menu-border-color);
+gr-nav-panel a:not(:hover):not(:focus):not(:active) {
+  color: inherit;
+  background: transparent;
+  text-decoration: none;
 }
 
-gr-popup-menu > menu > gr-list-container {
-  max-height: 15rem;
-  overflow: auto;
+gr-nav-panel input[type=search],
+gr-nav-panel button.search-button {
+  padding: .1em;
+}
+
+gr-nav-panel button:not(:hover):not(:focus):not(:active) {
+  color: inherit;
+  background: transparent;
+}
+
+gr-nav-panel .icon {
+  width: 1em;
+  height: 1em;
+}
+
+gr-nav-panel gr-group:not([hidden]) {
+  display: contents;
 }
 
 
