@@ -2873,10 +2873,7 @@ defineElement ({
       if (this.title) fd.append ('label', this.title);
       fd.append ('url', this.href);
       return gFetch ('/jump/add.json', {post: true, formData: fd}).then (function () {
-        $$ (document, 'gr-list-container[src="/jump/list.json"]').forEach (function (e) {
-          e.clearObjects ();
-          e.load ();
-        });
+        document.querySelectorAll ('.jump-list').forEach (_ => _.load ({}));
       });
     }, // grClick
   },
