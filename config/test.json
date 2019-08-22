@@ -9,6 +9,11 @@
     "context": "...",
     "servers": ["test1"]
   },
+  "apploach": {
+    "url": "http://apploach.server.test",
+    "key": "...",
+    "app_id": "..."
+  },
   "storage": {
     "url": "http://storage.server.test",
     "aws4": ["access key", "secret key", "us-east-1", "s3"],

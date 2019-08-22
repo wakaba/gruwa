@@ -37,11 +37,16 @@ sub run ($%) {
       handler => 'ServerSet::AccountsHandler',
       requires => ['mysqld', 'storage'],
     },
+    apploach => {
+      handler => 'ServerSet::ApploachHandler',
+      requires => ['mysqld', 'storage'],
+    },
     app_config => {
-      requires => ['mysqld', 'storage', 'accounts'],
+      requires => ['mysqld', 'storage', 'accounts', 'apploach'],
       keys => {
         accounts_context => 'key:,20',
         accounts_group_context => 'key:,20',
+        apploach_app_id => 'id',
       },
       start => sub ($$%) {
         my ($handler, $self, %args) = @_;
@@ -57,6 +62,11 @@ sub run ($%) {
           if ($args{has_accounts}) {
             $config->{accounts}->{key} = $self->key ('accounts_key');
             $config->{accounts}->{context} = $self->key ('accounts_context');
+          }
+
+          if ($args{has_apploach}) {
+            $config->{apploach}->{key} = $self->key ('apploach_bearer');
+            $config->{apploach}->{app_id} = $self->key ('apploach_app_id');
           }
           
           $data->{app_docker_image} = $args{app_docker_image}; # or undef
@@ -215,6 +225,7 @@ sub run ($%) {
         databases => {
           gruwa => $RootPath->child ('db/gruwa.sql'),
           accounts => $RootPath->child ('local/accounts.sql'),
+          apploach => $RootPath->child ('local/apploach.sql'),
         },
         database_name_suffix => $args->{mysqld_database_name_suffix},
       },
@@ -229,10 +240,16 @@ sub run ($%) {
         servers_path => $args->{accounts_servers_path}, # or undef
         docker_net_host => $args->{docker_net_host},
       },
+      apploach => {
+        disabled => $args->{dont_run_apploach},
+        config_path => $args->{apploach_config_path}, # or undef
+        docker_net_host => $args->{docker_net_host},
+      },
       app_config => {
         app_config_path => $args->{app_config_path},
         app_docker_image => $app_docker_image || undef,
         has_accounts => ! $args->{dont_run_accounts},
+        has_apploach => ! $args->{dont_run_apploach},
       },
       app => {
         disabled => !! $app_docker_image,

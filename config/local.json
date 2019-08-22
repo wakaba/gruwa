@@ -8,6 +8,11 @@
     "context": "gruwa:local",
     "servers": ["github", "google"]
   },
+  "apploach": {
+    "url": "https://invalid",
+    "key": "...",
+    "app_id": "..."
+  },
   "storage": {
     "url": "https://invalid",
     "aws4": ["access key", "secret key", "us-east-1", "s3"],
