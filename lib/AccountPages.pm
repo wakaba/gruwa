@@ -84,15 +84,25 @@ sub main ($$$$$) {
   return $app->send_error (404);
 } # main
 
-sub mymain ($$$$$) {
-  my ($class, $app, $path, $account_data) = @_;
+sub mymain ($$$$) {
+  my ($class, $app, $path, $acall) = @_;
+
+  if (@$path == 2 and $path->[1] eq 'groups.json') {
+    # /my/groups.json
+    return $class->mygroups ($app, $acall);
+  }
 
   if (@$path == 2 and $path->[1] eq 'info.json') {
     # /my/info.json
-    my $json = {
-      account_id => defined $account_data->{account_id} ? ''.$account_data->{account_id} : undef,
-      name => $account_data->{name},
-    };
+    return $acall->(['info'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+    })->(sub {
+      my $account_data = $_[0];
+      my $json = {
+        account_id => defined $account_data->{account_id} ? ''.$account_data->{account_id} : undef,
+        name => $account_data->{name},
+      };
   #if ($with_profile) {
   #  #
   #}
@@ -104,7 +114,8 @@ sub mymain ($$$$$) {
   #         id => $_->{id}, name => $_->{name}};
   #  }
   #}
-    return json $app, $json;
+      return json $app, $json;
+    });
   } # info
 
   return $app->throw_error (404);
