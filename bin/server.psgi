@@ -171,21 +171,9 @@ return sub {
           });
         }
 
-        if (@$path == 2 and
-            $path->[0] eq 'my' and $path->[1] eq 'groups.json') {
-          # /my/groups.json
-          return AccountPages->mygroups ($app, $acall);
-        }
-
         if ($path->[0] eq 'my') {
           # /my
-          return $acall->(['info'], {
-            sk_context => $app->config->{accounts}->{context},
-            sk => $app->http->request_cookies->{sk},
-          })->(sub {
-            my $account_data = $_[0];
-            return AccountPages->mymain ($app, $path, $account_data);
-          });
+          return AccountPages->mymain ($app, $path, $acall);
         }
 
         if ($path->[0] eq 'account') {

@@ -80,7 +80,7 @@ PROVE = ./prove
 
 test: test-deps test-main
 
-test-deps: git-submodules pmbp-install local/accounts.sql
+test-deps: git-submodules pmbp-install local/accounts.sql local/apploach.sql
 
 deps-circleci: test-deps deps-rev
 
@@ -88,6 +88,10 @@ local/accounts.sql: local/accounts-2.sql
 	cp $< $@
 local/accounts-2.sql:
 	curl https://raw.githubusercontent.com/wakaba/accounts/master/db/account.sql > $@
+local/apploach.sql: local/apploach-2.sql
+	cp $< $@
+local/apploach-2.sql:
+	curl https://raw.githubusercontent.com/wakaba/apploach/master/db/apploach.sql > $@
 
 test-main: test-http test-browser
 

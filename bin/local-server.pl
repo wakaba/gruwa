@@ -34,6 +34,7 @@ GruwaSS->run (
   mysqld_database_name_suffix => '_local',
   dont_run_xs => 1,
   dont_run_accounts => 1,
+  dont_run_apploach => 1,
 )->then (sub {
   my $v = $_[0];
   warn sprintf "\n\nURL: <%s>\n\n",
