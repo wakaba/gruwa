@@ -488,6 +488,11 @@ sub edit_object ($$$$$) {
       thread_id => $db->bare_sql_fragment ('values(`thread_id`)'),
       from_account_id => $db->bare_sql_fragment ('values(`from_account_id`)'),
       read => 0,
+    })->then (sub {
+      return $db->delete ('object_call', {
+        timestamp => {'<', $time - 7*24*60*60},
+        read => 1,
+      });
     });
   })->then (sub {
     my $index_ids = $edits->{index_ids};
