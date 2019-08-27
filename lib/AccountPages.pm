@@ -135,7 +135,7 @@ sub mymain ($$$$$) {
       $where->{timestamp} = $page->{value} if defined $page->{value};
       return $db->select ('object_call', $where, fields => [
         'group_id', 'object_id', 'from_account_id', 'timestamp', 'read',
-        'thread_id',
+        'thread_id', 'reason',
       ],
         offset => $page->{offset}, limit => $page->{limit},
         order => ['timestamp', $page->{order_direction}],

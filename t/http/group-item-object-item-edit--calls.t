@@ -44,6 +44,7 @@ Test {
       is $item->{from_account_id}, $current->o ('a1')->{account_id};
       ok $item->{timestamp};
       ok ! $item->{read};
+      is $item->{reason}, 0b10;
     } $current->c;
     return $current->get_json (['o', $current->o ('o1')->{object_id}, 'revisions.json'], {
       with_revision_data => 1,
@@ -58,7 +59,7 @@ Test {
       like $result->{res}->body_bytes, qr{"account_ids"\s*:\s*\[\s*"};
     } $current->c;
   });
-} n => 12, name => 'called';
+} n => 13, name => 'called';
 
 Test {
   my $current = shift;

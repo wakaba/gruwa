@@ -57,9 +57,10 @@ Test {
       like $result->{res}->body_bytes, qr{"from_account_id"\s*:\s*"};
       ok $item->{timestamp};
       ok ! $item->{read};
+      is $item->{reason}, 0b10;
     } $current->c;
   });
-} n => 13, name => 'has an item';
+} n => 14, name => 'has an item';
 
 Test {
   my $current = shift;

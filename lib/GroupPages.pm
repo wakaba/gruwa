@@ -434,7 +434,7 @@ sub edit_object ($$$$$) {
           return $app->throw_error (400, reason_phrase => "Bad account ID |$_|")
               unless $list->{$_};
           ## Don't have to check *_status and member_type.
-          $called_account_ids->{$_} = 1;
+          $called_account_ids->{$_} |= 0b10; # explicit
         }
       });
     }),
@@ -471,8 +471,9 @@ sub edit_object ($$$$$) {
     return unless keys %$called_account_ids;
     my $called = {};
     for (keys %$called_account_ids) {
-      $object->{data}->{called}->{account_ids}->{$_} = 1;
-      $called->{$_} = 1;
+      my $reason = $called_account_ids->{$_};
+      $object->{data}->{called}->{account_ids}->{$_} |= $reason;
+      $called->{$_} |= $reason;
     }
     $changes->{fields}->{called} = {account_ids => [sort { $a cmp $b } keys %$called]};
     return $db->insert ('object_call', [map { {
@@ -483,11 +484,13 @@ sub edit_object ($$$$$) {
       to_account_id => Dongry::Type->serialize ('text', $_),
       timestamp => $time,
       read => 0,
-    } } keys %$called_account_ids], duplicate => {
+      reason => $called->{$_},
+    } } keys %$called], duplicate => {
       timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
       thread_id => $db->bare_sql_fragment ('values(`thread_id`)'),
       from_account_id => $db->bare_sql_fragment ('values(`from_account_id`)'),
       read => 0,
+      reason => $db->bare_sql_fragment ('`reason` | values(`reason`)'),
     })->then (sub {
       return $db->delete ('object_call', {
         timestamp => {'<', $time - 7*24*60*60},
