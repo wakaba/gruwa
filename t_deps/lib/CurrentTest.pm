@@ -376,6 +376,9 @@ sub create_object ($$$) {
     if (defined $opts->{parent_object}) {
       $param{parent_object_id} = $self->_get_o ($opts->{parent_object})->{object_id};
     }
+    if (defined $opts->{called_account}) {
+      $param{called_account_id} = [map { $self->_get_o ($_)->{account_id} } ref $opts->{called_account} ? @{$opts->{called_account}} : $opts->{called_account}];
+    }
     if (keys %param) {
       return $self->post_json (['o', $_[0]->{json}->{object_id}, 'edit.json'],
                                \%param,
@@ -491,6 +494,90 @@ sub _get_o ($$) {
 sub set_o ($$$) {
   $_[0]->{objects}->{$_[1]} = $_[2];
 } # set_o
+
+sub pages_ok ($$$$;$) {
+  my $self = $_[0];
+  my ($path, $params, %args) = @{$_[1]};
+  my $items = [@{$_[2]}];
+  my $field = $_[3];
+  my $name = $_[4];
+  my $count = int (@$items / 2) + 3;
+  my $page = 1;
+  my $ref;
+  my $has_error = 0;
+  return promised_cleanup {
+    return if $has_error;
+    note "no error (@{[$page-1]} pages)";
+    return $self->are_errors (
+      ['GET', $path, $params, %args],
+      [
+        {params => {%$params, ref => rand}, status => 400, name => 'Bad |ref|'},
+        {params => {%$params, ref => '+5353,350000'}, status => 400, name => 'Bad |ref| offset'},
+        {params => {%$params, limit => 40000}, status => 400, name => 'Bad |limit|'},
+      ],
+      $name,
+    );
+  } promised_wait_until {
+    return $self->get_json ($path, {%$params, limit => 2, ref => $ref}, %args)->then (sub {
+      my $result = $_[0];
+      my $expected_length = (@$items > 2 ? 2 : 0+@$items);
+      my $actual_length = 0+@{$result->{json}->{items}};
+      if ($expected_length == $actual_length) {
+        if ($expected_length >= 1) {
+          unless ($result->{json}->{items}->[0]->{$field} eq $self->o ($items->[-1])->{$field}) {
+            test {
+              is $result->{json}->{items}->[0]->{$field},
+                 $self->o ($items->[-1])->{$field}, "page $page, first item";
+            } $self->c, name => $name;
+            $count = 0;
+            $has_error = 1;
+          }
+        }
+        if ($expected_length >= 2) {
+          unless ($result->{json}->{items}->[1]->{$field} eq $self->o ($items->[-2])->{$field}) {
+            test {
+              is $result->{json}->{items}->[1]->{$field},
+                 $self->o ($items->[-2])->{$field}, "page $page, second item";
+            } $self->c, name => $name;
+            $count = 0;
+            $has_error = 1;
+          }
+        }
+        pop @$items;
+        pop @$items;
+      } else {
+        test {
+          is $actual_length, $expected_length, "page $page length";
+        } $self->c, name => $name;
+        $count = 0;
+        $has_error = 1;
+      }
+      if (@$items) {
+        unless ($result->{json}->{has_next} and
+                defined $result->{json}->{next_ref}) {
+          test {
+            ok $result->{json}->{has_next}, 'has_next';
+            ok $result->{json}->{next_ref}, 'next_ref';
+          } $self->c, name => $name;
+          $count = 0;
+          $has_error = 1;
+        }
+      } else {
+        if ($result->{json}->{has_next}) {
+          test {
+            ok ! $result->{json}->{has_next}, 'no has_next';
+          } $self->c, name => $name;
+          $count = 0;
+          $has_error = 1;
+        }
+      }
+      $ref = $result->{json}->{next_ref};
+    })->then (sub {
+      $page++;
+      return not $count >= $page;
+    });
+  };
+} # pages_ok
 
 sub are_errors ($$$) {
   my ($self, $base, $tests) = @_;

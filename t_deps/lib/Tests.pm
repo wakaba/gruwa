@@ -8,6 +8,7 @@ use AbortController;
 use Test::More;
 use Test::X1;
 use JSON::PS;
+use Time::HiRes qw(time);
 use Promise;
 use Promised::Flow;
 use Exporter::Lite;
@@ -22,7 +23,8 @@ our @EXPORT = grep { not /^\$/ }
     @Test::X1::EXPORT,
     @Promised::Flow::EXPORT,
     @JSON::PS::EXPORT,
-    @Web::URL::Encoding::EXPORT;
+    @Web::URL::Encoding::EXPORT,
+    'time';
 
 my $RootPath = path (__FILE__)->parent->parent->parent;
 my $TestScriptPath = path ($0)->relative ($RootPath->child ('t'));

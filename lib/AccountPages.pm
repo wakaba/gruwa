@@ -3,6 +3,7 @@ use strict;
 use warnings;
 use Web::URL;
 
+use Pager;
 use Results;
 
 sub main ($$$$$) {
@@ -84,8 +85,8 @@ sub main ($$$$$) {
   return $app->send_error (404);
 } # main
 
-sub mymain ($$$$) {
-  my ($class, $app, $path, $acall) = @_;
+sub mymain ($$$$$) {
+  my ($class, $app, $path, $acall, $db) = @_;
 
   if (@$path == 2 and $path->[1] eq 'groups.json') {
     # /my/groups.json
@@ -117,6 +118,42 @@ sub mymain ($$$$) {
       return json $app, $json;
     });
   } # info
+
+  if (@$path == 2 and $path->[1] eq 'calls.json') {
+    # /my/calls.json
+    my $page = Pager::this_page ($app, limit => 30, max_limit => 100);
+    return $acall->(['info'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+    })->(sub {
+      my $account_data = $_[0];
+      return [] unless defined $account_data->{account_id};
+
+      my $where = {
+        to_account_id => Dongry::Type->serialize ('text', $account_data->{account_id}),
+      };
+      $where->{timestamp} = $page->{value} if defined $page->{value};
+      return $db->select ('object_call', $where, fields => [
+        'group_id', 'object_id', 'from_account_id', 'timestamp', 'read',
+        'thread_id',
+      ],
+        offset => $page->{offset}, limit => $page->{limit},
+        order => ['timestamp', $page->{order_direction}],
+      )->then (sub {
+        return $_[0]->all->to_a;
+      });
+    })->then (sub {
+      my $items = $_[0];
+      for (@$items) {
+        $_->{group_id} .= '';
+        $_->{object_id} .= '';
+        $_->{thread_id} .= '';
+        $_->{from_account_id} .= '';
+      }
+      my $next_page = Pager::next_page $page, $items, 'timestamp';
+      return json $app, {items => $items, %$next_page};
+    });
+  }
 
   return $app->throw_error (404);
 } # mymain
