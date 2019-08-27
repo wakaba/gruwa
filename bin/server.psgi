@@ -173,7 +173,7 @@ return sub {
 
         if ($path->[0] eq 'my') {
           # /my
-          return AccountPages->mymain ($app, $path, $acall);
+          return AccountPages->mymain ($app, $path, $acall, $db);
         }
 
         if ($path->[0] eq 'account') {

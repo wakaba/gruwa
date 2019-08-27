@@ -418,7 +418,27 @@ sub edit_object ($$$$$) {
   } # assigned_account_ids
 
   my $time = time;
-  return Promise->resolve->then (sub {
+  my $called_account_ids = {};
+  return Promise->all ([
+    Promise->resolve->then (sub {
+      my $ids = $app->bare_param_list ('called_account_id');
+      return unless @$ids;
+
+      return $opts->{acall}->(['group', 'members'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        group_id => $group_id,
+        account_id => $ids->to_a,
+      })->(sub {
+        my $list = $_[0]->{memberships};
+        for (@$ids) {
+          return $app->throw_error (400, reason_phrase => "Bad account ID |$_|")
+              unless $list->{$_};
+          ## Don't have to check *_status and member_type.
+          $called_account_ids->{$_} |= 0b10; # explicit
+        }
+      });
+    }),
+  ])->then (sub {
     my $value = $edits->{parent_object_id};
     return unless defined $value;
     my $old = $object->{data}->{parent_object_id} || 0;
@@ -446,6 +466,37 @@ sub edit_object ($$$$$) {
       $changes->{fields}->{thread_id} = 1;
       $object->{data}->{thread_id} = ''.$object->{object_id};
     }
+  })->then (sub {
+    ## Object account calls
+    return unless keys %$called_account_ids;
+    my $called = {};
+    for (keys %$called_account_ids) {
+      my $reason = $called_account_ids->{$_};
+      $object->{data}->{called}->{account_ids}->{$_} |= $reason;
+      $called->{$_} |= $reason;
+    }
+    $changes->{fields}->{called} = {account_ids => [sort { $a cmp $b } keys %$called]};
+    return $db->insert ('object_call', [map { {
+      group_id => $group_id,
+      object_id => ''.$object->{object_id},
+      thread_id => Dongry::Type->serialize ('text', $object->{data}->{thread_id}),
+      from_account_id => Dongry::Type->serialize ('text', $opts->{account}->{account_id}),
+      to_account_id => Dongry::Type->serialize ('text', $_),
+      timestamp => $time,
+      read => 0,
+      reason => $called->{$_},
+    } } keys %$called], duplicate => {
+      timestamp => $db->bare_sql_fragment ('values(`timestamp`)'),
+      thread_id => $db->bare_sql_fragment ('values(`thread_id`)'),
+      from_account_id => $db->bare_sql_fragment ('values(`from_account_id`)'),
+      read => 0,
+      reason => $db->bare_sql_fragment ('`reason` | values(`reason`)'),
+    })->then (sub {
+      return $db->delete ('object_call', {
+        timestamp => {'<', $time - 7*24*60*60},
+        read => 1,
+      });
+    });
   })->then (sub {
     my $index_ids = $edits->{index_ids};
     return unless defined $index_ids;
@@ -663,9 +714,8 @@ sub edit_object ($$$$$) {
               return unless @x;
               return $db->insert ('wiki_trackback_object', \@x);
             });
-
-          })->then (sub {
-            $sdata = Dongry::Type->serialize ('json', $object->{data});
+    })->then (sub {
+      $sdata = Dongry::Type->serialize ('json', $object->{data});
             return $db->insert ('object_revision', [{
               group_id => $group_id,
               object_id => ''.$object->{object_id},
@@ -720,7 +770,7 @@ sub edit_object ($$$$$) {
               } keys %{$object->{data}->{index_ids} or {}}]},
             });
           });
-        })->then (sub {
+  })->then (sub {
           ## Source metadata (for importing)
           my $ts = $app->bare_param ('source_timestamp');
           my $rev_ts = $app->bare_param ('source_rev_timestamp');
@@ -779,12 +829,12 @@ sub edit_object ($$$$$) {
               dest_id => ''.$object->{object_id},
             });
           }
-        })->then (sub {
-          return {
-            object_revision_id => ''.$object->{data}->{object_revision_id},
-          } if keys %{$changes->{fields}};
-          return {};
-        });
+  })->then (sub {
+    return {
+      object_revision_id => ''.$object->{data}->{object_revision_id},
+    } if keys %{$changes->{fields}};
+    return {};
+  });
 } # edit_object
 
 sub create ($$$$) {
