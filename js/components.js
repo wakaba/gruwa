@@ -912,7 +912,11 @@ License along with this program, see <https://www.gnu.org/licenses/>.
           this.pmToggle (this.hasAttribute ('open'));
         });
         mo.observe (this, {attributes: true, attributeFilter: ['open']});
-        setTimeout (() => this.pmLayout (), 100);
+        setTimeout (() => {
+          if (this.hasAttribute ('open') && !this.pmGlobalClickHandler) {
+            this.pmToggle (true);
+          }
+        }, 100);
       }, // pcInit
       pmClick: function (ev) {
         var current = ev.target;
@@ -974,6 +978,9 @@ License along with this program, see <https://www.gnu.org/licenses/>.
           if (this.pmGlobalClickHandler) {
             window.removeEventListener ('click', this.pmGlobalClickHandler);
             delete this.pmGlobalClickHandler;
+
+            var ev = new Event ('toggle', {bubbles: true});
+            this.dispatchEvent (ev);
           }
         }
       }, // pmToggle
@@ -1005,6 +1012,9 @@ License along with this program, see <https://www.gnu.org/licenses/>.
             menu.style.left = 'auto';
           }
         }
+
+        var ev = new Event ('toggle', {bubbles: true});
+        this.dispatchEvent (ev);
       }, // pmLayout
     },
   }); // popup-menu
