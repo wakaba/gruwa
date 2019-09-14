@@ -168,10 +168,49 @@
         </table>
       </list-control>
     </details>
+
+      通知送信先:
+      <gr-called-editor template=gr-called-editor />
     </form>
     <aside hidden/>
   </with-sidebar>
 </template>
+
+<template-set name=gr-called-editor>
+  <template>
+    <gr-called-editor-selected placeholder=なし />
+    <popup-menu>
+      <button type=button>
+        <button-label>変更</button-label>
+      </button>
+      <menu-main>
+        <gr-called-editor-menu-items/>
+        
+      </menu-main>
+    </popup-menu>
+  </template>
+</template-set>
+
+<template-set name=gr-called-editor-menu-item>
+  <template>
+        <label>
+          <input type=checkbox data-called-type=account_id data-field=account_id>
+          <gr-account data-field=account_id>
+            <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
+            <gr-account-name data-field=name data-filling>アカウント</gr-account-name>
+          </gr-account>
+        </label>
+  </template>
+</template-set>
+
+<template-set name=gr-called-editor-selected-item>
+  <template>
+    <gr-account data-field=account_id>
+      <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
+      <gr-account-name data-field=name data-filling>アカウント</gr-account-name>
+    </gr-account>
+  </template>
+</template-set>
 
   <template id=link-edit-template class=body-edit-template>
     <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener">

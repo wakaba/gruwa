@@ -204,6 +204,12 @@ GR.group._members = function () {
   });
 }; // GR.group._members
 
+GR.group.activeMembers = function () {
+  return GR.group._members ().then (list => {
+    return Object.values (list).filter (_ => _.user_status == 1 && _.owner_status == 1); // open
+  });
+}; // GR.group.activeMembers
+
 (() => {
 
   var e = document.createElementNS ('data:,pc', 'loader');
@@ -1918,6 +1924,9 @@ function saveObject (article, form, object, opts) {
     });
     c.push (function () { object.data[control.getAttribute ('key')] = cc });
   });
+  $$ (form, 'gr-called-editor').forEach (function (control) {
+    control.pcModifyFormData (fd);
+  });
   return Promise.all (ps).then (function () {
     opts.actionStatus.stageEnd ("dataset");
     opts.actionStatus.stageStart ("create");
@@ -1937,6 +1946,10 @@ function saveObject (article, form, object, opts) {
       object.updated = (new Date).valueOf () / 1000;
       opts.actionStatus.stageEnd ("edit");
       return objectId;
+    });
+  }).then (() => {
+    $$ (form, 'gr-called-editor').forEach (function (control) {
+      control.grReset ();
     });
   });
 } // saveObject
@@ -2691,6 +2704,107 @@ defineElement ({
     }, // pcModifyFormData
   },
 }); // <gr-icon-editor>
+
+defineElement ({
+  name: 'gr-called-editor',
+  templateSet: true,
+  props: {
+    pcInit: function () {
+      this.grSelected = {account_id: {}};
+      this.setAttribute ('formcontrol', '');
+      this.addEventListener ('pctemplatesetupdated', (ev) => {
+        this.grTemplateSet = ev.pcTemplateSet;
+        Promise.resolve ().then (() => this.grRender ());
+      });
+    }, // pcInit
+    grRender: function () {
+      if (!this.grTemplateSet) return;
+      
+      var tm = this.grTemplateSet;
+      var e = tm.createFromTemplate ('div', {});
+      this.textContent = '';
+      while (e.firstChild) this.appendChild (e.firstChild);
+
+      this.grUpdateSelectedView ();
+      return new Promise (ok => {
+        this.ontoggle = (ev) => {
+          if (ev.target.localName === 'popup-menu' &&
+              ev.target.hasAttribute ('open')) {
+            this.ontoggle = null;
+            ok ();
+          }
+        };
+      }).then (() => {
+        return Promise.all ([
+          $getTemplateSet ('gr-called-editor-menu-item'),
+          GR.group.activeMembers (),
+        ]);
+      }).then (_ => {
+        var [tm, mems] = _;
+        this.querySelectorAll ('gr-called-editor-menu-items').forEach (c => {
+          c.textContent = '';
+          mems.forEach (mem => {
+            var e = tm.createFromTemplate ('list-item', mem);
+            e.querySelectorAll ('input[data-called-type]').forEach (_ => {
+              _.onchange = () => this.grToggleCalled (_.getAttribute ('data-called-type'), _.value, _.checked);
+              _.checked = this.grSelected[_.getAttribute ('data-called-type')][_.value];
+            });
+            c.appendChild (e);
+          });
+        });
+      });
+    }, // grRender
+    grToggleCalled: function (type, id, selected) {
+      var old = this.grSelected[type][id];
+      if (old && selected) return;
+      if (!old && !selected) return;
+      if (selected) {
+        this.grSelected[type][id] = selected;
+      } else {
+        delete this.grSelected[type][id];
+      }
+      return this.grUpdateSelectedView ();
+    }, // grToggleCalled
+    grReset: function () {
+      this.grSelected = {account_id: {}};
+      return this.grRender ();
+    }, // grReset
+    grUpdateSelectedView: function () {
+      clearTimeout (this.grUpdateSelectedViewTimer);
+      this.grUpdateSelectedViewTimer = setTimeout (() => this.gr_updateSelectedView (), 200);
+    }, // grUpdateSelectedView
+    gr_updateSelectedView: function () {
+      this.querySelectorAll ('gr-called-editor-selected').forEach (c => {
+        return Promise.all ([
+          $getTemplateSet ('gr-called-editor-selected-item'),
+          GR.group.activeMembers (),
+        ]).then (_ => {
+          var [tm, mems] = _;
+          c.textContent = '';
+          mems.forEach (mem => {
+            if (this.grSelected.account_id[mem.account_id]) {
+              var e = tm.createFromTemplate ('list-item', mem);
+              c.appendChild (e);
+            }
+          });
+          if (!c.firstChild) {
+            c.classList.add ('placeholder');
+            c.textContent = c.getAttribute ('placeholder');
+          } else {
+            c.classList.remove ('placeholder');
+          }
+        });
+      });
+    }, // gr_updateSelectedView
+    pcModifyFormData: function (fd) {
+      Object.keys (this.grSelected.account_id).forEach (aid => {
+        if (this.grSelected.account_id[aid]) {
+          fd.append ('called_account_id', aid);
+        }
+      });
+    }, // pcModifyFormData
+  },
+}); // gr-called-editor
 
 defineElement ({
   name: 'form',
