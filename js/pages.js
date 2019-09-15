@@ -953,6 +953,10 @@ function fillFormControls (form, object, opts) {
     control.setSelectedValues (Object.keys (object.data[dataKey] || {}));
   }); // list-control
 
+  $$c (form, 'gr-called-editor').forEach (_ => {
+    _.grObjectCalled = object.data.called || {};
+  });
+
   return Promise.all (wait);
 } // fillFormControls
 
@@ -1941,14 +1945,16 @@ function saveObject (article, form, object, opts) {
   }).then (function (objectId) {
     opts.actionStatus.stageEnd ("create");
     opts.actionStatus.stageStart ("edit");
-    return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd}).then (function () {
+    return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd}).then (function (json) {
       c.forEach (function (_) { _ () });
       object.updated = (new Date).valueOf () / 1000;
+      if (json.called) object.data.called = json.called;
       opts.actionStatus.stageEnd ("edit");
       return objectId;
     });
   }).then (() => {
     $$ (form, 'gr-called-editor').forEach (function (control) {
+      control.grObjectCalled = object.data.called;
       control.grReset ();
     });
   });
@@ -2716,6 +2722,14 @@ defineElement ({
         this.grTemplateSet = ev.pcTemplateSet;
         Promise.resolve ().then (() => this.grRender ());
       });
+
+      this.grOC = this.grObjectCalled || {};
+      Object.defineProperty (this, 'grObjectCalled', {
+        set: function (v) {
+          this.grOC = v || {};
+          Promise.resolve ().then (() => this.grRender ());
+        },
+      });
     }, // pcInit
     grRender: function () {
       if (!this.grTemplateSet) return;
@@ -2741,14 +2755,17 @@ defineElement ({
         ]);
       }).then (_ => {
         var [tm, mems] = _;
+        var oca = this.grOC.account_ids || {};
         this.querySelectorAll ('gr-called-editor-menu-items').forEach (c => {
           c.textContent = '';
           mems.forEach (mem => {
+            mem.last_sent = (oca[mem.account_id] || {}).last_sent;
             var e = tm.createFromTemplate ('list-item', mem);
             e.querySelectorAll ('input[data-called-type]').forEach (_ => {
               _.onchange = () => this.grToggleCalled (_.getAttribute ('data-called-type'), _.value, _.checked);
               _.checked = this.grSelected[_.getAttribute ('data-called-type')][_.value];
             });
+            if (!mem.last_sent) e.querySelectorAll ('.if-sent').forEach (_ => _.remove ());
             c.appendChild (e);
           });
         });

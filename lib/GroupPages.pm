@@ -472,7 +472,8 @@ sub edit_object ($$$$$) {
     my $called = {};
     for (keys %$called_account_ids) {
       my $reason = $called_account_ids->{$_};
-      $object->{data}->{called}->{account_ids}->{$_} |= $reason;
+      $object->{data}->{called}->{account_ids}->{$_}->{reason} |= $reason;
+      $object->{data}->{called}->{account_ids}->{$_}->{last_sent} = $time;
       $called->{$_} |= $reason;
     }
     $changes->{fields}->{called} = {account_ids => [sort { $a cmp $b } keys %$called]};
@@ -832,6 +833,7 @@ sub edit_object ($$$$$) {
   })->then (sub {
     return {
       object_revision_id => ''.$object->{data}->{object_revision_id},
+      called => $object->{data}->{called} || {},
     } if keys %{$changes->{fields}};
     return {};
   });
