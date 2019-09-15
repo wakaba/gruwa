@@ -2384,6 +2384,11 @@ stageActions.resetForm = function (args) {
 }; // resetForm
 stageActions.resetForm.stages = [];
 
+stageActions.resetCallEditor = function (args) {
+  args.form.querySelectorAll ('gr-called-editor').forEach (_ => _.grReset ());
+}; // resetCallEditor
+stageActions.resetCallEditor.stages = [];
+
 stageActions.editObject = function (args) {
   var fd = new FormData;
   var length = 0;
@@ -2416,6 +2421,9 @@ stageActions.editCreatedObject = function (args) {
   var fd = new FormData;
   $$ (args.form, 'input[data-edit-created-object]:not([hidden]), textarea[data-edit-created-object]:not([hidden])').forEach (function (f) {
     fd.append (f.getAttribute ('data-name'), f.value);
+  });
+  $$ (args.form, 'gr-called-editor[data-edit-created-object]').forEach (function (control) {
+    control.pcModifyFormData (fd);
   });
   return gFetch ('o/' + args.result.object_id + '/edit.json', {post: true, formData: fd}).then (function (json) {
     args.as.stageEnd ('editcreatedobject_fetch');

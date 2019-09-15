@@ -840,7 +840,7 @@
             <summary>コメントを書く</summary>
 
             <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent"
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
               <textarea data-edit-created-object data-name=body required></textarea>
@@ -861,8 +861,14 @@
                     stage-editobject_fetch=状態を変更中...
                     stage-showcreatedobjectincommentlist=読み込み中...
                     ok=投稿しました />
-            </form>
-          </details>
+
+              <p>
+                <span>
+                  通知送信先:
+                  <gr-called-editor template=gr-called-editor data-edit-created-object />
+                </span>
+              </form>
+            </details>
 
           </article-comments>
         </template>
@@ -1237,7 +1243,7 @@
             <summary>コメントを書く</summary>
 
             <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent"
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
               <textarea data-edit-created-object data-name=body required></textarea>
@@ -1258,6 +1264,12 @@
                     stage-editobject_fetch=状態を変更中...
                     stage-showcreatedobjectincommentlist=読み込み中...
                     ok=投稿しました />
+
+              <p>
+                <span>
+                  通知送信先:
+                  <gr-called-editor template=gr-called-editor data-edit-created-object />
+                </span>
             </form>
           </details>
 
@@ -1457,7 +1469,7 @@
             <summary>コメントを書く</summary>
 
             <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent"
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
               <textarea data-edit-created-object data-name=body required></textarea>
@@ -1478,6 +1490,12 @@
                     stage-editobject_fetch=状態を変更中...
                     stage-showcreatedobjectincommentlist=読み込み中...
                     ok=投稿しました />
+
+              <p>
+                <span>
+                  通知送信先:
+                  <gr-called-editor template=gr-called-editor data-edit-created-object />
+                </span>
             </form>
           </details>
 
