@@ -193,13 +193,16 @@
 
 <template-set name=gr-called-editor-menu-item>
   <template>
-        <label>
+    <label>
           <input type=checkbox data-called-type=account_id data-field=account_id>
           <gr-account data-field=account_id>
             <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
             <gr-account-name data-field=name data-filling>アカウント</gr-account-name>
           </gr-account>
-        </label>
+    </label>
+    <small class=if-sent>
+      <time data-field=last_sent />に送信済
+    </small>
   </template>
 </template-set>
 

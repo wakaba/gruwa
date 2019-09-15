@@ -17,6 +17,14 @@ Test {
       called_account_id => $current->o ('a2')->{account_id},
     }, group => 'g1', account => 'a1');
   })->then (sub {
+    my $result = $_[0];
+    test {
+      ok my $called = $result->{json}->{called};
+      is 0+keys %{$called->{account_ids}}, 1;
+      ok my $a2c = $called->{account_ids}->{$current->o ('a2')->{account_id}};
+      ok $a2c->{last_sent};
+      is $a2c->{reason}, 0b10;
+    } $current->c;
     return $current->are_errors (
       ['POST', ['o', $current->o ('o1')->{object_id}, 'edit.json'], {
         called_account_id => $current->o ('a2')->{account_id},
@@ -58,8 +66,22 @@ Test {
       is $called->{account_ids}->[0], $current->o ('a2')->{account_id};
       like $result->{res}->body_bytes, qr{"account_ids"\s*:\s*\[\s*"};
     } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $item = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      ok my $called = $item->{data}->{called};
+      is 0+keys %{$called->{account_ids}}, 1;
+      ok my $a2c = $called->{account_ids}->{$current->o ('a2')->{account_id}};
+      ok $a2c->{last_sent};
+      is $a2c->{reason}, 0b10;
+    } $current->c;
   });
-} n => 13, name => 'called';
+} n => 23, name => 'called';
 
 Test {
   my $current = shift;
