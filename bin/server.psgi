@@ -139,9 +139,10 @@ return sub {
         }
 
         ## Pjax (partition=dashboard)
-        if (@$path == 1 and
-            ($path->[0] eq 'dashboard' or # /dashboard
-             $path->[0] eq 'jump')) { # /jump
+        if (($path->[0] eq 'dashboard' and (
+          (@$path == 1) or                        # /dashboard
+          (@$path == 2 and $path->[1] eq 'calls') # /dashboard/calls
+        )) or (@$path == 1 and $path->[0] eq 'jump')) { # /jump
           return AccountPages->dashboard ($app, $acall);
         }
 

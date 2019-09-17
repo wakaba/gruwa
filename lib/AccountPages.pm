@@ -214,6 +214,8 @@ sub dashboard ($$$) {
   my ($class, $app, $acall) = @_;
   ## Pjax (partition=dashboard)
   # /dashboard
+  # /dashboard/...
+  # /jump
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
     sk => $app->http->request_cookies->{sk},

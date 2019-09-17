@@ -42,6 +42,7 @@
 <template-set name=gr-menu-dashboard>
   <template>
     <p><a data-href-template=/dashboard>トップ</a>
+    <p><a data-href-template=/dashboard/calls>記事通知</a>
     <p><a data-href-template=/jump>ジャンプリスト</a>
     <p><a href=/help#dashboard target=help>ヘルプ</a>
   </template>
@@ -80,7 +81,7 @@
             <th>
         <tbody>
       </table>
-      <gr-action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読込中... />
     </gr-list-container>
 
     <details>
@@ -105,6 +106,51 @@
               stage-next=グループに移動します... />
       </form>
     </details>
+
+  </section>
+
+  </template>
+</template-set>
+
+<template-set name=page-dashboard-calls>
+  <template title=記事通知>
+
+  <section>
+    <h1>記事通知</>
+
+    <list-container type=table src=/my/calls.json key=items class=main-table>
+      <template data-class-template=object-read-{read}>
+        <td>
+          <p><time data-field=timestamp data-format=ambtime />
+          <p><a href data-href-template="/g/{group_id}/account/{from_account_id}/">
+            <img data-src-template=/g/{group_id}/account/{from_account}/icon alt class=icon>
+            <span data-field=from_account_id>XXX</span>
+          </a>
+        <td>
+          <p><a href data-href-template="/g/{group_id}/">
+            <img data-src-template=/g/{group_id}/icon alt class=icon>
+            <span data-field=group_id>XXX</span>
+          </a>
+          <p><a href data-href-template="/g/{group_id}/o/{object_id}/">
+            <span data-field=object_id>XXX</span>
+          </a>
+          <p>(<a href data-href-template="/g/{group_id}/o/{thread_id}/">
+            <span data-field=thread_id>XXX</span>
+          </a>)
+        <!-- reason -->
+      </template>
+
+      <table>
+        <thead>
+          <tr>
+            <th>送信
+            <th>記事
+        <tbody>
+      </table>
+      <action-status hidden stage-fetch=読込中... />
+      <p class=operations>
+        <button type=button class=list-next>もっと昔</button>
+    </list-container>
 
   </section>
 
@@ -136,7 +182,7 @@
             <th>編集
         <tbody>
       </table>
-      <gr-action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読込中... />
     </gr-list-container>
 
       <p>新しいジャンプメニューを追加するには、追加したい項目のメニューから

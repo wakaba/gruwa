@@ -150,7 +150,7 @@
             </gr-list-container>
         </template>
         <list-main/>
-        <gr-action-status hidden stage-load=読み込み中... />
+        <gr-action-status hidden stage-load=読込中... />
       </gr-list-container>
     </section>
 
@@ -204,7 +204,7 @@
         <list-is-empty hidden>
           <p>一致する記事は見つかりませんでした。</p>
         </list-is-empty>
-        <action-status hidden stage-loader=読み込み中...></action-status>
+        <action-status hidden stage-loader=読込中...></action-status>
         <p class=operations>
           <button type=button class=list-next>もっと昔</button>
         </p>
@@ -496,7 +496,7 @@
               <th>
           <tbody>
         </table>
-        <action-status hidden stage-loader=読み込み中... />
+        <action-status hidden stage-loader=読込中... />
       </list-container>
 
       <p><a href=my/config>自分の参加者設定を変更</a>
@@ -594,7 +594,7 @@
           <list-is-empty hidden>
             <p>招待状はありません。
           </list-is-empty>
-          <gr-action-status hidden stage-load=読み込み中... />
+          <gr-action-status hidden stage-load=読込中... />
           <p class="operations pager">
             <button type=button class=next-page-button hidden>もっと昔</button>
           </p>
@@ -730,7 +730,7 @@
 
         <list-main></list-main>
 
-      <gr-action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       <run-action name=installPrependNewObjects />
@@ -833,7 +833,7 @@
               <p class="operations pager">
                 <button type=button class=next-page-button hidden>もっと昔</button>
               </p>
-              <gr-action-status hidden stage-load=読み込み中... />
+              <gr-action-status hidden stage-load=読込中... />
               <list-main/>
             </gr-list-container>
 
@@ -860,7 +860,7 @@
                     stage-fetch=作成中...
                     stage-editcreatedobject_fetch=保存中...
                     stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読み込み中...
+                    stage-showcreatedobjectincommentlist=読込中...
                     ok=投稿しました />
 
               <p>
@@ -888,7 +888,7 @@
 
         <list-main></list-main>
 
-      <gr-action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       <run-action name=installPrependNewObjects />
@@ -1017,7 +1017,7 @@
 
         <list-main/>
 
-      <gr-action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       <run-action name=installPrependNewObjects />
@@ -1082,7 +1082,7 @@
                         stage-create=作成中...
                         stage-upload=アップロード中...
                         stage-close=保存中...
-                        stage-show=読み込み中...
+                        stage-show=読込中...
                         ok=アップロード完了 />
               </template>
               <table>
@@ -1110,7 +1110,7 @@
 
         <list-main></list-main>
 
-      <gr-action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       <run-action name=installPrependNewObjects />
@@ -1236,7 +1236,7 @@
               <p class="operations pager">
                 <button type=button class=next-page-button hidden>もっと昔</button>
               </p>
-              <gr-action-status hidden stage-load=読み込み中... />
+              <gr-action-status hidden stage-load=読込中... />
               <list-main/>
             </gr-list-container>
 
@@ -1263,7 +1263,7 @@
                     stage-fetch=作成中...
                     stage-editcreatedobject_fetch=保存中...
                     stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読み込み中...
+                    stage-showcreatedobjectincommentlist=読込中...
                     ok=投稿しました />
 
               <p>
@@ -1285,7 +1285,7 @@
         </template>
 
         <list-main></list-main>
-        <gr-action-status hidden stage-load=読み込み中... />
+        <gr-action-status hidden stage-load=読込中... />
       </gr-list-container>
     </section>
   </template>
@@ -1322,7 +1322,7 @@
               <th>変更点
           <tbody>
         </table>
-        <action-status hidden stage-loader=読み込み中...></action-status>
+        <action-status hidden stage-loader=読込中...></action-status>
         <p class=operations>
           <button type=button class=list-next>もっと昔</button>
       </list-container>
@@ -1462,7 +1462,7 @@
               <p class="operations pager">
                 <button type=button class=next-page-button hidden>もっと昔</button>
               </p>
-              <gr-action-status hidden stage-load=読み込み中... />
+              <gr-action-status hidden stage-load=読込中... />
               <list-main/>
             </gr-list-container>
 
@@ -1489,7 +1489,7 @@
                     stage-fetch=作成中...
                     stage-editcreatedobject_fetch=保存中...
                     stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読み込み中...
+                    stage-showcreatedobjectincommentlist=読込中...
                     ok=投稿しました />
 
               <p>
@@ -1521,7 +1521,7 @@
           </article>
         </list-is-empty>
 
-        <gr-action-status hidden stage-load=読み込み中... />
+        <gr-action-status hidden stage-load=読込中... />
         <run-action name=installPrependNewObjects />
       </gr-list-container>
 
@@ -1539,7 +1539,7 @@
           <p class="operations pager">
             <button type=button class=next-page-button hidden>もっと昔</button>
           </p>
-          <gr-action-status hidden stage-load=読み込み中... />
+          <gr-action-status hidden stage-load=読込中... />
           <list-main/>
         </gr-list-container>
       </article-comments>

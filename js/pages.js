@@ -3350,6 +3350,11 @@ GR.navigate.go = function (u, args) {
         } else if (path === '/jump') {
           return ['dashboard', 'jump', {}];
         }
+
+        var m = path.match (/^\/dashboard\/(calls)$/);
+        if (m) {
+          return ['dashboard', 'dashboard-' + m[1], {}];
+        }
         
         return ['site', url];
       } else {
