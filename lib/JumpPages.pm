@@ -11,11 +11,6 @@ use Results;
 sub main ($$$$) {
   my ($class, $app, $path, $db, $account_data) = @_;
 
-  if (@$path == 1) {
-    # /jump
-    return temma $app, 'jump.html.tm', {account => $account_data};
-  }
-
   if (@$path == 2 and $path->[1] eq 'list.json') {
     # /jump/list.json
     return $db->execute ('select `url`, `label`, `score` / greatest(unix_timestamp(now()) - `timestamp`, 1) as `s`, `score` from `jump` where `account_id` = :account_id order by `s` desc, `url` asc limit 100', {

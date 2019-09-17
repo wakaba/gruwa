@@ -111,6 +111,40 @@
   </template>
 </template-set>
 
+<template-set name=page-jump>
+  <template title=ジャンプリスト>
+    <section>
+      <header class=section>
+        <h1>ジャンプリスト</>
+        <a href=/help#jump target=help>ヘルプ</a>
+      </header>
+
+    <gr-list-container type=table src=/jump/list.json key=items class=main-table>
+      <template>
+        <th>
+          <a href data-href-template={URL} data-field=label />
+        <td class=operations>
+          <button type=button class=edit-button data-command=editJumpLabel data-prompt=ラベルを指定してください>編集</button>
+          <button type=button class=edit-button data-command=deleteJump>削除</button>
+          <gr-action-status hidden stage-fetch=... />
+      </template>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ページ
+            <th>編集
+        <tbody>
+      </table>
+      <gr-action-status hidden stage-load=読み込み中... />
+    </gr-list-container>
+
+      <p>新しいジャンプメニューを追加するには、追加したい項目のメニューから
+      「ジャンプリストに追加」を選んでください。
+    </section>
+  </template>
+</template-set>
+
 <!--
 
 Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.

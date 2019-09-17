@@ -3347,6 +3347,8 @@ GR.navigate.go = function (u, args) {
         var path = url.pathname;
         if (path === '/dashboard') {
           return ['dashboard', 'dashboard', {}];
+        } else if (path === '/jump') {
+          return ['dashboard', 'jump', {}];
         }
         
         return ['site', url];

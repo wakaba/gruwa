@@ -140,28 +140,20 @@ return sub {
 
         ## Pjax (partition=dashboard)
         if (@$path == 1 and
-            ($path->[0] eq 'dashboard')) { # /dashboard
+            ($path->[0] eq 'dashboard' or # /dashboard
+             $path->[0] eq 'jump')) { # /jump
           return AccountPages->dashboard ($app, $acall);
         }
 
         if ($path->[0] eq 'jump') {
-          # /jump
+          # /jump/...
           return $acall->(['info'], {
             sk_context => $app->config->{accounts}->{context},
             sk => $app->http->request_cookies->{sk},
           })->(sub {
             my $account_data = $_[0];
-            unless (defined $account_data->{account_id}) {
-              if ($app->http->request_method eq 'POST') {
-                return $app->send_error (403, reason_phrase => 'No user account');
-              } else {
-                my $this_url = Web::URL->parse_string ($app->http->url->stringify);
-                my $url = Web::URL->parse_string (q</account/login>, $this_url);
-                $url->set_query_params ({next => $this_url->stringify});
-                return $app->send_redirect ($url->stringify);
-              }
-            }
-
+            return $app->send_error (403, reason_phrase => 'No user account')
+                unless (defined $account_data->{account_id});
             return JumpPages->main ($app, $path, $db, $account_data);
           });
         }
