@@ -12,7 +12,7 @@ Test {
     return $current->are_errors (
       ['GET', ['jump', 'list.json'], {}, account => 'a1'],
       [
-        {account => undef, status => 302},
+        {account => undef, status => 403},
       ],
     );
   })->then (sub {
