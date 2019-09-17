@@ -63,6 +63,7 @@
       </gr-error>
     </gr-navigate-status>
 
+<!-- also in dashboard.html.tm -->
 <template-set name=gr-menu>
   <template>
     <popup-menu>

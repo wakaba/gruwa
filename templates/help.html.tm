@@ -398,6 +398,19 @@
       </div>
     </section>
 
+    <section id=dashboard>
+      <h1>ダッシュボード</h1>
+
+      <p><a href=/dashboard><dfn>ダッシュボード</dfn></a>では、
+      <a href=#groups>グループ</a>を横断して<a href=#accounts>自分</a>に関係ある情報を一覧できます。
+
+      <section id=dashboard-groups>
+        <h1>参加グループ</h1>
+
+        <p>参加中の<a href=#groups>グループ</a>の一覧です。
+        更新があった順で表示されます。
+      </section>
+      
     <section id=jump>
       <h1>ジャンプリスト</h1>
 
@@ -415,6 +428,8 @@
       <p><a href=/jump>ジャンプリスト</a>のページでは、
       登録した各項目のラベル (文字列) を変更したり、
       項目を削除したりできます。
+    </section>
+
     </section>
 
     <section id=import>

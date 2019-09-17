@@ -107,6 +107,15 @@ GR._state = {};
 
 GR._updateMyInfo = function () {
   delete GR._state.getMembers;
+  if (GR._state.navigatePartition === 'dashboard') {
+    return GR._state.updateMyInfo = fetch ('/my/info.json', {}).then (json => {
+      var oldAccount = GR._state.account || {};
+      GR._state.account = json;
+      delete GR._state.group;
+
+      // XXX
+    });
+  }
   // Cached until updated by reloadGroupInfo
   return GR._state.updateMyInfo = gFetch ('my/info.json', {}).then (json => {
     var oldAccount = GR._state.account || {};
@@ -348,6 +357,11 @@ defineElement ({
             $getTemplateSet ('gr-menu-wiki'),
             GR.group.info ().then (_ => obj.group = _),
             GR.index.info (indexId).then (_ => obj.index = _),
+          ]);
+        } else if (type === 'dashboard') {
+          return Promise.all ([
+            ts,
+            $getTemplateSet ('gr-menu-dashboard'),
           ]);
         } else {
           throw new Error ("Unknown <gr-menu type> value |"+type+"|");
@@ -3330,6 +3344,11 @@ GR.navigate.go = function (u, args) {
           }
         });
       } else if (GR._state.navigatePartition === 'dashboard') {
+        var path = url.pathname;
+        if (path === '/dashboard') {
+          return ['dashboard', 'dashboard', {}];
+        }
+        
         return ['site', url];
       } else {
         throw new Error ('Bad navigate partition |'+GR._state.navigatePartition+'|');
@@ -3348,7 +3367,7 @@ GR.navigate.go = function (u, args) {
         });
       }
     }; // sendPing
-    if (_[0] === 'group') {
+    if (_[0] === 'group' || _[0] === 'dashboard') {
       var ac = new AbortController;
       var nav = GR._state.currentNavigate = {
         abort: () => ac.abort (),

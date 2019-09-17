@@ -1,21 +1,54 @@
-<html t:params="$account $app">
-  <head>
-    <t:include path=_other_head.html.tm m:app=$app>
-      ダッシュボード
-    </t:include>
-  <body>
+<html t:params="$account $app"
+    data-theme=green>
+<head>
+  <title>Gruwa</title>
+  <meta name=referrer content=no-referrer>
+  <meta name=robots content="NOINDEX,NOFOLLOW,NOARCHIVE">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name=theme-color content="green">
+  <link rel=stylesheet pl:href="'/css/common.css?r='.$app->rev">
+  <script pl:src="'/js/components.js?r='.$app->rev" class=body-js async data-export="$fill $promised $getTemplateSet" data-time-selector="time:not(.asis)" />
+  <script pl:src="'/js/framework.js?r='.$app->rev" class=body-js />
+  <script pl:src="'/js/pages.js?r='.$app->rev" async />
 
-<header class=common>
-  <header-area>
-    <hgroup>
-      <h1><a href=/ rel=top>Gruwa</h1>
-    </>
-  </header-area>
-  <header-area>
-    <a href=/dashboard>ダッシュボード</a>
-    <a href=/jump>ジャンプリスト</a>
-  </header-area>
-</header>
+<body>
+  <header class=page>
+    <a href=/ rel=top>Gruwa</a>
+    <h1><a href=/dashboard>ダッシュボード</a></h1>
+    <gr-menu type=dashboard />
+  </header>
+  <page-main/>
+
+  <gr-navigate-status>
+    <action-status stage-loading=読込中... />
+  </gr-navigate-status>
+
+  <gr-navigate partition=dashboard />
+
+<!-- also in _common.html.tm -->
+<template-set name=gr-menu>
+  <template>
+    <popup-menu>
+      <button type=button title=メニュー>
+        <button-label>
+          メニュー
+        </button-label>
+      </button>
+      <menu-main/>
+    </popup-menu>
+  </template>
+</template-set>
+
+<template-set name=gr-menu-dashboard>
+  <template>
+    <p><a data-href-template=/dashboard>トップ</a>
+    <p><a data-href-template=/jump>ジャンプリスト</a>
+    <p><a href=/help#dashboard target=help>ヘルプ</a>
+  </template>
+</template-set>
+
+<template-set name=page-dashboard>
+  <template title=ダッシュボード>
 
   <section>
     <h1>参加グループ</>
@@ -73,14 +106,14 @@
       </form>
     </details>
 
-    <ul>
-      <li><a href=jump>ジャンプリスト</a>
-    </ul>
   </section>
+
+  </template>
+</template-set>
 
 <!--
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -93,6 +126,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 -->

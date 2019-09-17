@@ -1,4 +1,5 @@
-<html t:params="$app $public? $needreferrer?">
+<html t:params="$app $public? $needreferrer?"
+    data-theme=green>
 <title t:parse>
   <t:content> - Gruwa
 </>
@@ -14,6 +15,7 @@
   <meta name=robots content="NOINDEX,NOFOLLOW,NOARCHIVE">
 </t:if>
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name=theme-color content="green">
 <link rel=stylesheet pl:href="'/css/common.css?r='.$app->rev">
 <script pl:src="'/js/components.js?r='.$app->rev" class=body-js async data-export="$fill $promised $getTemplateSet" data-time-selector="time:not(.asis)" />
 <script pl:src="'/js/framework.js?r='.$app->rev" class=body-js />
