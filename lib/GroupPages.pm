@@ -911,6 +911,7 @@ sub create ($$$$) {
 sub main ($$$$$) {
   my ($class, $app, $path, $db, $acall) = @_;
 
+  ## Pjax (partition=group)
   if (
     (@$path == 3 and {
       '' => 1,         # /g/{group_id}/

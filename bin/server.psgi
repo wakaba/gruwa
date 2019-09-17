@@ -138,15 +138,10 @@ return sub {
           return GroupPages->create ($app, $db, $acall);
         }
 
-        if (@$path == 1 and $path->[0] eq 'dashboard') {
-          # /dashboard
-          return $acall->(['info'], {
-            sk_context => $app->config->{accounts}->{context},
-            sk => $app->http->request_cookies->{sk},
-          })->(sub {
-            my $account_data = $_[0];
-            return AccountPages->dashboard ($app, $account_data);
-          });
+        ## Pjax (partition=dashboard)
+        if (@$path == 1 and
+            ($path->[0] eq 'dashboard')) { # /dashboard
+          return AccountPages->dashboard ($app, $acall);
         }
 
         if ($path->[0] eq 'jump') {

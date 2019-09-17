@@ -211,14 +211,22 @@ sub mygroups ($$$) {
 } # mygroups
 
 sub dashboard ($$$) {
-  my ($class, $app, $account_data) = @_;
-  unless (defined $account_data->{account_id}) {
-    my $this_url = Web::URL->parse_string ($app->http->url->stringify);
-    my $url = Web::URL->parse_string (q</account/login>, $this_url);
-    $url->set_query_params ({next => $this_url->stringify});
-    return $app->send_redirect ($url->stringify);
-  }
-  return temma $app, 'dashboard.html.tm', {account => $account_data};
+  my ($class, $app, $acall) = @_;
+  ## Pjax (partition=dashboard)
+  # /dashboard
+  return $acall->(['info'], {
+    sk_context => $app->config->{accounts}->{context},
+    sk => $app->http->request_cookies->{sk},
+  })->(sub {
+    my $account_data = $_[0];
+    unless (defined $account_data->{account_id}) {
+      my $this_url = Web::URL->parse_string ($app->http->url->stringify);
+      my $url = Web::URL->parse_string (q</account/login>, $this_url);
+      $url->set_query_params ({next => $this_url->stringify});
+      return $app->send_redirect ($url->stringify);
+    }
+    return temma $app, 'dashboard.html.tm', {account => $account_data};
+  });
 } # dashboard
 
 1;
