@@ -3209,7 +3209,7 @@ $$ (document, 'object-ref').forEach (upgradeObjectRef);
 
 GR.navigate = {};
 
-GR.navigate._init = function () {
+GR.navigate._init = function (partition) {
   addEventListener ('click', (ev) => {
     var n = ev.target;
     while (n && n.localName !== 'a') {
@@ -3226,6 +3226,7 @@ GR.navigate._init = function () {
   history.scrollRestoration = "manual";
   GR.navigate.enabled = true;
   GR._state.navigateInitiated = performance.now ();
+  if (partition) GR._state.navigatePartition = partition;
 }; // GR.navigate._init
 
 GR.navigate.avail = function () {
@@ -3253,80 +3254,86 @@ GR.navigate.go = function (u, args) {
           url.search === location.search) {
         return ['fragment', url];
       }
-      return GR.group.info ().then (group => {
-        var path = url.pathname;
-        var prefix = '/g/' + group.group_id + '/';
-        if (path.substring (0, prefix.length) === prefix) {
-          path = path.substring (prefix.length);
+      if (GR._state.navigatePartition === 'group') {
+        return GR.group.info ().then (group => {
+          var path = url.pathname;
+          var prefix = '/g/' + group.group_id + '/';
+          if (path.substring (0, prefix.length) === prefix) {
+            path = path.substring (prefix.length);
 
-          if (path === '') {
-            return ['group', 'index', {}];
-          }
+            if (path === '') {
+              return ['group', 'index', {}];
+            }
 
-          var m = path.match (/^(search|config|members)$/);
-          if (m) return ['group', m[1], {
-            q: url.searchParams.get ('q'),
-          }];
+            var m = path.match (/^(search|config|members)$/);
+            if (m) return ['group', m[1], {
+              q: url.searchParams.get ('q'),
+            }];
 
-          m = path.match (/^o\/([0-9]+)\/$/);
-          if (m) return ['group', 'object-index', {
-            objectId: m[1],
-            objectRevisionId: url.searchParams.get ('object_revision_id') || null,
-          }];
+            m = path.match (/^o\/([0-9]+)\/$/);
+            if (m) return ['group', 'object-index', {
+              objectId: m[1],
+              objectRevisionId: url.searchParams.get ('object_revision_id') || null,
+            }];
 
-          m = path.match (/^o\/([0-9]+)\/(revisions)$/);
-          if (m) return ['group', 'object-' + m[2], {
-            objectId: m[1],
-          }];
+            m = path.match (/^o\/([0-9]+)\/(revisions)$/);
+            if (m) return ['group', 'object-' + m[2], {
+              objectId: m[1],
+            }];
 
-          m = path.match (/^i\/([0-9]+)\/$/);
-          if (m) return ['group', 'index-index', {
-            indexId: m[1],
-          }];
-
-          m = path.match (/^i\/([0-9]+)\/(config)$/);
-          if (m) return ['group', 'index-' + m[2], {
-            indexId: m[1],
-          }];
-
-          m = path.match (/^i\/([0-9]+)\/wiki\/([^\/]+)$/);
-          if (m) {
-            var n;
-            try {
-              n = decodeURIComponent (m[2]);
-            } catch (e) { }
-            return ['group', 'wiki', {
+            m = path.match (/^i\/([0-9]+)\/$/);
+            if (m) return ['group', 'index-index', {
               indexId: m[1],
-              wikiName: n,
             }];
-          }
 
-          m = path.match (/^wiki\/([^\/]+)$/);
-          if (m) {
-            var n;
-            try {
-              n = decodeURIComponent (m[1]);
-            } catch (e) { }
-            return ['group', 'wiki', {
-              wikiName: n,
+            m = path.match (/^i\/([0-9]+)\/(config)$/);
+            if (m) return ['group', 'index-' + m[2], {
+              indexId: m[1],
             }];
+
+            m = path.match (/^i\/([0-9]+)\/wiki\/([^\/]+)$/);
+            if (m) {
+              var n;
+              try {
+                n = decodeURIComponent (m[2]);
+              } catch (e) { }
+              return ['group', 'wiki', {
+                indexId: m[1],
+                wikiName: n,
+              }];
+            }
+
+            m = path.match (/^wiki\/([^\/]+)$/);
+            if (m) {
+              var n;
+              try {
+                n = decodeURIComponent (m[1]);
+              } catch (e) { }
+              return ['group', 'wiki', {
+                wikiName: n,
+              }];
+            }
+
+            m = path.match (/^account\/([0-9]+)\/$/);
+            if (m) return ['group', 'account-index', {
+              accountId: m[1],
+            }];
+
+            m = path.match (/^my\/(config)$/);
+            if (m) return ['group', 'my-config', {
+              myAccount: true,
+            }];
+
+            return ['site', url];
+          } else { // not in same group
+            return ['site', url];
           }
-
-          m = path.match (/^account\/([0-9]+)\/$/);
-          if (m) return ['group', 'account-index', {
-            accountId: m[1],
-          }];
-
-          m = path.match (/^my\/(config)$/);
-          if (m) return ['group', 'my-config', {
-            myAccount: true,
-          }];
-
-          return ['site', url];
-        } else {
-          return ['site', url];
-        }
-      });
+        });
+      } else if (GR._state.navigatePartition === 'dashboard') {
+        return ['site', url];
+      } else {
+        throw new Error ('Bad navigate partition |'+GR._state.navigatePartition+'|');
+      }
     }
     return ['external', url];
   }).then (_ => {
@@ -3450,10 +3457,15 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       pushed = true;
     }).then (_ => {
       if (GR._state.currentNavigate !== opts.thisNavigate) return;
-      
-      params.title = params.group.title;
-      params.url = '/g/' + params.group.group_id + '/';
-      params.theme = params.group.theme;
+
+      params.title = 'Gruwa';
+      params.url = '/dashboard';
+      params.theme = 'green';
+      if (params.group) {
+        params.title = params.group.title;
+        params.url = '/g/' + params.group.group_id + '/';
+        params.theme = params.group.theme;
+      }
       if (params.index && params.index.theme) {
         params.theme = params.index.theme;
         params.url += 'i/' + params.index.index_id + '/';
@@ -3468,9 +3480,11 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           menu.setAttribute ('type', 'index');
           menu.setAttribute ('indexid', params.index.index_id);
           _.querySelector ('header.page > a').style.visibility = 'visible';
-        } else {
+        } else if (params.group) {
           menu.setAttribute ('type', 'group');
           _.querySelector ('header.page > a').style.visibility = 'hidden';
+        } else {
+          menu.setAttribute ('type', 'dashboard');
         }
       });
       var contentTitle = '';
@@ -3479,16 +3493,18 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         contentTitle = div.title;
         div.title = '';
 
-        var isOwner = params.group.member.member_type == 2;
-        if (isOwner) {
-          div.querySelectorAll ('[data-gr-if-group-non-owner]').forEach (_ => {
-            _.remove ();
-          });
-        } else {
-          div.querySelectorAll ('[data-gr-if-group-owner]').forEach (_ => {
-            _.remove ();
-          });
-        }
+        if (params.group) {
+          var isOwner = params.group.member.member_type == 2;
+          if (isOwner) {
+            div.querySelectorAll ('[data-gr-if-group-non-owner]').forEach (_ => {
+              _.remove ();
+            });
+          } else {
+            div.querySelectorAll ('[data-gr-if-group-owner]').forEach (_ => {
+              _.remove ();
+            });
+          }
+        } // params.group
 
         if (params.index) {
           div.querySelectorAll ('[data-gr-if-index-type]:not([data-gr-if-index-type~="'+params.index.index_type+'"])').forEach (_ => {
@@ -3523,7 +3539,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           div.querySelectorAll ('gr-menu[type=index]').forEach (_ => {
             _.setAttribute ('indexid', params.index.index_id);
           });
-        }
+        } // params.index
 
         if (params.wiki) {
           div.querySelectorAll ('gr-menu[type=wiki]').forEach (_ => {
@@ -3562,10 +3578,9 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         _.textContent = '';
         while (div.firstChild) _.appendChild (div.firstChild);
       });
-      var title = [params.group.title];
-      if (params.index) {
-        title.unshift (params.index.title);
-      }
+      var title = [];
+      if (params.group) title.unshift (params.group.title);
+      if (params.index) title.unshift (params.index.title);
       if (params.wiki) {
         title.unshift (params.wiki.name);
       } else if (params.object) {
@@ -3577,6 +3592,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       } else {
         GR.page.setSearch (null);
       }
+      if (title.length === 0) title.unshift ('Gruwa');
       GR.page.setTitle (title.join (' - '));
       return GR.theme.set (params.theme);
     });
@@ -3690,7 +3706,7 @@ defineElement ({
   name: 'gr-navigate',
   props: {
     pcInit: function () {
-      if (!GR.navigate.enabled) GR.navigate._init ();
+      if (!GR.navigate.enabled) GR.navigate._init (this.getAttribute ('partition'));
       GR.navigate.go (location.href, {
         reload: true,
         popstate: this.hasAttribute ('popstate'),

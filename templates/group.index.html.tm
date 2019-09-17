@@ -14,7 +14,7 @@
   </header>
   <page-main/>
   <t:include path=_common.html.tm m:app=$app />
-  <gr-navigate/>
+  <gr-navigate partition=group />
 
 <!--
 
