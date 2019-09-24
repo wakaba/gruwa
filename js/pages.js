@@ -513,16 +513,26 @@ defineElement ({
     }, // pcInit
     grRender: function () {
       return Promise.resolve ().then (() => {
+        var type = this.getAttribute ('type');
         var value = this.getAttribute ('value');
         var groupId = this.getAttribute ('groupid');
-        if (!value || !groupId) return null;
-        
-        var type = this.getAttribute ('type');
         if (type === 'object') {
+          if (!value || !groupId) return null;
           return GR.dashboard._groupObject (groupId, value);
         } else if (type === 'account') {
+          if (!value || !groupId) return null;
           return GR.dashboard._groupMembers (groupId).then (members => {
             return members[value];
+          });
+        } else if (type === 'group') {
+          if (!value) return null;
+          return GR.dashboard._groupList ().then (groups => {
+            for (var i = 0; i < groups.length; i++) {
+              if (groups[i].group_id == value) {
+                return groups[i];
+              }
+            }
+            return null;
           });
         } else {
           return null;

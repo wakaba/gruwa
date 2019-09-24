@@ -128,10 +128,13 @@
               </a>
             </gr-dashboard-item>
         <td>
-          <p><a href data-href-template="/g/{group_id}/">
-            <img data-src-template=/g/{group_id}/icon alt class=icon>
-            <span data-field=group_id>XXX</span>
-          </a>
+          <p>
+            <gr-dashboard-item type=group data-filled=value data-value-field=group_id>
+              <a href data-href-template="/g/{group_id}/">
+                <img data-src-template=/g/{group_id}/icon alt class=icon>
+                <bdi data-field=title data-empty=■ />
+              </a>
+            </gr-dashboard-item>
           <p>
             <gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=object_id>
               <a href data-href-template="/g/{group_id}/o/{object_id}/">

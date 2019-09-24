@@ -33,6 +33,12 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'page-main',
+      text => $current->o ('t1'),
+      name => 'call list (group title)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
       text => $current->o ('t2'),
       name => 'call list (title)',
     });
