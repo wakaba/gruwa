@@ -11,7 +11,17 @@ Test {
     [g1 => group => {
       members => ['a1'], title => $current->generate_text (t1 => {}),
     }],
+    [i1 => index => {
+      group => 'g1', account => 'a1',
+    }],
+    [g2 => group => {
+      members => ['a1'], title => $current->generate_text (t2 => {}),
+    }],
   )->then (sub {
+    return $current->post_json (['i', $current->o ('i1')->{index_id}, 'my.json'], {
+      is_default => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
     return $current->create_browser (1 => {
       url => ['dashboard'],
       account => 'a1',
@@ -24,7 +34,25 @@ Test {
     return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('t1'),
-      name => 'group list',
+      name => 'group list (name1)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('t2'),
+      name => 'group list (name2)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main a.default-index-button:not([hidden])',
+      html => '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id},
+      name => 'default index link (i1)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main a.default-index-button[hidden]',
+      not => 1, shown => 1,
+      name => 'default index link (group2)',
     });
   })->then (sub {
     return $current->b (1)->execute (q{

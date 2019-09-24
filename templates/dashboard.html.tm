@@ -54,35 +54,33 @@
   <section>
     <h1>参加グループ</>
 
-    <gr-list-container type=table src=my/groups.json key=groups sortkey=updated class=main-table>
+    <list-container loader=dashboardGroupListLoader type=table class=main-table>
       <template>
         <th>
-          <a href data-href-template="/g/{group_id}/">
+          <a href data-href-template="/g/{group_id}/#t:{updated}">
             <img data-src-template=/g/{group_id}/icon alt class=icon>
             <span data-field=title data-empty=(未参加グループ) />
           </a>
-        <td class=member_type>
-          <gr-enum-value data-field=member_type text-1=一般 text-2=所有者 text-0=未参加 />
-        <td class=user_status>
-          <gr-enum-value data-field=user_status text-1=参加中 text-2=招待中 />
-        <td class=owner_status>
-          <gr-enum-value data-field=owner_status text-1=承認済 text-2=未承認 />
         <td>
-          <a href data-href-template="g/{group_id}/i/{default_index_id}/" data-if-field=default_index_id>日記</a>
+          <enum-value data-field=status
+              label-owner=所有者として参加中
+              label-member=参加中
+              label-invited=招待されています
+          />
+        <td>
+          <a href data-href-template="/g/{group_id}/i/{default_index_id}/" data-filled=hidden data-hidden-field=hidden-unless-has-default-index class=default-index-button>日記</a>
       </template>
 
       <table>
         <thead>
           <tr>
             <th>グループ
-            <th>種別
-            <th>参加状態
-            <th>参加承認
+            <th>状態
             <th>
         <tbody>
       </table>
-      <gr-action-status hidden stage-load=読込中... />
-    </gr-list-container>
+      <action-status hidden stage-loader=読込中... />
+    </list-container>
 
     <details>
       <summary>グループの作成</summary>

@@ -447,6 +447,61 @@ GR.dashboard._groupObject = function (groupId, objectId) {
   });
 }; // GR.dashboard._groupObject
 
+GR.dashboard._groupList = function () {
+  if (GR.dashboard._state.getGroupList) return GR.dashboard._state.getGroupList;
+  
+  var list = [];
+  var get = (ref) => {
+    var r = '';
+    if (ref) r = '?ref=' + encodeURIComponent (ref);
+    return fetch ('/my/groups.json' + r, {}).then (res => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then (json => {
+      Object.values (json.groups).forEach (_ => {
+        list.push (_);
+      });
+      if (json.has_next) {
+        return get (json.next_ref);
+      }
+    });
+  }; // get
+  return GR.dashboard._state.getGroupList = get (null).then (_ => {
+    list.forEach (g => {
+      if (g.user_status == 1 && g.owner_status == 1) {
+        if (g.member_type == 2) {
+          g.status = 'owner';
+        } else if (g.member_type == 1) {
+          g.status = 'member';
+        } else { // error
+          g.status = 'member_type ' + g.member_type;
+        }
+      } else if (g.user_status == 2 && g.owner_status == 1) {
+        g.status = 'invited';
+      } else { // error
+        g.status = 'user_status ' + g.user_status + ', owner_status ' + g.owner_status;
+      }
+      if (!g.default_index_id) g["hidden-unless-has-default-index"] = "hidden";
+    });
+    return list;
+  });
+}; // GR.dashboard._groupList
+
+(() => {
+
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'dashboardGroupListLoader');
+  e.pcHandler = function (opts) {
+    return GR.dashboard._groupList ().then (groups => {
+      return {
+        data: groups.sort ((a, b) => b.updated - a.updated),
+      };
+    });
+  };
+  document.head.appendChild (e);
+
+}) ();
+
 defineElement ({
   name: 'gr-dashboard-item',
   fill: 'contentattribute',
