@@ -108,7 +108,7 @@ GR._state = {};
 GR._updateMyInfo = function () {
   delete GR._state.getMembers;
   if (GR._state.navigatePartition === 'dashboard') {
-    return GR._state.updateMyInfo = fetch ('/my/info.json', {}).then (json => {
+    return GR._state.updateMyInfo = fetch ('/my/info.json', {}).then (json => { // XXX broken
       var oldAccount = GR._state.account || {};
       GR._state.account = json;
       delete GR._state.group;
@@ -385,6 +385,99 @@ defineElement ({
     }, // grUpdate
   },
 }); // <gr-menu>
+
+GR.dashboard = {_state: {}};
+
+GR.dashboard._groupMembers = function (groupId) {
+  if (!GR.dashboard._state.getGroupMembers) GR.dashboard._state.getGroupMembers = {};
+  if (GR.dashboard._state.getGroupMembers[groupId]) return GR.dashboard._state.getGroupMembers[groupId];
+  
+  var map = {};
+  var get = (ref) => {
+    var r = '';
+    if (ref) r = '?ref=' + encodeURIComponent (ref);
+    return fetch ('/g/'+groupId+'/members/list.json' + r, {}).then (res => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then (json => {
+      Object.values (json.members).forEach (_ => {
+        map[_.account_id] = _;
+        _.group_id = groupId;
+      });
+      if (json.has_next) {
+        return get (json.next_ref);
+      }
+    });
+  }; // get
+  return GR.dashboard._state.getGroupMembers[groupId] = get (null).then (_ => {
+    return map;
+  });
+}; // GR.dashboard._groupMembers
+
+GR.dashboard._groupObject = function (groupId, objectId) {
+  if (!GR.dashboard._state.getGroupObjects) GR.dashboard._state.getGroupObjects = {};
+  if (!GR.dashboard._state.getGroupObjects[groupId]) GR.dashboard._state.getGroupObjects[groupId] = {};
+  if (GR.dashboard._state.getGroupObjects[groupId][objectId]) return GR.dashboard._state.getGroupObjects[groupId][objectId];
+
+  var fd = new FormData;
+  var get = () => {
+    return new Promise (ok => {
+      setTimeout (ok, 500);
+    }).then (() => {
+      delete GR.dashboard._state.getGroupObjects[groupId].current;
+      return fetch ('/g/'+groupId+'/o/get.json?with_title=1&with_snippet=1', {method: 'POST', body: fd});
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then (function (json) {
+      return json.objects;
+    });
+  }; // get
+  return GR.dashboard._state.getGroupObjects[groupId][objectId] = Promise.resolve ().then (() => {
+    if (GR.dashboard._state.getGroupObjects[groupId].current) {
+      GR.dashboard._state.getGroupObjects[groupId].current.fd.append ('object_id', objectId);
+    } else {
+      fd.append ('object_id', objectId);
+      GR.dashboard._state.getGroupObjects[groupId].current = get ();
+      GR.dashboard._state.getGroupObjects[groupId].current.fd = fd;
+    }
+    return GR.dashboard._state.getGroupObjects[groupId].current;
+  }).then (objects => {
+    return objects[objectId];
+  });
+}; // GR.dashboard._groupObject
+
+defineElement ({
+  name: 'gr-dashboard-item',
+  fill: 'contentattribute',
+  props: {
+    pcInit: function () {
+      new MutationObserver (() => this.grRender ()).observe
+          (this, {attributes: true, attributeFilter: ['type', 'groupid', 'value']});
+      return Promise.resolve ().then (() => this.grRender ());
+    }, // pcInit
+    grRender: function () {
+      return Promise.resolve ().then (() => {
+        var value = this.getAttribute ('value');
+        var groupId = this.getAttribute ('groupid');
+        if (!value || !groupId) return null;
+        
+        var type = this.getAttribute ('type');
+        if (type === 'object') {
+          return GR.dashboard._groupObject (groupId, value);
+        } else if (type === 'account') {
+          return GR.dashboard._groupMembers (groupId).then (members => {
+            return members[value];
+          });
+        } else {
+          return null;
+        }
+      }).then (_ => {
+        $fill (this, _ || {});
+      });
+    }, // grRender
+  },
+}); // <gr-dashboard-item>
 
 function $$c (n, s) {
   return Array.prototype.filter.call (n.querySelectorAll (s), function (e) {
@@ -2584,7 +2677,10 @@ function upgradeForm (form) {
     return fetch (url, {
       credentials: "same-origin",
       referrerPolicy: 'same-origin',
-    }).then ((res) => res.json ()).then ((json) => {
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then ((json) => {
       if (!this.hasAttribute ('key')) throw new Error ("|key| is not specified");
       json = json || {};
       var hasNext = json.next_ref && opts.ref !== json.next_ref; // backcompat
@@ -3152,6 +3248,7 @@ Formatter.hatena = function (source) {
     method: "post",
     body: source,
   }).then (function (r) {
+    if (r.status !== 200) throw r;
     return r.text ();
   }).then (function (x) {
     var div = Formatter.html (x);

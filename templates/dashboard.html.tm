@@ -122,21 +122,34 @@
       <template data-class-template=object-read-{read}>
         <td>
           <p><time data-field=timestamp data-format=ambtime />
-          <p><a href data-href-template="/g/{group_id}/account/{from_account_id}/">
-            <img data-src-template=/g/{group_id}/account/{from_account}/icon alt class=icon>
-            <span data-field=from_account_id>XXX</span>
-          </a>
+          <p>
+            <gr-dashboard-item type=account data-filled="groupid value" data-groupid-field=group_id data-value-field=from_account_id>
+              <a href data-href-template="/g/{group_id}/account/{account_id}/">
+                <img data-src-template=/g/{group_id}/account/{account_id}/icon alt class=icon>
+                <gr-account-name data-field=name data-empty=■ />
+              </a>
+            </gr-dashboard-item>
         <td>
           <p><a href data-href-template="/g/{group_id}/">
             <img data-src-template=/g/{group_id}/icon alt class=icon>
             <span data-field=group_id>XXX</span>
           </a>
-          <p><a href data-href-template="/g/{group_id}/o/{object_id}/">
-            <span data-field=object_id>XXX</span>
-          </a>
-          <p>(<a href data-href-template="/g/{group_id}/o/{thread_id}/">
-            <span data-field=thread_id>XXX</span>
-          </a>)
+          <p>
+            <gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=object_id>
+              <a href data-href-template="/g/{group_id}/o/{object_id}/">
+                <cite data-field=title data-empty=■ />
+              </a>
+            </gr-dashboard-item>
+            
+            (<gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=thread_id>
+              <a href data-href-template="/g/{group_id}/o/{object_id}/">
+                <cite data-field=title data-empty=■ />
+              </a>
+            </gr-dashboard-item>)
+
+            <gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=object_id>
+              <gr-search-snippet data-field=snippet></gr-search-snippet>
+            </gr-dashboard-item>
         <!-- reason -->
       </template>
 

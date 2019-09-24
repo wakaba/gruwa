@@ -778,22 +778,26 @@ dfn {
   font-weight: bolder;
 }
 
-gr-account a:not(:hover):not(:active):not(:focus) {
+gr-account a:not(:hover):not(:active):not(:focus),
+gr-dashboard-item[type=account] a:not(:hover):not(:active):not(:focus) {
   text-decoration: none;
   color: inherit;
   background: transparent;
 }
 
-gr-account a gr-account-name {
+gr-account a gr-account-name,
+gr-dashboard-item[type=account] a gr-account-name {
   text-decoration: underline;
 }
 
-gr-account a:link gr-account-name {
+gr-account a:link gr-account-name,
+gr-dashboard-item[type=account] a:link gr-account-name {
   color: var(--link-color);
   background-color: var(--link-background-color);
 }
 
-gr-account a:visited gr-account-name {
+gr-account a:visited gr-account-name,
+gr-dashboard-item[type=account] a:visited gr-account-name {
   color: var(--visited-color);
   background-color: var(--visited-background-color);
 }
