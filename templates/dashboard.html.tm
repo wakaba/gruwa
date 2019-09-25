@@ -69,7 +69,7 @@
         <a href=/help#dashboard-groups target=help>ヘルプ</a>
       </header>
 
-    <list-container loader=dashboardGroupListLoader type=table class=main-table>
+    <list-container loader=dashboardGroupListLoader type=table class="main-table dashboard-group-list">
       <template>
         <th>
           <a href data-href-template="/g/{group_id}/#t:{updated}">
@@ -136,11 +136,12 @@
       <a href=/help#dashboard-calls target=help>ヘルプ</a>
     </header>
 
-    <list-container type=table src=/my/calls.json key=items class=main-table>
+    <list-container type=table src=/my/calls.json key=items class="main-table dashboard-call-list">
       <template data-class-template=object-read-{read}>
         <td>
-          <p><time data-field=timestamp data-format=ambtime />
-          <p>
+          <p class=dashboard-call-timestamp>
+            <time data-field=timestamp data-format=ambtime />
+          <p class=dashboard-call-account>
             <gr-dashboard-item type=account data-filled="groupid value" data-groupid-field=group_id data-value-field=from_account_id>
               <a href data-href-template="/g/{group_id}/account/{account_id}/">
                 <img data-src-template=/g/{group_id}/account/{account_id}/icon alt class=icon>
@@ -148,28 +149,28 @@
               </a>
             </gr-dashboard-item>
         <td>
-          <p>
+          <p class=dashboard-call-group>
             <gr-dashboard-item type=group data-filled=value data-value-field=group_id>
               <a href data-href-template="/g/{group_id}/">
                 <img data-src-template=/g/{group_id}/icon alt class=icon>
                 <bdi data-field=title data-empty=■ />
               </a>
             </gr-dashboard-item>
-          <p>
+          <p class=dashboard-call-object>
             <gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=object_id>
               <a href data-href-template="/g/{group_id}/o/{object_id}/">
                 <cite data-field=title data-empty=■ />
               </a>
             </gr-dashboard-item>
-            
-            (<gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=thread_id>
+          <p class=dashboard-call-snippet>
+            <gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=object_id>
+              <gr-search-snippet data-field=snippet></gr-search-snippet>
+            </gr-dashboard-item>
+          <p class=dashboard-call-thread>
+            <gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=thread_id>
               <a href data-href-template="/g/{group_id}/o/{object_id}/">
                 <cite data-field=title data-empty=■ />
               </a>
-            </gr-dashboard-item>)
-
-            <gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=object_id>
-              <gr-search-snippet data-field=snippet></gr-search-snippet>
             </gr-dashboard-item>
         <!-- reason -->
       </template>

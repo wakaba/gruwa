@@ -1207,6 +1207,27 @@ gr-nav-panel gr-group:not([hidden]) {
   margin-top: .5em;
 }
 
+.main-menu-list {
+  padding: 0;
+}
+
+.main-menu-list > li:not([hidden]) {
+  display: block;
+  margin: .5em 1em;
+  font-size: 150%;
+}
+
+.main-menu-list > li > a:not([hidden]) {
+  display: block;
+  padding: 0.5em;
+}
+
+.main-menu-list > li > a:not(:hover):not(:focus):not(:active) {
+  color: inherit;
+  background: transparent;
+  text-decoration: none;
+}
+
 number-unit {
   margin-left: .2em;
 }
