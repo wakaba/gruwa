@@ -3,6 +3,8 @@
   "is_test_script": true,
   "origin": "http://app.server.test",
   "x_forwarded": false,
+  "create_group_key": null,
+  "no_create_group_key": true,
   "accounts": {
     "url": "http://accounts.server.test",
     "key": "...",

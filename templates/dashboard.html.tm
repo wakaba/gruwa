@@ -101,9 +101,17 @@
       <action-status hidden stage-loader=読込中... />
     </list-container>
 
-    <details>
-      <summary>グループの作成</summary>
+      <p>他のグループに参加するには、
+      グループの所有者から招待状を発行してもらってください。
 
+      <details>
+        <summary>グループの作成</summary>
+
+        <p>新しいグループを作成します。
+        <t:if x="$app->config->{no_create_group_key}">
+          (サーバー管理者が発行したキーが必要です。)
+        </t:if>
+        
       <form method=post action=javascript: data-action=g/create.json
           data-next="createGroupWiki go:/g/{group_id}/config"
           data-prompt="グループを作成します。この操作は取り消せません。よろしいですか。">
@@ -124,8 +132,6 @@
       </form>
     </details>
 
-      <p>他のグループに参加するには、
-      グループの所有者から招待状を発行してもらってください。
     </section>
     
   </template>

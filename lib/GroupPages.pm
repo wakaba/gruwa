@@ -845,6 +845,8 @@ sub create ($$$$) {
   # /g/create.json
   $app->requires_request_method ({POST => 1});
   $app->requires_same_origin;
+  $app->requires_basic_auth ({g => $app->config->{create_group_key}})
+      unless $app->config->{no_create_group_key};
 
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
