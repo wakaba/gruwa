@@ -158,7 +158,7 @@
 </template-set>
 
 <template-set name=page-search>
-  <template title=検索>
+  <template title=検索 class=is-subpage>
     <section>
       <header class=section>
         <h1>検索</h1>
@@ -216,7 +216,7 @@
 </template-set>
   
 <template-set name=page-config>
-  <template title=設定>
+  <template title=設定 class=is-subpage>
     <section>
       <header class=section>
         <h1>グループ設定</>
@@ -440,7 +440,7 @@
 </template-set>
 
 <template-set name=page-members>
-  <template title=参加者>
+  <template title=参加者 class=is-subpage>
 
     <section id=members>
       <header class=section>
@@ -608,7 +608,7 @@
 </template-set>
   
 <template-set name=page-index-config>
-  <template title=設定>
+  <template title=設定 class=is-subpage>
     <section>
       <header class=section>
         <h1>設定</h1>
@@ -1292,7 +1292,7 @@
 </template-set>
 
 <template-set name=page-object-revisions>
-  <template>
+  <template title=編集履歴 class="is-subpage subpage-back-to-subdirectory">
     <section>
       <header class=section>
         <h1><bdi data-field=object.title data-empty=■ />の編集履歴</h1>
@@ -1351,6 +1351,7 @@
         label-timestamp=日付
         label-index_ids=所属
         label-user_status=公開状態
+        label-called=記事通知
       />
       <enum-value data-field=revision_data.changes.action
           label-new=新規作成
@@ -1636,7 +1637,7 @@
 </template-set>
   
 <template-set name=page-my-config>
-  <template title=グループ参加者設定>
+  <template title=グループ参加者設定 class=is-subpage>
     <section>
       <header class=section>
         <h1>グループ参加者設定</h1>

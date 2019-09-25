@@ -22,12 +22,19 @@ Test {
       selector => 'html:not([data-navigating])',
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'body > header.subpage',
+      shown => 1,
+    });
+  })->then (sub {
     return $current->b (1)->execute (q{
       return {
         config_url: document.querySelector ('gr-menu[type=group] menu-main a[href$="/config"]').pathname,
         title: document.title,
         theme_color: document.querySelector ('meta[name=theme-color]').content,
         header: document.querySelector ('header.page h1').textContent,
+        subTitle: document.querySelector ('body > header.subpage gr-subpage-title').textContent,
+        subBackURL: document.querySelector ('body > header.subpage a').pathname,
       };
     });
   })->then (sub {
@@ -39,9 +46,11 @@ Test {
       is $values->{title}, '設定 - ' . $current->o ('t1');
       is $values->{header}, $current->o ('t1');
       ok $values->{theme_color};
+      is $values->{subTitle}, '設定';
+      is $values->{subBackURL}, '/g/' . $current->o ('g1')->{group_id} . '/';
     } $current->c;
   });
-} n => 4, name => ['page'], browser => 1;
+} n => 6, name => ['page'], browser => 1;
 
 Test {
   my $current = shift;

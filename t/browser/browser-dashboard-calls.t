@@ -55,6 +55,11 @@ Test {
       name => 'call list (from account name)',
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'body > header.subpage',
+      shown => 1,
+    });
+  })->then (sub {
     return $current->b (1)->execute (q{
       return {
         title: document.title,
@@ -62,6 +67,8 @@ Test {
         headerTitle: document.querySelector ('header.page h1').textContent,
         headerURL: document.querySelector ('header.page h1 a').pathname,
         headerLink: document.querySelector ('header.page gr-menu a').pathname,
+        subTitle: document.querySelector ('body > header.subpage gr-subpage-title').textContent,
+        subBackURL: document.querySelector ('body > header.subpage a').pathname,
       };
     });
   })->then (sub {
@@ -74,9 +81,11 @@ Test {
       is $values->{headerTitle}, 'ダッシュボード';
       is $values->{headerURL}, '/dashboard';
       is $values->{headerLink}, $values->{headerURL};
+      is $values->{subTitle}, '記事通知';
+      is $values->{subBackURL}, '/dashboard';
     } $current->c;
   });
-} n => 5, name => ['initial load'], browser => 1;
+} n => 7, name => ['initial load'], browser => 1;
 
 RUN;
 

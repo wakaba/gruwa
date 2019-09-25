@@ -19,6 +19,10 @@
     <h1><a href=./><t:text value="$group->{data}->{title}"></a></h1>
     <gr-menu type=group />
   </header>
+  <header class=subpage>
+    <a href=./ title=親ページに戻る>←</a>
+    <gr-subpage-title>インポート</gr-subpage-title>
+  </header>
   <page-main>
     <section class=group-config-import>
       <header class=section>

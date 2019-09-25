@@ -3674,11 +3674,14 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         } else {
           menu.setAttribute ('type', 'dashboard');
         }
-      });
+      }); // header.page
+      
       var contentTitle = '';
+      var contentClasses;
       document.querySelectorAll ('page-main').forEach (_ => {
         var div = ts.createFromTemplate ('div', params);
-        contentTitle = div.title;
+        params.contentTitle = contentTitle = div.title;
+        contentClasses = div.classList;
         div.title = '';
 
         if (params.group) {
@@ -3766,6 +3769,17 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         _.textContent = '';
         while (div.firstChild) _.appendChild (div.firstChild);
       });
+
+      document.querySelectorAll ('body > header.subpage').forEach (_ => {
+        _.hidden = ! contentClasses.contains ('is-subpage');
+        if (contentClasses.contains ('subpage-back-to-subdirectory')) {
+          params.backURL = './';
+        } else {
+          params.backURL = params.url;
+        }
+        if (!_.hidden) $fill (_, params);
+      });
+      
       var title = [];
       if (params.group) {
         title.unshift (params.group.title);

@@ -17,6 +17,10 @@
     <h1><a href=/dashboard>ダッシュボード</a></h1>
     <gr-menu type=dashboard />
   </header>
+  <header class=subpage hidden>
+    <a href data-href-field=backURL title=親ページに戻る>←</a>
+    <gr-subpage-title data-field=contentTitle>ダッシュボード</gr-subpage-title>
+  </header>
   <page-main/>
 
   <gr-navigate-status>
@@ -61,7 +65,7 @@
 </template-set>
 
 <template-set name=page-dashboard-groups>
-  <template title=グループ>
+  <template title=グループ class=is-subpage>
 
     <section>
       <header class=section>
@@ -128,7 +132,7 @@
 </template-set>
 
 <template-set name=page-dashboard-calls>
-  <template title=記事通知>
+  <template title=記事通知 class=is-subpage>
 
   <section>
     <header class=section>
@@ -193,7 +197,7 @@
 </template-set>
 
 <template-set name=page-jump>
-  <template title=ジャンプリスト>
+  <template title=ジャンプリスト class=is-subpage>
     <section>
       <header class=section>
         <h1>ジャンプリスト</>

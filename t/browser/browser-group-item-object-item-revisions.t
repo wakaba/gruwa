@@ -42,6 +42,11 @@ Test {
       name => 'author name',
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'body > header.subpage',
+      shown => 1,
+    });
+  })->then (sub {
     use utf8;
     return $current->b_wait (1 => {
       selector => 'page-main .main-table tbody',
@@ -49,11 +54,22 @@ Test {
       name => 'changes',
     });
   })->then (sub {
+    return $current->b (1)->execute (q{
+      return {
+        subTitle: document.querySelector ('body > header.subpage gr-subpage-title').textContent,
+        subBackURL: document.querySelector ('body > header.subpage a').pathname,
+      };
+    });
+  })->then (sub {
+    my $res = $_[0];
+    my $values = $res->json->{value};
     test {
-      ok 1;
+      use utf8;
+      is $values->{subTitle}, '編集履歴';
+      is $values->{subBackURL}, '/g/' . $current->o ('g1')->{group_id} . '/o/'.$current->o ('o1')->{object_id}.'/';
     } $current->c;
   });
-} n => 1, name => ['page'], browser => 1;
+} n => 2, name => ['page'], browser => 1;
 
 Test {
   my $current = shift;

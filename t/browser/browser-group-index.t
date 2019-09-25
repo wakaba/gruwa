@@ -33,6 +33,11 @@ Test {
       text => $current->o ('t3'),
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'body > header.subpage',
+      not => 1, shown => 1,
+    });
+  })->then (sub {
     return $current->b (1)->execute (q{
       return {
         title: document.title,

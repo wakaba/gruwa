@@ -12,6 +12,10 @@
     <h1><a href=./ data-href-field=url data-field=title data-empty=■><t:text value="$group->{data}->{title}"></a></h1>
     <gr-menu type=group />
   </header>
+  <header class=subpage hidden>
+    <a href data-href-field=backURL title=親ページに戻る>←</a>
+    <gr-subpage-title data-field=contentTitle>Gruwa</gr-subpage-title>
+  </header>
   <page-main/>
   <t:include path=_common.html.tm m:app=$app />
   <gr-navigate partition=group />
