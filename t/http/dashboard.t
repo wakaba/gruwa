@@ -6,6 +6,7 @@ use Tests;
 
 for my $path (
   ['dashboard'],
+  ['dashboard', 'groups'],
   ['dashboard', 'calls'],
 ) {
 

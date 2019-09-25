@@ -42,8 +42,6 @@
 <template-set name=gr-menu-dashboard>
   <template>
     <p><a data-href-template=/dashboard>トップ</a>
-    <p><a data-href-template=/dashboard/calls>記事通知</a>
-    <p><a data-href-template=/jump>ジャンプリスト</a>
     <p><a href=/help#dashboard target=help>ヘルプ</a>
   </template>
 </template-set>
@@ -51,8 +49,25 @@
 <template-set name=page-dashboard>
   <template title=ダッシュボード>
 
-  <section>
-    <h1>参加グループ</>
+    <ul class=main-menu-list>
+
+      <li><a href=/dashboard/groups>グループ</a>
+      <li><a href=/jump>ジャンプリスト</a>
+      <li><a href=/dashboard/calls>記事通知</a>
+      
+    </ul>
+  
+  </template>
+</template-set>
+
+<template-set name=page-dashboard-groups>
+  <template title=グループ>
+
+    <section>
+      <header class=section>
+        <h1>参加グループ</h1>
+        <a href=/help#dashboard-groups target=help>ヘルプ</a>
+      </header>
 
     <list-container loader=dashboardGroupListLoader type=table class=main-table>
       <template>
@@ -105,8 +120,10 @@
       </form>
     </details>
 
-  </section>
-
+      <p>他のグループに参加するには、
+      グループの所有者から招待状を発行してもらってください。
+    </section>
+    
   </template>
 </template-set>
 
@@ -114,7 +131,10 @@
   <template title=記事通知>
 
   <section>
-    <h1>記事通知</>
+    <header class=section>
+      <h1>記事通知</h1>
+      <a href=/help#dashboard-calls target=help>ヘルプ</a>
+    </header>
 
     <list-container type=table src=/my/calls.json key=items class=main-table>
       <template data-class-template=object-read-{read}>

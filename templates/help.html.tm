@@ -404,11 +404,31 @@
       <p><a href=/dashboard><dfn>ダッシュボード</dfn></a>では、
       <a href=#groups>グループ</a>を横断して<a href=#accounts>自分</a>に関係ある情報を一覧できます。
 
-      <section id=dashboard-groups>
-        <h1>参加グループ</h1>
+      <p><a href=#dashboard>ダッシュボード</a>は、
+      <a href=/>Gruwa のトップページ</a>や、
+      グループ内ページ共通のメニューから開けます。
 
-        <p>参加中の<a href=#groups>グループ</a>の一覧です。
+      <p><a href=#dashboard>ダッシュボード</a>には次のページがあります。
+
+        <ul>
+          <li><a href=#dashboard-groups>グループ</a>
+          <li><a href=#jump>ジャンプリスト</a>
+          <li><a href=#dashboard-calls>記事通知</a>
+        </ul>
+        
+      <section id=dashboard-groups>
+        <h1>グループ</h1>
+
+        <p>参加中の<a href=#groups>グループ</a>の一覧が表示されます。
         更新があった順で表示されます。
+
+        <p>他のグループに参加するには、
+        <a href=#groups>グループ</a>の<a href=#owner>所有者</a>から<a href=#invitation>招待状</a>を発行してもらってください。
+
+          <div class=notes>
+            <p><a href=#owner>所有者</a>により<a href=#group-members>参加者</a>から外されると、
+            一覧に表示されなくなります。
+          </div>
       </section>
       
     <section id=jump>
@@ -430,6 +450,12 @@
       項目を削除したりできます。
     </section>
 
+      <section id=dashboard-calls>
+        <h1>記事通知</h1>
+
+        <p>受信した<dfn id=object-call>記事通知</dfn>が表示されます。
+      </section>
+      
     </section>
 
     <section id=import>

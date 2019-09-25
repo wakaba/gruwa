@@ -69,7 +69,7 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, '記事通知';
+      is $values->{title}, '記事通知 - Gruwa';
       is $values->{url}, '/dashboard/calls';
       is $values->{headerTitle}, 'ダッシュボード';
       is $values->{headerURL}, '/dashboard';

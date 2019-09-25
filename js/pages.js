@@ -3513,7 +3513,7 @@ GR.navigate.go = function (u, args) {
           return ['dashboard', 'jump', {}];
         }
 
-        var m = path.match (/^\/dashboard\/(calls)$/);
+        var m = path.match (/^\/dashboard\/(groups|calls)$/);
         if (m) {
           return ['dashboard', 'dashboard-' + m[1], {}];
         }
@@ -3767,7 +3767,11 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         while (div.firstChild) _.appendChild (div.firstChild);
       });
       var title = [];
-      if (params.group) title.unshift (params.group.title);
+      if (params.group) {
+        title.unshift (params.group.title);
+      } else {
+        title.unshift ('Gruwa');
+      }
       if (params.index) title.unshift (params.index.title);
       if (params.wiki) {
         title.unshift (params.wiki.name);
@@ -3780,7 +3784,6 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       } else {
         GR.page.setSearch (null);
       }
-      if (title.length === 0) title.unshift ('Gruwa');
       GR.page.setTitle (title.join (' - '));
       return GR.theme.set (params.theme);
     });
