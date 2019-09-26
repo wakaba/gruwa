@@ -23,7 +23,7 @@ sub rev ($) {
 
 sub accounts ($$$) {
   my ($app, $path, $params) = @_;
-  my $accounts = $self->{accounts_client} ||= Web::Transport::BasicClient->new_from_url
+  my $accounts = $app->{accounts_client} ||= Web::Transport::BasicClient->new_from_url
       (Web::URL->parse_string ($app->config->{accounts}->{url}));
   return $accounts->request (
     method => 'POST',
