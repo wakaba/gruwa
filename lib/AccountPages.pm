@@ -2,6 +2,8 @@ package AccountPages;
 use strict;
 use warnings;
 use Web::URL;
+use Promise;
+use JSON::PS;
 
 use Pager;
 use Results;
@@ -82,8 +84,94 @@ sub main ($$$$$) {
     return temma $app, 'account.done.html.tm', {};
   }
 
+  if ($path->[1] eq 'push') {
+    return $app->accounts (['info'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+    })->then (sub {
+      my $account = $_[0];
+      $account->{has_account} = !! $account->{account_id};
+      return $class->account_push ($app, $path, $account);
+    });
+  }
+
   return $app->send_error (404);
 } # main
+
+sub account_push ($$$$) {
+  my ($class, $app, $path, $account) = @_;
+  # /account/push/...
+
+  if (@$path == 3 and $path->[2] eq 'list.json') {
+    # /account/push/list.json
+    return Promise->resolve->then (sub {
+      return [] unless $account->{has_account};
+      return $app->apploach (['notification', 'hook', 'list.json'], {
+        subscriber_nobj_key => 'account-' . $account->{account_id},
+        type_nobj_key => 'apploach-push',
+        limit => 100,
+      })->then (sub {
+        my $v = $_[0];
+        return [map {
+          +{
+            url_sha => $_->{url_sha},
+            ua => $_->{data}->{ua},
+            created => $_->{created},
+            expires => $_->{expires},
+          };
+        } @{$v->{items}}];
+      });
+      ## Apploach supports paging but there should not be many push
+      ## destinations.
+    })->then (sub {
+      return json $app, {items => $_[0]};
+    });
+  } elsif (@$path == 3 and $path->[2] eq 'add.json') {
+    # /account/push/add.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+    return $app->throw_error (403) unless $account->{has_account};
+    my $sub = json_bytes2perl ($app->bare_param ('sub') // '{}');
+    return $app->throw_error (400, reason_phrase => 'Bad |sub|')
+        unless defined $sub and ref $sub eq 'HASH';
+    my $u = $sub->{endpoint} // '';
+    return $app->throw_error (400, reason_phrase => 'Bad |sub|.endpoint')
+        unless $u =~ m{^https://};
+    my $url = Web::URL->parse_string ($u);
+    return $app->throw_error (400, reason_phrase => 'Bad |sub|.endpoint')
+        unless defined $url and $url->scheme eq 'https';
+    return $app->apploach (['notification', 'hook', 'subscribe.json'], {
+      subscriber_nobj_key => 'account-' . $account->{account_id},
+      type_nobj_key => 'apploach-push',
+      url => $url->stringify,
+      status => 2, # enabled
+      data => {
+        apploach_subscription => $sub,
+        ua => $app->http->get_request_header ('user-agent'),
+        ip => $app->http->client_ip_addr->as_text,
+      },
+    })->then (sub {
+      return json $app, {};
+    });
+  } elsif (@$path == 3 and $path->[2] eq 'delete.json') {
+    # /account/push/delete.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+    return Promise->resolve->then (sub {
+      return unless $account->{has_account};
+      return $app->apploach (['notification', 'hook', 'delete.json'], {
+        subscriber_nobj_key => 'account-' . $account->{account_id},
+        type_nobj_key => 'apploach-push',
+        url => $app->bare_param ('url'),
+        url_sha => $app->bare_param ('url_sha'),
+      });
+    })->then (sub {
+      return json $app, {};
+    });
+  }
+
+  return $app->send_error (404);
+} # account_push
 
 sub mymain ($$$$$) {
   my ($class, $app, $path, $acall, $db) = @_;

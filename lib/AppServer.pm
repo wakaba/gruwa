@@ -45,6 +45,38 @@ sub accounts ($$$) {
   });
 } # accounts
 
+sub apploach ($$$) {
+  my ($self, $path, $params) = @_;
+  my $config = $self->config;
+  my $client = $self->{apploach_client} ||= do {
+    my $url = Web::URL->parse_string ($config->{apploach}->{url});
+    Web::Transport::BasicClient->new_from_url ($url);
+  };
+  for (keys %$params) {
+    if (ref $params->{$_} eq 'HASH') {
+      $params->{$_} = perl2json_chars $params->{$_};
+    }
+  }
+  return $client->request (
+    method => 'POST',
+    bearer => $config->{apploach}->{key},
+    path => [$config->{apploach}->{app_id}, @$path],
+    params => $params,
+  )->then (sub {
+    my $res = $_[0];
+    if ($res->status == 200) {
+      return json_bytes2perl $res->body_bytes;
+    } elsif ($res->status == 400 and
+             $res->header ('content-type') =~ m{^application/json}) {
+      my $json = json_bytes2perl $res->body_bytes;
+      if (ref $json eq 'HASH' and defined $json->{reason}) {
+        return $self->throw_error (400, reason_phrase => $json->{reason});
+      }
+    }
+    die $res;
+  });
+} # apploach
+
 sub close ($) {
   my $self = $_[0];
   return Promise->all ([
