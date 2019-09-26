@@ -73,9 +73,25 @@ Test {
       is $res->status, 200;
       is $res->header ('last-modified'), $current->o ('rev1');
       is $res->header ('cache-control'), undef;
+      is $res->header ('service-worker-allowed'), undef;
     } $current->c, name => 'Current revision';
   });
-} n => 11, name => '/js/pages.js';
+} n => 12, name => '/js/pages.js';
+
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['js', 'sw.js'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'text/javascript;charset=utf-8';
+      like $res->body_bytes, qr<GNU Affero General Public License>;
+      ok $res->header ('last-modified');
+      is $res->header ('cache-control'), undef;
+      is $res->header ('service-worker-allowed'), '/';
+    } $current->c;
+  });
+} n => 6, name => '/js/sw.js';
 
 Test {
   my $current = shift;

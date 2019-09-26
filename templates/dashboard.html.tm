@@ -1,5 +1,6 @@
 <html t:params="$account $app"
-    data-theme=green>
+    data-theme=green
+    pl:data-push-server-key="$app->config->{push_server_public_key}">
 <head>
   <title>Gruwa</title>
   <meta name=referrer content=no-referrer>
@@ -198,7 +199,74 @@
     </list-container>
 
   </section>
+  
+    <section id=push-notifications>
+      <header class=section>
+        <h1>デスクトップ/スマートフォン通知</h1>
+        <a href=/help#notifications target=help>ヘルプ</a>
+      </header>
 
+      <p>記事通知を受信した時、
+      デスクトップ/スマートフォン通知を受け取ることができます。</p>
+
+      <list-container src=/account/push/list.json filter=uaLabelFilter key=items type=table class="main-table push-list">
+        <table>
+          <thead>
+            <tr>
+              <th>Web ブラウザー
+              <th>登録日時
+              <th>有効期限
+              <th>操作
+          <tbody>
+        </table>
+        <template>
+          <td><span data-field=uaLabel data-title-field=ua />
+          <td><time data-format=datetime data-field=created />
+          <td><time data-format=datetime data-field=expires />
+          <td>
+            <!--XXX <button type=button>テスト送信する</button>-->
+            <form method=post action=/account/push/delete.json is=save-data data-confirm=削除します data-next=reloadPushList>
+              <input type=hidden name=url_sha data-field=url_sha />
+              <button type=submit class=delete-button>削除する</button>
+              <action-status />
+            </form>
+        </template>
+        <list-is-empty>
+          受信設定はありません。
+        </list-is-empty>
+        <action-status stage-loader=読込中... />
+      </list-container>
+
+      <gr-push-config>
+        現在お使いの Web ブラウザーは:
+        <gr-has-push>
+          <gr-has-push-sub>
+            登録されています。
+
+            <form method=post action is=save-data data-saver=addPush data-next=reloadPushList>
+              <button type=submit class=save-button>再登録する</button>
+              <action-status stage-saver=登録中... ok=登録しました。 />
+            </form>
+            <form method=post action is=save-data data-saver=removePush data-next=reloadPushList>
+              <button type=submit class=cancel-button>解除する</button>
+              <action-status stage-saver=解除中... ok=解除しました。 />
+            </form>
+          </gr-has-push-sub>
+          <gr-no-push-sub>
+            登録されていません。
+
+            <form method=post action is=save-data data-saver=addPush data-next=reloadPushList>
+              <button type=submit class=save-button>登録する</button>
+              <action-status stage-saver=登録中... ok=登録しました。 />
+            </form>
+          </gr-no-push-sub>
+        </gr-has-push>
+        <gr-no-push>
+          通知に対応していません。
+        </gr-no-push>
+      </gr-push-config>
+    </section>
+  
   </template>
 </template-set>
 

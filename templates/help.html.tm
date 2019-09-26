@@ -467,6 +467,16 @@
 
         <p><a href=/dashboard/calls>記事通知</a>ページには、
         受信した<dfn id=object-call>記事通知</dfn>が表示されます。
+
+        <p id=notifications>「デスクトップ/スマートフォン通知」
+        欄では、<a href=#object-call>記事通知</a>があったとき、
+        デスクトップOSやスマートフォンの通知機能でお知らせするよう設定できます。
+        (お使いの Web ブラウザーが対応している必要があります。)
+
+          <div class=notes>
+            <p>同じ Web ブラウザーで複数の<a href=#accounts>アカウント</a>を使い分けていると、
+            通知は正しく動作しません。
+          </div>
       </section>
       
     </section>
