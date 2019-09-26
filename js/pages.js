@@ -3963,6 +3963,97 @@ defineElement ({
   },
 }); // <XXX-multi-enum>
 
+(() => {
+  var def = document.createElementNS ('data:,pc', 'formsaved');
+  def.setAttribute ('name', 'reloadPushList');
+  def.pcHandler = function (fd) {
+    document.querySelectorAll ('.push-list').forEach (_ => _.load ({}));
+    document.querySelectorAll ('gr-push-config').forEach (_ => _.grReset ());
+  };
+  document.head.appendChild (def);
+
+  var def = document.createElementNS ('data:,pc', 'saver');
+  def.setAttribute ('name', 'addPush');
+  def.pcHandler = function (fd) {
+    return navigator.serviceWorker.register ('/js/sw.js', {scope: "/"}).then (function (reg) {
+      return navigator.serviceWorker.ready;
+    }).then (function (reg) {
+      return reg.pushManager.subscribe ({
+        userVisibleOnly: true,
+        applicationServerKey: Uint8Array.from (document.documentElement.getAttribute ('data-push-server-key').split (/,/)),
+      });
+    }).then (function (sub) {
+      fd.append ('sub', JSON.stringify (sub.toJSON ()));
+      return fetch ('/account/push/add.json', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        referrerPolicy: 'same-origin',
+      });
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+    });
+  };
+  document.head.appendChild (def);
+
+  var def = document.createElementNS ('data:,pc', 'saver');
+  def.setAttribute ('name', 'removePush');
+  def.pcHandler = function (fd) {
+    if (!navigator.serviceWorker.controller) return;
+    return navigator.serviceWorker.ready.then (function (reg) {
+      return reg.pushManager.getSubscription ();
+    }).then (function (sub) {
+      if (!sub) return;
+      fd.append ('url', sub.endpoint);
+      return fetch ('/account/push/delete.json', {
+        method: 'POST',
+        body: fd,
+        credentials: 'same-origin',
+        referrerPolicy: 'same-origin',
+      }).then ((res) => {
+        if (res.status !== 200) throw res;
+      }).then (() => sub.unsubscribe ());
+    });
+  };
+  document.head.appendChild (def);
+
+  var hasPush = !(!navigator.serviceWorker || !window.PushManager || !(location.protocol === 'https:' || location.hostname === 'localhost'));
+
+  defineElement ({
+    name: 'gr-push-config',
+    props: {
+      pcInit: function () {
+        this.querySelectorAll ('gr-has-push').forEach (_ => _.hidden = !hasPush);
+        this.querySelectorAll ('gr-no-push').forEach (_ => _.hidden = hasPush);
+        if (!hasPush) return;
+
+        this.grReset ();
+      }, // pcInit
+      grReset: function () {
+        this.querySelectorAll ('gr-has-push-sub').forEach (_ => _.hidden = false);
+        this.querySelectorAll ('gr-no-push-sub').forEach (_ => _.hidden = true);
+        navigator.serviceWorker.ready.then ((reg) => {
+          return reg.pushManager.getSubscription ();
+        }).then ((sub) => {
+          this.querySelectorAll ('gr-has-push-sub').forEach (_ => _.hidden = !sub);
+          this.querySelectorAll ('gr-no-push-sub').forEach (_ => _.hidden = !!sub);
+        });
+      }, // grReset
+    },
+  }); // <gr-push-config>
+  
+  var def = document.createElementNS ('data:,pc', 'filter');
+  def.setAttribute ('name', 'uaLabelFilter');
+  def.pcHandler = function (result) {
+    result.data.forEach ((_) => {
+      _.uaLabel = _.ua;
+    });
+    return result;
+  };
+  document.head.appendChild (def);
+
+}) ();
+
 /*
 
 License:

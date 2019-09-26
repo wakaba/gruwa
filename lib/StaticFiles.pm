@@ -46,6 +46,9 @@ sub main ($$$) {
 
   if (@$path == 2 and
       $path->[0] eq 'js' and $path->[1] =~ /\A[A-Za-z0-9-]+\.js\z/) {
+    if ($path->[1] eq 'sw.js') {
+      $app->http->set_response_header ('Service-Worker-Allowed' => '/');
+    }
     return static $app, [$path->[0], $path->[1]], 'text/javascript;charset=utf-8';
   }
 
