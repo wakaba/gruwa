@@ -43,7 +43,7 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, 'ジャンプリスト';
+      is $values->{title}, 'ジャンプリスト - Gruwa';
       is $values->{url}, '/jump';
       is $values->{headerTitle}, 'ダッシュボード';
       is $values->{headerURL}, '/dashboard';

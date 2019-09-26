@@ -46,30 +46,30 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'gr-called-editor button',
-      shown => 1,
+      selector => 'edit-container gr-called-editor button',
+      scroll => 1, shown => 1,
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      document.querySelector ('gr-called-editor button').click ();
+      document.querySelector ('edit-container gr-called-editor button').click ();
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'gr-called-editor menu-main',
+      selector => 'edit-container gr-called-editor menu-main',
       text => $current->o ('t2'),
       scroll => 1,
       name => 'a2 name (t2)',
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'gr-called-editor menu-main',
+      selector => 'edit-container gr-called-editor menu-main',
       text => $current->o ('t3'),
       scroll => 1,
       name => 'a3 name (t3)',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      document.querySelector ('gr-called-editor menu-main input[type=checkbox][value="'+arguments[0]+'"]').click ();
+      document.querySelector ('edit-container gr-called-editor menu-main input[type=checkbox][value="'+arguments[0]+'"]').click ();
     }, [$current->o ('a3')->{account_id}]);
   })->then (sub {
     return $current->b (1)->execute (q{
