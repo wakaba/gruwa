@@ -248,6 +248,20 @@ sub post_redirect ($$$;%) {
   });
 } # post_redirect
 
+sub generate_key ($$$) {
+  my ($self, $name, $opts) = @_;
+  my $length = $opts->{length} || int rand ($opts->{max_length} || 200) || 1;
+  $length = $opts->{min_length} if defined $opts->{min_length} and $length < $opts->{min_length};
+  my $bytes = '';
+  $bytes .= ['0'..'9','A'..'Z','a'..'z']->[rand 36] for 1..$length;
+  return $self->{objects}->{$name} = $bytes;
+} # generate_key
+
+sub generate_url ($$$) {
+  my ($self, $name, $opts) = @_;
+  return $self->{objects}->{$name // ''} = 'https://' . rand . '.test/' . rand;
+} # generate_url
+
 sub generate_text ($;$) {
   my $v = rand;
   $v .= chr int rand 0x10FFFF for 1..rand 10;

@@ -8,19 +8,14 @@ Test {
   my $current = shift;
   return $current->create (
     [a1 => account => {}],
-    [g1 => group => {
-      members => ['a1'], title => $current->generate_text (t1 => {}),
-      theme => 'red',
-    }],
-    [i1 => index => {
-      group => 'g1',
-      account => 'a1',
-      title => $current->generate_text (t3 => {}),
-      index_type => 1, # blog
-    }],
   )->then (sub {
+    return $current->post_json (['jump', 'add.json'], {
+      url => $current->resolve ('/abcd')->stringify,
+      label => $current->generate_text (t1 => {}),
+    }, account => 'a1');
+  })->then (sub {
     return $current->create_browser (1 => {
-      url => ['g', $current->o ('g1')->{group_id}, ''],
+      url => ['jump'],
       account => 'a1',
     });
   })->then (sub {
@@ -30,18 +25,17 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'page-main',
-      text => $current->o ('t3'),
-    });
-  })->then (sub {
-    return $current->b_wait (1 => {
-      selector => 'body > header.subpage',
-      not => 1, shown => 1,
+      text => $current->o ('t1'),
+      name => 'jump list',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
       return {
         title: document.title,
         url: location.pathname,
+        headerTitle: document.querySelector ('header.page h1').textContent,
+        headerURL: document.querySelector ('header.page h1 a').pathname,
+        headerLink: document.querySelector ('header.page gr-menu a').pathname,
       };
     });
   })->then (sub {
@@ -49,11 +43,14 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, $current->o ('t1');
-      is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/';
+      is $values->{title}, 'ジャンプリスト - Gruwa';
+      is $values->{url}, '/jump';
+      is $values->{headerTitle}, 'ダッシュボード';
+      is $values->{headerURL}, '/dashboard';
+      is $values->{headerLink}, $values->{headerURL};
     } $current->c;
   });
-} n => 2, name => ['initial load'], browser => 1;
+} n => 5, name => ['initial load'], browser => 1;
 
 RUN;
 

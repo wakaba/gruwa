@@ -63,6 +63,7 @@
       </gr-error>
     </gr-navigate-status>
 
+<!-- also in dashboard.html.tm -->
 <template-set name=gr-menu>
   <template>
     <popup-menu>
@@ -149,7 +150,7 @@
             </gr-list-container>
         </template>
         <list-main/>
-        <gr-action-status hidden stage-load=読み込み中... />
+        <gr-action-status hidden stage-load=読込中... />
       </gr-list-container>
     </section>
 
@@ -157,7 +158,7 @@
 </template-set>
 
 <template-set name=page-search>
-  <template title=検索>
+  <template title=検索 class=is-subpage>
     <section>
       <header class=section>
         <h1>検索</h1>
@@ -203,7 +204,7 @@
         <list-is-empty hidden>
           <p>一致する記事は見つかりませんでした。</p>
         </list-is-empty>
-        <action-status hidden stage-loader=読み込み中...></action-status>
+        <action-status hidden stage-loader=読込中...></action-status>
         <p class=operations>
           <button type=button class=list-next>もっと昔</button>
         </p>
@@ -215,7 +216,7 @@
 </template-set>
   
 <template-set name=page-config>
-  <template title=設定>
+  <template title=設定 class=is-subpage>
     <section>
       <header class=section>
         <h1>グループ設定</>
@@ -439,7 +440,7 @@
 </template-set>
 
 <template-set name=page-members>
-  <template title=参加者>
+  <template title=参加者 class=is-subpage>
 
     <section id=members>
       <header class=section>
@@ -495,7 +496,7 @@
               <th>
           <tbody>
         </table>
-        <action-status hidden stage-loader=読み込み中... />
+        <action-status hidden stage-loader=読込中... />
       </list-container>
 
       <p><a href=my/config>自分の参加者設定を変更</a>
@@ -593,7 +594,7 @@
           <list-is-empty hidden>
             <p>招待状はありません。
           </list-is-empty>
-          <gr-action-status hidden stage-load=読み込み中... />
+          <gr-action-status hidden stage-load=読込中... />
           <p class="operations pager">
             <button type=button class=next-page-button hidden>もっと昔</button>
           </p>
@@ -607,7 +608,7 @@
 </template-set>
   
 <template-set name=page-index-config>
-  <template title=設定>
+  <template title=設定 class=is-subpage>
     <section>
       <header class=section>
         <h1>設定</h1>
@@ -729,7 +730,7 @@
 
         <list-main></list-main>
 
-      <gr-action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       <run-action name=installPrependNewObjects />
@@ -832,7 +833,7 @@
               <p class="operations pager">
                 <button type=button class=next-page-button hidden>もっと昔</button>
               </p>
-              <gr-action-status hidden stage-load=読み込み中... />
+              <gr-action-status hidden stage-load=読込中... />
               <list-main/>
             </gr-list-container>
 
@@ -840,7 +841,7 @@
             <summary>コメントを書く</summary>
 
             <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent"
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
               <textarea data-edit-created-object data-name=body required></textarea>
@@ -859,10 +860,16 @@
                     stage-fetch=作成中...
                     stage-editcreatedobject_fetch=保存中...
                     stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読み込み中...
+                    stage-showcreatedobjectincommentlist=読込中...
                     ok=投稿しました />
-            </form>
-          </details>
+
+              <p>
+                <span>
+                  通知送信先:
+                  <gr-called-editor template=gr-called-editor data-edit-created-object />
+                </span>
+              </form>
+            </details>
 
           </article-comments>
         </template>
@@ -881,7 +888,7 @@
 
         <list-main></list-main>
 
-      <gr-action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       <run-action name=installPrependNewObjects />
@@ -1010,7 +1017,7 @@
 
         <list-main/>
 
-      <gr-action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       <run-action name=installPrependNewObjects />
@@ -1075,7 +1082,7 @@
                         stage-create=作成中...
                         stage-upload=アップロード中...
                         stage-close=保存中...
-                        stage-show=読み込み中...
+                        stage-show=読込中...
                         ok=アップロード完了 />
               </template>
               <table>
@@ -1103,7 +1110,7 @@
 
         <list-main></list-main>
 
-      <gr-action-status hidden stage-load=読み込み中... />
+      <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
       <run-action name=installPrependNewObjects />
@@ -1229,7 +1236,7 @@
               <p class="operations pager">
                 <button type=button class=next-page-button hidden>もっと昔</button>
               </p>
-              <gr-action-status hidden stage-load=読み込み中... />
+              <gr-action-status hidden stage-load=読込中... />
               <list-main/>
             </gr-list-container>
 
@@ -1237,7 +1244,7 @@
             <summary>コメントを書く</summary>
 
             <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent"
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
               <textarea data-edit-created-object data-name=body required></textarea>
@@ -1256,8 +1263,14 @@
                     stage-fetch=作成中...
                     stage-editcreatedobject_fetch=保存中...
                     stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読み込み中...
+                    stage-showcreatedobjectincommentlist=読込中...
                     ok=投稿しました />
+
+              <p>
+                <span>
+                  通知送信先:
+                  <gr-called-editor template=gr-called-editor data-edit-created-object />
+                </span>
             </form>
           </details>
 
@@ -1272,14 +1285,14 @@
         </template>
 
         <list-main></list-main>
-        <gr-action-status hidden stage-load=読み込み中... />
+        <gr-action-status hidden stage-load=読込中... />
       </gr-list-container>
     </section>
   </template>
 </template-set>
 
 <template-set name=page-object-revisions>
-  <template>
+  <template title=編集履歴 class="is-subpage subpage-back-to-subdirectory">
     <section>
       <header class=section>
         <h1><bdi data-field=object.title data-empty=■ />の編集履歴</h1>
@@ -1309,7 +1322,7 @@
               <th>変更点
           <tbody>
         </table>
-        <action-status hidden stage-loader=読み込み中...></action-status>
+        <action-status hidden stage-loader=読込中...></action-status>
         <p class=operations>
           <button type=button class=list-next>もっと昔</button>
       </list-container>
@@ -1338,6 +1351,7 @@
         label-timestamp=日付
         label-index_ids=所属
         label-user_status=公開状態
+        label-called=記事通知
       />
       <enum-value data-field=revision_data.changes.action
           label-new=新規作成
@@ -1449,7 +1463,7 @@
               <p class="operations pager">
                 <button type=button class=next-page-button hidden>もっと昔</button>
               </p>
-              <gr-action-status hidden stage-load=読み込み中... />
+              <gr-action-status hidden stage-load=読込中... />
               <list-main/>
             </gr-list-container>
 
@@ -1457,7 +1471,7 @@
             <summary>コメントを書く</summary>
 
             <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent"
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
               <textarea data-edit-created-object data-name=body required></textarea>
@@ -1476,8 +1490,14 @@
                     stage-fetch=作成中...
                     stage-editcreatedobject_fetch=保存中...
                     stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読み込み中...
+                    stage-showcreatedobjectincommentlist=読込中...
                     ok=投稿しました />
+
+              <p>
+                <span>
+                  通知送信先:
+                  <gr-called-editor template=gr-called-editor data-edit-created-object />
+                </span>
             </form>
           </details>
 
@@ -1502,7 +1522,7 @@
           </article>
         </list-is-empty>
 
-        <gr-action-status hidden stage-load=読み込み中... />
+        <gr-action-status hidden stage-load=読込中... />
         <run-action name=installPrependNewObjects />
       </gr-list-container>
 
@@ -1520,7 +1540,7 @@
           <p class="operations pager">
             <button type=button class=next-page-button hidden>もっと昔</button>
           </p>
-          <gr-action-status hidden stage-load=読み込み中... />
+          <gr-action-status hidden stage-load=読込中... />
           <list-main/>
         </gr-list-container>
       </article-comments>
@@ -1617,7 +1637,7 @@
 </template-set>
   
 <template-set name=page-my-config>
-  <template title=グループ参加者設定>
+  <template title=グループ参加者設定 class=is-subpage>
     <section>
       <header class=section>
         <h1>グループ参加者設定</h1>

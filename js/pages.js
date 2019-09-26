@@ -107,6 +107,15 @@ GR._state = {};
 
 GR._updateMyInfo = function () {
   delete GR._state.getMembers;
+  if (GR._state.navigatePartition === 'dashboard') {
+    return GR._state.updateMyInfo = fetch ('/my/info.json', {}).then (json => { // XXX broken
+      var oldAccount = GR._state.account || {};
+      GR._state.account = json;
+      delete GR._state.group;
+
+      // XXX
+    });
+  }
   // Cached until updated by reloadGroupInfo
   return GR._state.updateMyInfo = gFetch ('my/info.json', {}).then (json => {
     var oldAccount = GR._state.account || {};
@@ -349,6 +358,11 @@ defineElement ({
             GR.group.info ().then (_ => obj.group = _),
             GR.index.info (indexId).then (_ => obj.index = _),
           ]);
+        } else if (type === 'dashboard') {
+          return Promise.all ([
+            ts,
+            $getTemplateSet ('gr-menu-dashboard'),
+          ]);
         } else {
           throw new Error ("Unknown <gr-menu type> value |"+type+"|");
         }
@@ -371,6 +385,164 @@ defineElement ({
     }, // grUpdate
   },
 }); // <gr-menu>
+
+GR.dashboard = {_state: {}};
+
+GR.dashboard._groupMembers = function (groupId) {
+  if (!GR.dashboard._state.getGroupMembers) GR.dashboard._state.getGroupMembers = {};
+  if (GR.dashboard._state.getGroupMembers[groupId]) return GR.dashboard._state.getGroupMembers[groupId];
+  
+  var map = {};
+  var get = (ref) => {
+    var r = '';
+    if (ref) r = '?ref=' + encodeURIComponent (ref);
+    return fetch ('/g/'+groupId+'/members/list.json' + r, {}).then (res => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then (json => {
+      Object.values (json.members).forEach (_ => {
+        map[_.account_id] = _;
+        _.group_id = groupId;
+      });
+      if (json.has_next) {
+        return get (json.next_ref);
+      }
+    });
+  }; // get
+  return GR.dashboard._state.getGroupMembers[groupId] = get (null).then (_ => {
+    return map;
+  });
+}; // GR.dashboard._groupMembers
+
+GR.dashboard._groupObject = function (groupId, objectId) {
+  if (!GR.dashboard._state.getGroupObjects) GR.dashboard._state.getGroupObjects = {};
+  if (!GR.dashboard._state.getGroupObjects[groupId]) GR.dashboard._state.getGroupObjects[groupId] = {};
+  if (GR.dashboard._state.getGroupObjects[groupId][objectId]) return GR.dashboard._state.getGroupObjects[groupId][objectId];
+
+  var fd = new FormData;
+  var get = () => {
+    return new Promise (ok => {
+      setTimeout (ok, 500);
+    }).then (() => {
+      delete GR.dashboard._state.getGroupObjects[groupId].current;
+      return fetch ('/g/'+groupId+'/o/get.json?with_title=1&with_snippet=1', {method: 'POST', body: fd});
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then (function (json) {
+      return json.objects;
+    });
+  }; // get
+  return GR.dashboard._state.getGroupObjects[groupId][objectId] = Promise.resolve ().then (() => {
+    if (GR.dashboard._state.getGroupObjects[groupId].current) {
+      GR.dashboard._state.getGroupObjects[groupId].current.fd.append ('object_id', objectId);
+    } else {
+      fd.append ('object_id', objectId);
+      GR.dashboard._state.getGroupObjects[groupId].current = get ();
+      GR.dashboard._state.getGroupObjects[groupId].current.fd = fd;
+    }
+    return GR.dashboard._state.getGroupObjects[groupId].current;
+  }).then (objects => {
+    return objects[objectId];
+  });
+}; // GR.dashboard._groupObject
+
+GR.dashboard._groupList = function () {
+  if (GR.dashboard._state.getGroupList) return GR.dashboard._state.getGroupList;
+  
+  var list = [];
+  var get = (ref) => {
+    var r = '';
+    if (ref) r = '?ref=' + encodeURIComponent (ref);
+    return fetch ('/my/groups.json' + r, {}).then (res => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then (json => {
+      Object.values (json.groups).forEach (_ => {
+        list.push (_);
+      });
+      if (json.has_next) {
+        return get (json.next_ref);
+      }
+    });
+  }; // get
+  return GR.dashboard._state.getGroupList = get (null).then (_ => {
+    list.forEach (g => {
+      if (g.user_status == 1 && g.owner_status == 1) {
+        if (g.member_type == 2) {
+          g.status = 'owner';
+        } else if (g.member_type == 1) {
+          g.status = 'member';
+        } else { // error
+          g.status = 'member_type ' + g.member_type;
+        }
+      } else if (g.user_status == 2 && g.owner_status == 1) {
+        g.status = 'invited';
+      } else { // error
+        g.status = 'user_status ' + g.user_status + ', owner_status ' + g.owner_status;
+      }
+      if (!g.default_index_id) g["hidden-unless-has-default-index"] = "hidden";
+    });
+    return list;
+  });
+}; // GR.dashboard._groupList
+
+(() => {
+
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'dashboardGroupListLoader');
+  e.pcHandler = function (opts) {
+    return GR.dashboard._groupList ().then (groups => {
+      return {
+        data: groups.sort ((a, b) => b.updated - a.updated),
+      };
+    });
+  };
+  document.head.appendChild (e);
+
+}) ();
+
+defineElement ({
+  name: 'gr-dashboard-item',
+  fill: 'contentattribute',
+  props: {
+    pcInit: function () {
+      new MutationObserver (() => this.grRender ()).observe
+          (this, {attributes: true, attributeFilter: ['type', 'groupid', 'value']});
+      return Promise.resolve ().then (() => this.grRender ());
+    }, // pcInit
+    grRender: function () {
+      return Promise.resolve ().then (() => {
+        var type = this.getAttribute ('type');
+        var value = this.getAttribute ('value');
+        var groupId = this.getAttribute ('groupid');
+        if (type === 'object') {
+          if (!value || !groupId) return null;
+          return GR.dashboard._groupObject (groupId, value);
+        } else if (type === 'account') {
+          if (!value || !groupId) return null;
+          return GR.dashboard._groupMembers (groupId).then (members => {
+            return members[value];
+          });
+        } else if (type === 'group') {
+          if (!value) return null;
+          return GR.dashboard._groupList ().then (groups => {
+            for (var i = 0; i < groups.length; i++) {
+              if (groups[i].group_id == value) {
+                return groups[i];
+              }
+            }
+            return null;
+          });
+        } else {
+          return null;
+        }
+      }).then (_ => {
+        $fill (this, _ || {});
+      });
+    }, // grRender
+  },
+}); // <gr-dashboard-item>
 
 function $$c (n, s) {
   return Array.prototype.filter.call (n.querySelectorAll (s), function (e) {
@@ -2384,6 +2556,11 @@ stageActions.resetForm = function (args) {
 }; // resetForm
 stageActions.resetForm.stages = [];
 
+stageActions.resetCallEditor = function (args) {
+  args.form.querySelectorAll ('gr-called-editor').forEach (_ => _.grReset ());
+}; // resetCallEditor
+stageActions.resetCallEditor.stages = [];
+
 stageActions.editObject = function (args) {
   var fd = new FormData;
   var length = 0;
@@ -2416,6 +2593,9 @@ stageActions.editCreatedObject = function (args) {
   var fd = new FormData;
   $$ (args.form, 'input[data-edit-created-object]:not([hidden]), textarea[data-edit-created-object]:not([hidden])').forEach (function (f) {
     fd.append (f.getAttribute ('data-name'), f.value);
+  });
+  $$ (args.form, 'gr-called-editor[data-edit-created-object]').forEach (function (control) {
+    control.pcModifyFormData (fd);
   });
   return gFetch ('o/' + args.result.object_id + '/edit.json', {post: true, formData: fd}).then (function (json) {
     args.as.stageEnd ('editcreatedobject_fetch');
@@ -2562,7 +2742,10 @@ function upgradeForm (form) {
     return fetch (url, {
       credentials: "same-origin",
       referrerPolicy: 'same-origin',
-    }).then ((res) => res.json ()).then ((json) => {
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then ((json) => {
       if (!this.hasAttribute ('key')) throw new Error ("|key| is not specified");
       json = json || {};
       var hasNext = json.next_ref && opts.ref !== json.next_ref; // backcompat
@@ -3130,6 +3313,7 @@ Formatter.hatena = function (source) {
     method: "post",
     body: source,
   }).then (function (r) {
+    if (r.status !== 200) throw r;
     return r.text ();
   }).then (function (x) {
     var div = Formatter.html (x);
@@ -3201,7 +3385,7 @@ $$ (document, 'object-ref').forEach (upgradeObjectRef);
 
 GR.navigate = {};
 
-GR.navigate._init = function () {
+GR.navigate._init = function (partition) {
   addEventListener ('click', (ev) => {
     var n = ev.target;
     while (n && n.localName !== 'a') {
@@ -3218,6 +3402,7 @@ GR.navigate._init = function () {
   history.scrollRestoration = "manual";
   GR.navigate.enabled = true;
   GR._state.navigateInitiated = performance.now ();
+  if (partition) GR._state.navigatePartition = partition;
 }; // GR.navigate._init
 
 GR.navigate.avail = function () {
@@ -3245,80 +3430,98 @@ GR.navigate.go = function (u, args) {
           url.search === location.search) {
         return ['fragment', url];
       }
-      return GR.group.info ().then (group => {
-        var path = url.pathname;
-        var prefix = '/g/' + group.group_id + '/';
-        if (path.substring (0, prefix.length) === prefix) {
-          path = path.substring (prefix.length);
+      if (GR._state.navigatePartition === 'group') {
+        return GR.group.info ().then (group => {
+          var path = url.pathname;
+          var prefix = '/g/' + group.group_id + '/';
+          if (path.substring (0, prefix.length) === prefix) {
+            path = path.substring (prefix.length);
 
-          if (path === '') {
-            return ['group', 'index', {}];
-          }
+            if (path === '') {
+              return ['group', 'index', {}];
+            }
 
-          var m = path.match (/^(search|config|members)$/);
-          if (m) return ['group', m[1], {
-            q: url.searchParams.get ('q'),
-          }];
+            var m = path.match (/^(search|config|members)$/);
+            if (m) return ['group', m[1], {
+              q: url.searchParams.get ('q'),
+            }];
 
-          m = path.match (/^o\/([0-9]+)\/$/);
-          if (m) return ['group', 'object-index', {
-            objectId: m[1],
-            objectRevisionId: url.searchParams.get ('object_revision_id') || null,
-          }];
+            m = path.match (/^o\/([0-9]+)\/$/);
+            if (m) return ['group', 'object-index', {
+              objectId: m[1],
+              objectRevisionId: url.searchParams.get ('object_revision_id') || null,
+            }];
 
-          m = path.match (/^o\/([0-9]+)\/(revisions)$/);
-          if (m) return ['group', 'object-' + m[2], {
-            objectId: m[1],
-          }];
+            m = path.match (/^o\/([0-9]+)\/(revisions)$/);
+            if (m) return ['group', 'object-' + m[2], {
+              objectId: m[1],
+            }];
 
-          m = path.match (/^i\/([0-9]+)\/$/);
-          if (m) return ['group', 'index-index', {
-            indexId: m[1],
-          }];
-
-          m = path.match (/^i\/([0-9]+)\/(config)$/);
-          if (m) return ['group', 'index-' + m[2], {
-            indexId: m[1],
-          }];
-
-          m = path.match (/^i\/([0-9]+)\/wiki\/([^\/]+)$/);
-          if (m) {
-            var n;
-            try {
-              n = decodeURIComponent (m[2]);
-            } catch (e) { }
-            return ['group', 'wiki', {
+            m = path.match (/^i\/([0-9]+)\/$/);
+            if (m) return ['group', 'index-index', {
               indexId: m[1],
-              wikiName: n,
             }];
-          }
 
-          m = path.match (/^wiki\/([^\/]+)$/);
-          if (m) {
-            var n;
-            try {
-              n = decodeURIComponent (m[1]);
-            } catch (e) { }
-            return ['group', 'wiki', {
-              wikiName: n,
+            m = path.match (/^i\/([0-9]+)\/(config)$/);
+            if (m) return ['group', 'index-' + m[2], {
+              indexId: m[1],
             }];
+
+            m = path.match (/^i\/([0-9]+)\/wiki\/([^\/]+)$/);
+            if (m) {
+              var n;
+              try {
+                n = decodeURIComponent (m[2]);
+              } catch (e) { }
+              return ['group', 'wiki', {
+                indexId: m[1],
+                wikiName: n,
+              }];
+            }
+
+            m = path.match (/^wiki\/([^\/]+)$/);
+            if (m) {
+              var n;
+              try {
+                n = decodeURIComponent (m[1]);
+              } catch (e) { }
+              return ['group', 'wiki', {
+                wikiName: n,
+              }];
+            }
+
+            m = path.match (/^account\/([0-9]+)\/$/);
+            if (m) return ['group', 'account-index', {
+              accountId: m[1],
+            }];
+
+            m = path.match (/^my\/(config)$/);
+            if (m) return ['group', 'my-config', {
+              myAccount: true,
+            }];
+
+            return ['site', url];
+          } else { // not in same group
+            return ['site', url];
           }
-
-          m = path.match (/^account\/([0-9]+)\/$/);
-          if (m) return ['group', 'account-index', {
-            accountId: m[1],
-          }];
-
-          m = path.match (/^my\/(config)$/);
-          if (m) return ['group', 'my-config', {
-            myAccount: true,
-          }];
-
-          return ['site', url];
-        } else {
-          return ['site', url];
+        });
+      } else if (GR._state.navigatePartition === 'dashboard') {
+        var path = url.pathname;
+        if (path === '/dashboard') {
+          return ['dashboard', 'dashboard', {}];
+        } else if (path === '/jump') {
+          return ['dashboard', 'jump', {}];
         }
-      });
+
+        var m = path.match (/^\/dashboard\/(groups|calls)$/);
+        if (m) {
+          return ['dashboard', 'dashboard-' + m[1], {}];
+        }
+        
+        return ['site', url];
+      } else {
+        throw new Error ('Bad navigate partition |'+GR._state.navigatePartition+'|');
+      }
     }
     return ['external', url];
   }).then (_ => {
@@ -3333,7 +3536,7 @@ GR.navigate.go = function (u, args) {
         });
       }
     }; // sendPing
-    if (_[0] === 'group') {
+    if (_[0] === 'group' || _[0] === 'dashboard') {
       var ac = new AbortController;
       var nav = GR._state.currentNavigate = {
         abort: () => ac.abort (),
@@ -3442,10 +3645,15 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       pushed = true;
     }).then (_ => {
       if (GR._state.currentNavigate !== opts.thisNavigate) return;
-      
-      params.title = params.group.title;
-      params.url = '/g/' + params.group.group_id + '/';
-      params.theme = params.group.theme;
+
+      params.title = 'Gruwa';
+      params.url = '/dashboard';
+      params.theme = 'green';
+      if (params.group) {
+        params.title = params.group.title;
+        params.url = '/g/' + params.group.group_id + '/';
+        params.theme = params.group.theme;
+      }
       if (params.index && params.index.theme) {
         params.theme = params.index.theme;
         params.url += 'i/' + params.index.index_id + '/';
@@ -3460,27 +3668,34 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           menu.setAttribute ('type', 'index');
           menu.setAttribute ('indexid', params.index.index_id);
           _.querySelector ('header.page > a').style.visibility = 'visible';
-        } else {
+        } else if (params.group) {
           menu.setAttribute ('type', 'group');
           _.querySelector ('header.page > a').style.visibility = 'hidden';
+        } else {
+          menu.setAttribute ('type', 'dashboard');
         }
-      });
+      }); // header.page
+      
       var contentTitle = '';
+      var contentClasses;
       document.querySelectorAll ('page-main').forEach (_ => {
         var div = ts.createFromTemplate ('div', params);
-        contentTitle = div.title;
+        params.contentTitle = contentTitle = div.title;
+        contentClasses = div.classList;
         div.title = '';
 
-        var isOwner = params.group.member.member_type == 2;
-        if (isOwner) {
-          div.querySelectorAll ('[data-gr-if-group-non-owner]').forEach (_ => {
-            _.remove ();
-          });
-        } else {
-          div.querySelectorAll ('[data-gr-if-group-owner]').forEach (_ => {
-            _.remove ();
-          });
-        }
+        if (params.group) {
+          var isOwner = params.group.member.member_type == 2;
+          if (isOwner) {
+            div.querySelectorAll ('[data-gr-if-group-non-owner]').forEach (_ => {
+              _.remove ();
+            });
+          } else {
+            div.querySelectorAll ('[data-gr-if-group-owner]').forEach (_ => {
+              _.remove ();
+            });
+          }
+        } // params.group
 
         if (params.index) {
           div.querySelectorAll ('[data-gr-if-index-type]:not([data-gr-if-index-type~="'+params.index.index_type+'"])').forEach (_ => {
@@ -3515,7 +3730,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           div.querySelectorAll ('gr-menu[type=index]').forEach (_ => {
             _.setAttribute ('indexid', params.index.index_id);
           });
-        }
+        } // params.index
 
         if (params.wiki) {
           div.querySelectorAll ('gr-menu[type=wiki]').forEach (_ => {
@@ -3554,10 +3769,24 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         _.textContent = '';
         while (div.firstChild) _.appendChild (div.firstChild);
       });
-      var title = [params.group.title];
-      if (params.index) {
-        title.unshift (params.index.title);
+
+      document.querySelectorAll ('body > header.subpage').forEach (_ => {
+        _.hidden = ! contentClasses.contains ('is-subpage');
+        if (contentClasses.contains ('subpage-back-to-subdirectory')) {
+          params.backURL = './';
+        } else {
+          params.backURL = params.url;
+        }
+        if (!_.hidden) $fill (_, params);
+      });
+      
+      var title = [];
+      if (params.group) {
+        title.unshift (params.group.title);
+      } else {
+        title.unshift ('Gruwa');
       }
+      if (params.index) title.unshift (params.index.title);
       if (params.wiki) {
         title.unshift (params.wiki.name);
       } else if (params.object) {
@@ -3682,7 +3911,7 @@ defineElement ({
   name: 'gr-navigate',
   props: {
     pcInit: function () {
-      if (!GR.navigate.enabled) GR.navigate._init ();
+      if (!GR.navigate.enabled) GR.navigate._init (this.getAttribute ('partition'));
       GR.navigate.go (location.href, {
         reload: true,
         popstate: this.hasAttribute ('popstate'),

@@ -42,6 +42,15 @@
         <li><a href=#filesets>アップローダー</a>
       </ul>
 
+      <p id=group-create><a href=#groups>グループ</a>は、
+      <a href=#dashboard>ダッシュボード</a>の<a href=#dashboard-groups>グループ</a>ページから作成できます。
+      (サーバー管理者がサーバー設定 JSON ファイルで
+      <code>"no_create_group_key": true</code> に設定し<em>ない</em>場合、
+      認証が必要です。
+      ユーザー名は <code>g</code>、パスワードは
+      <code>"create_group_key": "<var>...</var>"</code>
+      で指定した文字列です。)
+      
       <section id=group-members>
         <h1>参加者</h1>
 
@@ -398,6 +407,42 @@
       </div>
     </section>
 
+    <section id=dashboard>
+      <h1>ダッシュボード</h1>
+
+      <p><a href=/dashboard><dfn>ダッシュボード</dfn></a>では、
+      <a href=#groups>グループ</a>を横断して<a href=#accounts>自分</a>に関係ある情報を一覧できます。
+
+      <p><a href=#dashboard>ダッシュボード</a>は、
+      <a href=/>Gruwa のトップページ</a>や、
+      グループ内ページ共通のメニューから開けます。
+
+      <p><a href=#dashboard>ダッシュボード</a>には次のページがあります。
+
+        <ul>
+          <li><a href=#dashboard-groups>グループ</a>
+          <li><a href=#jump>ジャンプリスト</a>
+          <li><a href=#dashboard-calls>記事通知</a>
+        </ul>
+        
+      <section id=dashboard-groups>
+        <h1>グループ</h1>
+
+        <p><a href=/dashboard/groups>グループ</a>ページには、
+        参加中の<a href=#groups>グループ</a>の一覧が表示されます。
+        更新があった順で表示されます。
+
+        <p>他のグループに参加するには、
+        <a href=#groups>グループ</a>の<a href=#owner>所有者</a>から<a href=#invitation>招待状</a>を発行してもらってください。
+
+        <p>ここから<a href=#group-create>新しいグループも作成</a>できます。
+        
+          <div class=notes>
+            <p><a href=#owner>所有者</a>により<a href=#group-members>参加者</a>から外されると、
+            一覧に表示されなくなります。
+          </div>
+      </section>
+      
     <section id=jump>
       <h1>ジャンプリスト</h1>
 
@@ -412,9 +457,18 @@
       ジャンプリストには最大100件のページを登録できます。
       ジャンプリストの表示順序は、利用頻度に応じて自動的に決まります。
 
-      <p><a href=/jump>ジャンプリスト</a>のページでは、
+      <p><a href=/jump>ジャンプリスト</a>ページでは、
       登録した各項目のラベル (文字列) を変更したり、
       項目を削除したりできます。
+    </section>
+
+      <section id=dashboard-calls>
+        <h1>記事通知</h1>
+
+        <p><a href=/dashboard/calls>記事通知</a>ページには、
+        受信した<dfn id=object-call>記事通知</dfn>が表示されます。
+      </section>
+      
     </section>
 
     <section id=import>

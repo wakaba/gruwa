@@ -1,58 +1,117 @@
-<html t:params="$account $app">
-  <head>
-    <t:include path=_other_head.html.tm m:app=$app>
-      ダッシュボード
-    </t:include>
-  <body>
+<html t:params="$account $app"
+    data-theme=green>
+<head>
+  <title>Gruwa</title>
+  <meta name=referrer content=no-referrer>
+  <meta name=robots content="NOINDEX,NOFOLLOW,NOARCHIVE">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name=theme-color content="green">
+  <link rel=stylesheet pl:href="'/css/common.css?r='.$app->rev">
+  <script pl:src="'/js/components.js?r='.$app->rev" class=body-js async data-export="$fill $promised $getTemplateSet" data-time-selector="time:not(.asis)" />
+  <script pl:src="'/js/framework.js?r='.$app->rev" class=body-js />
+  <script pl:src="'/js/pages.js?r='.$app->rev" async />
 
-<header class=common>
-  <header-area>
-    <hgroup>
-      <h1><a href=/ rel=top>Gruwa</h1>
-    </>
-  </header-area>
-  <header-area>
-    <a href=/dashboard>ダッシュボード</a>
-    <a href=/jump>ジャンプリスト</a>
-  </header-area>
-</header>
+<body>
+  <header class=page>
+    <a href=/ rel=top>Gruwa</a>
+    <h1><a href=/dashboard>ダッシュボード</a></h1>
+    <gr-menu type=dashboard />
+  </header>
+  <header class=subpage hidden>
+    <a href data-href-field=backURL title=親ページに戻る>←</a>
+    <gr-subpage-title data-field=contentTitle>ダッシュボード</gr-subpage-title>
+  </header>
+  <page-main/>
 
-  <section>
-    <h1>参加グループ</>
+  <gr-navigate-status>
+    <action-status stage-loading=読込中... />
+  </gr-navigate-status>
 
-    <gr-list-container type=table src=my/groups.json key=groups sortkey=updated class=main-table>
+  <gr-navigate partition=dashboard />
+
+<!-- also in _common.html.tm -->
+<template-set name=gr-menu>
+  <template>
+    <popup-menu>
+      <button type=button title=メニュー>
+        <button-label>
+          メニュー
+        </button-label>
+      </button>
+      <menu-main/>
+    </popup-menu>
+  </template>
+</template-set>
+
+<template-set name=gr-menu-dashboard>
+  <template>
+    <p><a data-href-template=/dashboard>トップ</a>
+    <p><a href=/help#dashboard target=help>ヘルプ</a>
+  </template>
+</template-set>
+
+<template-set name=page-dashboard>
+  <template title=ダッシュボード>
+
+    <ul class=main-menu-list>
+
+      <li><a href=/dashboard/groups>グループ</a>
+      <li><a href=/jump>ジャンプリスト</a>
+      <li><a href=/dashboard/calls>記事通知</a>
+      
+    </ul>
+  
+  </template>
+</template-set>
+
+<template-set name=page-dashboard-groups>
+  <template title=グループ class=is-subpage>
+
+    <section>
+      <header class=section>
+        <h1>参加グループ</h1>
+        <a href=/help#dashboard-groups target=help>ヘルプ</a>
+      </header>
+
+    <list-container loader=dashboardGroupListLoader type=table class="main-table dashboard-group-list">
       <template>
         <th>
-          <a href data-href-template="/g/{group_id}/">
+          <a href data-href-template="/g/{group_id}/#t:{updated}">
             <img data-src-template=/g/{group_id}/icon alt class=icon>
             <span data-field=title data-empty=(未参加グループ) />
           </a>
-        <td class=member_type>
-          <gr-enum-value data-field=member_type text-1=一般 text-2=所有者 text-0=未参加 />
-        <td class=user_status>
-          <gr-enum-value data-field=user_status text-1=参加中 text-2=招待中 />
-        <td class=owner_status>
-          <gr-enum-value data-field=owner_status text-1=承認済 text-2=未承認 />
         <td>
-          <a href data-href-template="g/{group_id}/i/{default_index_id}/" data-if-field=default_index_id>日記</a>
+          <enum-value data-field=status
+              label-owner=所有者として参加中
+              label-member=参加中
+              label-invited=招待されています
+          />
+        <td>
+          <a href data-href-template="/g/{group_id}/i/{default_index_id}/" data-filled=hidden data-hidden-field=hidden-unless-has-default-index class=default-index-button>日記</a>
       </template>
 
       <table>
         <thead>
           <tr>
             <th>グループ
-            <th>種別
-            <th>参加状態
-            <th>参加承認
+            <th>状態
             <th>
         <tbody>
       </table>
-      <gr-action-status hidden stage-load=読み込み中... />
-    </gr-list-container>
+      <action-status hidden stage-loader=読込中... />
+    </list-container>
 
-    <details>
-      <summary>グループの作成</summary>
+      <p>他のグループに参加するには、
+      グループの所有者から招待状を発行してもらってください。
 
+      <details>
+        <summary>グループの作成</summary>
+
+        <p>新しいグループを作成します。
+        <t:if x="$app->config->{no_create_group_key}">
+          (サーバー管理者が発行したキーが必要です。)
+        </t:if>
+        
       <form method=post action=javascript: data-action=g/create.json
           data-next="createGroupWiki go:/g/{group_id}/config"
           data-prompt="グループを作成します。この操作は取り消せません。よろしいですか。">
@@ -73,14 +132,113 @@
       </form>
     </details>
 
-    <ul>
-      <li><a href=jump>ジャンプリスト</a>
-    </ul>
+    </section>
+    
+  </template>
+</template-set>
+
+<template-set name=page-dashboard-calls>
+  <template title=記事通知 class=is-subpage>
+
+  <section>
+    <header class=section>
+      <h1>記事通知</h1>
+      <a href=/help#dashboard-calls target=help>ヘルプ</a>
+    </header>
+
+    <list-container type=table src=/my/calls.json key=items class="main-table dashboard-call-list">
+      <template data-class-template=object-read-{read}>
+        <td>
+          <p class=dashboard-call-timestamp>
+            <time data-field=timestamp data-format=ambtime />
+          <p class=dashboard-call-account>
+            <gr-dashboard-item type=account data-filled="groupid value" data-groupid-field=group_id data-value-field=from_account_id>
+              <a href data-href-template="/g/{group_id}/account/{account_id}/">
+                <img data-src-template=/g/{group_id}/account/{account_id}/icon alt class=icon>
+                <gr-account-name data-field=name data-empty=■ />
+              </a>
+            </gr-dashboard-item>
+        <td>
+          <p class=dashboard-call-group>
+            <gr-dashboard-item type=group data-filled=value data-value-field=group_id>
+              <a href data-href-template="/g/{group_id}/">
+                <img data-src-template=/g/{group_id}/icon alt class=icon>
+                <bdi data-field=title data-empty=■ />
+              </a>
+            </gr-dashboard-item>
+          <p class=dashboard-call-object>
+            <gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=object_id>
+              <a href data-href-template="/g/{group_id}/o/{object_id}/">
+                <cite data-field=title data-empty=■ />
+              </a>
+            </gr-dashboard-item>
+          <p class=dashboard-call-snippet>
+            <gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=object_id>
+              <gr-search-snippet data-field=snippet></gr-search-snippet>
+            </gr-dashboard-item>
+          <p class=dashboard-call-thread>
+            <gr-dashboard-item type=object data-filled="groupid value" data-groupid-field=group_id data-value-field=thread_id>
+              <a href data-href-template="/g/{group_id}/o/{object_id}/">
+                <cite data-field=title data-empty=■ />
+              </a>
+            </gr-dashboard-item>
+        <!-- reason -->
+      </template>
+
+      <table>
+        <thead>
+          <tr>
+            <th>送信
+            <th>記事
+        <tbody>
+      </table>
+      <action-status hidden stage-fetch=読込中... />
+      <p class=operations>
+        <button type=button class=list-next>もっと昔</button>
+    </list-container>
+
   </section>
+
+  </template>
+</template-set>
+
+<template-set name=page-jump>
+  <template title=ジャンプリスト class=is-subpage>
+    <section>
+      <header class=section>
+        <h1>ジャンプリスト</>
+        <a href=/help#jump target=help>ヘルプ</a>
+      </header>
+
+    <gr-list-container type=table src=/jump/list.json key=items class=main-table>
+      <template>
+        <th>
+          <a href data-href-template={URL} data-field=label />
+        <td class=operations>
+          <button type=button class=edit-button data-command=editJumpLabel data-prompt=ラベルを指定してください>編集</button>
+          <button type=button class=edit-button data-command=deleteJump>削除</button>
+          <gr-action-status hidden stage-fetch=... />
+      </template>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ページ
+            <th>編集
+        <tbody>
+      </table>
+      <gr-action-status hidden stage-load=読込中... />
+    </gr-list-container>
+
+      <p>新しいジャンプメニューを追加するには、追加したい項目のメニューから
+      「ジャンプリストに追加」を選んでください。
+    </section>
+  </template>
+</template-set>
 
 <!--
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -93,6 +251,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 -->

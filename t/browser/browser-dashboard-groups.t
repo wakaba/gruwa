@@ -10,17 +10,20 @@ Test {
     [a1 => account => {}],
     [g1 => group => {
       members => ['a1'], title => $current->generate_text (t1 => {}),
-      theme => 'red',
     }],
     [i1 => index => {
-      group => 'g1',
-      account => 'a1',
-      title => $current->generate_text (t3 => {}),
-      index_type => 1, # blog
+      group => 'g1', account => 'a1',
+    }],
+    [g2 => group => {
+      members => ['a1'], title => $current->generate_text (t2 => {}),
     }],
   )->then (sub {
+    return $current->post_json (['i', $current->o ('i1')->{index_id}, 'my.json'], {
+      is_default => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
     return $current->create_browser (1 => {
-      url => ['g', $current->o ('g1')->{group_id}, ''],
+      url => ['dashboard', 'groups'],
       account => 'a1',
     });
   })->then (sub {
@@ -30,18 +33,35 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'page-main',
-      text => $current->o ('t3'),
+      text => $current->o ('t1'),
+      name => 'group list (name1)',
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'body > header.subpage',
+      selector => 'page-main',
+      text => $current->o ('t2'),
+      name => 'group list (name2)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main a.default-index-button:not([hidden])',
+      html => '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id},
+      name => 'default index link (i1)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main a.default-index-button[hidden]',
       not => 1, shown => 1,
+      name => 'default index link (group2)',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
       return {
         title: document.title,
         url: location.pathname,
+        headerTitle: document.querySelector ('header.page h1').textContent,
+        headerURL: document.querySelector ('header.page h1 a').pathname,
+        headerLink: document.querySelector ('header.page gr-menu a').pathname,
       };
     });
   })->then (sub {
@@ -49,11 +69,14 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, $current->o ('t1');
-      is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/';
+      is $values->{title}, 'グループ - Gruwa';
+      is $values->{url}, '/dashboard/groups';
+      is $values->{headerTitle}, 'ダッシュボード';
+      is $values->{headerURL}, '/dashboard';
+      is $values->{headerLink}, $values->{headerURL};
     } $current->c;
   });
-} n => 2, name => ['initial load'], browser => 1;
+} n => 5, name => ['initial load'], browser => 1;
 
 RUN;
 

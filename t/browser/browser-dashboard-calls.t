@@ -8,21 +8,22 @@ Test {
   my $current = shift;
   return $current->create (
     [a1 => account => {}],
+    [a2 => account => {}],
     [g1 => group => {
-      members => ['a1'],
+      members => ['a1', 'a2'],
+      title => $current->generate_text (t1 => {}),
     }],
-    [o1 => object => {
-      group => 'g1',
-      account => 'a1',
-      title => $current->generate_text (t4 => {}),
-    }],
+    [o1 => object => {group => 'g1', account => 'a2',
+                      called_account => 'a1',
+                      title => $current->generate_text (t2 => {}),
+                      body => $current->generate_text (t3 => {})}],
   )->then (sub {
-    return $current->post_json (['my', 'edit.json'], {
-      name => $current->generate_text (t1 => {}),
-    }, account => 'a1', group => 'g1');
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'my', 'edit.json'], {
+      name => $current->generate_text ('t4' => {}),
+    }, account => 'a2');
   })->then (sub {
     return $current->create_browser (1 => {
-      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, 'revisions'],
+      url => ['dashboard', 'calls'],
       account => 'a1',
     });
   })->then (sub {
@@ -32,14 +33,26 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'page-main',
-      text => $current->o ('t4'),
-      name => 'object title',
+      text => $current->o ('t1'),
+      name => 'call list (group title)',
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'page-main .main-table tbody',
-      text => $current->o ('t1'),
-      name => 'author name',
+      selector => 'page-main',
+      text => $current->o ('t2'),
+      name => 'call list (title)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('t3'),
+      name => 'call list (body snippet)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('t4'),
+      name => 'call list (from account name)',
     });
   })->then (sub {
     return $current->b_wait (1 => {
@@ -47,15 +60,13 @@ Test {
       shown => 1,
     });
   })->then (sub {
-    use utf8;
-    return $current->b_wait (1 => {
-      selector => 'page-main .main-table tbody',
-      text => '新規作成',
-      name => 'changes',
-    });
-  })->then (sub {
     return $current->b (1)->execute (q{
       return {
+        title: document.title,
+        url: location.pathname,
+        headerTitle: document.querySelector ('header.page h1').textContent,
+        headerURL: document.querySelector ('header.page h1 a').pathname,
+        headerLink: document.querySelector ('header.page gr-menu a').pathname,
         subTitle: document.querySelector ('body > header.subpage gr-subpage-title').textContent,
         subBackURL: document.querySelector ('body > header.subpage a').pathname,
       };
@@ -65,40 +76,16 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{subTitle}, '編集履歴';
-      is $values->{subBackURL}, '/g/' . $current->o ('g1')->{group_id} . '/o/'.$current->o ('o1')->{object_id}.'/';
+      is $values->{title}, '記事通知 - Gruwa';
+      is $values->{url}, '/dashboard/calls';
+      is $values->{headerTitle}, 'ダッシュボード';
+      is $values->{headerURL}, '/dashboard';
+      is $values->{headerLink}, $values->{headerURL};
+      is $values->{subTitle}, '記事通知';
+      is $values->{subBackURL}, '/dashboard';
     } $current->c;
   });
-} n => 2, name => ['page'], browser => 1;
-
-Test {
-  my $current = shift;
-  return $current->create (
-    [a1 => account => {}],
-    [g1 => group => {
-      members => ['a1'], title => $current->generate_text (t1 => {}),
-      theme => 'red',
-    }],
-  )->then (sub {
-    return $current->create_browser (1 => {
-      url => ['g', $current->o ('g1')->{group_id}, 'o', 5235244, 'revisions'],
-      account => 'a1',
-    });
-  })->then (sub {
-    return $current->b_wait (1 => {
-      selector => 'html:not([data-navigating])',
-    });
-  })->then (sub {
-    return $current->b_wait (1 => {
-      selector => 'gr-navigate-status',
-      text => 'Object not found',
-    });
-  })->then (sub {
-    test {
-      ok 1;
-    } $current->c;
-  });
-} n => 1, name => ['object not found'], browser => 1;
+} n => 7, name => ['initial load'], browser => 1;
 
 RUN;
 

@@ -15,6 +15,7 @@ use Web::MIME::Type;
 use Web::URL;
 use Web::URL::Encoding;
 use Web::DOM::Document;
+use Web::Transport::BasicClient;
 
 use Pager;
 use Results;
@@ -845,6 +846,8 @@ sub create ($$$$) {
   # /g/create.json
   $app->requires_request_method ({POST => 1});
   $app->requires_same_origin;
+  $app->requires_basic_auth ({g => $app->config->{create_group_key}})
+      unless $app->config->{no_create_group_key};
 
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
@@ -911,6 +914,7 @@ sub create ($$$$) {
 sub main ($$$$$) {
   my ($class, $app, $path, $db, $acall) = @_;
 
+  ## Pjax (partition=group)
   if (
     (@$path == 3 and {
       '' => 1,         # /g/{group_id}/
@@ -1937,7 +1941,7 @@ sub group_object ($$$$) {
         my $aws4 = $app->config->{storage}->{aws4};
         my $bucket = $app->config->{storage}->{bucket};
         my $url = Web::URL->parse_string ($app->config->{storage}->{url});
-        my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+        my $client = Web::Transport::BasicClient->new_from_url ($url);
         # XXX body streaming
         return $client->request (
           method => 'GET',
@@ -1983,7 +1987,7 @@ sub group_object ($$$$) {
         my $aws4 = $app->config->{storage}->{aws4};
         my $bucket = $app->config->{storage}->{bucket};
         my $url = Web::URL->parse_string ($app->config->{storage}->{url});
-        my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+        my $client = Web::Transport::BasicClient->new_from_url ($url);
 
         my $file = $path->[3];
         return $client->request (

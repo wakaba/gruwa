@@ -38,46 +38,47 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'article .edit-button',
+      selector => 'article-comments form button[type=submit]',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      document.querySelector ('article .edit-button').click ();
+      document.querySelector ('article-comments details summary').click ();
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'edit-container gr-called-editor button',
-      scroll => 1, shown => 1,
+      selector => 'article-comments form gr-called-editor button',
+      shown => 1,
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      document.querySelector ('edit-container gr-called-editor button').click ();
+      document.querySelector ('article-comments form gr-called-editor button').click ();
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'edit-container gr-called-editor menu-main',
+      selector => 'article-comments form gr-called-editor menu-main',
       text => $current->o ('t2'),
       scroll => 1,
       name => 'a2 name (t2)',
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'edit-container gr-called-editor menu-main',
+      selector => 'article-comments form gr-called-editor menu-main',
       text => $current->o ('t3'),
       scroll => 1,
       name => 'a3 name (t3)',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      document.querySelector ('edit-container gr-called-editor menu-main input[type=checkbox][value="'+arguments[0]+'"]').click ();
-    }, [$current->o ('a3')->{account_id}]);
+      document.querySelector ('article-comments form [data-name=body]').value = arguments[1];
+      document.querySelector ('article-comments form gr-called-editor menu-main input[type=checkbox][value="'+arguments[0]+'"]').click ();
+    }, [$current->o ('a3')->{account_id}, $current->generate_text (b1 => {})]);
   })->then (sub {
     return $current->b (1)->execute (q{
-      document.querySelector ('edit-container .save-button').click ();
+      document.querySelector ('article-comments form button[type=submit]').click ();
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'edit-container .save-button:enabled',
+      selector => 'article-comments form button[type=submit]:enabled',
     });
   })->then (sub {
     return $current->get_json (['my', 'calls.json'], {}, account => 'a3');
@@ -87,7 +88,8 @@ Test {
       is 0+@{$result->{json}->{items}}, 1;
       my $item = $result->{json}->{items}->[0];
       is $item->{group_id}, $current->o ('g1')->{group_id};
-      is $item->{object_id}, $current->o ('o1')->{object_id};
+      is $item->{thread_id}, $current->o ('o1')->{object_id};
+      isnt $item->{object_id}, $current->o ('o1')->{object_id};
       is $item->{from_account_id}, $current->o ('a4')->{account_id};
       is $item->{reason}, 0b10;
     } $current->c;
@@ -98,7 +100,7 @@ Test {
       is 0+@{$result->{json}->{items}}, 0;
     } $current->c;
   });
-} n => 6, name => ['object_revision_id'], browser => 1;
+} n => 7, name => ['comment with object call'], browser => 1;
 
 RUN;
 

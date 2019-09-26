@@ -37,7 +37,7 @@ Test {
     return $current->are_errors (
       ['GET', ['jump', 'abc'], {}],
       [
-        {account => undef, status => 302},
+        {account => undef, status => 403},
         {account => 'a1', status => 404},
         {account => 'a1', path => ['jump', ''], status => 404},
       ],
@@ -49,7 +49,7 @@ RUN;
 
 =head1 LICENSE
 
-Copyright 2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2017-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -62,6 +62,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

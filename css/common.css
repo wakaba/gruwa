@@ -163,6 +163,39 @@ header.page > gr-popup-menu {
   font-size: 90%;
 }
 
+header.subpage:not([hidden]) {
+  display: flex;
+  margin-top: -1em;
+  margin-bottom: 1em;
+  padding: .3em;
+  background: var(--dark-background-color);
+  color: var(--dark-color);
+  font-size: 130%;
+  font-weight: bolder;
+}
+
+header.subpage > a:not([hidden]) {
+  display: inline-block;
+  min-width: 2em;
+  min-height: 2em;
+  box-sizing: border-box;
+  padding: .3em;
+  text-align: center;
+  vertical-align: middle;
+}
+
+header.subpage > a:not(:hover):not(:focus):not(:active) {
+  color: inherit;
+  background: transparent;
+  text-decoration: none;
+}
+
+header.subpage > gr-subpage-title {
+  flex-grow: 1;
+  text-align: center;
+  align-self: center;
+}
+
 section.page > footer {
   margin: 2em;
 }
@@ -598,20 +631,68 @@ article-comments .actions form textarea {
   line-height: 1.5;
 }
 
-gr-list-container[key=groups] td.user_status,
-gr-list-container[key=groups] td.owner_status,
-gr-list-container[key=groups] td.member_type {
-  text-align: center;
-  min-width: 5em;
-}
-
-gr-list-container[key=groups] td.desc {
+.dashboard-call-list td:first-child {
   min-width: 10em;
+  vertical-align: top;
 }
 
-gr-list-container[key=groups] .icon {
+.dashboard-group-list .icon,
+.dashboard-call-list td:first-child .icon {
   width: 2em;
   height: 2em;
+}
+
+.dashboard-call-timestamp {
+  font-size: 80%;
+  text-align: right;
+}
+
+.dashboard-call-group {
+  font-size: 80%;
+}
+
+.dashboard-call-group a:not(:hover):not(:focus):not(:active) {
+  text-decoration: none;
+  color: inherit;
+  background: transparent;
+}
+
+.dashboard-call-group .icon {
+  width: 1em;
+  height: 1em;
+}
+
+.dashboard-call-object,
+.dashboard-call-thread,
+.dashboard-call-snippet {
+  margin-left: 2em;
+}
+
+.dashboard-call-object a:not([hidden]) {
+  display: block;
+  font-size: 120%;
+  font-weight: bolder;
+  padding: 0.3em;
+}
+
+.dashboard-call-thread {
+  font-size: 80%;
+  text-align: right;
+}
+
+.dashboard-call-thread::before {
+  content: "(Re: ";
+}
+.dashboard-call-thread::after {
+  content: ")";
+}
+
+.dashboard-call-snippet {
+  padding: .5em;
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+  line-height: 1.3;
+  font-size: 80%;
 }
 
 page-main form[is=gr-search] {

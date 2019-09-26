@@ -3,6 +3,9 @@ use strict;
 use warnings;
 use Warabe::App;
 push our @ISA, qw(Warabe::App);
+use Web::URL;
+use Web::Transport::BasicClient;
+use JSON::PS;
 
 sub new_from_http_and_config ($$$) {
   my $self = $_[0]->new_from_http ($_[1]);
@@ -18,11 +21,76 @@ sub rev ($) {
   return $_[0]->{app_config}->{git_sha};
 } # rev
 
+sub accounts ($$$) {
+  my ($app, $path, $params) = @_;
+  my $accounts = $app->{accounts_client} ||= Web::Transport::BasicClient->new_from_url
+      (Web::URL->parse_string ($app->config->{accounts}->{url}));
+  return $accounts->request (
+    method => 'POST',
+    path => $path,
+    bearer => $app->config->{accounts}->{key},
+    params => $params,
+  )->then (sub {
+    my $res = $_[0];
+    if ($res->status == 200) {
+      return json_bytes2perl $res->body_bytes;
+    } elsif (not $res->is_network_error and
+             ($res->header ('Content-Type') // '') =~ m{^application/json}) {
+      my $json = json_bytes2perl $res->body_bytes;
+      if (defined $json and ref $json eq 'HASH' and defined $json->{reason}) {
+        die $json;
+      }
+    }
+    die $res;
+  });
+} # accounts
+
+sub apploach ($$$) {
+  my ($self, $path, $params) = @_;
+  my $config = $self->config;
+  my $client = $self->{apploach_client} ||= do {
+    my $url = Web::URL->parse_string ($config->{apploach}->{url});
+    Web::Transport::BasicClient->new_from_url ($url);
+  };
+  for (keys %$params) {
+    if (ref $params->{$_} eq 'HASH') {
+      $params->{$_} = perl2json_chars $params->{$_};
+    }
+  }
+  return $client->request (
+    method => 'POST',
+    bearer => $config->{apploach}->{key},
+    path => [$config->{apploach}->{app_id}, @$path],
+    params => $params,
+  )->then (sub {
+    my $res = $_[0];
+    if ($res->status == 200) {
+      return json_bytes2perl $res->body_bytes;
+    } elsif ($res->status == 400 and
+             $res->header ('content-type') =~ m{^application/json}) {
+      my $json = json_bytes2perl $res->body_bytes;
+      if (ref $json eq 'HASH' and defined $json->{reason}) {
+        return $self->throw_error (400, reason_phrase => $json->{reason});
+      }
+    }
+    die $res;
+  });
+} # apploach
+
+sub close ($) {
+  my $self = $_[0];
+  return Promise->all ([
+    (defined $self->{db} ? $self->{db}->disconnect : undef),
+    (defined $self->{accounts_client} ? $self->{accounts_client}->close : undef),
+    (defined $self->{apploach_client} ? $self->{apploach_client}->close : undef),
+  ]);
+} # close
+
 1;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -35,6 +103,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

@@ -7,8 +7,6 @@ use Promised::Flow;
 use JSON::PS;
 use Wanage::HTTP;
 use Dongry::Database;
-use Web::URL;
-use Web::Transport::ConnectionClient;
 
 use AppServer;
 use StaticFiles;
@@ -37,38 +35,20 @@ my $DBSources = {sources => {
 
 sub accounts ($) {
   my $app = $_[0];
-  my $accounts = Web::Transport::ConnectionClient->new_from_url
-      (Web::URL->parse_string ($app->config->{accounts}->{url}));
   my $acall = sub {
-    my ($path, $params) = @_;
-    my $p = $accounts->request (
-      method => 'POST',
-      path => $path,
-      bearer => $app->config->{accounts}->{key},
-      params => $params,
-    );
+    my $p = $app->accounts (@_);
     return sub {
       my ($ok, $ng, $exception) = @_;
-      return $p->then (sub {
-        my $result = $_[0];
-        if ($result->status == 200) {
-          return $ok->(json_bytes2perl $result->body_bytes) if defined $ok;
-          return;
-        } elsif (defined $ng and
-                 not $result->is_network_error and
-                 ($result->header ('Content-Type') // '') =~ m{^application/json}) {
-          my $json = json_bytes2perl $result->body_bytes;
-          if (defined $json and ref $json eq 'HASH' and
-              defined $json->{reason}) {
-            return $ng->($json);
-          }
+      return $p->then ($ok, sub {
+        my $error = $_[0];
+        if (defined $ng and defined $error and ref $error eq 'HASH') {
+          $ng->($error);
         }
-        return $exception->($result) if defined $exception;
-        die $result;
-      }, $exception);
+        ($exception || sub { die $_[0] })->($error);
+      });
     };
   }; # $acall
-  return ($acall, $accounts);
+  return $acall;
 } # accounts
 
 return sub {
@@ -100,11 +80,11 @@ return sub {
       }
 
       my $db = Dongry::Database->new (%$DBSources);
-      my ($acall, $accounts) = accounts $app;
+      my $acall = accounts $app;
       return promised_cleanup {
         return Promise->all ([
           $db->disconnect,
-          $accounts->close,
+          $app->close,
         ]);
       } Promise->resolve->then (sub {
 
@@ -138,35 +118,24 @@ return sub {
           return GroupPages->create ($app, $db, $acall);
         }
 
-        if (@$path == 1 and $path->[0] eq 'dashboard') {
-          # /dashboard
-          return $acall->(['info'], {
-            sk_context => $app->config->{accounts}->{context},
-            sk => $app->http->request_cookies->{sk},
-          })->(sub {
-            my $account_data = $_[0];
-            return AccountPages->dashboard ($app, $account_data);
-          });
+        ## Pjax (partition=dashboard)
+        if (($path->[0] eq 'dashboard' and (
+          (@$path == 1) or                        # /dashboard
+          (@$path == 2 and $path->[1] eq 'groups') or # /dashboard/groups
+          (@$path == 2 and $path->[1] eq 'calls') # /dashboard/calls
+        )) or (@$path == 1 and $path->[0] eq 'jump')) { # /jump
+          return AccountPages->dashboard ($app, $acall);
         }
 
         if ($path->[0] eq 'jump') {
-          # /jump
+          # /jump/...
           return $acall->(['info'], {
             sk_context => $app->config->{accounts}->{context},
             sk => $app->http->request_cookies->{sk},
           })->(sub {
             my $account_data = $_[0];
-            unless (defined $account_data->{account_id}) {
-              if ($app->http->request_method eq 'POST') {
-                return $app->send_error (403, reason_phrase => 'No user account');
-              } else {
-                my $this_url = Web::URL->parse_string ($app->http->url->stringify);
-                my $url = Web::URL->parse_string (q</account/login>, $this_url);
-                $url->set_query_params ({next => $this_url->stringify});
-                return $app->send_redirect ($url->stringify);
-              }
-            }
-
+            return $app->send_error (403, reason_phrase => 'No user account')
+                unless (defined $account_data->{account_id});
             return JumpPages->main ($app, $path, $db, $account_data);
           });
         }
@@ -203,7 +172,11 @@ return sub {
         return $app->send_error (404, reason_phrase => 'Page not found');
       })->catch (sub {
         return if UNIVERSAL::isa ($_[0], 'Warabe::App::Done');
-        warn "ERROR: $_[0]\n";
+        if (ref $_[0] eq 'HASH') {
+          warn "ERROR: ".(perl2json_bytes_for_record $_[0])."\n";
+        } else {
+          warn "ERROR: $_[0]\n";
+        }
         return $app->send_error (500);
       });
     } else {
