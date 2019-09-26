@@ -15,6 +15,7 @@ use Web::MIME::Type;
 use Web::URL;
 use Web::URL::Encoding;
 use Web::DOM::Document;
+use Web::Transport::BasicClient;
 
 use Pager;
 use Results;
@@ -1940,7 +1941,7 @@ sub group_object ($$$$) {
         my $aws4 = $app->config->{storage}->{aws4};
         my $bucket = $app->config->{storage}->{bucket};
         my $url = Web::URL->parse_string ($app->config->{storage}->{url});
-        my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+        my $client = Web::Transport::BasicClient->new_from_url ($url);
         # XXX body streaming
         return $client->request (
           method => 'GET',
@@ -1986,7 +1987,7 @@ sub group_object ($$$$) {
         my $aws4 = $app->config->{storage}->{aws4};
         my $bucket = $app->config->{storage}->{bucket};
         my $url = Web::URL->parse_string ($app->config->{storage}->{url});
-        my $client = Web::Transport::ConnectionClient->new_from_url ($url);
+        my $client = Web::Transport::BasicClient->new_from_url ($url);
 
         my $file = $path->[3];
         return $client->request (
