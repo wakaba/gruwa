@@ -195,6 +195,35 @@ Test {
   });
 } n => 4, name => 'called thread_id';
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [a3 => account => {}],
+    [g1 => group => {members => ['a1', 'a2']}],
+    [o1 => object => {group => 'g1', account => 'a1'}],
+  )->then (sub {
+    return $current->post_json (['account', 'push', 'add.json'], {
+      sub => perl2json_chars {endpoint => $current->generate_push_url (e1 => {})},
+    }, account => 'a2');
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      called_account_id => $current->o ('a2')->{account_id},
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $url = Web::URL->parse_string ($current->o ('e1'));
+    return $current->client_for ($url)->request (url => $url);
+  })->then (sub {
+    my $res = $_[0];
+    die $res unless $res->status == 200;
+    test {
+      my $json = json_bytes2perl $res->body_bytes;
+      is $json->{count}, 1;
+    } $current->c;
+  });
+} n => 1, name => 'push';
+
 RUN;
 
 =head1 LICENSE

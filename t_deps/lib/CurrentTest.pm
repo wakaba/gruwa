@@ -262,6 +262,11 @@ sub generate_url ($$$) {
   return $self->{objects}->{$name // ''} = 'https://' . rand . '.test/' . rand;
 } # generate_url
 
+sub generate_push_url ($$$) {
+  my ($self, $name, $opts) = @_;
+  return $self->set_o ($name => 'http://xs.server.test/push/' . rand);
+} # generate_push_url
+
 sub generate_text ($;$) {
   my $v = rand;
   $v .= chr int rand 0x10FFFF for 1..rand 10;
@@ -506,7 +511,7 @@ sub _get_o ($$) {
 } # _get_o
 
 sub set_o ($$$) {
-  $_[0]->{objects}->{$_[1]} = $_[2];
+  return $_[0]->{objects}->{$_[1]} = $_[2];
 } # set_o
 
 sub pages_ok ($$$$;$) {

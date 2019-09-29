@@ -832,6 +832,13 @@ sub edit_object ($$$$$) {
             });
           }
   })->then (sub {
+    return promised_for {
+      my $account_id = shift;
+      return $app->apploach (['notification', 'send', 'push.json'], {
+        'nevent_subscriber_nobj_key' => 'account-' . $account_id,
+      });
+    } [keys %$called_account_ids];
+  })->then (sub {
     return {
       object_revision_id => ''.$object->{data}->{object_revision_id},
       called => $object->{data}->{called} || {},
