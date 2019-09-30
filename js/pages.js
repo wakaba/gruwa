@@ -4030,8 +4030,8 @@ defineElement ({
         this.grReset ();
       }, // pcInit
       grReset: function () {
-        this.querySelectorAll ('gr-has-push-sub').forEach (_ => _.hidden = false);
-        this.querySelectorAll ('gr-no-push-sub').forEach (_ => _.hidden = true);
+        this.querySelectorAll ('gr-has-push-sub').forEach (_ => _.hidden = true);
+        this.querySelectorAll ('gr-no-push-sub').forEach (_ => _.hidden = false);
         navigator.serviceWorker.ready.then ((reg) => {
           return reg.pushManager.getSubscription ();
         }).then ((sub) => {
