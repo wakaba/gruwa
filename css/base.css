@@ -5,6 +5,7 @@ html { /* [data-thema=green] */
   color: var(--wall-color);
   background: var(--wall-background);
   /* min-height: var(--wall-min-height); box-sizing: border-box */
+  --timejs-serialization: dtsjp2;
 
   --dark-background-color: green;
   --dark-color: white;
@@ -205,6 +206,7 @@ section > header.section {
   color: var(--header4-color);
   min-height: var(--header4-min-height);
   text-align: var(--header4-text-align);
+  --timejs-serialization: dtsjp1;
 }
 
 section > h1,
