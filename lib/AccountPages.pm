@@ -135,11 +135,14 @@ sub account_push ($$$$) {
     return $app->throw_error (400, reason_phrase => 'Bad |sub|')
         unless defined $sub and ref $sub eq 'HASH';
     my $u = $sub->{endpoint} // '';
-    return $app->throw_error (400, reason_phrase => 'Bad |sub|.endpoint')
-        unless $u =~ m{^https://};
     my $url = Web::URL->parse_string ($u);
-    return $app->throw_error (400, reason_phrase => 'Bad |sub|.endpoint')
-        unless defined $url and $url->scheme eq 'https';
+    if ($app->config->{is_test_script}) {
+      return $app->throw_error (400, reason_phrase => 'Bad |sub|.endpoint')
+          unless defined $url and $url->is_http_s;
+    } else {
+      return $app->throw_error (400, reason_phrase => 'Bad |sub|.endpoint')
+          unless defined $url and $url->scheme eq 'https';
+    }
     return $app->apploach (['notification', 'hook', 'subscribe.json'], {
       subscriber_nobj_key => 'account-' . $account->{account_id},
       type_nobj_key => 'apploach-push',

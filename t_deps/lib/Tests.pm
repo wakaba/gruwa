@@ -63,6 +63,7 @@ sub RUN () {
     signal => $ac->signal,
     mysqld_database_name_suffix => '_test',
     app_config_path => $RootPath->child ('config/test.json'),
+    apploach_config_path => $RootPath->child ('t_deps/config/test-apploach.json'),
     accounts_servers_path => $RootPath->child ('t_deps/config/test-accounts-servers.json'),
     need_browser => $NeedBrowser,
     browser_type => $ENV{TEST_WD_BROWSER}, # or undef

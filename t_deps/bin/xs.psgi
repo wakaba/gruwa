@@ -6,12 +6,14 @@ use Warabe::App;
 use JSON::PS;
 
 my $Tokens = {};
+my $Counts = {};
 
 return sub {
-        my $http = Wanage::HTTP->new_from_psgi_env (shift);
-        my $app = Warabe::App->new_from_http ($http);
-        $app->execute_by_promise (sub {
-          if ($app->http->url->{path} eq '/authorize') {
+  my $http = Wanage::HTTP->new_from_psgi_env (shift);
+  my $app = Warabe::App->new_from_http ($http);
+  $app->execute_by_promise (sub {
+    my $path = $app->http->url->{path};
+    if ($path eq '/authorize') {
             my $state = $app->bare_param ('state');
             my $code = rand;
             my $token = rand;
@@ -19,7 +21,9 @@ return sub {
             $app->http->set_response_header ('X-Code', $code);
             $app->http->set_response_header ('X-State', $state);
             return $app->send_error (200);
-          } elsif ($app->http->url->{path} eq '/token') {
+          }
+
+    if ($path eq '/token') {
             my $code = $app->bare_param ('code');
             my $token = delete $Tokens->{$code};
             return $app->send_error (404) unless defined $token;
@@ -28,7 +32,22 @@ return sub {
             $app->http->send_response_body_as_ref (\perl2json_bytes $result);
             return $app->http->close_response_body;
           }
-          return $app->send_error (404);
+
+    if ($path =~ m{^/push/([0-9A-Za-z._-]+)$}) {
+      my $key = $1;
+      if ($http->request_method eq 'POST') {
+        $Counts->{$key}++;
+        $http->set_status (200);
+        return $http->close_response_body;
+      }
+      $http->set_status (200);
+      $http->send_response_body_as_ref (\perl2json_bytes {
+        count => $Counts->{$key} || 0,
+      });
+      return $http->close_response_body;
+    }
+    
+    return $app->send_error (404);
   });
 };
 

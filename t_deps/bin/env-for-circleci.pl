@@ -19,6 +19,7 @@ GruwaSS->run (
   no_set_uid => 1,
   write_ss_env => 1,
   app_config_path => $RootPath->child ('config/test.json'),
+  apploach_config_path => $RootPath->child ('t_deps/config/test-apploach.json'),
   accounts_servers_path => $RootPath->child ('t_deps/config/test-accounts-servers.json'),
   signal => $ac->signal,
 )->then (sub {
