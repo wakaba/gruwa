@@ -1,31 +1,67 @@
-<html t:params="$app $servers">
+<html t:params="$app $servers"
+    data-theme=green
+>
 <head>
+  <base target=_top>
   <!-- XXX until browsers support <form referrerpolicy=""> -->
   <meta name=referrer content=origin>
   <!--<meta name=referrer content=no-referrer>-->
   <meta name=robots content="NOINDEX,NOFOLLOW,NOARCHIVE">
   <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name=theme-color content="green">
   <link rel=stylesheet pl:href="'/css/common.css?r='.$app->rev">
   <title>ログイン - Gruwa</title>
-
-<body>
-  <h1>ログイン</>
-
-<form method=post action=/account/login referrerpolicy=origin>
-  <t:my as=$next x="$app->text_param ('next')">
-  <t:if x="defined $next">
-    <input type=hidden name=next pl:value=$next>
+  <t:if x="$app->bare_param ('done')">
+    <script>
+      if (window.opener)
+      window.opener.top.postMessage ({grAccountUpdated: true});
+      if (window.BroadcastChannel)
+      new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+      window.close ();
+    </script>
   </t:if>
-  <ul>
-    <t:for as=$server x=$servers>
-      <li>
-        <button type=submit name=server pl:value=$server>
-          <t:text value=$server> のアカウントでログイン
-        </button>
-    </t:for>
-  </ul>
-</form>
+  
+<body>
+  <header class=page>
+    <h1><a href=/>Gruwa</a></h1>
+  </header>
 
+  <section>
+    <header class=section>
+      <h1>ログイン</h1>
+      <a href=/help#accounts target=help>ヘルプ</a>
+    </header>
+  
+    <form method=post action=/account/login referrerpolicy=origin class=transparent>
+    <t:my as=$next x="$app->text_param ('next')">
+    <t:if x="defined $next">
+      <input type=hidden name=next pl:value=$next>
+    </t:if>
+    <ul class=main-menu-list>
+      <t:for as=$server x=$servers>
+        <li>
+          <button type=submit name=server pl:value=$server>
+            <t:text value="{
+              google => 'Google',
+              github => 'GitHub',
+            }->{$server} || $server"> のアカウントでログイン
+          </button>
+      </t:for>
+    </ul>
+    </form>
+
+    <ul class=notes>
+      <li>利用者アカウントの識別のためにクッキーを使用します。
+      <li>ログインに使ったサービスに、 Gruwa が無断で投稿することはありません。
+    </ul>
+  </section>
+  <script>
+    if (window.top !== window) {
+      document.querySelector ('form').target = 'login';
+      document.documentElement.classList.add ('page-in-iframe');
+    }
+  </script>
+  
 <!--
 
 Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.

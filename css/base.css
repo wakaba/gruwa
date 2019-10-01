@@ -364,6 +364,10 @@ form {
   padding: 1em .5em .5em .5em;
 }
 
+form.transparent:not([hidden]) {
+  display: contents;
+}
+
 gr-editable-tr form:not([hidden]) {
   display: contents;
 }
@@ -516,8 +520,6 @@ button:enabled {
 .operations .edit-button,
 .next-page-button {
   -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
   margin-left: 1em;
   border-style: none;
   padding: .5em;
@@ -538,8 +540,6 @@ button:enabled {
 
 .save-button, .cancel-button {
   -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
   margin: .2em .5em;
   border-style: none;
   padding: .5em;
@@ -1219,12 +1219,18 @@ gr-nav-panel gr-group:not([hidden]) {
   font-size: 150%;
 }
 
-.main-menu-list > li > a:not([hidden]) {
+.main-menu-list > li > a:not([hidden]),
+.main-menu-list > li > button:not([hidden]) {
+  -webkit-appearance: none;
   display: block;
+  border-style: none;
   padding: 0.5em;
+  width: 100%;
+  font-size: 100%;
 }
 
-.main-menu-list > li > a:not(:hover):not(:focus):not(:active) {
+.main-menu-list > li > a:not(:hover):not(:focus):not(:active),
+.main-menu-list > li > button:not(:hover):not(:focus):not(:active) {
   color: inherit;
   background: transparent;
   text-decoration: none;
@@ -1339,9 +1345,46 @@ hatena-star img.hatena-user-icon {
   opacity: 0.8;
 }
 
+.notes:not([hidden]) {
+  display: block;
+  margin: 1em 2em;
+  padding: .5em;
+  font-size: 90%;
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+}
+
 small {
   color: var(--small-color);
   background-color: var(--small-background-color);
+}
+
+gr-backdrop:not([hidden]) {
+  display: flex;
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  z-index: 2000000;
+  align-items: center;
+  justify-content: center;
+}
+
+gr-backdrop > .dialog:not([hidden]) {
+  display: block;
+  border-style: none;
+  max-width: 90%;
+  max-height: 90%;
+  width: 30em;
+  height: 40em;
+}
+
+.page-in-iframe .not-in-iframe {
+  display: none;
 }
 
 /*

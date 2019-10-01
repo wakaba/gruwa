@@ -4,6 +4,7 @@ use warnings;
 use Wanage::HTTP;
 use Warabe::App;
 use JSON::PS;
+use Web::URL::Encoding;
 
 my $Tokens = {};
 my $Counts = {};
@@ -14,14 +15,21 @@ return sub {
   $app->execute_by_promise (sub {
     my $path = $app->http->url->{path};
     if ($path eq '/authorize') {
-            my $state = $app->bare_param ('state');
-            my $code = rand;
-            my $token = rand;
-            $Tokens->{$code} = $token;
-            $app->http->set_response_header ('X-Code', $code);
-            $app->http->set_response_header ('X-State', $state);
-            return $app->send_error (200);
-          }
+      my $state = $app->bare_param ('state');
+      my $code = rand;
+      my $token = rand;
+      $Tokens->{$code} = $token;
+      $app->http->set_response_header ('X-Code', $code);
+      $app->http->set_response_header ('X-State', $state);
+      my $next_url = $app->text_param ('redirect_uri') // '';
+      $next_url .= $next_url =~ /\?/ ? '&' : '?';
+      $next_url .= 'state=' . percent_encode_c $state;
+      $next_url .= '&code=' . percent_encode_c $code;
+      #warn $next_url;
+      $app->http->set_response_header ('content-type', 'text/html;charset=utf-8');
+      $app->http->send_response_body_as_ref (\sprintf q{<!DOCTYPE HTML><meta http-equiv=refresh content="0;url=%s">}, $next_url);
+      return $app->http->close_response_body;
+    }
 
     if ($path eq '/token') {
             my $code = $app->bare_param ('code');
