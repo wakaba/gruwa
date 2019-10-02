@@ -193,6 +193,113 @@ Test {
   });
 } n => 1, name => ['dashboard page - another account (login)'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [o1 => object => {group => 'g1', account => 'a1'}],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form button[type=submit]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments details summary').click ();
+
+      GR._timestamp = {}; // reset cache
+    });
+  })->then (sub { # cookie staled
+    return $current->b (1)->set_cookie (sk => '', path => '/', max_age => -1);
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments form textarea').value = arguments[0];
+      document.querySelector ('article-comments form button[type=submit]').click ();
+    }, [$current->generate_text (t1 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-backdrop > .dialog',
+      shown => 1, scroll => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form gr-action-status', # XXX
+      text => 403,
+      scroll => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('article-comments form textarea').value;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, $current->o ('t1'), 'form value unchanged';
+    } $current->c;
+  });
+} n => 1, name => ['group form 403'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [i1 => index => {
+      group => 'g1', account => 'a1',
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'i', $current->o ('i1')->{index_id}, 'config'],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'h1 a',
+    });
+  })->then (sub { # cookie staled
+    return $current->b (1)->set_cookie (sk => '', path => '/', max_age => -1);
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      GR._timestamp = {}; // reset cache
+
+      document.querySelector ('h1 a').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-backdrop > .dialog',
+      shown => 1, scroll => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-navigate-status action-status',
+      text => 403,
+      scroll => 1, shown => 1,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['group pjax 403'], browser => 1;
+
 RUN;
 
 =head1 LICENSE

@@ -26,6 +26,7 @@
 
   <gr-navigate-status>
     <action-status stage-loading=読込中... />
+    <p class=operations><button type=button class=reload-button>再読込</button>
   </gr-navigate-status>
 
   <gr-navigate partition=dashboard />

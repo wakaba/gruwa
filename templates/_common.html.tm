@@ -61,6 +61,7 @@
         <a href=/help#default-wiki-index target=help>グループの Wiki</a>
         が設定されていません。
       </gr-error>
+      <p class=operations><button type=button class=reload-button>再読込</button>
     </gr-navigate-status>
 
 <!-- also in dashboard.html.tm -->

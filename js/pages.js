@@ -17,6 +17,26 @@ window.GR = {};
 // XXX
 $with.register ('GR', () => window.GR);
 
+class GRError extends Error {
+  constructor (type) {
+    var message = type;
+    if (type === 'InvalidAccountError') {
+      message = 'ログインしていないか、グループに参加していないアカウントです。正しいアカウントでログインしてからもう一度実行してください。 (403)';
+    }
+    super (message);
+    this.name = type;
+  };
+};
+GR.Error = GRError;
+delete window.GRError;
+
+GR.Error.handle403 = function (res) {
+  var e = new GR.Error ('InvalidAccountError');
+  e.errorResponse = res;
+  GR.account.check ({});
+  return e;
+}; // handle403
+
 GR.theme = {};
 
 GR.theme.list = function () {
@@ -119,7 +139,11 @@ GR._updateMyInfo = function () {
         return {account: json};
       });
     } else {
-      return gFetch ('my/info.json', {});
+      var url = document.documentElement.getAttribute ('data-group-url') + '/my/info.json';
+      return fetch (url).then (res => {
+        if (res.status !== 200) throw res;
+        return res.json ();
+      });
     }
   }).then (json => {
     var oldAccount = GR._state.account || {newSession: true};
@@ -522,6 +546,11 @@ GR.dashboard._groupMembers = function (groupId) {
       if (json.has_next) {
         return get (json.next_ref);
       }
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   }; // get
   return GR.dashboard._state.getGroupMembers[groupId] = get (null).then (_ => {
@@ -546,6 +575,11 @@ GR.dashboard._groupObject = function (groupId, objectId) {
       return res.json ();
     }).then (function (json) {
       return json.objects;
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   }; // get
   return GR.dashboard._state.getGroupObjects[groupId][objectId] = Promise.resolve ().then (() => {
@@ -579,6 +613,11 @@ GR.dashboard._groupList = function () {
       if (json.has_next) {
         return get (json.next_ref);
       }
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   }; // get
   return GR.dashboard._state.getGroupList = get (null).then (_ => {
@@ -771,6 +810,11 @@ function gFetch (pathquery, opts) {
       }
       return ff;
     }
+  }).catch (e => {
+    if (e instanceof Response && e.status === 403) {
+      throw GR.Error.handle403 (e);
+    }
+    throw e;
   });
 } // gFetch
 
@@ -2261,6 +2305,11 @@ function saveObject (article, form, object, opts) {
     }).then ((res) => {
       if (res.status !== 200) throw res;
       return res;
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
     // XXX notify object update
   };
@@ -2869,6 +2918,11 @@ function upgradeForm (form) {
         prev: {ref: json.prev_ref, has: json.has_prev, limit: opts.limit},
         next: {ref: json.next_ref, has: json.has_next || hasNext, limit: opts.limit},
       };
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   };
   document.head.appendChild (e);
@@ -2885,6 +2939,11 @@ function upgradeForm (form) {
     }).then ((res) => {
       if (res.status !== 200) throw res;
       return res;
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   };
   document.head.appendChild (e);
@@ -3991,7 +4050,7 @@ defineElement ({
       as.start ({stages: ['loading']});
       as.stageStart ('loading');
 
-      this.querySelectorAll ('gr-error').forEach (_ => _.hidden = true);
+      this.querySelectorAll ('gr-error, .reload-button').forEach (_ => _.hidden = true);
     }, // grStart
     grStop: function () {
       this.grAS.end ({ok: true});
@@ -4008,6 +4067,11 @@ defineElement ({
         } else {
           _.hidden = true;
         }
+      });
+
+      this.querySelectorAll ('.reload-button').forEach (_ => {
+        _.onclick = () => GR.navigate.go ('', {reload: true});
+        _.hidden = false;
       });
 
       if (found) {
@@ -4107,6 +4171,11 @@ defineElement ({
       });
     }).then ((res) => {
       if (res.status !== 200) throw res;
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   };
   document.head.appendChild (def);
