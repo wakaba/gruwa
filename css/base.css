@@ -1381,6 +1381,8 @@ gr-backdrop > .dialog:not([hidden]) {
   max-height: 90%;
   width: 30em;
   height: 40em;
+  color: var(--main-color);
+  background-color: var(--main-background-color);
 }
 
 .page-in-iframe .not-in-iframe {

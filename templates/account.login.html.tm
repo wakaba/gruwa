@@ -15,8 +15,6 @@
     <script>
       if (window.opener)
       window.opener.top.postMessage ({grAccountUpdated: true});
-      if (window.BroadcastChannel)
-      new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
       window.close ();
     </script>
   </t:if>
@@ -57,7 +55,7 @@
   </section>
   <script>
     if (window.top !== window) {
-      document.querySelector ('form').target = 'login';
+      document.querySelector ('form').target = 'login' + Math.random ();
       document.documentElement.classList.add ('page-in-iframe');
     }
   </script>
