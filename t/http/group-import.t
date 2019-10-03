@@ -9,6 +9,7 @@ Test {
   return $current->create (
     [a1 => account => {}],
     [a2 => account => {}],
+    [a3 => account => {terms_version => 1}],
     [g1 => group => {
       title => $current->generate_text (t1 => {}),
       owner => 'a1',
@@ -21,6 +22,7 @@ Test {
         {path => ['g', int rand 10000, 'members'], status => 404},
         {account => '', status => 403},
         {account => undef, status => 302},
+        {account => 'a3', status => 302},
       ],
     );
   })->then (sub {

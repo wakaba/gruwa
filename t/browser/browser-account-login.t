@@ -7,11 +7,13 @@ use Tests;
 Test {
   my $current = shift;
   return $current->create (
-    [a1 => account => {}],
+    [ax1 => account => {xs => 1}],
   )->then (sub {
     return $current->create_browser (1 => {
       url => ['account', 'login'],
     });
+  })->then (sub {
+    return $current->b_set_xs_name (1 => 'ax1');
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'form button[type=submit]',
@@ -92,6 +94,7 @@ Test {
     [a1 => account => {}],
     [a2 => account => {}],
     [g1 => group => {members => ['a1', 'a2']}],
+    [ax1 => account => {xs => 1}],
   )->then (sub {
     return $current->post_json (['g', $current->o ('g1')->{group_id}, 'my', 'edit.json'], {
       name => $current->generate_text (t2 => {}),
@@ -116,6 +119,8 @@ Test {
     });
   })->then (sub {
     return $current->b (1)->switch_to_frame_by_selector ('gr-backdrop > .dialog');
+  })->then (sub {
+    return $current->b_set_xs_name (1 => 'ax1');
   })->then (sub { # signed in with new account
     return $current->b_wait (1 => {
       selector => 'form button[type=submit]',
@@ -144,6 +149,7 @@ Test {
   my $current = shift;
   return $current->create (
     [a1 => account => {}],
+    [ax1 => account => {xs => 1}],
   )->then (sub {
     return $current->create_browser (1 => {
       url => ['dashboard'],
@@ -164,6 +170,8 @@ Test {
     });
   })->then (sub {
     return $current->b (1)->switch_to_frame_by_selector ('gr-backdrop > .dialog');
+  })->then (sub {
+    return $current->b_set_xs_name (1 => 'ax1');
   })->then (sub { # signed in with new account
     return $current->b_wait (1 => {
       selector => 'form button[type=submit]',

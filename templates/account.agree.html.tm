@@ -11,13 +11,6 @@
   <meta name=theme-color content="green">
   <link rel=stylesheet pl:href="'/css/common.css?r='.$app->rev">
   <title>ログイン - Gruwa</title>
-  <t:if x="$app->bare_param ('done')">
-    <script>
-      if (window.opener)
-      window.opener.top.postMessage ({grAccountUpdated: true});
-      window.close ();
-    </script>
-  </t:if>
   
 <body>
   <header class=page>
@@ -30,34 +23,37 @@
       <a href=/help#accounts target=help>ヘルプ</a>
     </header>
   
-    <form method=post action=/account/login referrerpolicy=origin class=transparent>
-    <t:my as=$next x="$app->text_param ('next')">
-    <t:if x="defined $next">
-      <input type=hidden name=next pl:value=$next>
-    </t:if>
-    <ul class=main-menu-list>
-      <t:for as=$server x=$servers>
-        <li>
-          <button type=submit name=server pl:value=$server>
-            <t:text value="{
-              google => 'Google',
-              github => 'GitHub',
-            }->{$server} || $server"> のアカウントでログイン
-          </button>
-      </t:for>
-    </ul>
+    <form method=post action=/account/agree referrerpolicy=origin class=transparent>
+      <t:my as=$next x="$app->text_param ('next')">
+      <t:if x="defined $next">
+        <input type=hidden name=next pl:value=$next>
+      </t:if>
+
+      <p>続行するには、 Gruwa の利用規約にご同意いただく必要があります。
+
+      <p class="operations main-button-container">
+        <a href=/terms class=main-button target=help>利用規約</a>
+
+      <p><label>
+        <input type=checkbox name=agree value=1 required>
+        利用規約に同意する
+      </label></p>
+
+      <t:if x="$app->bare_param ('disagree')">
+        <p>[開発者用]
+        <label>
+          <input type=checkbox name=disagree value=1>
+          利用規約への同意を取り消す
+        </label>
+      </t:if>
+
+      <p class=operations>
+        <button type=submit class=save-button>続行する</button>
     </form>
 
-    <ul class=notes>
-      <li>利用者アカウントの識別のためにクッキーを使用します。
-      <li>ログインに使ったサービスに、 Gruwa が無断で投稿することはありません。
-      <li>Gruwa のご利用には、
-      <a href=/terms target=help>利用規約</a>への同意が必要です。
-    </ul>
   </section>
   <script>
     if (window.top !== window) {
-      document.querySelector ('form').target = 'login' + Math.random ();
       document.documentElement.classList.add ('page-in-iframe');
     }
   </script>

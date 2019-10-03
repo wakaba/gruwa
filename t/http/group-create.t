@@ -44,7 +44,10 @@ Test {
 
 Test {
   my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {terms_version => 1}],
+  )->then (sub {
     return $current->are_errors (
       ['POST', ['g', 'create.json'], {
         title => "\x{4000}ab ",
@@ -55,6 +58,7 @@ Test {
         {params => {title => undef}, status => 400, name => 'no title'},
         {params => {title => ''}, status => 400, name => 'empty title'},
         {account => undef, status => 403, name => 'no account'},
+        {account => 'a2', status => 403},
       ],
     );
   });

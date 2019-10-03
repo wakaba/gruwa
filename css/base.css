@@ -386,6 +386,12 @@ gr-editable-tr form:not([hidden]) {
   direction: ltr;
 }
 
+.operations.main-button-container {
+  margin-top: 1.5em;
+  margin-bottom: 1.5em;
+  text-align: center;
+}
+
 input:not([type]),
 input[type=search] {
   box-sizing: border-box;
@@ -587,6 +593,10 @@ button:enabled {
 .search-button:focus {
   color: var(--hover-color);
   background-color: var(--hover-background-color);
+}
+
+.main-button {
+  font-size: 140%;
 }
 
 .config {

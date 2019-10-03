@@ -49,6 +49,7 @@
   <template>
     <p><a data-href-template=/dashboard>トップ</a>
     <p><a href=/help#dashboard target=help>ヘルプ</a>
+    <p><a href=/terms target=help>利用規約</a>
   </template>
 </template-set>
 

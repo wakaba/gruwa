@@ -859,6 +859,7 @@ sub create ($$$$) {
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
     sk => $app->http->request_cookies->{sk},
+    terms_version => $app->config->{accounts}->{terms_version},
   })->(sub {
     my $account_data = $_[0];
     return $app->throw_error (403, reason_phrase => 'No user account')
@@ -951,7 +952,8 @@ sub main ($$$$$) {
     return $acall->(['info'], {
       sk_context => $app->config->{accounts}->{context},
       sk => $app->http->request_cookies->{sk},
-
+      terms_version => $app->config->{accounts}->{terms_version},
+      
       context_key => $app->config->{accounts}->{context} . ':group',
       group_id => $path->[1],
 
@@ -989,7 +991,8 @@ sub main ($$$$$) {
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
     sk => $app->http->request_cookies->{sk},
-
+    terms_version => $app->config->{accounts}->{terms_version},
+    
     context_key => $app->config->{accounts}->{context} . ':group',
     group_id => $path->[1],
     # XXX
@@ -1450,7 +1453,8 @@ sub group_members_status ($$$$) {
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
     sk => $app->http->request_cookies->{sk},
-
+    terms_version => $app->config->{accounts}->{terms_version},
+    
     context_key => $app->config->{accounts}->{context} . ':group',
     group_id => $group_id,
     # XXX
@@ -1522,7 +1526,8 @@ sub group_members_list ($$$$) {
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
     sk => $app->http->request_cookies->{sk},
-
+    terms_version => $app->config->{accounts}->{terms_version},
+    
     context_key => $app->config->{accounts}->{context} . ':group',
     group_id => $group_id,
 
@@ -2432,7 +2437,8 @@ sub invitation ($$$$) {
       return $acall->(['info'], {
         sk_context => $app->config->{accounts}->{context},
         sk => $app->http->request_cookies->{sk},
-
+        terms_version => $app->config->{accounts}->{terms_version},
+        
         context_key => $app->config->{accounts}->{context} . ':group',
         group_id => $path->[1],
 

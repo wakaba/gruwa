@@ -52,6 +52,7 @@
       <details>
         <summary>Gruwa</summary>
         <p><a href=/help target=help>ヘルプ</a>
+        <p><a href=/terms target=help>利用規約</a>
       </details>
     </gr-nav-panel>
 

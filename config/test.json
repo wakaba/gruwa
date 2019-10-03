@@ -6,11 +6,13 @@
   "create_group_key": null,
   "no_create_group_key": true,
   "push_server_public_key": "4,149,83,169,167,47,158,159,237,46,10,199,251,45,245,95,107,102,189,251,153,93,156,87,99,173,80,79,225,137,240,24,141,132,67,226,44,237,114,51,191,216,47,80,63,80,218,164,221,221,98,192,35,62,53,100,243,51,181,81,158,210,230,98,34",
+  "terms_url": "https://path/to/terms",
   "accounts": {
     "url": "http://accounts.server.test",
     "key": "...",
     "context": "...",
-    "servers": ["test1"]
+    "servers": ["test1"],
+    "terms_version": 12
   },
   "apploach": {
     "url": "http://apploach.server.test",

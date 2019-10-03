@@ -8,6 +8,7 @@ use Web::URL::Encoding;
 
 my $Tokens = {};
 my $Counts = {};
+my $NamedToken = {};
 
 return sub {
   my $http = Wanage::HTTP->new_from_psgi_env (shift);
@@ -18,6 +19,12 @@ return sub {
       my $state = $app->bare_param ('state');
       my $code = rand;
       my $token = rand;
+      my $token_name = $app->bare_param ('name') // $app->http->request_cookies->{name};
+      #warn "TOKEN name : |$token_name|";
+      if (defined $token_name) {
+        $NamedToken->{$token_name} //= $token;
+        $token = $NamedToken->{$token_name};
+      }
       $Tokens->{$code} = $token;
       $app->http->set_response_header ('X-Code', $code);
       $app->http->set_response_header ('X-State', $state);
@@ -30,7 +37,6 @@ return sub {
       $app->http->send_response_body_as_ref (\sprintf q{<!DOCTYPE HTML><meta http-equiv=refresh content="0;url=%s">}, $next_url);
       return $app->http->close_response_body;
     }
-
     if ($path eq '/token') {
             my $code = $app->bare_param ('code');
             my $token = delete $Tokens->{$code};
@@ -40,6 +46,14 @@ return sub {
             $app->http->send_response_body_as_ref (\perl2json_bytes $result);
             return $app->http->close_response_body;
           }
+    if ($path eq '/setname') {
+      my $name = $app->bare_param ('name');
+      #warn "Set cookie |$name|";
+      $app->http->set_response_header
+          ('set-cookie', 'name=' . $name . '; path=/');
+      $app->http->set_response_header ('access-control-allow-origin', '*');
+      return $app->send_error (200);
+    }
 
     if ($path =~ m{^/push/([0-9A-Za-z._-]+)$}) {
       my $key = $1;

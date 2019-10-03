@@ -24,11 +24,22 @@ Test {
   });
 } n => 1, name => '/help GET';
 
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['terms'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 302;
+      is $res->header ('location'), q{https://path/to/terms};
+    } $current->c;
+  });
+} n => 2, name => '/terms GET';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -41,6 +52,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

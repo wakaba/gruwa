@@ -13,9 +13,10 @@ Test {
       my $json = json_bytes2perl $res->body_bytes;
       is $json->{account_id}, undef;
       is $json->{name}, undef;
+      is $json->{terms_version}, undef;
     } $current->c;
   });
-} n => 3, name => '/my/info.json';
+} n => 4, name => '/my/info.json (no account)';
 
 Test {
   my $current = shift;
@@ -30,9 +31,29 @@ Test {
       ok $result->{json}->{account_id};
       is $result->{json}->{name}, $name;
       like $result->{res}->body_bytes, qr{"account_id"\s*:\s*"};
+      is $result->{json}->{terms_version}, 12;
     } $current->c;
   });
-} n => 3, name => '/my/info.json';
+} n => 4, name => '/my/info.json (valid account)';
+
+Test {
+  my $current = shift;
+  my $name = rand;
+  return $current->create_account (u1 => {
+    name => $name,
+    terms_version => 1,
+  })->then (sub {
+    return $current->get_json (['my', 'info.json'], {}, account => 'u1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok $result->{json}->{account_id};
+      is $result->{json}->{name}, $name;
+      like $result->{res}->body_bytes, qr{"account_id"\s*:\s*"};
+      is $result->{json}->{terms_version}, 1;
+    } $current->c;
+  });
+} n => 4, name => '/my/info.json (low terms_version)';
 
 RUN;
 

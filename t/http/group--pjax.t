@@ -17,6 +17,7 @@ for my $path (
     return $current->create (
       [a1 => account => {}],
       [a2 => account => {}],
+      [a3 => account => {terms_version => 1}],
       [g1 => group => {
         title => $current->generate_text (t1 => {}),
         owner => 'a1',
@@ -32,6 +33,7 @@ for my $path (
            name => 'Leading zero', status => 404},
           {account => '', status => 403, name => 'Not a member'},
           {account => undef, status => 302, name => 'No account'},
+          {account => 'a3', status => 302},
         ],
       );
     })->then (sub {

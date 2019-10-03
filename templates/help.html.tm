@@ -400,7 +400,10 @@
       <a href=#comments>コメント</a>一覧、編集履歴などで使われます。
 
       <ul class=notes>
-        <li>利用者アカウントの識別のためにクッキーを使用します。
+        <li><a href=#accounts>利用者アカウント</a>を作成して Gruwa
+        を利用するためには、
+        <a href=/terms>利用規約</a>にご同意いただく必要があります。
+        <li><a href=#accounts>利用者アカウント</a>の識別のためにクッキーを使用します。
         <li>ログインに使ったサービスに、 Gruwa が無断で投稿することはありません。
         <li><a href=#account-icon>アイコン</a>は<a href=#groups>グループ</a>内の<a href=#objects>記事</a>として保存されます。
 
@@ -831,7 +834,7 @@
 
 <!--
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

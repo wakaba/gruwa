@@ -4,11 +4,13 @@
   "x_forwarded": false,
   "create_group_key": "Y3JZV09ZekU4RVdGZ0pRdE8xY09EUEJpTDJFU045",
   "push_server_public_key": "11,22,...",
+  "terms_url": "https://path/to/terms",
   "accounts": {
     "url": "https://invalid",
     "key": "...",
     "context": "gruwa:local",
-    "servers": ["github", "google"]
+    "servers": ["github", "google"],
+    "terms_version": 2
   },
   "apploach": {
     "url": "https://invalid",
