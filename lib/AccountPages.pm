@@ -15,7 +15,7 @@ sub main ($$$$$) {
   if (@$path == 2 and $path->[1] eq 'login') {
     # /account/login
     if ($app->http->request_method eq 'POST') {
-      $app->requires_same_origin;
+      $app->requires_same_origin_or_referer_origin;
       my $server = $app->bare_param ('server') // '';
       return $app->throw_error (400, reason_phrase => 'Bad |server|')
           unless grep { $_ eq $server } @{$app->config->{accounts}->{servers}};
