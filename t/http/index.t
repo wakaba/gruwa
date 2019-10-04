@@ -35,6 +35,17 @@ Test {
   });
 } n => 2, name => '/terms GET';
 
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['news'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 302;
+      is $res->header ('location'), q{http://xs.server.test/news};
+    } $current->c;
+  });
+} n => 2, name => '/news GET';
+
 RUN;
 
 =head1 LICENSE

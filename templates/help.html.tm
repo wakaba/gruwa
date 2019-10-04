@@ -888,6 +888,15 @@
       </dl>
       
     </section>
+
+    <section>
+      <h1>お知らせ</h1>
+
+      <p>Gruwa の新機能や変更点のご紹介や、
+      サービスの運営に関するご案内は、
+      <a href=/news>お知らせ</a>にて行います。
+        
+    </section>
     
   </section>
 

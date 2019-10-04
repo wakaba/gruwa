@@ -17,6 +17,11 @@ sub main ($$$$) {
     return temma $app, 'help.html.tm', {};
   }
 
+  if ($path->[0] eq 'news') {
+    # /news
+    return $app->send_redirect ($app->config->{news_url});
+  }
+
   if ($path->[0] eq 'terms') {
     # /terms
     return $app->send_redirect ($app->config->{terms_url});

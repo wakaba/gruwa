@@ -68,6 +68,25 @@ return sub {
       });
       return $http->close_response_body;
     }
+
+    if ($path eq '/news') {
+      $http->set_response_header ('access-control-allow-origin', '*');
+      return $app->send_text (q{
+        <!DOCTYPE HTML>
+        <section id=2012-04-02>
+          <h1>News 4</h1>
+        </section>
+        <section id=2012-03-14 data-important>
+          <h1>News 3</h1>
+        </section>
+        <section id=2012-03-12>
+          <h1>News 2</h1>
+        </section>
+        <section id=2012-01-02 data-important>
+          <h1>News 1</h1>
+        </section>
+      });
+    }
     
     return $app->send_error (404);
   });

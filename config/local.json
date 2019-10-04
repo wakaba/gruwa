@@ -5,6 +5,7 @@
   "create_group_key": "Y3JZV09ZekU4RVdGZ0pRdE8xY09EUEJpTDJFU045",
   "push_server_public_key": "11,22,...",
   "terms_url": "https://path/to/terms",
+  "news_url": "https://path/to/news",
   "accounts": {
     "url": "https://invalid",
     "key": "...",
