@@ -19,3 +19,6 @@ License along with this program, see <https://www.gnu.org/licenses/>.
 Some files have different license terms, though all of them are
 opensourced.  Especially, many design theme definitions have different
 terms.  See |themes.json| and |css/themes.css|.
+
+Please note that any user data contained in the output of this program
+are not covered by these license terms.
