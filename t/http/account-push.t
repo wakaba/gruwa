@@ -8,6 +8,7 @@ Test {
   my $current = shift;
   return $current->create (
     [u1 => account => {}],
+    [u2 => account => {terms_version => 1}],
   )->then (sub {
     return $current->are_errors (
       ['POST', ['account', 'push', 'add.json'], {
@@ -26,6 +27,7 @@ Test {
         {params => {sub => perl2json_chars {endpoint => rand}}, status => 400, name => 'Bad |url|'},
         {params => {sub => perl2json_chars {endpoint => 'ftp://abc/'}}, status => 400, name => 'Bad |url|'},
         {account => undef, status => 403, name => 'No account'},
+        {account => 'u2', status => 403, name => 'No account'},
       ],
     );
   })->then (sub {
@@ -56,13 +58,21 @@ Test {
     test {
       is 0+@{$result->{json}->{items}}, 0;
     } $current->c;
+    return $current->get_json (['account', 'push', 'list.json'], {
+    }, account => 'u2');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 0;
+    } $current->c;
   });
-} n => 9, name => 'push add / list';
+} n => 10, name => 'push add / list';
 
 Test {
   my $current = shift;
   return $current->create (
     [u1 => account => {}],
+    [u2 => account => {terms_version => 1}],
   )->then (sub {
     return $current->post_json (['account', 'push', 'add.json'], {
       sub => perl2json_chars {endpoint => $current->generate_url (e1 => {})},
@@ -75,9 +85,17 @@ Test {
     test {
       is 0+@{$result->{json}->{items}}, 1;
     } $current->c;
-    return $current->post_json (['account', 'push', 'delete.json'], {
-      url_sha => $result->{json}->{items}->[0]->{url_sha},
-    }, account => undef);
+    return $current->are_errors (
+      ['POST', ['account', 'push', 'delete.json'], {
+        url_sha => $result->{json}->{items}->[0]->{url_sha},
+      }, account => 'u1'],
+      [
+        {account => undef, status => 403},
+        {account => 'u2', status => 403},
+        {method => 'GET', status => 405},
+        {origin => undef, status => 400},
+      ],
+    );
   })->then (sub {
     return $current->get_json (['account', 'push', 'list.json'], {
     }, account => 'u1');
@@ -98,7 +116,7 @@ Test {
       is 0+@{$result->{json}->{items}}, 0;
     } $current->c;
   });
-} n => 3, name => 'push delete';
+} n => 4, name => 'push delete';
 
 Test {
   my $current = shift;
@@ -116,9 +134,14 @@ Test {
     test {
       is 0+@{$result->{json}->{items}}, 1;
     } $current->c;
-    return $current->post_json (['account', 'push', 'delete.json'], {
-      url => $current->o ('e1'),
-    }, account => undef);
+    return $current->are_errors (
+      ['POST', ['account', 'push', 'delete.json'], {
+        url => $current->o ('e1'),
+      }, account => 'u1'],
+      [
+        {account => undef, status => 403},
+      ],
+    );
   })->then (sub {
     return $current->get_json (['account', 'push', 'list.json'], {
     }, account => 'u1');
@@ -139,7 +162,7 @@ Test {
       is 0+@{$result->{json}->{items}}, 0;
     } $current->c;
   });
-} n => 3, name => 'push delete by url';
+} n => 4, name => 'push delete by url';
 
 RUN;
 

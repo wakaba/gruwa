@@ -16,6 +16,18 @@ Test {
 
 Test {
   my $current = shift;
+  return $current->create_account (u1 => {terms_version => 1})->then (sub {
+    return $current->get_json (['my', 'groups.json'], {}, account => 'u1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{groups}}, 0;
+    } $current->c;
+  });
+} n => 1, name => 'terms_version bad';
+
+Test {
+  my $current = shift;
   return $current->create_account (u1 => {})->then (sub {
     return $current->get_json (['my', 'groups.json'], {}, account => 'u1');
   })->then (sub {

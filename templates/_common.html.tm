@@ -52,6 +52,8 @@
       <details>
         <summary>Gruwa</summary>
         <p><a href=/help target=help>ヘルプ</a>
+        <p><a href=/news target=help class=news-link>お知らせ</a>
+        <p><a href=/terms target=help>利用規約</a>
       </details>
     </gr-nav-panel>
 
@@ -61,6 +63,7 @@
         <a href=/help#default-wiki-index target=help>グループの Wiki</a>
         が設定されていません。
       </gr-error>
+      <p class=operations><button type=button class=reload-button>再読込</button>
     </gr-navigate-status>
 
 <!-- also in dashboard.html.tm -->

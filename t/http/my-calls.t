@@ -19,6 +19,23 @@ Test {
 
 Test {
   my $current = shift;
+  return $current->create (
+    [u1 => account => {terms_version => 1}],
+  )->then (sub {
+    return $current->get_json (['my', 'calls.json'], {}, account => 'u1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is ref $result->{json}->{items}, 'ARRAY';
+      is 0+@{$result->{json}->{items}}, 0;
+      ok ! $result->{json}->{has_next};
+      is $result->{json}->{next_ref}, undef;
+    } $current->c;
+  });
+} n => 4, name => 'bad terms version';
+
+Test {
+  my $current = shift;
   return $current->get_json (['my', 'calls.json'], {}, account => '')->then (sub {
     my $result = $_[0];
     test {

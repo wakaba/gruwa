@@ -229,7 +229,7 @@ sub post_redirect ($$$;%) {
   ];
   my $cookies = {%{$args{cookies} or {}}};
   return $self->_account ($args{account})->then (sub {
-    $cookies->{sk} = $_[0]->{cookies}->{sk}; # or undef
+    $cookies->{sk} //= $_[0]->{cookies}->{sk}; # or undef
     return $self->client->request (
       path => $path,
       method => 'POST',
@@ -435,32 +435,69 @@ sub accounts_client ($) {
 
 sub create_account ($$$) {
   my ($self, $name => $opts) = @_;
-  $opts->{name} //= "\x{6322}" . rand;
-  my $account = {};
-  return $self->accounts_client->request (
-    method => 'POST',
-    path => ['session'],
-    params => {
-      sk_context => $self->{server_data}->{accounts_context},
-    },
-    bearer => $self->{server_data}->{accounts_key},
-  )->then (sub {
-    die $_[0] unless $_[0]->status == 200;
-    $account->{cookies}->{sk} = (json_bytes2perl $_[0]->body_bytes)->{sk};
-    return $self->accounts_client->request (
-      method => 'POST',
-      path => ['create'],
-      params => {
-        sk_context => $self->{server_data}->{accounts_context},
-        sk => $account->{cookies}->{sk},
-        name => $opts->{name},
-      },
-      bearer => $self->{server_data}->{accounts_key},
-    );
-  })->then (sub {
-    die $_[0] unless $_[0]->status == 200;
-    $account->{account_id} = (json_bytes2perl $_[0]->body_bytes)->{account_id};
-    $self->{objects}->{$name} = $account;
+  return Promise->resolve->then (sub {
+    my $account = {};
+    $self->set_o ($name => $account);
+    if ($opts->{xs}) {
+      return $self->client->request (path => ['account', 'login'], headers => {
+        origin => $self->client->origin->to_ascii,
+      }, method => 'POST', params => {
+        server => 'test1',
+      })->then (sub {
+        my $res = $_[0];
+        $res->header ('Set-Cookie') =~ /sk=([^;]+)/ or die;
+        $account->{cookies}->{sk} = $1;
+        my $url = Web::URL->parse_string ($res->header ('Location'));
+        my $client = $self->client_for ($url);
+        $account->{xs_name} = $self->generate_key (rand, {});
+        return $client->request (url => $url, params => {
+          name => $account->{xs_name},
+        });
+      })->then (sub {
+        my $res = $_[0];
+        die $res unless $res->status == 200;
+        my $code = $res->header ('X-Code');
+        my $state = $res->header ('X-State');
+        return $self->client->request (path => ['account', 'cb'], params => {
+          code => $code,
+          state => $state,
+        }, cookies => $account->{cookies});
+      })->then (sub {
+        return $self->post_redirect (['account', 'agree'], {
+          agree => 1,
+        }, cookies => $account->{cookies});
+      });
+      # $opts->{name}
+      # $opts->{terms_version}
+      # $account->{account_id}
+    } else { # not xs
+      $opts->{name} //= $self->generate_text (rand, {});
+      return $self->accounts_client->request (
+        method => 'POST',
+        path => ['session'],
+        params => {
+          sk_context => $self->{server_data}->{accounts_context},
+        },
+        bearer => $self->{server_data}->{accounts_key},
+      )->then (sub {
+        die $_[0] unless $_[0]->status == 200;
+        $account->{cookies}->{sk} = (json_bytes2perl $_[0]->body_bytes)->{sk};
+        return $self->accounts_client->request (
+          method => 'POST',
+          path => ['create'],
+          params => {
+            sk_context => $self->{server_data}->{accounts_context},
+            sk => $account->{cookies}->{sk},
+            name => $opts->{name},
+            terms_version => $opts->{terms_version} // 12,
+          },
+          bearer => $self->{server_data}->{accounts_key},
+        );
+      })->then (sub {
+        die $_[0] unless $_[0]->status == 200;
+        $account->{account_id} = (json_bytes2perl $_[0]->body_bytes)->{account_id};
+      });
+    }
   });
 } # create_account
 
@@ -720,6 +757,19 @@ sub b_set_account ($$$) {
         (sk => defined $_[0] ? $_[0]->{cookies}->{sk} : '', path => '/');
   });
 } # b_set_account
+
+sub b_set_xs_name ($$$) {
+  my ($current, $name, $oname) = @_;
+  return $current->b ($name)->execute (q{
+    return fetch ('http://xs.server.test/setname?name=' + encodeURIComponent (arguments[0]), {
+      credentials: 'include',
+    }).catch (e => {
+      return "" + e;
+    });
+  }, [$current->o ($oname)->{xs_name}])->then (sub {
+    #warn $_[0]->json->{value};
+  });
+} # b_set_xs_name
 
 sub b_wait ($$$) {
   my ($self, $name, $for) = @_;

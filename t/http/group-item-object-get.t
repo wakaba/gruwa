@@ -6,7 +6,10 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
+  return $current->create (
+    [a1 => account => {}],
+    [a3 => account => {terms_version => 1}],
+  )->then (sub {
     return $current->create_group (g1 => {members => ['a1']});
   })->then (sub {
     return $current->create_index (i1 => {group => 'g1', account => 'a1'});
@@ -15,6 +18,7 @@ Test {
       ['GET', ['o', 'get.json'], {}, account => 'a1', group => 'g1'],
       [
         {account => '', status => 403},
+        {account => 'a3', status => 403},
         {account => undef, status => 403},
         {path => ['g', '532523', 'o', 'get.json'], status => 404},
       ],

@@ -17,6 +17,16 @@ sub main ($$$$) {
     return temma $app, 'help.html.tm', {};
   }
 
+  if ($path->[0] eq 'news') {
+    # /news
+    return $app->send_redirect ($app->config->{news_url});
+  }
+
+  if ($path->[0] eq 'terms') {
+    # /terms
+    return $app->send_redirect ($app->config->{terms_url});
+  }
+
   return $app->send_error (404);
 } # main
 
@@ -24,7 +34,7 @@ sub main ($$$$) {
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -37,6 +47,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

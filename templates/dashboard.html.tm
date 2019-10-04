@@ -26,6 +26,7 @@
 
   <gr-navigate-status>
     <action-status stage-loading=読込中... />
+    <p class=operations><button type=button class=reload-button>再読込</button>
   </gr-navigate-status>
 
   <gr-navigate partition=dashboard />
@@ -48,6 +49,23 @@
   <template>
     <p><a data-href-template=/dashboard>トップ</a>
     <p><a href=/help#dashboard target=help>ヘルプ</a>
+    <p><a href=/terms target=help>利用規約</a>
+  </template>
+</template-set>
+
+<template-set name=gr-account-changed>
+  <template>
+    <header class=page>
+      <h1>Gruwa</h1>
+    </header>
+
+    <section>
+      <h1>アカウント</h1>
+      
+      <p>アカウントが変更されました。
+      <p class=operations>
+        <a href=javascript:location.reload() class=login-button>再読込</a>
+    </section>
   </template>
 </template-set>
 

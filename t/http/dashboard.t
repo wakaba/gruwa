@@ -10,20 +10,40 @@ for my $path (
   ['dashboard', 'calls'],
 ) {
 
-Test {
-  my $current = shift;
-  return $current->client->request (
-    path => $path,
-  )->then (sub {
-    my $res = $_[0];
-    test {
-      is $res->status, 302;
-      my $next_url = $current->resolve (q</account/login>);
-      $next_url->set_query_params ({next => $current->resolve (join '/', '', @$path)->stringify});
-      is $res->header ('Location'), $next_url->stringify;
-    } $current->c;
-  });
-} n => 2, name => [@$path, 'no account'];
+  Test {
+    my $current = shift;
+    return $current->client->request (
+      path => $path,
+    )->then (sub {
+      my $res = $_[0];
+      test {
+        is $res->status, 302;
+        my $next_url = $current->resolve (q</account/login>);
+        $next_url->set_query_params ({next => $current->resolve (join '/', '', @$path)->stringify});
+        is $res->header ('Location'), $next_url->stringify;
+      } $current->c;
+    });
+  } n => 2, name => [@$path, 'no account'];
+
+  Test {
+    my $current = shift;
+    return $current->create (
+      [a1 => account => {terms_version => 1}],
+    )->then (sub {
+      return $current->client->request (
+        path => $path,
+        cookies => $current->o ('a1')->{cookies},
+      );
+    })->then (sub {
+      my $res = $_[0];
+      test {
+        is $res->status, 302;
+        my $next_url = $current->resolve (q</account/login>);
+        $next_url->set_query_params ({next => $current->resolve (join '/', '', @$path)->stringify});
+        is $res->header ('Location'), $next_url->stringify;
+      } $current->c;
+    });
+  } n => 2, name => [@$path, 'bad terms_version'];
 
 Test {
   my $current = shift;

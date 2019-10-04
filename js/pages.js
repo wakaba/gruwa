@@ -17,6 +17,26 @@ window.GR = {};
 // XXX
 $with.register ('GR', () => window.GR);
 
+class GRError extends Error {
+  constructor (type) {
+    var message = type;
+    if (type === 'InvalidAccountError') {
+      message = 'ログインしていないか、グループに参加していないアカウントです。正しいアカウントでログインしてからもう一度実行してください。 (403)';
+    }
+    super (message);
+    this.name = type;
+  };
+};
+GR.Error = GRError;
+delete window.GRError;
+
+GR.Error.handle403 = function (res) {
+  var e = new GR.Error ('InvalidAccountError');
+  e.errorResponse = res;
+  GR.account.check ({});
+  return e;
+}; // handle403
+
 GR.theme = {};
 
 GR.theme.list = function () {
@@ -104,34 +124,68 @@ defineElement ({
 });
 
 GR._state = {};
+GR._timestamp = {};
 
 GR._updateMyInfo = function () {
   delete GR._state.getMembers;
-  if (GR._state.navigatePartition === 'dashboard') {
-    return GR._state.updateMyInfo = fetch ('/my/info.json', {}).then (json => { // XXX broken
-      var oldAccount = GR._state.account || {};
-      GR._state.account = json;
-      delete GR._state.group;
-
-      // XXX
-    });
-  }
+  
   // Cached until updated by reloadGroupInfo
-  return GR._state.updateMyInfo = gFetch ('my/info.json', {}).then (json => {
-    var oldAccount = GR._state.account || {};
-    GR._state.account = json.account;
-    GR._state.account.group_id = json.group.group_id;
-    GR._state.group = json.group;
-    GR._state.group.member = json.group_member;
-
-    if (oldAccount.account_id !== json.account) {
-      // XXX
+  return GR._state.updateMyInfo = Promise.resolve ().then (() => {
+    if (GR._state.navigatePartition === 'dashboard') {
+      return fetch ('/my/info.json', {}).then (res => {
+        if (res.status !== 200) throw res;
+        return res.json ();
+      }).then (json => {
+        return {account: json};
+      });
+    } else {
+      var url = document.documentElement.getAttribute ('data-group-url') + '/my/info.json';
+      return fetch (url).then (res => {
+        if (res.status !== 200) throw res;
+        return res.json ();
+      });
     }
+  }).then (json => {
+    var oldAccount = GR._state.account || {newSession: true};
+    GR._state.account = json.account;
+    GR._state.group = json.group;
+    if (json.group) {
+      GR._state.account.group_id = json.group.group_id;
+      GR._state.group.member = json.group_member;
+    }
+    GR._timestamp.myinfo = performance.now ();
+
+    document.querySelectorAll ('gr-account-dialog').forEach (_ => _.grClose ());
+    if (json.account.account_id == null) {
+      GR.account.showDialog ();
+
+      if (window.BroadcastChannel)
+      new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+    } else if (oldAccount.account_id !== json.account.account_id &&
+               !oldAccount.newSession) {
+      document.querySelectorAll ('gr-account[self]').forEach (_ => _.grRender ());
+      
+      if (window.BroadcastChannel)
+      new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+
+      if (GR._state.navigatePartition === 'dashboard') {
+        var d = document.createElement ('gr-account-dialog');
+        d.setAttribute ('changed', '');
+        document.body.appendChild (d);
+      }
+    }
+    GR.account.scheduleCheck ();
+  }, (e) => {
+    if (e instanceof Response && e.status === 403) {
+      GR.account.showDialog ();
+
+      if (window.BroadcastChannel)
+      new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+      return;
+    }
+    throw e;
   });
-  // XXX if 403
-  // XXX update gr-nav-panel, if necessary
 }; // GR._updateMyInfo
-// XXX auto _updateMyInfo
 
 GR._myinfo = function () {
   return GR._state.updateMyInfo || GR._updateMyInfo ();
@@ -178,6 +232,28 @@ GR.account.get = function (accountId) {
   });
 }; // GR.account.get
 
+GR.account.showDialog = function () {
+  if (document.querySelector ('gr-account-dialog')) return;
+  document.body.appendChild (document.createElement ('gr-account-dialog'));
+}; // GR.account.showDialog
+
+GR.account.check = function (opt) {
+  if (opt.force ||
+      !(performance.now () - GR._timestamp.myinfo < 3*60*1000)) {
+    //
+  } else {
+    return Promise.resolve ();
+  }
+  return GR._updateMyInfo ();
+}; // GR.account.check
+
+GR.account.scheduleCheck = function () {
+  clearTimeout (GR._state.checkTimer);
+  GR._state.checkTimer = setTimeout (() => {
+    GR.account.check ({});
+  }, 30*60*1000);
+}; // GR.account.scheduleCheck
+
 GR.group = {};
 
 GR.group.info = function () {
@@ -220,6 +296,18 @@ GR.group.activeMembers = function () {
 }; // GR.group.activeMembers
 
 (() => {
+
+  GR.account.scheduleCheck ();
+  if (window.BroadcastChannel) {
+    var bc = new BroadcastChannel ('grAccount');
+    bc.onmessage = (ev) => {
+      if (ev.data.grAccountUpdated) {
+        setTimeout (() => {
+          GR.account.check ({});
+        }, Math.random () * 60*1000);
+      }
+    };
+  }
 
   var e = document.createElementNS ('data:,pc', 'loader');
   e.setAttribute ('name', 'groupMembersLoader');
@@ -293,6 +381,9 @@ defineElement ({
   fill: 'contentattribute',
   props: {
     pcInit: function () {
+      this.grRender ();
+    }, // pcInit
+    grRender: function () {
       if (this.hasAttribute ('self')) {
         return GR.account.info ().then (account => {
           $fill (this, account);
@@ -302,9 +393,57 @@ defineElement ({
           $fill (this, account);
         });
       }
-    }, // pcInit
+    }, // grRender
   },
 }); // <gr-account>
+
+defineElement ({
+  name: 'gr-account-dialog',
+  props: {
+    pcInit: function () {
+      if (this.hasAttribute ('changed')) {
+        this.grShowChanged ();
+      } else {
+        this.grShow ();
+      }
+    }, // pcInit
+    grShow: function () {
+      var backdrop = document.createElement ('gr-backdrop');
+      var iframe = document.createElement ('iframe');
+      iframe.className = 'dialog';
+      iframe.src = '/account/login?next='+encodeURIComponent (new URL ('/account/login?done=1', location.href));
+      backdrop.appendChild (iframe);
+      this.appendChild (backdrop);
+      var listener = ev => {
+        if (ev.origin === location.origin &&
+            ev.data.grAccountUpdated) {
+          this.grClose ();
+          GR.account.check ({force: true});
+        }
+      };
+      window.addEventListener ('message', listener);
+      this.grClose = () => {
+        this.remove ();
+        window.removeEventListener ('message', listener);
+        this.grClose = () => {};
+      };
+    }, // grShow
+    grShowChanged: function () {
+      this.grClose = () => {
+        this.remove ();
+        this.grClose = () => {};
+      };
+      return $getTemplateSet ('gr-account-changed').then (ts => {
+        var backdrop = document.createElement ('gr-backdrop');
+        var container = ts.createFromTemplate ('article', {});
+        container.className = 'dialog';
+        backdrop.appendChild (container);
+        this.appendChild (backdrop);
+      });
+    }, // grShowChanged
+    grClose: function () {},
+  },
+}); // <gr-account-dialog>
 
 defineElement ({
   name: 'gr-group',
@@ -407,6 +546,11 @@ GR.dashboard._groupMembers = function (groupId) {
       if (json.has_next) {
         return get (json.next_ref);
       }
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   }; // get
   return GR.dashboard._state.getGroupMembers[groupId] = get (null).then (_ => {
@@ -431,6 +575,11 @@ GR.dashboard._groupObject = function (groupId, objectId) {
       return res.json ();
     }).then (function (json) {
       return json.objects;
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   }; // get
   return GR.dashboard._state.getGroupObjects[groupId][objectId] = Promise.resolve ().then (() => {
@@ -464,6 +613,11 @@ GR.dashboard._groupList = function () {
       if (json.has_next) {
         return get (json.next_ref);
       }
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   }; // get
   return GR.dashboard._state.getGroupList = get (null).then (_ => {
@@ -656,6 +810,11 @@ function gFetch (pathquery, opts) {
       }
       return ff;
     }
+  }).catch (e => {
+    if (e instanceof Response && e.status === 403) {
+      throw GR.Error.handle403 (e);
+    }
+    throw e;
   });
 } // gFetch
 
@@ -2146,6 +2305,11 @@ function saveObject (article, form, object, opts) {
     }).then ((res) => {
       if (res.status !== 200) throw res;
       return res;
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
     // XXX notify object update
   };
@@ -2754,6 +2918,11 @@ function upgradeForm (form) {
         prev: {ref: json.prev_ref, has: json.has_prev, limit: opts.limit},
         next: {ref: json.next_ref, has: json.has_next || hasNext, limit: opts.limit},
       };
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   };
   document.head.appendChild (e);
@@ -2770,6 +2939,11 @@ function upgradeForm (form) {
     }).then ((res) => {
       if (res.status !== 200) throw res;
       return res;
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   };
   document.head.appendChild (e);
@@ -3876,7 +4050,7 @@ defineElement ({
       as.start ({stages: ['loading']});
       as.stageStart ('loading');
 
-      this.querySelectorAll ('gr-error').forEach (_ => _.hidden = true);
+      this.querySelectorAll ('gr-error, .reload-button').forEach (_ => _.hidden = true);
     }, // grStart
     grStop: function () {
       this.grAS.end ({ok: true});
@@ -3893,6 +4067,11 @@ defineElement ({
         } else {
           _.hidden = true;
         }
+      });
+
+      this.querySelectorAll ('.reload-button').forEach (_ => {
+        _.onclick = () => GR.navigate.go ('', {reload: true});
+        _.hidden = false;
       });
 
       if (found) {
@@ -3992,6 +4171,11 @@ defineElement ({
       });
     }).then ((res) => {
       if (res.status !== 200) throw res;
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
     });
   };
   document.head.appendChild (def);

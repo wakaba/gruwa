@@ -2,6 +2,7 @@ package AccountPages;
 use strict;
 use warnings;
 use Web::URL;
+use Web::URL::Encoding;
 use Promise;
 use JSON::PS;
 
@@ -14,7 +15,7 @@ sub main ($$$$$) {
   if (@$path == 2 and $path->[1] eq 'login') {
     # /account/login
     if ($app->http->request_method eq 'POST') {
-      $app->requires_same_origin;
+      $app->requires_same_origin_or_referer_origin;
       my $server = $app->bare_param ('server') // '';
       return $app->throw_error (400, reason_phrase => 'Bad |server|')
           unless grep { $_ eq $server } @{$app->config->{accounts}->{servers}};
@@ -70,7 +71,18 @@ sub main ($$$$$) {
               $next->get_origin->same_origin_as ($url->get_origin)) {
         $next = $url;
       }
-      return $app->send_redirect ($next->stringify);
+      return $app->accounts (['info'], {
+        sk_context => $app->config->{accounts}->{context},
+        sk => $app->http->request_cookies->{sk},
+      })->then (sub {
+        my $account = $_[0];
+        if (defined $account->{terms_version} and
+            $account->{terms_version} >= $app->config->{accounts}->{terms_version}) {
+          return $app->send_redirect ($next->stringify);
+        } else {
+          return $app->send_redirect (sprintf '/account/agree?next=%s', percent_encode_c $next->stringify);
+        }
+      });
     }, sub {
       my $json = $_[0];
       $app->http->set_status (400, reason_phrase => $json->{reason});
@@ -84,10 +96,47 @@ sub main ($$$$$) {
     return temma $app, 'account.done.html.tm', {};
   }
 
+  if (@$path == 2 and $path->[1] eq 'agree') {
+    # /account/agree
+    $app->http->set_response_header ('X-Frame-Options' => 'sameorigin');
+    if ($app->http->request_method eq 'POST') {
+      $app->requires_same_origin;
+      my $agree;
+      if ($app->bare_param ('disagree')) {
+        $agree = {
+          version => 1,
+          downgrade => 1,
+        };
+      } elsif ($app->bare_param ('agree')) {
+        $agree = {
+          version => $app->config->{accounts}->{terms_version},
+        };
+      }
+      return Promise->resolve->then (sub {
+        return $app->accounts (['agree'], {
+          sk_context => $app->config->{accounts}->{context},
+          sk => $app->http->request_cookies->{sk},
+          %$agree,
+        }) if keys %$agree;
+      })->then (sub {
+        my $url = Web::URL->parse_string ($app->http->url->resolve_string ('/dashboard')->stringify);
+        my $next = Web::URL->parse_string ($app->text_param ('next') // '');
+        unless (defined $next and
+                $next->get_origin->same_origin_as ($url->get_origin)) {
+          $next = $url;
+        }
+        return $app->send_redirect ($next->stringify);
+      });
+    } else {
+      return temma $app, 'account.agree.html.tm', {};
+    }
+  }
+
   if ($path->[1] eq 'push') {
     return $app->accounts (['info'], {
       sk_context => $app->config->{accounts}->{context},
       sk => $app->http->request_cookies->{sk},
+      terms_version => $app->config->{accounts}->{terms_version},
     })->then (sub {
       my $account = $_[0];
       $account->{has_account} = !! $account->{account_id};
@@ -161,7 +210,7 @@ sub account_push ($$$$) {
     $app->requires_request_method ({POST => 1});
     $app->requires_same_origin;
     return Promise->resolve->then (sub {
-      return unless $account->{has_account};
+      return $app->throw_error (403) unless $account->{has_account};
       return $app->apploach (['notification', 'hook', 'delete.json'], {
         subscriber_nobj_key => 'account-' . $account->{account_id},
         type_nobj_key => 'apploach-push',
@@ -194,6 +243,7 @@ sub mymain ($$$$$) {
       my $json = {
         account_id => defined $account_data->{account_id} ? ''.$account_data->{account_id} : undef,
         name => $account_data->{name},
+        terms_version => $account_data->{terms_version},
       };
   #if ($with_profile) {
   #  #
@@ -216,6 +266,7 @@ sub mymain ($$$$$) {
     return $acall->(['info'], {
       sk_context => $app->config->{accounts}->{context},
       sk => $app->http->request_cookies->{sk},
+      terms_version => $app->config->{accounts}->{terms_version},
     })->(sub {
       my $account_data = $_[0];
       return [] unless defined $account_data->{account_id};
@@ -256,6 +307,7 @@ sub mygroups ($$$) {
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
     sk => $app->http->request_cookies->{sk},
+    terms_version => $app->config->{accounts}->{terms_version},
   })->(sub {
     my $account_data = $_[0];
     return unless defined $account_data->{account_id};
@@ -310,6 +362,7 @@ sub dashboard ($$$) {
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
     sk => $app->http->request_cookies->{sk},
+    terms_version => $app->config->{accounts}->{terms_version},
   })->(sub {
     my $account_data = $_[0];
     unless (defined $account_data->{account_id}) {

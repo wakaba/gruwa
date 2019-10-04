@@ -16,10 +16,6 @@
 </nav>
 
 <!--
-XXX admin-configured footer
--->
-
-<!--
 
 Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 

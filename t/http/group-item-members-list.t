@@ -6,9 +6,11 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->create_account (a2 => {});
-  })->then (sub {
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [a3 => account => {terms_version => 1}],
+  )->then (sub {
     return $current->create_group (g1 => {owner => 'a1', members => ['a2']});
   })->then (sub {
     return $current->are_errors (
@@ -17,6 +19,7 @@ Test {
         {path => ['g', '52564444', 'members', 'list.json'], status => 404},
         {path => ['g', '0'.$current->o ('g1')->{group_id}, 'members', 'list.json'], status => 404},
         {account => undef, status => 403},
+        {account => 'a3', status => 403},
       ],
     );
   });

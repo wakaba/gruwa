@@ -6,17 +6,23 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->client->request (path => ['account', 'login'], headers => {
-    origin => $current->client->origin->to_ascii,
-  }, method => 'POST', params => {
-    server => 'test1',
+  return $current->create (
+    [ax1 => account => {xs => 1}],
+  )->then (sub {
+    return $current->client->request (path => ['account', 'login'], headers => {
+      origin => $current->client->origin->to_ascii,
+    }, method => 'POST', params => {
+      server => 'test1',
+    });
   })->then (sub {
     my $res = $_[0];
     $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
     my $sk = $1;
     my $url = Web::URL->parse_string ($res->header ('Location'));
     my $client = $current->client_for ($url);
-    return $client->request (url => $url)->then (sub {
+    return $client->request (url => $url, params => {
+      name => $current->o ('ax1')->{xs_name},
+    })->then (sub {
       my $res = $_[0];
       die $res unless $res->status == 200;
       my $code = $res->header ('X-Code');
@@ -86,25 +92,70 @@ Test {
     test {
       is $res->status, 302;
       is $res->header ('Set-Cookie'), undef;
-      is $res->header ('Location'), $current->resolve ("/hoge/fuga?abc")->stringify;
+      is $res->header ('Location'), 'http://app.server.test/account/agree?next=http%3A%2F%2Fapp.server.test%2Fhoge%2Ffuga%3Fabc';
     } $current->c;
   });
-} n => 3, name => '/account/cb with next';
+} n => 3, name => '/account/cb with next (new account)';
 
 Test {
   my $current = shift;
-  return $current->client->request (path => ['account', 'login'], headers => {
-    origin => $current->client->origin->to_ascii,
-  }, method => 'POST', params => {
-    server => 'test1',
-    next => 'https://hoge.test/foo',
+  return $current->create (
+    [ax1 => account => {xs => 1}],
+  )->then (sub {
+    return $current->client->request (path => ['account', 'login'], headers => {
+      origin => $current->client->origin->to_ascii,
+    }, method => 'POST', params => {
+      server => 'test1',
+      next => $current->resolve ('/hoge/fuga?abc')->stringify,
+    });
   })->then (sub {
     my $res = $_[0];
     $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
     my $sk = $1;
     my $url = Web::URL->parse_string ($res->header ('Location'));
     my $client = $current->client_for ($url);
-    return $client->request (url => $url)->then (sub {
+    return $client->request (url => $url, params => {
+      name => $current->o ('ax1')->{xs_name},
+    })->then (sub {
+      my $res = $_[0];
+      die $res unless $res->status == 200;
+      my $code = $res->header ('X-Code');
+      my $state = $res->header ('X-State');
+      return $current->client->request (path => ['account', 'cb'], params => {
+        code => $code,
+        state => $state,
+      }, cookies => {sk => $sk});
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 302;
+      is $res->header ('Set-Cookie'), undef;
+      is $res->header ('Location'), $current->resolve ("/hoge/fuga?abc")->stringify;
+    } $current->c;
+  });
+} n => 3, name => '/account/cb with next (not new account)';
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [ax1 => account => {xs => 1}],
+  )->then (sub {
+    return $current->client->request (path => ['account', 'login'], headers => {
+      origin => $current->client->origin->to_ascii,
+    }, method => 'POST', params => {
+      server => 'test1',
+      next => 'https://hoge.test/foo',
+    });
+  })->then (sub {
+    my $res = $_[0];
+    $res->header ('Set-Cookie') =~ /sk=([^;]+)/;
+    my $sk = $1;
+    my $url = Web::URL->parse_string ($res->header ('Location'));
+    my $client = $current->client_for ($url);
+    return $client->request (url => $url, params => {
+      name => $current->o ('ax1')->{xs_name},
+    })->then (sub {
       my $res = $_[0];
       die $res unless $res->status == 200;
       my $code = $res->header ('X-Code');

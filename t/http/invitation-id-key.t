@@ -6,9 +6,11 @@ use Tests;
 
 Test {
   my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->create_account (a2 => {});
-  })->then (sub {
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [a3 => account => {terms_version => 1}],
+  )->then (sub {
     return $current->create_group (g1 => {owner => 'a1', members => ['a2']});
   })->then (sub {
     return $current->create_group (g2 => {owner => 'a1'});
@@ -32,6 +34,11 @@ Test {
          response_headers => {location => $current->resolve ("/g/".$current->o ('g2')->{group_id}."/")->stringify}},
       ],
     );
+  })->then (sub {
+    return $current->get_html (['invitation',
+      $current->o ('g1')->{group_id},
+      $current->o ('i1')->{invitation_key},
+    ''], {}, account => 'a3');
   })->then (sub {
     return $current->get_html (['invitation',
       $current->o ('g1')->{group_id},
@@ -124,6 +131,7 @@ Test {
     [a2 => account => {
       name => $current->generate_text (a2name => {}),
     }],
+    [a3 => account => {terms_version => 1}],
   )->then (sub {
     return $current->create_group (g1 => {owner => 'a1'});
   })->then (sub {
@@ -147,6 +155,7 @@ Test {
         {path => ['invitation', $current->o ('g2')->{group_id}, $current->o ('i1')->{invitation_key}, ''], status => 302,
          response_headers => {location => $current->resolve ("/g/".$current->o ('g2')->{group_id}."/")->stringify}},
         {account => undef, status => 403, name => 'no account'},
+        {account => 'a3', status => 403, name => 'bad terms_version'},
         {origin => undef, status => 400},
       ],
     );

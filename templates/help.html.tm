@@ -78,11 +78,11 @@
         <a href=#owner>所有者</a>は、
         参加承認を取り消したり、メモを書いたりできます。
 
-          <div class=notes>
+          <ul class=notes>
 
-            <p>自分自身の参加承認は取り消せません。
+            <li>自分自身の参加承認は取り消せません。
             
-          </div>
+          </ul>
 
         <hr>
         
@@ -159,12 +159,12 @@
               <td>
                 名前と共に表示されるアイコンです。
 
-                <div class=notes>
-                  <p>アイコンは<a href=#groups>グループ</a>内の<a href=#objects>記事</a>として保存されます。
+                <ul class=notes>
+                  <li>アイコンは<a href=#groups>グループ</a>内の<a href=#objects>記事</a>として保存されます。
 
-                  <p>アイコンが変更されてから反映されるまで、
+                  <li>アイコンが変更されてから反映されるまで、
                   時間がかかることがあります。
-                </div>
+                </ul>
         </table>
 
         <p id=group-config-create><a href=#groups>グループ</a>の<a href=#config>設定</a>ページでは、
@@ -196,8 +196,8 @@
         <p>グループごと、日記ごとに違う配色を選ぶと、
         誤投稿しにくくなって便利です。
 
-          <div class=notes>
-            <p><a href=https://github.com/wakaba/gruwa-themes>利用できる配色</a>の中には、
+          <ul class=notes>
+            <li><a href=https://github.com/wakaba/gruwa-themes>利用できる配色</a>の中には、
             他のソフトウェア
             (<cite>tDiary</cite> や<a href=http://d.hatena.ne.jp/keyword/%A4%CF%A4%C6%A4%CA%A5%C0%A5%A4%A5%A2%A5%EA%A1%BC%A5%C6%A1%BC%A5%DE%BA%EE%C0%AE%BB%FE%A4%CE%C3%ED%B0%D5?kid=1342#fn3><cite>はてなダイアリー</cite></a>)
             のために開発され、
@@ -205,7 +205,7 @@
             Gruwa と他のソフトウェアの構造の違いのため、
             適切に表示できないものもあります
             (順次改善予定です)。
-          </div>
+          </ul>
       </section>
     </section>
 
@@ -365,9 +365,9 @@
       <p><a href=#objects>記事</a>の<a href=#menu>メニュー</a>から
       「削除」を選ぶと、<a href=#objects>記事</a>の内容を消去できます。
 
-        <div class=notes>
-          <p><a href=#objects>記事</a>への<a href=#comments>コメント</a>や履歴は削除後も残ります。
-        </div>
+        <ul class=notes>
+          <li><a href=#objects>記事</a>への<a href=#comments>コメント</a>や履歴は削除後も残ります。
+        </ul>
 
       <p><a href=#objects>記事</a>の<a href=#menu>メニュー</a>から
       「編集履歴」を選ぶと、<a href=#objects>記事</a>の変更日時、
@@ -399,12 +399,17 @@
       <a href=#account-name>名前</a>と<a href=#account-icon>アイコン</a>は<a href=#group-members>参加者</a>一覧、
       <a href=#comments>コメント</a>一覧、編集履歴などで使われます。
 
-      <div class=notes>
-        <p><a href=#account-icon>アイコン</a>は<a href=#groups>グループ</a>内の<a href=#objects>記事</a>として保存されます。
+      <ul class=notes>
+        <li><a href=#accounts>利用者アカウント</a>を作成して Gruwa
+        を利用するためには、
+        <a href=/terms>利用規約</a>にご同意いただく必要があります。
+        <li><a href=#accounts>利用者アカウント</a>の識別のためにクッキーを使用します。
+        <li>ログインに使ったサービスに、 Gruwa が無断で投稿することはありません。
+        <li><a href=#account-icon>アイコン</a>は<a href=#groups>グループ</a>内の<a href=#objects>記事</a>として保存されます。
 
-        <p><a href=#account-icon>アイコン</a>が変更されてから反映されるまで、
+        <li><a href=#account-icon>アイコン</a>が変更されてから反映されるまで、
         時間がかかることがあります。
-      </div>
+      </ul>
     </section>
 
     <section id=dashboard>
@@ -437,10 +442,10 @@
 
         <p>ここから<a href=#group-create>新しいグループも作成</a>できます。
         
-          <div class=notes>
-            <p><a href=#owner>所有者</a>により<a href=#group-members>参加者</a>から外されると、
+          <ul class=notes>
+            <li><a href=#owner>所有者</a>により<a href=#group-members>参加者</a>から外されると、
             一覧に表示されなくなります。
-          </div>
+          </ul>
       </section>
       
     <section id=jump>
@@ -473,10 +478,10 @@
         デスクトップOSやスマートフォンの通知機能でお知らせするよう設定できます。
         (お使いの Web ブラウザーが対応している必要があります。)
 
-          <div class=notes>
-            <p>同じ Web ブラウザーで複数の<a href=#accounts>アカウント</a>を使い分けていると、
+          <ul class=notes>
+            <li>同じ Web ブラウザーで複数の<a href=#accounts>アカウント</a>を使い分けていると、
             通知は正しく動作しません。
-          </div>
+          </ul>
       </section>
       
     </section>
@@ -825,11 +830,79 @@
       </section>
 
     </section>
+
+    <section id=privacy>
+      <h1>プライバシーについて</h1>
+
+      <p>個人情報その他の情報の取り扱いは、
+      <a href=/terms#privacy>プライバシーポリシー</a>に定めるところによります。
+
+      <p>Gruwa では次の情報を扱います。
+
+      <dl>
+
+        <div>
+          <dt>アクセスした者の IP アドレス、
+          利用者エージェントの識別子、
+          アクセスの日時
+          <dd>サービスの利用の状況を記録し一定期間保持します。
+          サービスに対する攻撃の防止など、
+          サービスの正常な稼働を維持するために使用します。
+          <dd><a href=#accounts>アカウント</a>に関する重要な操作について適宜記録し、
+          利用者自身の便宜や不正利用の防止のため、
+          当該<a href=#accounts>アカウント</a>自身による閲覧に供します。
+          <dd><a href=#groups>グループ</a>内での操作について適宜記録し、
+          監査のため当該<a href=#groups>グループ</a>の<a href=#owner>所有者</a>による閲覧に供します。
+        </div>
+
+        <div>
+          <dt>ログインに使用した他のサービスのプロフィール
+          (他のサービスにおける識別子、名前、
+          画像、メールアドレス)
+          <dd><a href=#accounts>アカウント</a>の作成や識別のために使用、
+          記録します。
+          <dd>サービスに対する攻撃の防止など、
+          サービスの正常な稼働を維持するために使用します。
+          <dd>当該<a href=#accounts>アカウント</a>自身に対する<a href=#accounts>アカウント</a>情報の表示のため使います。
+        </div>
+
+        <div>
+          <dt>メールアドレス
+          (直接登録されたもの、他のサービスのプロフィールから自動登録されたもの)
+          <dd>サービスからの通知メールの送信に使います。
+          <dd>サービス運営者から利用者への連絡に使います。
+        </div>
+
+        <div>
+          <dt>デスクトップ/スマートフォン通知の通知先
+          <dd>サービスからの通知の送信に使います。
+        </div>
+
+        <div>
+          <dt><a href=#import>インポート</a>に使用した他のサービスのプロフィール
+          (他のサービスにおける識別子、名前)
+          <dd><a href=#import>インポート</a>に使用します。
+          完了後に破棄します。
+        </div>
+        
+      </dl>
+      
+    </section>
+
+    <section>
+      <h1>お知らせ</h1>
+
+      <p>Gruwa の新機能や変更点のご紹介や、
+      サービスの運営に関するご案内は、
+      <a href=/news>お知らせ</a>にて行います。
+        
+    </section>
+    
   </section>
 
 <!--
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
