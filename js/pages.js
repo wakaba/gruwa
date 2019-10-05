@@ -2283,11 +2283,12 @@ function saveObject (article, form, object, opts) {
       opts.actionStatus.stageEnd ("edit");
       return objectId;
     });
-  }).then (() => {
+  }).then ((objectId) => {
     $$ (form, 'gr-called-editor').forEach (function (control) {
       control.grObjectCalled = object.data.called;
       control.grReset ();
     });
+    return objectId;
   });
 } // saveObject
 
