@@ -1,5 +1,6 @@
 {
   "is_local": true,
+  "env_name": "local",
   "origin": "http://budou:5521",
   "x_forwarded": false,
   "create_group_key": "Y3JZV09ZekU4RVdGZ0pRdE8xY09EUEJpTDJFU045",

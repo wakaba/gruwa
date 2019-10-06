@@ -192,6 +192,20 @@ Test {
   });
 } n => 6, name => '/robots.txt';
 
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['favicon.ico'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'image/svg+xml;charset=utf-8';
+      like $res->body_bytes, qr<Public Domain>;
+      ok $res->header ('last-modified');
+      is $res->header ('cache-control'), undef;
+    } $current->c;
+  });
+} n => 5, name => '/favicon.ico';
+
 RUN;
 
 =head1 LICENSE

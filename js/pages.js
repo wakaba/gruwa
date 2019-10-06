@@ -17,6 +17,12 @@ window.GR = {};
 // XXX
 $with.register ('GR', () => window.GR);
 
+GR.idle = self.requestIdleCallback ? (cb) => {
+  requestIdleCallback (cb);
+} : (cb) => {
+  setTimeout (cb, 600);
+};
+
 class GRError extends Error {
   constructor (type) {
     var message = type;
@@ -125,6 +131,67 @@ defineElement ({
 
 GR._state = {};
 GR._timestamp = {};
+
+GR.Favicon = {};
+
+GR.Favicon.loadBaseImage = function () {
+  var link = document.querySelector ('link[rel~=icon]');
+  if (!link) return;
+  return new Promise ((ok, ng) => {
+    var img = document.createElement ('img');
+    img.src = link.href;
+    img.width = img.height = 600;
+    img.onload = () => ok (img);
+    img.onerror = ng;
+  }).then (img => {
+    GR._state.faviconBaseImage = img;
+    GR.Favicon.redraw ();
+  });
+}; // GR.Favicon.loadBaseImage
+
+GR.Favicon.redraw = function () {
+  var canvas = document.createElement ('canvas');
+  canvas.width = canvas.height = 600;
+  var ctx = canvas.getContext ('2d');
+  
+  var envName = document.documentElement.getAttribute ('data-env');
+  if (envName) {
+    ctx.globalAlpha = 0.4;
+  }
+
+  if (GR._state.faviconBaseImage) {
+    ctx.drawImage (GR._state.faviconBaseImage, 0, 0, 600, 600);
+  }
+
+  if (envName) {
+    ctx.globalAlpha = 1;
+    ctx.font = "bold 480px serif";
+    ctx.fillStyle = "red";
+    ctx.fillText (envName, 0, 600);
+  }
+  
+  var link = document.querySelector ('link[rel~=icon]');
+  link.href = canvas.toDataURL ();
+}; // GR.Favicon.redraw    
+
+(() => {
+  GR.idle (() => GR.Favicon.loadBaseImage ());
+
+  var envName = document.documentElement.getAttribute ('data-env');
+  if (envName) {
+    var label = "Gruwa - " + envName + " -";
+    var div = document.createElement ('div');
+    div.innerHTML = '<svg height="'+(label.length/2+1)+'em" width="1em" style="font-size: 24px; opacity: 0.4"><text x="0" y="1em" fill="red" font-weight="bold" transform="rotate(90 12 12)"></text></svg>';
+    div.querySelector ('text').textContent = label;
+    var d = document.implementation.createDocument (null, null);
+    d.appendChild (div.firstChild);
+    document.documentElement.style.backgroundPosition = 'right';
+    document.documentElement.style.backgroundRepeat = 'repeat-y';
+    document.documentElement.style.backgroundImage = 'url("data:image/svg+xml;charset=utf-8,' + encodeURIComponent (d.documentElement.outerHTML) + '")';
+    document.documentElement.style.paddingRight = '24px';
+  }
+  
+}) ();
 
 GR._updateMyInfo = function () {
   delete GR._state.getMembers;
@@ -1459,7 +1526,7 @@ function upgradeBodyControl (e, object, opts) {
     e.sendChange = function (data) {
       mc.port2.postMessage ({type: "change", value: data});
     };
-    e.focus = function () {
+  e.focus = function () {
       iframe.focus ();
       var ev = new UIEvent ('focus', {});
       e.dispatchEvent (ev);

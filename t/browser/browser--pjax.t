@@ -186,7 +186,9 @@ Test {
 
       window.testState = 123445;
       document.querySelector ('gr-menu[type=group] button').click ();
-      document.querySelector ('gr-menu[type=group] a[href$="/members"]').click ();
+      setTimeout (() => {
+        document.querySelector ('gr-menu[type=group] a[href$="/members"]').click ();
+      }, 100);
     });
   })->then (sub {
     return $current->b_wait (1 => {
