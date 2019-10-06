@@ -42,6 +42,12 @@ html { /* [data-thema=green] */
   --success-color: green;
   --success-background-color: transparent;
 
+  --inprogress-color: white;
+  --inprogress-background-color: red;
+
+  --completed-color: white;
+  --completed-background-color: green;
+
   --small-color: gray;
   --small-background-color: transparent;
 
@@ -846,25 +852,38 @@ td .icon {
   height: 1.5em;
 }
 
-gr-enum-value[data-field="data.todo_state"]:not([hidden]),
-todo-state:not([hidden]) {
+enum-value.todo-state:not([hidden]) {
   display: inline-block;
-  margin: .3em 0;
-  padding: .3em;
-  font-size: 80%;
+  margin: .5em;
+  border-radius: .5em;
+  padding: .4em;
+  font-size: 60%;
   text-align: center;
+  line-height: 1.0;
 }
 
-gr-enum-value[data-field="data.todo_state"][value="1"],
-todo-state[value="1"] {
-  background: red;
-  color: white;
+enum-value.todo-state:empty {
+  display: none;
 }
 
-gr-enum-value[data-field="data.todo_state"][value="2"],
-todo-state[value="2"] {
-  background: green;
-  color: white;
+enum-value.todo-state[value="1" /* open */ ] {
+  color: var(--inprogress-color);
+  background-color: var(--inprogress-background-color);
+}
+enum-value.todo-state[value="2" /* closed */ ] {
+  color: var(--completed-color);
+  background-color: var(--completed-background-color);
+}
+
+enum-value.todo-state::before {
+  display: block;
+  font-size: 200%;
+}
+enum-value.todo-state[value="1"]::before {
+  content: "\0026CF";
+}
+enum-value.todo-state[value="2"]::before {
+  content: "\01F38A";
 }
 
 gr-menu {

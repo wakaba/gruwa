@@ -13,14 +13,14 @@ Test {
       members => ['a1', 'a2'],
     }],
   )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, group => 'g1', account => 'a2');
+  })->then (sub {
     return $current->create_browser (1 => {
       url => ['g', $current->o ('g1')->{group_id}, 'account', $current->o ('a2')->{account_id}, ''],
       account => 'a1',
     });
-  })->then (sub {
-    return $current->post_json (['my', 'edit.json'], {
-      name => $current->generate_text (t2 => {}),
-    }, group => 'g1', account => 'a2');
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'html:not([data-navigating])',

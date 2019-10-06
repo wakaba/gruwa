@@ -431,6 +431,49 @@ GR.object.get = function (objectId, objectRevisionId) {
   });
 }; // GR.object.get
 
+(() => {
+
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'groupIndexLoader');
+  e.pcHandler = function (opts) {
+    var indexId = this.getAttribute ('loader-indexid');
+    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/o/get.json?index_id=' + encodeURIComponent (indexId) + '&with_title=1&with_snippet=1';
+    if (opts.ref) url += '&ref=' + encodeURIComponent (opts.ref);
+    var limit = this.getAttribute ('loader-limit') || opts.limit;
+    if (limit) url += '&limit=' + encodeURIComponent (limit);
+    // XXX cache
+    return fetch (url, {
+      credentials: "same-origin",
+      referrerPolicy: 'same-origin',
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then ((json) => {
+      var list = Object.values (json.objects).sort ((a, b) => {
+        return b.timestamp - a.timestamp;
+      }).map (_ => {
+        return {
+          url: '/g/'+_.group_id+'/i/'+indexId+'/wiki/'+encodeURIComponent (_.title)+'#' + _.object_id,
+          object: _,
+        };
+      });
+      var hasNext = json.next_ref && opts.ref !== json.next_ref; // backcompat
+      return {
+        data: list,
+        prev: {ref: json.prev_ref, has: json.has_prev, limit: limit},
+        next: {ref: json.next_ref, has: json.has_next || hasNext, limit: limit},
+      };
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
+    });
+  };
+  document.head.appendChild (e);
+
+}) ()
+
 GR.wiki = {};
 
 GR.wiki.url = function (indexId, wikiName) {
@@ -463,6 +506,35 @@ defineElement ({
     }, // grRender
   },
 }); // <gr-account>
+
+defineElement ({
+  name: 'gr-account-list',
+  fill: 'idlattribute',
+  props: {
+    pcInit: function () {
+      this.grValue = Object.keys (this.value || {});
+      if (this.grValue) Promise.resolve ().then (() => this.grRender ());
+      Object.defineProperty (this, 'value', {
+        set: function (v) {
+          this.grValue = Object.keys (v || {});
+          Promise.resolve ().then (() => this.grRender ());
+        },
+      });
+    }, // pcInit
+    grRender: function () {
+      return $getTemplateSet ('gr-account-list-item').then (tm => {
+        this.textContent = '';
+
+        this.grValue.sort ((a, b) => {
+          return a - b;
+        }).forEach (accountId => {
+          var e = tm.createFromTemplate ('span', {account_id: accountId});
+          while (e.firstChild) this.appendChild (e.firstChild);
+        });
+      });
+    }, // grRender
+  },
+}); // <gr-account-list>
 
 defineElement ({
   name: 'gr-account-dialog',
@@ -1230,15 +1302,8 @@ function fillFields (contextEl, rootEl, el, object, opts) {
           field.appendChild (item);
         });
       });
-    } else if (field.localName === 'account-list') {
-      field.textContent = '';
-      var template = document.querySelector ('#account-list-item-template');
-      Object.keys (value || {}).forEach (function (accountId) {
-        var item = document.createElement ('list-item');
-        item.appendChild (template.content.cloneNode (true));
-        fillFields (item, item, item, {account_id: accountId}, {});
-        field.appendChild (item);
-      });
+    } else if (field.localName === 'gr-account-list') {
+      field.value = value;
     } else if (field.localName === 'iframe') {
       field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
       field.setAttribute ('srcdoc', createBodyHTML ('', {}));
@@ -1284,12 +1349,14 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       } else {
         field.hidden = true;
       }
-    } else if (field.localName === 'progress') {
+    } else if (field.localName === 'enum-value') {
       field.setAttribute ('value', value);
-      var maxKey = field.getAttribute ('data-max-data-field');
+    } else if (field.localName === 'gr-count') {
+      field.setAttribute ('value', value);
+      var maxKey = field.getAttribute ('data-all-data-field');
       if (maxKey) {
         var max = object.data ? object.data[maxKey] : null;
-        if (max) field.setAttribute ('max', max);
+        if (max) field.setAttribute ('all', max);
       }
     } else if (field.localName === 'unit-number') {
       field.setAttribute ('value', value);
@@ -2244,9 +2311,16 @@ function editObject (article, object, opts) {
         article.classList.remove ('editing');
         as.end ({ok: true});
       } else { // new object
-        return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
-          return document.querySelector ('gr-list-container[src-index_id]')
-              .showObjects (json.objects, {prepend: true});
+        var list = document.querySelector ('gr-list-container[src-index_id]');
+        return Promise.resolve ().then (() => {
+          if (list) {
+            return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
+              return list.showObjects (json.objects, {prepend: true});
+            });
+          } else {
+            // XXX loadPrev ({})
+            document.querySelectorAll ('list-container.search-result').forEach (_ => _.load ({}));
+          }
         }).then (function () {
           //as.stageEnd ("update");
           as.end ({ok: true});
@@ -2957,7 +3031,8 @@ function upgradeForm (form) {
   e.pcHandler = function (opts) {
     if (!this.hasAttribute ('src')) return {};
     var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/' + this.getAttribute ('src');
-    if (this.hasAttribute ('src-search')) {
+    var isSearch = this.hasAttribute ('loader-search');
+    if (isSearch) {
       if (GR._state.searchWord) {
         url += /\?/.test (url) ? '&' : '?';
         url += 'q=' + encodeURIComponent (GR._state.searchWord);
@@ -2980,9 +3055,20 @@ function upgradeForm (form) {
     }).then ((json) => {
       if (!this.hasAttribute ('key')) throw new Error ("|key| is not specified");
       json = json || {};
+
+      var list = json[this.getAttribute ('key')];
+      if (isSearch) {
+        list = list.map (_ => {
+          return {
+            url: '/g/'+_.group_id+'/o/'+_.object_id+'/',
+            object: _,
+          };
+        });
+      }
+      
       var hasNext = json.next_ref && opts.ref !== json.next_ref; // backcompat
       return {
-        data: json[this.getAttribute ('key')],
+        data: list,
         prev: {ref: json.prev_ref, has: json.has_prev, limit: opts.limit},
         next: {ref: json.next_ref, has: json.has_next || hasNext, limit: opts.limit},
       };
@@ -3996,13 +4082,14 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           list.setAttribute ('src-index_id', params.index.index_id);
           list.setAttribute ('src-wiki_name', params.wiki.name);
         } else if (pageName === 'index-index') {
-          var list = div.querySelector ('gr-list-container[key=objects]');
-          list.setAttribute ('src-index_id', params.index.index_id);
-          if (params.index.subtype === 'image') {
-            list.setAttribute ('class', 'image-list');
-          } else if (params.index.subtype === 'file') {
-            list.setAttribute ('class', 'file-list');
-          }
+          div.querySelectorAll ('gr-list-container[key=objects]').forEach (list => {
+            list.setAttribute ('src-index_id', params.index.index_id);
+            if (params.index.subtype === 'image') {
+              list.setAttribute ('class', 'image-list');
+            } else if (params.index.subtype === 'file') {
+              list.setAttribute ('class', 'file-list');
+            }
+          });
           div.querySelectorAll ('[data-form-type=uploader]').forEach (_ => {
             _.setAttribute ('data-context', params.index.index_id);
           });
@@ -4173,6 +4260,39 @@ addEventListener ('popstate', ev => {
   nav.setAttribute ('popstate', '');
   document.body.appendChild (nav);
 });
+
+defineElement ({
+  name: 'gr-count',
+  fill: 'contentattribute',
+  templateSet: true,
+  props: {
+    pcInit: function () {
+      this.addEventListener ('pctemplatesetupdated', (ev) => {
+        this.grTemplateSet = ev.pcTemplateSet;
+        Promise.resolve ().then (() => this.grRender ());
+      });
+      new MutationObserver (() => this.grRender ()).observe
+          (this, {attributes: true, attributeFilter: ['all', 'value']});
+    }, // pcInit
+    grRender: function () {
+      var tm = this.grTemplateSet;
+      if (!tm) return;
+
+      var v = {
+        value: this.getAttribute ('value'),
+        all: parseFloat (this.getAttribute ('all')),
+      };
+      if (!v.all || !Number.isFinite (v.all)) {
+        this.hidden = true;
+      } else {
+        this.hidden = false;
+        var e = tm.createFromTemplate ('div', v);
+        this.textContent = '';
+        while (e.firstChild) this.appendChild (e.firstChild);
+      }
+    }, // grRender
+  },
+}); // <gr-count>
 
 defineElement ({
   name: 'xxx-multi-enum', // XXX

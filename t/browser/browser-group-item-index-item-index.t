@@ -148,8 +148,9 @@ Test {
   my $current = shift;
   return $current->create (
     [a1 => account => {}],
+    [a2 => account => {}],
     [g1 => group => {
-      members => ['a1'], title => $current->generate_text (t1 => {}),
+      members => ['a1', 'a2'], title => $current->generate_text (t1 => {}),
       theme => 'red',
     }],
     [i1 => index => {
@@ -164,10 +165,27 @@ Test {
       title => $current->generate_text (t4 => {}),
       index => 'i1',
       todo_state => 1, # open
+      assigned_account => ['a2'],
+    }],
+    [o2 => object => {
+      group => 'g1',
+      account => 'a1',
+      title => $current->generate_text (t5 => {}),
+      index => 'i1',
+      todo_state => 2, # closed
+      body_type => 1, # html
+      body => q{<input type=checkbox><input type=checkbox checked><input type=checkbox>},
     }],
   )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (a2name => {}),
+    }, group => 'g1', account => 'a2');
+  })->then (sub {
     return $current->create_browser (1 => {
       url => ['g', $current->o ('g1')->{group_id}, 'i', $current->o ('i1')->{index_id}, ''],
+      params => {
+        todo => 'all',
+      },
       account => 'a1',
     });
   })->then (sub {
@@ -187,6 +205,21 @@ Test {
     return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('t4'), # object title
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('t5'), # object title
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('a2name'), # assgined account name
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main gr-count progress[value][max]',
+      shown => 1, scroll => 1,
     });
   })->then (sub {
     return $current->b (1)->execute (q{
@@ -209,8 +242,33 @@ Test {
       is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
       is $values->{headerLink}, $values->{headerURL};
     } $current->c;
+    return $current->b (1)->execute (q{
+      return Array.prototype.slice.call (document.querySelectorAll ('.todo-list list-main list-item')).map (_ => {
+        return {
+          statusValue: _.querySelector ('enum-value.todo-state').getAttribute ('value'),
+          countHidden: _.querySelector ('gr-count').hidden,
+          countValue: (_.querySelector ('gr-count progress') || {}).value,
+          countAll: (_.querySelector ('gr-count progress') || {}).max,
+          assigned: _.querySelector ('gr-account-list').textContent,
+        };
+      });
+    });
+  })->then (sub {
+    my $res = $_[0];
+    my $values = $res->json->{value};
+    test {
+      is 0+@{$values}, 2;
+      is $values->[0]->{statusValue}, 2;
+      is !!$values->[0]->{countHidden}, !!0;
+      is $values->[0]->{countValue}, 1;
+      is $values->[0]->{countAll}, 3;
+      is !!$values->[0]->{assigned}, '';
+      is $values->[1]->{statusValue}, 1;
+      is !!$values->[1]->{countHidden}, !!1;
+      like $values->[1]->{assigned}, qr{\Q@{[$current->o ('a2name')]}\E};
+    } $current->c;
   });
-} n => 5, name => ['initial load (todo)'], browser => 1;
+} n => 14, name => ['initial load (todo)'], browser => 1;
 
 Test {
   my $current = shift;
