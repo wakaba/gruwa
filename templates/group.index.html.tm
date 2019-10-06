@@ -1,4 +1,5 @@
 <html t:params="$group $app"
+    pl:data-env="$app->config->{env_name}"
     pl:data-group-url="'/g/'.$group->{group_id}"
     pl:data-theme="$group->{data}->{theme}">
 <head>

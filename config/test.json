@@ -1,6 +1,7 @@
 {
   "is_local": false,
   "is_test_script": true,
+  "env_name": null,
   "origin": "http://app.server.test",
   "x_forwarded": false,
   "create_group_key": null,

@@ -1,4 +1,6 @@
-<html t:params="$group_title $app">
+<html t:params="$group_title $app"
+    pl:data-env="$app->config->{env_name}"
+    data-theme=green>
   <head>
     <t:include path=_other_head.html.tm m:app=$app m:needreferrer=1>
       グループに参加 - <t:text value=$group_title>
@@ -13,7 +15,6 @@
   </header-area>
   <header-area>
     <a href=/dashboard>ダッシュボード</a>
-    <a href=/jump>ジャンプリスト</a>
     <a href=/help target=help>ヘルプ</a>
   </header-area>
 </header>

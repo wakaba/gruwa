@@ -6,6 +6,7 @@
 </t:if>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel=stylesheet pl:href="'/css/common.css?r='.$app->rev">
+<link rel=icon href=/favicon.ico>
 
 <header class=cover>
   <h1>Gruwa</h1>

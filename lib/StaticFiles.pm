@@ -62,6 +62,12 @@ sub main ($$$) {
     return static $app, ['themes.json'], 'application/json;charset=utf-8';
   }
 
+  if (@$path == 1 and $path->[0] eq 'favicon.ico') {
+    # /favicon.ico
+    return static $app, ['images', 'group.svg'], 'image/svg+xml;charset=utf-8';
+  }
+
+
   if (@$path == 1 and $path->[0] eq 'robots.txt') {
     $app->http->set_response_header ('X-Rev' => $app->rev);
     $app->http->set_response_last_modified (1556636400);

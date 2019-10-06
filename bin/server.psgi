@@ -71,7 +71,7 @@ return sub {
       my $path = $app->path_segments;
 
       if ($path->[0] eq 'robots.txt' or
-          #$path->[0] eq 'favicon.ico' or
+          $path->[0] eq 'favicon.ico' or
           #$path->[0] eq 'manifest.json' or
           $path->[0] eq 'css' or
           $path->[0] eq 'images' or

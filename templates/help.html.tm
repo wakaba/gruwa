@@ -13,7 +13,6 @@
   </header-area>
   <header-area>
     <a href=/dashboard>ダッシュボード</a>
-    <a href=/jump>ジャンプリスト</a>
   </header-area>
 </header>
 
