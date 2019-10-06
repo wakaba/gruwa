@@ -350,6 +350,7 @@ article.object.editing > edit-container header > p {
 
 article.object > header:not([hidden]) {
   display: flex;
+  align-items: center;
 }
 
 article.object > header > .edit-by-dblclick:not([hidden]) {
@@ -770,7 +771,7 @@ page-main form[is=gr-search] .search-button {
   display: block;
 }
 
-.todo-list list-main > list-item > todo-state {
+.todo-list list-main > list-item > enum-value.todo-state {
   float: left;
   margin-right: .5em;
   font-size: 70%;
@@ -805,26 +806,26 @@ page-main form[is=gr-search] .search-button {
   text-decoration: none;
 }
 
-.todo-list list-main > list-item .info-line checkbox-count:not([hidden]) {
+.todo-list list-main > list-item .info-line gr-count:not([hidden]) {
   display: inline-block;
   min-width: 5em;
   margin-right: 1rem;
   vertical-align: middle;
 }
 
-.todo-list list-main > list-item .info-line checkbox-count > span {
+.todo-list list-main > list-item .info-line gr-count-line {
   display: block;
   text-align: center;
   line-height: 1.0;
   font-size: 80%;
 }
 
-.todo-list list-main > list-item .info-line checkbox-count count-value {
+.todo-list list-main > list-item .info-line gr-count-line data {
   font-weight: bolder;
   font-family: cursive;
 }
 
-.todo-list list-main > list-item .info-line checkbox-count progress {
+.todo-list list-main > list-item .info-line gr-count progress {
   display: block;
   width: 5rem;
   height: .6em;

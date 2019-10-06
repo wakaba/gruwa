@@ -745,7 +745,10 @@
             <div class=edit-by-dblclick>
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
-            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+            <enum-value class=todo-state data-data-field=todo_state
+                label-1=未完了 label-2=完了済
+                label-undefined
+            />
             <popup-menu>
               <button type=button title=メニュー>
                 <button-label>
@@ -914,19 +917,16 @@
       
       <gr-list-container key=objects sortkey=updated src-limit=100 query class=todo-list>
         <template>
-          <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+            <enum-value class=todo-state data-data-field=todo_state
+                label-1=未完了 label-2=完了済
+                label-undefined
+            />
           <p class=main-line>
             <a data-href-template={GROUP}/o/{object_id}/>
               <span data-data-field=title data-empty=■ />
             </a>
           <p class=info-line>
-            <checkbox-count data-if-data-field=all_checkbox_count>
-              <span>
-                <count-value data-data-field=checked_checkbox_count data-empty=0 /> /
-                <count-value data-data-field=all_checkbox_count />
-              </span>
-              <progress data-data-field=checked_checkbox_count data-max-data-field=all_checkbox_count />
-            </checkbox-count>
+            <gr-count data-data-field=checked_checkbox_count data-all-data-field=all_checkbox_count data-filled=all template=gr-count />
             <time data-field=created data-format=ambtime />
             (<time data-field=updated data-format=ambtime /> 編集)
             <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=マイルストーン />
@@ -1129,6 +1129,17 @@
   </template><!-- fileset -->
 </template-set>
 
+<template-set name=gr-count>
+  <template>
+    <gr-count-line>
+      <data data-field=value data-empty=0 />
+      /
+      <data data-field=all />
+    </gr-count-line>
+    <progress data-value-field=value data-max-field=all data-filled="max value" />
+  </template>
+</template-set>
+
 <template-set name=page-object-index>
   <template>
     <section>
@@ -1157,9 +1168,12 @@
         <template class=object>
           <header>
             <div class=edit-by-dblclick>
+              <enum-value class=todo-state data-data-field=todo_state
+                  label-1=未完了 label-2=完了済
+                  label-undefined
+              />
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
-            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
             <popup-menu>
               <button type=button title=メニュー>
                 <button-label>
@@ -1396,7 +1410,10 @@
             <div class=edit-by-dblclick>
               <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
             </div>
-            <todo-state data-data-field=todo_state label-1=未完了 label-2=完了済 />
+            <enum-value class=todo-state data-data-field=todo_state
+                label-1=未完了 label-2=完了済
+                label-undefined
+            />
             <popup-menu>
               <button type=button title=メニュー>
                 <button-label>
@@ -1586,7 +1603,10 @@
   <template class=body-template id=object-ref-template>
     <a href data-href-template={GROUP}/o/{object_id}/>
       <ref-header>
-        <gr-enum-value data-field=data.todo_state text-1=未完了 text-2=完了済 />
+        <enum-value class=todo-state data-field=data.todo_state
+            label-1=未完了 label-2=完了済
+            label-undefined
+        />
         <cite data-field=data.title data-empty=■ />
         <time data-field=created />
       </ref-header>

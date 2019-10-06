@@ -1327,12 +1327,14 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       } else {
         field.hidden = true;
       }
-    } else if (field.localName === 'progress') {
+    } else if (field.localName === 'enum-value') {
       field.setAttribute ('value', value);
-      var maxKey = field.getAttribute ('data-max-data-field');
+    } else if (field.localName === 'gr-count') {
+      field.setAttribute ('value', value);
+      var maxKey = field.getAttribute ('data-all-data-field');
       if (maxKey) {
         var max = object.data ? object.data[maxKey] : null;
-        if (max) field.setAttribute ('max', max);
+        if (max) field.setAttribute ('all', max);
       }
     } else if (field.localName === 'unit-number') {
       field.setAttribute ('value', value);
@@ -4236,6 +4238,39 @@ addEventListener ('popstate', ev => {
   nav.setAttribute ('popstate', '');
   document.body.appendChild (nav);
 });
+
+defineElement ({
+  name: 'gr-count',
+  fill: 'contentattribute',
+  templateSet: true,
+  props: {
+    pcInit: function () {
+      this.addEventListener ('pctemplatesetupdated', (ev) => {
+        this.grTemplateSet = ev.pcTemplateSet;
+        Promise.resolve ().then (() => this.grRender ());
+      });
+      new MutationObserver (() => this.grRender ()).observe
+          (this, {attributes: true, attributeFilter: ['all', 'value']});
+    }, // pcInit
+    grRender: function () {
+      var tm = this.grTemplateSet;
+      if (!tm) return;
+
+      var v = {
+        value: this.getAttribute ('value'),
+        all: parseFloat (this.getAttribute ('all')),
+      };
+      if (!v.all || !Number.isFinite (v.all)) {
+        this.hidden = true;
+      } else {
+        this.hidden = false;
+        var e = tm.createFromTemplate ('div', v);
+        this.textContent = '';
+        while (e.firstChild) this.appendChild (e.firstChild);
+      }
+    }, // grRender
+  },
+}); // <gr-count>
 
 defineElement ({
   name: 'xxx-multi-enum', // XXX
