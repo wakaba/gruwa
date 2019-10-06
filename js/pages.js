@@ -4058,11 +4058,14 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           list.setAttribute ('src-index_id', params.index.index_id);
           list.setAttribute ('src-wiki_name', params.wiki.name);
         } else if (pageName === 'index-index') {
-          if (params.index.subtype === 'image') {
-            list.setAttribute ('class', 'image-list');
-          } else if (params.index.subtype === 'file') {
-            list.setAttribute ('class', 'file-list');
-          }
+          div.querySelectorAll ('gr-list-container[key=objects]').forEach (list => {
+            list.setAttribute ('src-index_id', params.index.index_id);
+            if (params.index.subtype === 'image') {
+              list.setAttribute ('class', 'image-list');
+            } else if (params.index.subtype === 'file') {
+              list.setAttribute ('class', 'file-list');
+            }
+          });
           div.querySelectorAll ('[data-form-type=uploader]').forEach (_ => {
             _.setAttribute ('data-context', params.index.index_id);
           });
