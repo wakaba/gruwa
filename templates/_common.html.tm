@@ -847,6 +847,12 @@
                 data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
+
+              <gr-account self>
+                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
+                <gr-account-name data-field=name data-filling>アカウント</>
+              </gr-account>
+
               <textarea data-edit-created-object data-name=body required></textarea>
               <p class=operations>
                 <button type=submit class=save-button>投稿する</>
@@ -867,6 +873,10 @@
                     ok=投稿しました />
 
               <p>
+                <gr-group>
+                  <img data-src-template=/g/{group_id}/icon class=icon alt>
+                  <gr-group-name data-field=title data-filling>グループ</>
+                </gr-group>
                 <span>
                   通知送信先:
                   <gr-called-editor template=gr-called-editor data-edit-created-object />
@@ -1250,6 +1260,12 @@
                 data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
+
+              <gr-account self>
+                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
+                <gr-account-name data-field=name data-filling>アカウント</>
+              </gr-account>
+
               <textarea data-edit-created-object data-name=body required></textarea>
               <p class=operations>
                 <button type=submit class=save-button>投稿する</>
@@ -1270,6 +1286,10 @@
                     ok=投稿しました />
 
               <p>
+                <gr-group>
+                  <img data-src-template=/g/{group_id}/icon class=icon alt>
+                  <gr-group-name data-field=title data-filling>グループ</>
+                </gr-group>
                 <span>
                   通知送信先:
                   <gr-called-editor template=gr-called-editor data-edit-created-object />
@@ -1477,6 +1497,12 @@
                 data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
                 data-child-form>
               <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
+
+              <gr-account self>
+                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
+                <gr-account-name data-field=name data-filling>アカウント</>
+              </gr-account>
+
               <textarea data-edit-created-object data-name=body required></textarea>
               <p class=operations>
                 <button type=submit class=save-button>投稿する</>
@@ -1497,6 +1523,10 @@
                     ok=投稿しました />
 
               <p>
+                <gr-group>
+                  <img data-src-template=/g/{group_id}/icon class=icon alt>
+                  <gr-group-name data-field=title data-filling>グループ</>
+                </gr-group>
                 <span>
                   通知送信先:
                   <gr-called-editor template=gr-called-editor data-edit-created-object />
