@@ -714,10 +714,6 @@ page-main form[is=gr-search] .search-button {
   margin: 0 0 1em 0;
 }
 
-.search-result list-item:hover {
-  outline: 1px dotted var(--accented-border-color);
-}
-
 .search-result list-item > a:not([hidden]) {
   display: flex;
   padding: .5em;

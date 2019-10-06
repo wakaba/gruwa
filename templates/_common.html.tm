@@ -184,7 +184,7 @@
         <button type=submit class=search-button>検索</button>
       </form>
       
-      <list-container loader=groupLoader src=o/search.json src-search class=search-result key=objects>
+      <list-container loader=groupLoader src=o/search.json loader-search class=search-result key=objects template=gr-search-result-item>
 
         <gr-search-wiki-name hidden>
           <list-item>
@@ -193,22 +193,12 @@
             </a>
           </list-item>
         </gr-search-wiki-name>
-
-        <template>
-          <a href data-href-template=o/{object_id}/>
-            <cite data-field=title data-empty=■></cite>
-            <time data-field=timestamp data-format=date></time>
-          </a>
-          <p class=object-summary>
-            <gr-search-snippet data-field=snippet></gr-search-snippet>
-            <span>更新: <time data-field=updated></time></span>
-        </template>
         <list-main></list-main>
         <list-is-empty hidden>
           <p>一致する記事は見つかりませんでした。</p>
         </list-is-empty>
         <action-status hidden stage-loader=読込中...></action-status>
-        <p class=operations>
+        <p class="operations pager">
           <button type=button class=list-next>もっと昔</button>
         </p>
       </list-container>
@@ -217,7 +207,19 @@
 
   </template>
 </template-set>
-  
+
+<template-set name=gr-search-result-item>
+  <template>
+    <a href data-href-field=url>
+      <cite data-field=object.title data-empty=■></cite>
+      <time data-field=object.timestamp data-format=date></time>
+    </a>
+    <p class=object-summary>
+      <gr-search-snippet data-field=object.snippet></gr-search-snippet>
+      <span>更新: <time data-field=object.updated></time></span>
+  </template>
+</template-set>
+
 <template-set name=page-config>
   <template title=設定 class=is-subpage>
     <section>
@@ -711,33 +713,29 @@
 <template-set name=page-index-index templateselector=selectIndexIndexTemplate>
   <template><!-- default / wiki -->
 
-    <gr-list-container key=objects sortkey=updated src-limit=100>
-        <template>
-          <p><a data-href-template={GROUP}/i/{INDEX_ID}/wiki/{title}#{object_id}>
-            <strong data-data-field=title data-empty=■ />
-            <time data-field=created data-format=ambtime />
-            (<time data-field=updated data-format=ambtime /> 編集)
-          </a></p>
-        </template>
+    <article class="object new" data-gr-if-index-type=2><!-- wiki -->
+      <p class=operations>
+        <button type=button class=edit-button onclick="
+          var data = {index_ids: {}, timestamp: (new Date).valueOf () / 1000,
+                      body_type: 1, body: ''};
+          data.index_ids[this.getAttribute ('data-indexid')] = 1;
+          editObject (this.parentNode.parentNode, {data: data}, {open: true, focusTitle: true});
+        " data-data-indexid-field=index.index_id data-filled=data-indexid>新しい記事を書く</button>
+    </article>
 
-          <article class="object new" data-gr-if-index-type=2><!-- wiki -->
-            <p class=operations>
-              <button type=button class=edit-button>新しい記事を書く</button>
-          </article>
-        <template id=index-list-item-template data-name>
-          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
-        </template>
-        <template id=account-list-item-template data-name>
-          <gr-account-name data-field=account_id />
-        </template>
-
+    <section>
+      <h1>記事一覧</h1>
+      
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id loader-limit=50 data-filled=loader-indexid template=gr-search-result-item class=search-result>
         <list-main></list-main>
-
-      <gr-action-status hidden stage-load=読込中... />
+        <list-is-empty hidden>
+          <p>記事は見つかりませんでした。</p>
+        </list-is-empty>
+        <action-status hidden stage-loader=読込中... />
         <p class="operations pager">
-          <button type=button class=next-page-button hidden>もっと昔</button>
-      <run-action name=installPrependNewObjects />
-    </gr-list-container>
+          <button type=button class=list-next hidden>もっと昔</button>
+      </list-container>
+    </section>
   </template><!-- default -->
   <template data-name=blog>
   

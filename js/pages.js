@@ -431,6 +431,49 @@ GR.object.get = function (objectId, objectRevisionId) {
   });
 }; // GR.object.get
 
+(() => {
+
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'groupIndexLoader');
+  e.pcHandler = function (opts) {
+    var indexId = this.getAttribute ('loader-indexid');
+    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/o/get.json?index_id=' + encodeURIComponent (indexId) + '&with_title=1&with_snippet=1';
+    if (opts.ref) url += '&ref=' + encodeURIComponent (opts.ref);
+    var limit = this.getAttribute ('loader-limit') || opts.limit;
+    if (limit) url += '&limit=' + encodeURIComponent (limit);
+    // XXX cache
+    return fetch (url, {
+      credentials: "same-origin",
+      referrerPolicy: 'same-origin',
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then ((json) => {
+      var list = Object.values (json.objects).sort ((a, b) => {
+        return b.timestamp - a.timestamp;
+      }).map (_ => {
+        return {
+          url: '/g/'+_.group_id+'/i/'+indexId+'/wiki/'+encodeURIComponent (_.title)+'#' + _.object_id,
+          object: _,
+        };
+      });
+      var hasNext = json.next_ref && opts.ref !== json.next_ref; // backcompat
+      return {
+        data: list,
+        prev: {ref: json.prev_ref, has: json.has_prev, limit: limit},
+        next: {ref: json.next_ref, has: json.has_next || hasNext, limit: limit},
+      };
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
+    });
+  };
+  document.head.appendChild (e);
+
+}) ()
+
 GR.wiki = {};
 
 GR.wiki.url = function (indexId, wikiName) {
@@ -2244,9 +2287,16 @@ function editObject (article, object, opts) {
         article.classList.remove ('editing');
         as.end ({ok: true});
       } else { // new object
-        return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
-          return document.querySelector ('gr-list-container[src-index_id]')
-              .showObjects (json.objects, {prepend: true});
+        var list = document.querySelector ('gr-list-container[src-index_id]');
+        return Promise.resolve ().then (() => {
+          if (list) {
+            return gFetch ('o/get.json?with_data=1&object_id=' + objectId, {}).then (function (json) {
+              return list.showObjects (json.objects, {prepend: true});
+            });
+          } else {
+            // XXX loadPrev ({})
+            document.querySelectorAll ('list-container.search-result').forEach (_ => _.load ({}));
+          }
         }).then (function () {
           //as.stageEnd ("update");
           as.end ({ok: true});
@@ -2957,7 +3007,8 @@ function upgradeForm (form) {
   e.pcHandler = function (opts) {
     if (!this.hasAttribute ('src')) return {};
     var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/' + this.getAttribute ('src');
-    if (this.hasAttribute ('src-search')) {
+    var isSearch = this.hasAttribute ('loader-search');
+    if (isSearch) {
       if (GR._state.searchWord) {
         url += /\?/.test (url) ? '&' : '?';
         url += 'q=' + encodeURIComponent (GR._state.searchWord);
@@ -2980,9 +3031,20 @@ function upgradeForm (form) {
     }).then ((json) => {
       if (!this.hasAttribute ('key')) throw new Error ("|key| is not specified");
       json = json || {};
+
+      var list = json[this.getAttribute ('key')];
+      if (isSearch) {
+        list = list.map (_ => {
+          return {
+            url: '/g/'+_.group_id+'/o/'+_.object_id+'/',
+            object: _,
+          };
+        });
+      }
+      
       var hasNext = json.next_ref && opts.ref !== json.next_ref; // backcompat
       return {
-        data: json[this.getAttribute ('key')],
+        data: list,
         prev: {ref: json.prev_ref, has: json.has_prev, limit: opts.limit},
         next: {ref: json.next_ref, has: json.has_next || hasNext, limit: opts.limit},
       };
@@ -3996,8 +4058,6 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           list.setAttribute ('src-index_id', params.index.index_id);
           list.setAttribute ('src-wiki_name', params.wiki.name);
         } else if (pageName === 'index-index') {
-          var list = div.querySelector ('gr-list-container[key=objects]');
-          list.setAttribute ('src-index_id', params.index.index_id);
           if (params.index.subtype === 'image') {
             list.setAttribute ('class', 'image-list');
           } else if (params.index.subtype === 'file') {
