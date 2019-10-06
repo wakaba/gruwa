@@ -508,6 +508,35 @@ defineElement ({
 }); // <gr-account>
 
 defineElement ({
+  name: 'gr-account-list',
+  fill: 'idlattribute',
+  props: {
+    pcInit: function () {
+      this.grValue = Object.keys (this.value || {});
+      if (this.grValue) Promise.resolve ().then (() => this.grRender ());
+      Object.defineProperty (this, 'value', {
+        set: function (v) {
+          this.grValue = Object.keys (v || {});
+          Promise.resolve ().then (() => this.grRender ());
+        },
+      });
+    }, // pcInit
+    grRender: function () {
+      return $getTemplateSet ('gr-account-list-item').then (tm => {
+        this.textContent = '';
+
+        this.grValue.sort ((a, b) => {
+          return a - b;
+        }).forEach (accountId => {
+          var e = tm.createFromTemplate ('span', {account_id: accountId});
+          while (e.firstChild) this.appendChild (e.firstChild);
+        });
+      });
+    }, // grRender
+  },
+}); // <gr-account-list>
+
+defineElement ({
   name: 'gr-account-dialog',
   props: {
     pcInit: function () {
@@ -1273,15 +1302,8 @@ function fillFields (contextEl, rootEl, el, object, opts) {
           field.appendChild (item);
         });
       });
-    } else if (field.localName === 'account-list') {
-      field.textContent = '';
-      var template = document.querySelector ('#account-list-item-template');
-      Object.keys (value || {}).forEach (function (accountId) {
-        var item = document.createElement ('list-item');
-        item.appendChild (template.content.cloneNode (true));
-        fillFields (item, item, item, {account_id: accountId}, {});
-        field.appendChild (item);
-      });
+    } else if (field.localName === 'gr-account-list') {
+      field.value = value;
     } else if (field.localName === 'iframe') {
       field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
       field.setAttribute ('srcdoc', createBodyHTML ('', {}));

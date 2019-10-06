@@ -148,8 +148,9 @@ Test {
   my $current = shift;
   return $current->create (
     [a1 => account => {}],
+    [a2 => account => {}],
     [g1 => group => {
-      members => ['a1'], title => $current->generate_text (t1 => {}),
+      members => ['a1', 'a2'], title => $current->generate_text (t1 => {}),
       theme => 'red',
     }],
     [i1 => index => {
@@ -164,6 +165,7 @@ Test {
       title => $current->generate_text (t4 => {}),
       index => 'i1',
       todo_state => 1, # open
+      assigned_account => ['a2'],
     }],
     [o2 => object => {
       group => 'g1',
@@ -175,6 +177,10 @@ Test {
       body => q{<input type=checkbox><input type=checkbox checked><input type=checkbox>},
     }],
   )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (a2name => {}),
+    }, group => 'g1', account => 'a2');
+  })->then (sub {
     return $current->create_browser (1 => {
       url => ['g', $current->o ('g1')->{group_id}, 'i', $current->o ('i1')->{index_id}, ''],
       params => {
@@ -204,6 +210,11 @@ Test {
     return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('t5'), # object title
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('a2name'), # assgined account name
     });
   })->then (sub {
     return $current->b_wait (1 => {
@@ -238,6 +249,7 @@ Test {
           countHidden: _.querySelector ('gr-count').hidden,
           countValue: (_.querySelector ('gr-count progress') || {}).value,
           countAll: (_.querySelector ('gr-count progress') || {}).max,
+          assigned: _.querySelector ('gr-account-list').textContent,
         };
       });
     });
@@ -250,11 +262,13 @@ Test {
       is !!$values->[0]->{countHidden}, !!0;
       is $values->[0]->{countValue}, 1;
       is $values->[0]->{countAll}, 3;
+      is !!$values->[0]->{assigned}, '';
       is $values->[1]->{statusValue}, 1;
       is !!$values->[1]->{countHidden}, !!1;
+      like $values->[1]->{assigned}, qr{\Q@{[$current->o ('a2name')]}\E};
     } $current->c;
   });
-} n => 12, name => ['initial load (todo)'], browser => 1;
+} n => 14, name => ['initial load (todo)'], browser => 1;
 
 Test {
   my $current = shift;

@@ -398,6 +398,10 @@ sub create_object ($$$) {
     if (defined $opts->{called_account}) {
       $param{called_account_id} = [map { $self->_get_o ($_)->{account_id} } ref $opts->{called_account} ? @{$opts->{called_account}} : $opts->{called_account}];
     }
+    if (defined $opts->{assigned_account}) {
+      $param{assigned_account_id} = [map { $self->_get_o ($_)->{account_id} } ref $opts->{assigned_account} ? @{$opts->{assigned_account}} : $opts->{assigned_account}];
+      $param{edit_assigned_account_id} = 1;
+    }
     if (keys %param) {
       return $self->post_json (['o', $_[0]->{json}->{object_id}, 'edit.json'],
                                \%param,

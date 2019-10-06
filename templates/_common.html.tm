@@ -776,10 +776,7 @@
               <gr-action-status hidden
                   stage-edit=保存中...
                   ok=保存しました />
-              <span data-if-data-non-empty-field=assigned_account_ids>
-                担当者:
-                <account-list data-data-field=assigned_account_ids />
-              </span>
+              <gr-account-list data-data-field=assigned_account_ids title=担当者 />
               <index-list data-data-field=index_ids />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
@@ -896,9 +893,6 @@
         <template id=index-list-item-template data-name>
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
-        <template id=account-list-item-template data-name>
-          <gr-account-name data-field=account_id />
-        </template>
 
         <list-main></list-main>
 
@@ -931,7 +925,7 @@
             (<time data-field=updated data-format=ambtime /> 編集)
             <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=マイルストーン />
             <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "4"}]' title=ラベル />
-            <account-list data-data-field=assigned_account_ids title=担当者 />
+              <gr-account-list data-data-field=assigned_account_ids title=担当者 />
         </template>
 
           <article class="object new" data-gr-if-index-type=3><!-- todos -->
@@ -1021,9 +1015,6 @@
 
         <template id=index-list-item-template data-name>
           <a data-href-template=./?index={index_id} data-field=title data-color-field=color class=label-index></a>
-        </template>
-        <template id=account-list-item-template data-name>
-          <a data-href-template=./?assigned={account_id}><gr-account-name data-field=account_id /></a>
         </template>
 
         <list-main/>
@@ -1115,9 +1106,6 @@
         <template id=index-list-item-template data-name>
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
-        <template id=account-list-item-template data-name>
-          <gr-account-name data-field=account_id />
-        </template>
 
         <list-main></list-main>
 
@@ -1137,6 +1125,17 @@
       <data data-field=all />
     </gr-count-line>
     <progress data-value-field=value data-max-field=all data-filled="max value" />
+  </template>
+</template-set>
+
+<template-set name=gr-account-list-item>
+  <template>
+    <gr-account data-field=account_id>
+      <a data-href-template=/g/{group_id}/account/{account_id}/>
+        <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
+        <gr-account-name data-field=name data-empty=■ />
+      </a>
+    </gr-account>
   </template>
 </template-set>
 
@@ -1200,10 +1199,7 @@
               <gr-action-status hidden
                   stage-edit=保存中...
                   ok=保存しました />
-              <span data-if-data-non-empty-field=assigned_account_ids>
-                担当者:
-                <account-list data-data-field=assigned_account_ids />
-              </span>
+              <gr-account-list data-data-field=assigned_account_ids title=担当者 />
               <index-list data-data-field=index_ids />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
@@ -1314,9 +1310,6 @@
 
         <template id=index-list-item-template data-name>
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
-        </template>
-        <template id=account-list-item-template data-name>
-          <gr-account-name data-field=account_id />
         </template>
 
         <list-main></list-main>
@@ -1440,10 +1433,7 @@
               <gr-action-status hidden
                   stage-edit=保存中...
                   ok=保存しました />
-              <span data-if-data-non-empty-field=assigned_account_ids>
-                担当者:
-                <account-list data-data-field=assigned_account_ids />
-              </span>
+              <gr-account-list data-data-field=assigned_account_ids title=担当者 />
               <index-list data-data-field=index_ids />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
@@ -1554,9 +1544,6 @@
 
         <template id=index-list-item-template data-name>
           <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
-        </template>
-        <template id=account-list-item-template data-name>
-          <gr-account-name data-field=account_id />
         </template>
 
         <list-main></list-main>
