@@ -125,36 +125,20 @@
 
 <template-set name=page-index>
   <template>
-      
-  <section class=page>
-    <section>
-      <h1>最近の更新</>
 
-      <gr-list-container src=i/list.json?index_type=1&index_type=2&index_type=3 key=index_list sortkey=updated class=index-list>
+    <section>
+      <h1>最近の更新</h1>
+
+      <list-container loader=recentIndexListLoader class=main-menu-list-container>
         <template>
-          <p>
-            <a href data-href-template="i/{index_id}/#{updated}">
-              <time data-field=updated />
-              <strong data-field=title></strong>
-            </a>
-            <gr-list-container
-                data-src-template="o/get.json?index_id={index_id}&limit=5"
-                data-parent-template=i/{index_id}/
-                data-context-template={index_type}
-                key=objects sortkey=timestamp,created>
-              <template>
-                <a href data-href-template="o/{object_id}/"
-                    data-2-href-template={PARENT}wiki/{title}#{updated}>
-                  <strong data-field=title data-empty=■ />
-                  (<time data-field=updated data-format=ambtime />)
-                </a>
-              </template>
-              <list-main/>
-            </gr-list-container>
+          <a href data-href-template="i/{index_id}/#{updated}" class=antenna-item>
+            <span data-field=title data-empty=■></span>
+            <small><time data-field=updated data-format=ambtime /></small>
+          </a>
         </template>
-        <list-main/>
-        <gr-action-status hidden stage-load=読込中... />
-      </gr-list-container>
+        <list-main class=main-menu-list />
+        <action-status hidden stage-loader=読込中... />
+      </list-container>
     </section>
 
   </template>
@@ -291,7 +275,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=groupGo:i/{index_id}/config>
+              data-next="reloadIndexInfo groupGo:i/{index_id}/config">
             <table class=config>
               <tbody>
                 <tr>
@@ -316,7 +300,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=groupGo:i/{index_id}/config>
+              data-next="reloadIndexInfo groupGo:i/{index_id}/config">
             <table class=config>
               <tbody>
                 <tr>
@@ -342,7 +326,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=groupGo:i/{index_id}/config>
+              data-next="reloadIndexInfo groupGo:i/{index_id}/config">
             <table class=config>
               <tbody>
                 <tr>
@@ -365,7 +349,7 @@
             <summary>ラベルの作成</summary>
 
             <form is=save-data data-saver=groupSaver method=post action=i/create.json
-                data-next=groupGo:i/{index_id}/config>
+                data-next="reloadIndexInfo groupGo:i/{index_id}/config">
               <table class=config>
                 <tbody>
                   <tr>
@@ -384,7 +368,7 @@
             <summary>マイルストーンの作成</summary>
 
             <form is=save-data data-saver=groupSaver method=post action=i/create.json
-                data-next=groupGo:i/{index_id}/config>
+                data-next="reloadIndexInfo groupGo:i/{index_id}/config">
               <table class=config>
                 <tbody>
                   <tr>
@@ -408,7 +392,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=groupGo:i/{index_id}/config>
+              data-next="reloadIndexInfo groupGo:i/{index_id}/config">
             <table class=config>
               <tbody>
                 <tr>
@@ -619,7 +603,7 @@
         <h1>設定</h1>
         <a href=/help#config target=help>ヘルプ</a>
       </header>
-      <form is=save-data data-saver=groupSaver method=post data-action-template=i/{index.index_id}/edit.json id=edit-form>
+      <form is=save-data data-saver=groupSaver method=post data-action-template=i/{index.index_id}/edit.json id=edit-form data-next=reloadIndexInfo>
         <table class=config>
           <tbody>
             <tr>
@@ -635,7 +619,7 @@
                 <enum-value data-field=index.subtype
                     label-image=アルバム
                     label-file=ファイルアップローダー
-                    label-null />
+                    label-null label-undefined />
             <tr>
               <th><label for=edit-title>名前</>
               <td><input name=title data-field=index.title id=edit-title required>
@@ -777,7 +761,7 @@
                   stage-edit=保存中...
                   ok=保存しました />
               <gr-account-list data-data-field=assigned_account_ids title=担当者 />
-              <gr-index-list data-data-field=index_ids />
+              <gr-index-list data-data-field=index_ids nocurrentindex />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
           </footer>
@@ -1124,7 +1108,7 @@
                   stage-edit=保存中...
                   ok=保存しました />
               <gr-account-list data-data-field=assigned_account_ids title=担当者 />
-              <gr-index-list data-data-field=index_ids />
+              <gr-index-list data-data-field=index_ids nocurrentindex />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
           </footer>
@@ -1354,7 +1338,7 @@
                   stage-edit=保存中...
                   ok=保存しました />
               <gr-account-list data-data-field=assigned_account_ids title=担当者 />
-              <gr-index-list data-data-field=index_ids />
+              <gr-index-list data-data-field=index_ids nocurrentindex />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
           </footer>

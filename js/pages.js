@@ -129,7 +129,7 @@ defineElement ({
   },
 });
 
-GR._state = {};
+GR._state = {currentPage: {}};
 GR._timestamp = {};
 
 GR.Favicon = {};
@@ -417,14 +417,68 @@ GR.group.activeMembers = function () {
     });
   }; // reloadGroupInfo
   document.head.appendChild (e);
+  
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'reloadIndexInfo');
+  e.pcHandler = function (args) {
+    return GR.index._updateList ({force: true});
+  }; // reloadIndexInfo
+  document.head.appendChild (e);
+
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'recentIndexListLoader');
+  e.pcHandler = function (opts) {
+    return GR.index.list ().then (list => {
+      list = Object.values (list).filter (_ => {
+        return _.index_type == 1 || _.index_type == 2 || _.index_type == 3;
+      }).sort ((a, b) => b.updated - a.updated);
+      return {
+        data: list,
+      };
+    });
+  };
+  document.head.appendChild (e);
 
 }) ();
 
 GR.index = {};
 
+GR.index.list = () => {
+  if (GR._state.getIndexList) {
+    if (performance.now () - GR._timestamp.indexList > 3*60*60*1000) {
+      GR.idle (() => GR.index._updateList ());
+    }
+    return GR._state.getIndexList;
+  }
+  return GR._state.getIndexList = gFetch ('i/list.json', {}).then (json => {
+    GR._timestamp.indexList = performance.now ();
+    return json.index_list;
+  });
+}; // GR.index.list
+
+GR.index._updateList = (opts) => {
+  if (opts.force ||
+      !(performance.now () - GR._timestamp.indexList < 3*60*1000)) {
+    //
+  } else {
+    return Promise.resolve ();
+  }
+  delete GR._state.getIndexList;
+  return GR.index.list ();
+}; // GR.index._updateList
+
 GR.index.info = function (indexId) {
-  // XXX cache
-  return gFetch ('i/'+indexId+'/info.json', {});
+  return GR.index.list ().then (list => {
+    var info = list[indexId];
+    if (info) return info;
+
+    return GR.index._updateList ({}).then (list => {
+      var info = list[indexId];
+      if (info) return info;
+      console.log ('Index |'+indexId+'| not found');
+      return {index_id: indexId, title: indexId, group_id: GR._state.group.group_id};
+    });
+  });
 }; // GR.index.info
 
 defineElement ({
@@ -445,6 +499,7 @@ defineElement ({
       var indexIds = this.grValue.sort ((a, b) => {
         return a - b;
       });
+      var currentIndex = this.hasAttribute ('nocurrentindex') ? GR._state.currentPage.index ? GR._state.currentPage.index.index_id : null : null;
       var indexList = {};
       return Promise.all ([
         $getTemplateSet ('gr-index-list-item'),
@@ -456,6 +511,8 @@ defineElement ({
         var expectedIndexType = this.getAttribute ('indextype'); // or null
 
         indexIds.forEach (indexId => {
+          if (indexId === currentIndex) return;
+          
           var index = indexList[indexId];
           if (expectedIndexType && expectedIndexType != index.index_type) return;
           var item = {index: index, class: 'label-index'};
@@ -3972,11 +4029,21 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       }));
     }
     if (pageArgs.objectId) {
-      wait.push (GR.object.get (pageArgs.objectId, pageArgs.objectRevisionId).then (_ => params.object = _).then (() => {
-        // XXX use first index_type=[123] index
-        var indexId = Object.keys (params.object.data.index_ids || {})[0];
-        if (indexId) {
-          return GR.index.info (indexId).then (_ => params.index = _);
+      wait.push (Promise.all ([
+        GR.index.list (),
+        GR.object.get (pageArgs.objectId, pageArgs.objectRevisionId).then (_ => params.object = _),
+      ]).then (_ => {
+        var [indexList] = _;
+        var indexIds = Object.keys (params.object.data.index_ids || {});
+        for (var i = 0; i < indexIds.length; i++) {
+          var index = indexList[indexIds[i]];
+          if (index &&
+              (index.index_type == 1 /* blog */ ||
+               index.index_type == 2 /* wiki */ ||
+               index.index_type == 3 /* todo */)) {
+            params.index = index;
+            break;
+          }
         }
       }));
     }
@@ -4175,6 +4242,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         GR.page.setSearch (null);
       }
       GR.page.setTitle (title.join (' - '));
+      GR._state.currentPage = params;
       return GR.theme.set (params.theme);
     });
   }).then (_ => {

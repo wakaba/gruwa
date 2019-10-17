@@ -1262,18 +1262,22 @@ gr-nav-panel gr-group:not([hidden]) {
   margin-top: .5em;
 }
 
+.main-menu-list-container:not([hidden]) {
+  display: contents;
+}
+
 .main-menu-list {
   padding: 0;
 }
 
-.main-menu-list > li:not([hidden]) {
+.main-menu-list > :not([hidden]) {
   display: block;
   margin: .5em 1em;
   font-size: 150%;
 }
 
-.main-menu-list > li > a:not([hidden]),
-.main-menu-list > li > button:not([hidden]) {
+.main-menu-list > * > a:not([hidden]),
+.main-menu-list > * > button:not([hidden]) {
   -webkit-appearance: none;
   display: block;
   border-style: none;
@@ -1282,11 +1286,23 @@ gr-nav-panel gr-group:not([hidden]) {
   font-size: 100%;
 }
 
-.main-menu-list > li > a:not(:hover):not(:focus):not(:active),
-.main-menu-list > li > button:not(:hover):not(:focus):not(:active) {
+.main-menu-list > * > a:not(:hover):not(:focus):not(:active):not(.antenna-item),
+.main-menu-list > * > button:not(:hover):not(:focus):not(:active) {
   color: inherit;
   background: transparent;
+}
+
+.main-menu-list > * > a:not(:hover):not(:focus):not(:active),
+.main-menu-list > * > button:not(:hover):not(:focus):not(:active) {
   text-decoration: none;
+}
+
+.main-menu-list > * > * > small:not([hidden]) {
+  display: block;
+  margin-bottom: -0.5em;
+  font-size: .9rem;
+  line-height: 1.0;
+  text-align: right;
 }
 
 number-unit {

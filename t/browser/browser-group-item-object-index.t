@@ -216,15 +216,15 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      #is $values->{title}, $current->o ('t4') . ' - ' . $current->o ('t2') . ' - ' . $current->o ('t1');
+      is $values->{title}, $current->o ('t4') . ' - ' . $current->o ('t2') . ' - ' . $current->o ('t1');
       is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/o/'.$current->o ('o1')->{object_id}.'/';
-      #is $values->{headerTitle}, $current->o ('t2');
-      #is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
+      is $values->{headerTitle}, $current->o ('t2');
+      is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
       is $values->{headerLink}, $values->{headerURL};
       like $values->{sectionTitle}, qr{[0-9]};
     } $current->c;
   });
-} n => 3, name => ['initial load (todo object)'], browser => 1;
+} n => 6, name => ['initial load (todo object)'], browser => 1;
 
 Test {
   my $current = shift;
