@@ -618,6 +618,8 @@ defineElement ({
             ev.data.grAccountUpdated) {
           this.grClose ();
           GR.account.check ({force: true, source: 'logindone'});
+          if (window.BroadcastChannel)
+          new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
         }
       };
       window.addEventListener ('message', listener);
