@@ -852,6 +852,30 @@ td .icon {
   height: 1.5em;
 }
 
+gr-account-list > gr-account + gr-account {
+  margin-left: .5em;
+}
+
+gr-index-list > a + a {
+  margin-left: .5em;
+}
+
+gr-index-list > a:not([hidden]) {
+  display: inline-block;
+  border-radius: .5em;
+  padding: .4em;
+  min-width: 3em;
+  font-size: 90%;
+  line-height: 1.0;
+  text-align: center;
+  background: var(--dark-background-color);
+  color: var(--dark-color);
+}
+
+gr-index-list > a:not(:hover):not(:focus):not(:active) {
+  text-decoration: none;
+}
+
 enum-value.todo-state:not([hidden]) {
   display: inline-block;
   margin: .5em;

@@ -159,11 +159,23 @@ Test {
       title => $current->generate_text (t3 => {}),
       index_type => 3, # todos
     }],
+    [i2 => index => {
+      group => 'g1',
+      account => 'a1',
+      title => $current->generate_text (ti2 => {}),
+      index_type => 4, # category
+    }],
+    [i3 => index => {
+      group => 'g1',
+      account => 'a1',
+      title => $current->generate_text (ti3 => {}),
+      index_type => 5, # milestone
+    }],
     [o1 => object => {
       group => 'g1',
       account => 'a1',
       title => $current->generate_text (t4 => {}),
-      index => 'i1',
+      index => ['i1', 'i2', 'i3'],
       todo_state => 1, # open
       assigned_account => ['a2'],
     }],
@@ -215,6 +227,18 @@ Test {
     return $current->b_wait (1 => {
       selector => 'page-main',
       text => $current->o ('a2name'), # assgined account name
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main list-item:nth-child(2) gr-index-list[indextype="4"]',
+      text => $current->o ('ti2'),
+      name => 'label index title',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main list-item:nth-child(2) gr-index-list[indextype="5"]',
+      text => $current->o ('ti3'),
+      name => 'milestone index title',
     });
   })->then (sub {
     return $current->b_wait (1 => {

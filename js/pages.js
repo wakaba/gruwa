@@ -39,7 +39,7 @@ delete window.GRError;
 GR.Error.handle403 = function (res) {
   var e = new GR.Error ('InvalidAccountError');
   e.errorResponse = res;
-  GR.account.check ({});
+  GR.account.check ({source: '403'});
   return e;
 }; // handle403
 
@@ -226,8 +226,10 @@ GR._updateMyInfo = function () {
     if (json.account.account_id == null) {
       GR.account.showDialog ();
 
-      if (window.BroadcastChannel)
-      new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+      if (oldAccount.account_id) {
+        if (window.BroadcastChannel)
+        new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+      }
     } else if (oldAccount.account_id !== json.account.account_id &&
                !oldAccount.newSession) {
       document.querySelectorAll ('gr-account[self]').forEach (_ => _.grRender ());
@@ -246,8 +248,11 @@ GR._updateMyInfo = function () {
     if (e instanceof Response && e.status === 403) {
       GR.account.showDialog ();
 
-      if (window.BroadcastChannel)
-      new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+      if (!GR._state.account.stale) {
+        GR._state.account.stale = true;
+        if (window.BroadcastChannel)
+        new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+      }
       return;
     }
     throw e;
@@ -311,13 +316,18 @@ GR.account.check = function (opt) {
   } else {
     return Promise.resolve ();
   }
-  return GR._updateMyInfo ();
+  return GR._state.accountChecking = GR._state.accountChecking || Promise.resolve ().then (() => {
+    console.log ('account check invoked from:', opt.source, performance.now ()); // debug
+    return GR._updateMyInfo ();
+  }).finally (() => {
+    delete GR._state.accountChecking;
+  });
 }; // GR.account.check
 
 GR.account.scheduleCheck = function () {
   clearTimeout (GR._state.checkTimer);
   GR._state.checkTimer = setTimeout (() => {
-    GR.account.check ({});
+    GR.account.check ({source: 'timer'});
   }, 30*60*1000);
 }; // GR.account.scheduleCheck
 
@@ -370,7 +380,7 @@ GR.group.activeMembers = function () {
     bc.onmessage = (ev) => {
       if (ev.data.grAccountUpdated) {
         setTimeout (() => {
-          GR.account.check ({});
+          GR.account.check ({source: 'bc'});
         }, Math.random () * 60*1000);
       }
     };
@@ -416,6 +426,56 @@ GR.index.info = function (indexId) {
   // XXX cache
   return gFetch ('i/'+indexId+'/info.json', {});
 }; // GR.index.info
+
+defineElement ({
+  name: 'gr-index-list',
+  fill: 'idlattribute',
+  props: {
+    pcInit: function () {
+      this.grValue = Object.keys (this.value || {});
+      if (this.grValue) Promise.resolve ().then (() => this.grRender ());
+      Object.defineProperty (this, 'value', {
+        set: function (v) {
+          this.grValue = Object.keys (v || {});
+          Promise.resolve ().then (() => this.grRender ());
+        },
+      });
+    }, // pcInit
+    grRender: function () {
+      var indexIds = this.grValue.sort ((a, b) => {
+        return a - b;
+      });
+      var indexList = {};
+      return Promise.all ([
+        $getTemplateSet ('gr-index-list-item'),
+        Promise.all (indexIds.map (indexId => GR.index.info (indexId).then (_ => indexList[indexId] = _))),
+      ]).then (_ => {
+        var [tm] = _;
+        this.textContent = '';
+
+        var expectedIndexType = this.getAttribute ('indextype'); // or null
+
+        indexIds.forEach (indexId => {
+          var index = indexList[indexId];
+          if (expectedIndexType && expectedIndexType != index.index_type) return;
+          var item = {index: index, class: 'label-index'};
+          if (index.color) {
+            var m = index.color.match (/#(..)(..)(..)/);
+            var r = parseInt ("0x" + m[1]);
+            var g = parseInt ("0x" + m[2]);
+            var b = parseInt ("0x" + m[3]);
+            var y = 0.299 * r + 0.587 * g + 0.114 * b;
+            var c = y > 127 + 64 ? 0 : 255;
+            item.style = 'color:rgb('+c+','+c+','+c+');background-color:'+index.color;
+            item['class'] += ' colored';
+          }
+          var e = tm.createFromTemplate ('span', item);
+          while (e.firstChild) this.appendChild (e.firstChild);
+        });
+      });
+    }, // grRender
+  },
+}); // <gr-index-list>
 
 GR.object = {};
 
@@ -557,7 +617,7 @@ defineElement ({
         if (ev.origin === location.origin &&
             ev.data.grAccountUpdated) {
           this.grClose ();
-          GR.account.check ({force: true});
+          GR.account.check ({force: true, source: 'logindone'});
         }
       };
       window.addEventListener ('message', listener);
@@ -1285,24 +1345,9 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       } catch (e) {
         console.log (e); // XXX
       }
-    } else if (field.localName === 'index-list') {
-      field.textContent = '';
-      var template = document.querySelector ('#index-list-item-template');
-      $with ('index-list').then (function (list) {
-        var objects = Object.keys (value || {}).map (function (indexId) {
-          return list[indexId] || {index_id: indexId, title: indexId};
-        });
-        objects = applyFilters (objects, field.getAttribute ('filters'));
-        objects.forEach (function (object) {
-          var item = document.createElement ('index-list-item');
-          item.appendChild (template.content.cloneNode (true));
-          fillFields (item, item, item, object, {});
-          //XXX
-          //item.classList.toggle ('this-index', object.index_id == document.documentElement.getAttribute ('data-index'));
-          field.appendChild (item);
-        });
-      });
     } else if (field.localName === 'gr-account-list') {
+      field.value = value;
+    } else if (field.localName === 'gr-index-list') {
       field.value = value;
     } else if (field.localName === 'iframe') {
       field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');

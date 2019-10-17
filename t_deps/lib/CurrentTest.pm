@@ -384,9 +384,11 @@ sub create_object ($$$) {
     $self->{objects}->{$name // 'X'} = $_[0]->{json};
     my %param;
     if (exists $opts->{index}) {
-      my $index = $self->_get_o ($opts->{index});
-      push @{$param{index_id} ||= []}, $index->{index_id} if defined $index;
-      $param{edit_index_id} = 1;
+      for (ref $opts->{index} ? @{$opts->{index}} : $opts->{index}) {
+        my $index = $self->_get_o ($_);
+        push @{$param{index_id} ||= []}, $index->{index_id} if defined $index;
+        $param{edit_index_id} = 1;
+      }
     }
     for my $key (qw(timestamp body_type user_status owner_status
                     title body todo_state author_name author_hatena_id)) {

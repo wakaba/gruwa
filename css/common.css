@@ -551,14 +551,6 @@ edit-container > form > footer p {
   background-color: var(--small-background-color);
 }
 
-article.object > footer index-list > * {
-  margin-right: .5em;
-}
-
-article.object > footer index-list > .this-index {
-  display: none;
-}
-
 article.object > .actions form {
   border-style: none;
 }
@@ -800,17 +792,14 @@ page-main form[is=gr-search] .search-button {
   color: var(--small-color);
 }
 
-.todo-list list-main > list-item .info-line index-list a,
-.todo-list list-main > list-item .info-line account-list a {
-  margin-left: 1em;
-  text-decoration: none;
+.todo-list list-main > list-item .info-line > * {
+  margin-right: 1em;
+  vertical-align: middle;
 }
 
 .todo-list list-main > list-item .info-line gr-count:not([hidden]) {
   display: inline-block;
   min-width: 5em;
-  margin-right: 1rem;
-  vertical-align: middle;
 }
 
 .todo-list list-main > list-item .info-line gr-count-line {
@@ -831,6 +820,11 @@ page-main form[is=gr-search] .search-button {
   height: .6em;
   line-height: 1.0;
   font-size: 80%;
+}
+
+.todo-list list-main > list-item .info-line gr-account .icon {
+  width: 1.5em;
+  height: 1.5em;
 }
 
 form[data-form-type=uploader].drop-target {
