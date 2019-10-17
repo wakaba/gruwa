@@ -257,9 +257,19 @@ sub generate_key ($$$) {
   return $self->{objects}->{$name} = $bytes;
 } # generate_key
 
+sub generate_domain ($$$) {
+  my ($self, $name, $opts) = @_;
+  return $self->{objects}->{$name // ''} = rand . '.test';
+} # generate_domain
+
+sub generate_email_addr ($$$) {
+  my ($self, $name, $opts) = @_;
+  return $self->{objects}->{$name // ''} = rand . '@' . $self->generate_domain (undef, {});
+} # generate_email_addr
+
 sub generate_url ($$$) {
   my ($self, $name, $opts) = @_;
-  return $self->{objects}->{$name // ''} = 'https://' . rand . '.test/' . rand;
+  return $self->{objects}->{$name // ''} = 'https://' . $self->generate_domain (undef, {}) . '/' . rand;
 } # generate_url
 
 sub generate_push_url ($$$) {
@@ -502,6 +512,39 @@ sub create_account ($$$) {
       })->then (sub {
         die $_[0] unless $_[0]->status == 200;
         $account->{account_id} = (json_bytes2perl $_[0]->body_bytes)->{account_id};
+
+        if (defined $opts->{email} and $opts->{email} eq 1) {
+          $opts->{email} = $self->generate_email_addr (undef, {});
+        }
+        if (defined $opts->{email}) {
+          return promised_for {
+            my $addr = shift;
+            return $self->accounts_client->request (
+              method => 'POST',
+              path => ['email', 'input'],
+              params => {
+                sk_context => $self->{server_data}->{accounts_context},
+                sk => $account->{cookies}->{sk},
+                addr => $addr,
+              },
+              bearer => $self->{server_data}->{accounts_key},
+            )->then (sub {
+              die $_[0] unless $_[0]->status == 200;
+              return $self->accounts_client->request (
+                method => 'POST',
+                path => ['email', 'verify'],
+                params => {
+                  sk_context => $self->{server_data}->{accounts_context},
+                  sk => $account->{cookies}->{sk},
+                  key => (json_bytes2perl $_[0]->body_bytes)->{key},
+                },
+                bearer => $self->{server_data}->{accounts_key},
+              );
+            })->then (sub {
+              die $_[0] unless $_[0]->status == 200;
+            });
+          } [ref $opts->{email} ? @{$opts->{email}} : $opts->{email}];
+        } # email
       });
     }
   });
@@ -913,6 +956,51 @@ sub b_is_hidden ($$$) {
     return ! ($_[0]->json->{value}->[0] && $_[0]->json->{value}->[1]);
   });
 } # b_is_hidden
+
+sub reset_email_count ($$) {
+  my ($self, $name) = @_;
+  my $addr = $self->o ($name);
+  my $url = Web::URL->parse_string ("http://xs.server.test/mailgun/get");
+  return $self->client_for ($url)->request (
+    url => $url,
+    params => {
+      addr => $addr,
+    },
+  )->then (sub {
+    my $res = $_[0];
+    die $res unless $res->status == 200;
+    my $data = json_bytes2perl $res->body_bytes;
+    $self->{email_counts}->{$addr} = 0+@$data;
+  });
+} # reset_email_count
+
+sub get_email ($$) {
+  my ($self, $name) = @_;
+  my $addr = $self->o ($name);
+  my $url = Web::URL->parse_string ("http://xs.server.test/mailgun/get");
+  my $new;
+  return ((promised_wait_until {
+    return $self->client_for ($url)->request (
+      url => $url,
+      params => {
+        addr => $addr,
+      },
+    )->then (sub {
+      my $res = $_[0];
+      die $res unless $res->status == 200;
+      my $data = json_bytes2perl $res->body_bytes;
+      my $new_count = 0+@$data;
+      unless ($new_count >= ($self->{email_counts}->{$addr} || 0) + 1) {
+        return promised_sleep (3)->then (sub { return not 'done' });
+      }
+      $new = $data->[$self->{email_counts}->{$addr}];
+      $self->{email_counts}->{$addr}++;
+      return 'done';
+    });
+  } timeout => 62, name => 'waiting for email')->then (sub {
+    return $new;
+  }));
+} # reset_email_count
 
 sub done ($) {
   my $self = $_[0];

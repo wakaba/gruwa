@@ -9,6 +9,7 @@ use Web::URL::Encoding;
 my $Tokens = {};
 my $Counts = {};
 my $NamedToken = {};
+my $Mails = {};
 
 return sub {
   my $http = Wanage::HTTP->new_from_psgi_env (shift);
@@ -86,6 +87,24 @@ return sub {
           <h1>News 1</h1>
         </section>
       });
+    }
+
+    if ($path eq '/mailgun/send') {
+      my $params = $http->request_body_params;
+      push @{$Mails->{$params->{to}->[0]} ||= []}, {
+        from => $params->{from}->[0],
+        to => $params->{to}->[0],
+        message => (scalar $http->request_uploads->{message}->[0]->as_f->slurp),
+      };
+      
+      $http->set_status (200);
+      return $http->close_response_body;
+    } elsif ($http->url->stringify =~ m{/mailgun/get\?addr=([^&]+)$}) {
+      my $addr = percent_decode_c $1;
+
+      $http->set_status (200);
+      $http->send_response_body_as_ref (\perl2json_bytes ($Mails->{$addr} || []));
+      return $http->close_response_body;
     }
     
     return $app->send_error (404);
