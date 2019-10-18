@@ -33,6 +33,28 @@
 
   <gr-navigate partition=dashboard />
 
+<!-- also in dashboard.html.tm -->
+<template-set name=mn-email>
+  <template>
+    <gr-mn-main>
+      メールアドレスが登録されていません。
+      <a href=/dashboard/receive#emails class=main-button>登録する</a>
+    </gr-mn-main>
+    <button type=button class=cancel-button title="今後このメッセージを表示しない">×</button>
+  </template>
+</template-set>
+
+<!-- also in dashboard.html.tm -->
+<template-set name=mn-push>
+  <template>
+    <gr-mn-main>
+      通知の受信設定がありません。
+      <a href=/dashboard/receive#notifications class=main-button>設定する</a>
+    </gr-mn-main>
+    <button type=button class=cancel-button title="今後このメッセージを表示しない">×</button>
+  </template>
+</template-set>
+
 <!-- also in _common.html.tm -->
 <template-set name=gr-menu>
   <template>
@@ -252,7 +274,7 @@
           <td><time data-format=datetime data-field=expires />
           <td>
             <!--XXX <button type=button>テスト送信する</button>-->
-            <form method=post action=/account/push/delete.json is=save-data data-confirm=削除します data-next=reloadPushList>
+            <form method=post action=/account/push/delete.json is=save-data data-confirm=削除します data-next="reloadPushList resetConfig:hidePushMN">
               <input type=hidden name=url_sha data-field=url_sha />
               <button type=submit class=delete-button>削除する</button>
               <action-status />
@@ -312,7 +334,7 @@
           <template>
             <td><code data-field=addr />
             <td>
-              <form method=post action=/account/unlink.json is=save-data data-confirm=削除します。 data-next=reloadList:.email-list class=transparent>
+              <form method=post action=/account/unlink.json is=save-data data-confirm=削除します。 data-next="reloadList:.email-list resetConfig:hideEmailMN" class=transparent>
                 <input type=hidden name=server value=email>
                 <input type=hidden name=account_link_id data-field=account_link_id />
                 <button type=submit class=delete-button>削除する</button>

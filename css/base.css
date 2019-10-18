@@ -1430,6 +1430,40 @@ small {
   background-color: var(--small-background-color);
 }
 
+gr-mn-list:not(:empty):not([hidden]) {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 50%;
+  overflow: auto;
+  z-index: 100000;
+}
+
+gr-mn-item:not([hidden]) {
+  display: flex;
+  margin: 1em;
+  padding: .4em;
+  font-size: 90%;
+  color: var(--light-1-color);
+  background-color: var(--light-1-background-color);
+  box-shadow: .2em .2em var(--light-1-shadow-color);
+  align-items: center;
+}
+
+gr-mn-main {
+  flex-grow: 1;
+}
+
+gr-mn-main > * {
+  vertical-align: middle;
+}
+
+gr-mn-item .cancel-button {
+  min-width: 2em;
+}
+
 gr-backdrop:not([hidden]) {
   display: flex;
   position: fixed;

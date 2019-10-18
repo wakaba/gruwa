@@ -290,6 +290,25 @@ GR.page._title = function () {
   }
 }; // GR.page._title
 
+GR.page.showMiniNotification = function (obj) {
+  return $getTemplateSet (obj.template).then (tm => {
+    var e = tm.createFromTemplate ('gr-mn-item', obj);
+    e.querySelectorAll ('.cancel-button').forEach (_ => {
+      _.onclick = () => {
+        e.remove ();
+        if (obj.close) obj.close.apply (_);
+      };
+    });
+
+    var f = document.body.querySelector ('gr-mn-list');
+    if (!f) {
+      f = document.createElement ('gr-mn-list');
+      document.body.appendChild (f);
+    }
+    f.appendChild (e);
+  });
+}; // GR.page.showMiniNotification
+
 GR.account = {};
 
 GR.account.info = function () {
@@ -4513,6 +4532,32 @@ defineElement ({
   document.head.appendChild (def);
 
   var hasPush = !(!navigator.serviceWorker || !window.PushManager || !(location.protocol === 'https:' || location.hostname === 'localhost'));
+
+  if (location.pathname !== '/dashboard/receive')
+  GR.idle (() => {
+    fetch ('/account/configsummary.json').then (res => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then (json => {
+      if (!json.email && !localStorage.hideEmailMN) {
+        GR.page.showMiniNotification ({template: "mn-email", close: () => {
+          localStorage.hideEmailMN = true;
+        }});
+      }
+      if (!json.push && !localStorage.hidePushMN && hasPush) {
+        GR.page.showMiniNotification ({template: "mn-push", close: () => {
+          localStorage.hidePushMN = true;
+        }});
+      }
+    });
+  });
+  
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'resetConfig');
+  e.pcHandler = function (args) {
+    delete localStorage[args.args[1]];
+  }; // resetConfig
+  document.head.appendChild (e);
 
   defineElement ({
     name: 'gr-push-config',

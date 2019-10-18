@@ -67,6 +67,28 @@
     </gr-navigate-status>
 
 <!-- also in dashboard.html.tm -->
+<template-set name=mn-email>
+  <template>
+    <gr-mn-main>
+      メールアドレスが登録されていません。
+      <a href=/dashboard/receive#emails class=main-button>登録する</a>
+    </gr-mn-main>
+    <button type=button class=cancel-button title="今後このメッセージを表示しない">×</button>
+  </template>
+</template-set>
+
+<!-- also in dashboard.html.tm -->
+<template-set name=mn-push>
+  <template>
+    <gr-mn-main>
+      通知の受信設定がありません。
+      <a href=/dashboard/receive#notifications class=main-button>設定する</a>
+    </gr-mn-main>
+    <button type=button class=cancel-button title="今後このメッセージを表示しない">×</button>
+  </template>
+</template-set>
+
+<!-- also in dashboard.html.tm -->
 <template-set name=gr-menu>
   <template>
     <popup-menu>
