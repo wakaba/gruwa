@@ -166,6 +166,36 @@ sub main ($$$$$) {
     });
   } # /account/unlink.json
 
+  if (@$path == 2 and $path->[1] eq 'configsummary.json') {
+    # /account/configsummary.json
+    return $app->accounts (['info'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+      terms_version => $app->config->{accounts}->{terms_version},
+      with_linked => 'email',
+    })->then (sub {
+      my $account = $_[0];
+      my $result = {};
+      return $result unless defined $account->{account_id};
+      for (values %{$account->{links} or {}}) {
+        next unless $_->{service_name} eq 'email';
+        $result->{email} = 1;
+        last;
+      }
+      return $app->apploach (['notification', 'hook', 'list.json'], {
+        subscriber_nobj_key => 'account-' . $account->{account_id},
+        type_nobj_key => 'apploach-push',
+        limit => 1,
+      })->then (sub {
+        my $v = $_[0];
+        $result->{push} = 1 if @{$v->{items}};
+        return $result;
+      });
+    })->then (sub {
+      return json $app, $_[0];
+    });
+  }
+
   return $app->send_error (404);
 } # main
 
@@ -235,7 +265,7 @@ sub account_email ($$$) {
       die $_[0];
     });
   } # /account/email/verify
-
+  
   return $app->send_error (404);
 } # account_email
 
