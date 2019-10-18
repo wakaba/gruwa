@@ -261,59 +261,6 @@ section section section section > header.section {
   box-sizing: border-box;
   text-align: var(--header4-align);
 }
- 
-gr-list-container.index-list {
-  display: block;
-}
-
-gr-list-container.index-list > list-main > list-item {
-  display: block;
-  background-color: var(--light-2-background-color);
-  color: var(--light-2-color);
-}
-
-gr-list-container.index-list > list-main > list-item:nth-child(2n) {
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-}
-
-gr-list-container.index-list a {
-  display: block;
-  padding: .5em;
-  text-decoration: none;
-}
-
-gr-list-container.index-list a:not(:hover) {
-  color: inherit;
-  background: transparent;
-}
-
-gr-list-container.index-list a strong {
-  text-decoration: underline;
-  color: var(--link-color);
-  background-color: var(--link-background-color);
-}
-
-gr-list-container.index-list a:visited strong {
-  color: var(--visited-color);
-  background-color: var(--visited-background-color);
-}
-
-gr-list-container.index-list a:hover strong,
-gr-list-container.index-list a:active strong {
-  color: inherit;
-  background-color: transparent;
-}
-
-gr-list-container.index-list gr-list-container[key=objects] {
-  display: block;
-  margin: 0.2rem 1rem;
-  font-size: 80%;
-}
-
-gr-list-container.index-list gr-list-container[key=objects] a {
-  display: inline-block;
-}
 
 article.object:not([hidden]) {
   margin: 0 0.5em 1em 0.5em;
@@ -549,14 +496,6 @@ edit-container > form > footer p {
   text-align: right;
   color: var(--small-color);
   background-color: var(--small-background-color);
-}
-
-article.object > footer index-list > * {
-  margin-right: .5em;
-}
-
-article.object > footer index-list > .this-index {
-  display: none;
 }
 
 article.object > .actions form {
@@ -800,17 +739,14 @@ page-main form[is=gr-search] .search-button {
   color: var(--small-color);
 }
 
-.todo-list list-main > list-item .info-line index-list a,
-.todo-list list-main > list-item .info-line account-list a {
-  margin-left: 1em;
-  text-decoration: none;
+.todo-list list-main > list-item .info-line > * {
+  margin-right: 1em;
+  vertical-align: middle;
 }
 
 .todo-list list-main > list-item .info-line gr-count:not([hidden]) {
   display: inline-block;
   min-width: 5em;
-  margin-right: 1rem;
-  vertical-align: middle;
 }
 
 .todo-list list-main > list-item .info-line gr-count-line {
@@ -831,6 +767,11 @@ page-main form[is=gr-search] .search-button {
   height: .6em;
   line-height: 1.0;
   font-size: 80%;
+}
+
+.todo-list list-main > list-item .info-line gr-account .icon {
+  width: 1.5em;
+  height: 1.5em;
 }
 
 form[data-form-type=uploader].drop-target {

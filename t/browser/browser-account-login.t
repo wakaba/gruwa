@@ -271,21 +271,17 @@ Test {
     [g1 => group => {
       members => ['a1'],
     }],
-    [i1 => index => {
+    [o1 => object => {
       group => 'g1', account => 'a1',
     }],
   )->then (sub {
     return $current->create_browser (1 => {
-      url => ['g', $current->o ('g1')->{group_id}, 'i', $current->o ('i1')->{index_id}, 'config'],
+      url => ['g', $current->o ('g1')->{group_id}, ''],
       account => 'a1',
     });
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'html:not([data-navigating])',
-    });
-  })->then (sub {
-    return $current->b_wait (1 => {
-      selector => 'h1 a',
     });
   })->then (sub { # cookie staled
     return $current->b (1)->set_cookie (sk => '', path => '/', max_age => -1);
@@ -293,8 +289,8 @@ Test {
     return $current->b (1)->execute (q{
       GR._timestamp = {}; // reset cache
 
-      document.querySelector ('h1 a').click ();
-    });
+      GR.navigate.go ('o/'+arguments[0]+'/', {});
+    }, [$current->o ('o1')->{object_id}]);
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'gr-backdrop > .dialog',

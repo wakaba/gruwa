@@ -30,6 +30,7 @@ sub main ($$$$$) {
           server => $server,
           callback_url => $app->http->url->resolve_string (q</account/cb>)->stringify,
           app_data => $app->text_param ('next'),
+          create_email_link => 1,
         })->(sub {
           my $json2 = $_[0];
           if ($json1->{set_sk}) {
@@ -144,8 +145,129 @@ sub main ($$$$$) {
     });
   }
 
+  if ($path->[1] eq 'email') {
+    return $class->account_email ($app, $path);
+  }
+
+  if (@$path == 2 and $path->[1] eq 'unlink.json') {
+    # /account/unlink.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+    my $server = $app->bare_param ('server') // '';
+    return $app->throw_error (400, reason_phrase => 'Bad |server|')
+        unless $server eq 'email';
+    return $app->accounts (['link', 'delete'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+      account_link_id => $app->bare_param ('account_link_id') // '',
+      server => $server,
+    })->then (sub {
+      return json $app, {};
+    });
+  } # /account/unlink.json
+
+  if (@$path == 2 and $path->[1] eq 'configsummary.json') {
+    # /account/configsummary.json
+    return $app->accounts (['info'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+      terms_version => $app->config->{accounts}->{terms_version},
+      with_linked => 'email',
+    })->then (sub {
+      my $account = $_[0];
+      my $result = {};
+      return $result unless defined $account->{account_id};
+      for (values %{$account->{links} or {}}) {
+        next unless $_->{service_name} eq 'email';
+        $result->{email} = 1;
+        last;
+      }
+      return $app->apploach (['notification', 'hook', 'list.json'], {
+        subscriber_nobj_key => 'account-' . $account->{account_id},
+        type_nobj_key => 'apploach-push',
+        limit => 1,
+      })->then (sub {
+        my $v = $_[0];
+        $result->{push} = 1 if @{$v->{items}};
+        return $result;
+      });
+    })->then (sub {
+      return json $app, $_[0];
+    });
+  }
+
   return $app->send_error (404);
 } # main
+
+sub account_email ($$$) {
+  my ($class, $app, $path) = @_;
+  # /account/email/...
+
+  if (@$path == 3 and $path->[2] eq 'list.json') {
+    # /account/email/list.json
+    return $app->accounts (['info'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+      terms_version => $app->config->{accounts}->{terms_version},
+      with_linked => 'email',
+    })->then (sub {
+      my $account = $_[0];
+      return [] unless defined $account->{account_id};
+      my $email_addrs = [];
+      for (values %{$account->{links} or {}}) {
+        next unless $_->{service_name} eq 'email';
+        push @$email_addrs, {addr => $_->{email}, account_link_id => $_->{account_link_id}};
+      }
+      return $email_addrs;
+    })->then (sub {
+      return json $app, {items => $_[0]};
+    });
+  }
+
+  if (@$path == 3 and $path->[2] eq 'add.json') {
+    # /account/email/add.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+    my $to_addr = $app->text_param ('addr');
+    return $app->accounts (['email', 'input'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+      addr => $to_addr,
+    })->then (sub {
+      my $json = $_[0];
+      if (defined $json->{key}) {
+        return $app->temma_email ('email-verify.html.tm', {
+          url => $app->http->url->resolve_string ('/account/email/verify?key=' . $json->{key})->stringify, # key is URL safe
+          #to_account
+        }, undef, undef, $to_addr)->then (sub {
+          return json $app, {sent => 1};
+        });
+      } else { # verified
+        return json $app, {};
+      }
+    }, sub {
+      return $app->throw_error (400, reason_phrase => $_[0]->{reason})
+          if ref $_[0] eq 'HASH';
+      die $_[0];
+    });
+  } elsif (@$path == 3 and $path->[2] eq 'verify') {
+    # /account/email/verify
+    return $app->accounts (['email', 'verify'], {
+      sk_context => $app->config->{accounts}->{context},
+      sk => $app->http->request_cookies->{sk},
+      key => $app->text_param ('key'),
+    })->then (sub {
+      my $json = $_[0];
+      return $app->send_redirect ('/dashboard/receive#emails');
+    }, sub {
+      return $app->throw_error (400, reason_phrase => $_[0]->{reason})
+          if ref $_[0] eq 'HASH';
+      die $_[0];
+    });
+  } # /account/email/verify
+  
+  return $app->send_error (404);
+} # account_email
 
 sub account_push ($$$$) {
   my ($class, $app, $path, $account) = @_;

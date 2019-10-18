@@ -82,7 +82,7 @@ Test {
     [o1 => object => {
       group => 'g1',
       account => 'a1',
-      index => 'i1',
+      index => ['i1'],
       title => $current->generate_text (t4 => {}),
       timestamp => 1234646444,
     }],
@@ -127,6 +127,104 @@ Test {
     } $current->c;
   });
 } n => 6, name => ['initial load (blog object)'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [g1 => group => {
+      members => ['a1', 'a2'], title => $current->generate_text (t1 => {}),
+      theme => 'red',
+    }],
+    [i1 => index => {
+      account => 'a1',
+      group => 'g1',
+      title => $current->generate_text (t2 => {}),
+      index_type => 3, # todo
+    }],
+    [i2 => index => {
+      group => 'g1',
+      account => 'a1',
+      title => $current->generate_text (ti2 => {}),
+      index_type => 4, # category
+    }],
+    [i3 => index => {
+      group => 'g1',
+      account => 'a1',
+      title => $current->generate_text (ti3 => {}),
+      index_type => 5, # milestone
+    }],
+    [o1 => object => {
+      group => 'g1',
+      account => 'a1',
+      index => ['i1', 'i2', 'i3'],
+      assigned_account => ['a2'],
+      title => $current->generate_text (t4 => {}),
+      timestamp => 1234646444,
+    }],
+  )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (a2name => {}),
+    }, group => 'g1', account => 'a2');
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('t4'), # object title
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('a2name'), # assgined account name
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article.object footer gr-index-list',
+      text => $current->o ('ti2'),
+      name => 'label index title',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article.object footer gr-index-list',
+      text => $current->o ('ti3'),
+      name => 'milestone index title',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return {
+        title: document.title,
+        url: location.pathname,
+        headerTitle: document.querySelector ('header.page h1').textContent,
+        headerURL: document.querySelector ('header.page h1 a').pathname,
+        headerLink: document.querySelector ('header.page gr-menu a').pathname,
+        sectionTitle: document.querySelector ('header.section h1').textContent,
+        //sectionURL: document.querySelector ('header.section a').pathname,
+        //sectionLink: document.querySelector ('header.section gr-menu a').pathname,
+      };
+    });
+  })->then (sub {
+    my $res = $_[0];
+    my $values = $res->json->{value};
+    test {
+      use utf8;
+      is $values->{title}, $current->o ('t4') . ' - ' . $current->o ('t2') . ' - ' . $current->o ('t1');
+      is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/o/'.$current->o ('o1')->{object_id}.'/';
+      is $values->{headerTitle}, $current->o ('t2');
+      is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
+      is $values->{headerLink}, $values->{headerURL};
+      like $values->{sectionTitle}, qr{[0-9]};
+    } $current->c;
+  });
+} n => 6, name => ['initial load (todo object)'], browser => 1;
 
 Test {
   my $current = shift;

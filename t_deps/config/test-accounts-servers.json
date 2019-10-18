@@ -8,5 +8,8 @@
     "linked_id_field": "access_token",
 
     "":""
+  },
+  "email": {
+    "name": "email"
   }
 }

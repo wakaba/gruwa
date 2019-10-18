@@ -39,7 +39,7 @@ delete window.GRError;
 GR.Error.handle403 = function (res) {
   var e = new GR.Error ('InvalidAccountError');
   e.errorResponse = res;
-  GR.account.check ({});
+  GR.account.check ({source: '403'});
   return e;
 }; // handle403
 
@@ -129,7 +129,7 @@ defineElement ({
   },
 });
 
-GR._state = {};
+GR._state = {currentPage: {}};
 GR._timestamp = {};
 
 GR.Favicon = {};
@@ -226,8 +226,10 @@ GR._updateMyInfo = function () {
     if (json.account.account_id == null) {
       GR.account.showDialog ();
 
-      if (window.BroadcastChannel)
-      new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+      if (oldAccount.account_id) {
+        if (window.BroadcastChannel)
+        new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+      }
     } else if (oldAccount.account_id !== json.account.account_id &&
                !oldAccount.newSession) {
       document.querySelectorAll ('gr-account[self]').forEach (_ => _.grRender ());
@@ -246,8 +248,11 @@ GR._updateMyInfo = function () {
     if (e instanceof Response && e.status === 403) {
       GR.account.showDialog ();
 
-      if (window.BroadcastChannel)
-      new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+      if (!GR._state.account.stale) {
+        GR._state.account.stale = true;
+        if (window.BroadcastChannel)
+        new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+      }
       return;
     }
     throw e;
@@ -285,6 +290,25 @@ GR.page._title = function () {
   }
 }; // GR.page._title
 
+GR.page.showMiniNotification = function (obj) {
+  return $getTemplateSet (obj.template).then (tm => {
+    var e = tm.createFromTemplate ('gr-mn-item', obj);
+    e.querySelectorAll ('.cancel-button').forEach (_ => {
+      _.onclick = () => {
+        e.remove ();
+        if (obj.close) obj.close.apply (_);
+      };
+    });
+
+    var f = document.body.querySelector ('gr-mn-list');
+    if (!f) {
+      f = document.createElement ('gr-mn-list');
+      document.body.appendChild (f);
+    }
+    f.appendChild (e);
+  });
+}; // GR.page.showMiniNotification
+
 GR.account = {};
 
 GR.account.info = function () {
@@ -311,13 +335,18 @@ GR.account.check = function (opt) {
   } else {
     return Promise.resolve ();
   }
-  return GR._updateMyInfo ();
+  return GR._state.accountChecking = GR._state.accountChecking || Promise.resolve ().then (() => {
+    console.log ('account check invoked from:', opt.source, performance.now ()); // debug
+    return GR._updateMyInfo ();
+  }).finally (() => {
+    delete GR._state.accountChecking;
+  });
 }; // GR.account.check
 
 GR.account.scheduleCheck = function () {
   clearTimeout (GR._state.checkTimer);
   GR._state.checkTimer = setTimeout (() => {
-    GR.account.check ({});
+    GR.account.check ({source: 'timer'});
   }, 30*60*1000);
 }; // GR.account.scheduleCheck
 
@@ -370,7 +399,7 @@ GR.group.activeMembers = function () {
     bc.onmessage = (ev) => {
       if (ev.data.grAccountUpdated) {
         setTimeout (() => {
-          GR.account.check ({});
+          GR.account.check ({source: 'bc'});
         }, Math.random () * 60*1000);
       }
     };
@@ -407,15 +436,123 @@ GR.group.activeMembers = function () {
     });
   }; // reloadGroupInfo
   document.head.appendChild (e);
+  
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'reloadIndexInfo');
+  e.pcHandler = function (args) {
+    return GR.index._updateList ({force: true});
+  }; // reloadIndexInfo
+  document.head.appendChild (e);
+
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'recentIndexListLoader');
+  e.pcHandler = function (opts) {
+    return GR.index.list ().then (list => {
+      list = Object.values (list).filter (_ => {
+        return _.index_type == 1 || _.index_type == 2 || _.index_type == 3;
+      }).sort ((a, b) => b.updated - a.updated);
+      return {
+        data: list,
+      };
+    });
+  };
+  document.head.appendChild (e);
 
 }) ();
 
 GR.index = {};
 
+GR.index.list = () => {
+  if (GR._state.getIndexList) {
+    if (performance.now () - GR._timestamp.indexList > 3*60*60*1000) {
+      GR.idle (() => GR.index._updateList ());
+    }
+    return GR._state.getIndexList;
+  }
+  return GR._state.getIndexList = gFetch ('i/list.json', {}).then (json => {
+    GR._timestamp.indexList = performance.now ();
+    return json.index_list;
+  });
+}; // GR.index.list
+
+GR.index._updateList = (opts) => {
+  if (opts.force ||
+      !(performance.now () - GR._timestamp.indexList < 3*60*1000)) {
+    //
+  } else {
+    return GR.index.list ();
+  }
+  delete GR._state.getIndexList;
+  return GR.index.list ();
+}; // GR.index._updateList
+
 GR.index.info = function (indexId) {
-  // XXX cache
-  return gFetch ('i/'+indexId+'/info.json', {});
+  return GR.index.list ().then (list => {
+    var info = list[indexId];
+    if (info) return info;
+
+    return GR.index._updateList ({}).then (list => {
+      var info = list[indexId];
+      if (info) return info;
+      throw new Error ('404 Index |'+indexId+'| not found');
+      //console.log ('Index |'+indexId+'| not found');
+      //return {index_id: indexId, title: indexId, group_id: GR._state.group.group_id};
+    });
+  });
 }; // GR.index.info
+
+defineElement ({
+  name: 'gr-index-list',
+  fill: 'idlattribute',
+  props: {
+    pcInit: function () {
+      this.grValue = Object.keys (this.value || {});
+      if (this.grValue) Promise.resolve ().then (() => this.grRender ());
+      Object.defineProperty (this, 'value', {
+        set: function (v) {
+          this.grValue = Object.keys (v || {});
+          Promise.resolve ().then (() => this.grRender ());
+        },
+      });
+    }, // pcInit
+    grRender: function () {
+      var indexIds = this.grValue.sort ((a, b) => {
+        return a - b;
+      });
+      var currentIndex = this.hasAttribute ('nocurrentindex') ? GR._state.currentPage.index ? GR._state.currentPage.index.index_id : null : null;
+      var indexList = {};
+      return Promise.all ([
+        $getTemplateSet ('gr-index-list-item'),
+        Promise.all (indexIds.map (indexId => GR.index.info (indexId).then (_ => indexList[indexId] = _))),
+      ]).then (_ => {
+        var [tm] = _;
+        this.textContent = '';
+
+        var expectedIndexType = this.getAttribute ('indextype'); // or null
+
+        indexIds.forEach (indexId => {
+          if (indexId === currentIndex) return;
+          
+          var index = indexList[indexId];
+          if (expectedIndexType && expectedIndexType != index.index_type) return;
+          var item = {index: index, class: 'label-index'};
+          if (index.color) {
+            var m = index.color.match (/#(..)(..)(..)/);
+            var r = parseInt ("0x" + m[1]);
+            var g = parseInt ("0x" + m[2]);
+            var b = parseInt ("0x" + m[3]);
+            var y = 0.299 * r + 0.587 * g + 0.114 * b;
+            var c = y > 127 + 64 ? 0 : 255;
+            item.style = 'color:rgb('+c+','+c+','+c+');background-color:'+index.color;
+            item['class'] += ' colored';
+          }
+          var e = tm.createFromTemplate ('span', item);
+          while (e.firstChild) this.appendChild (e.firstChild);
+        });
+      });
+    }, // grRender
+  },
+}); // <gr-index-list>
 
 GR.object = {};
 
@@ -557,7 +694,9 @@ defineElement ({
         if (ev.origin === location.origin &&
             ev.data.grAccountUpdated) {
           this.grClose ();
-          GR.account.check ({force: true});
+          GR.account.check ({force: true, source: 'logindone'});
+          if (window.BroadcastChannel)
+          new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
         }
       };
       window.addEventListener ('message', listener);
@@ -792,7 +931,7 @@ GR.dashboard._groupList = function () {
     });
   };
   document.head.appendChild (e);
-
+  
 }) ();
 
 defineElement ({
@@ -1285,24 +1424,9 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       } catch (e) {
         console.log (e); // XXX
       }
-    } else if (field.localName === 'index-list') {
-      field.textContent = '';
-      var template = document.querySelector ('#index-list-item-template');
-      $with ('index-list').then (function (list) {
-        var objects = Object.keys (value || {}).map (function (indexId) {
-          return list[indexId] || {index_id: indexId, title: indexId};
-        });
-        objects = applyFilters (objects, field.getAttribute ('filters'));
-        objects.forEach (function (object) {
-          var item = document.createElement ('index-list-item');
-          item.appendChild (template.content.cloneNode (true));
-          fillFields (item, item, item, object, {});
-          //XXX
-          //item.classList.toggle ('this-index', object.index_id == document.documentElement.getAttribute ('data-index'));
-          field.appendChild (item);
-        });
-      });
     } else if (field.localName === 'gr-account-list') {
+      field.value = value;
+    } else if (field.localName === 'gr-index-list') {
       field.value = value;
     } else if (field.localName === 'iframe') {
       field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
@@ -3111,6 +3235,13 @@ function upgradeForm (form) {
     });
   }; // groupGo
   document.head.appendChild (e);
+
+  var def = document.createElementNS ('data:,pc', 'formsaved');
+  def.setAttribute ('name', 'reloadList');
+  def.pcHandler = function (args) {
+    document.querySelectorAll (args.args[1]).forEach (_ => _.load ({}));
+  };
+  document.head.appendChild (def);
 }) ();
 
 defineElement ({
@@ -3841,7 +3972,7 @@ GR.navigate.go = function (u, args) {
           return ['dashboard', 'jump', {}];
         }
 
-        var m = path.match (/^\/dashboard\/(groups|calls)$/);
+        var m = path.match (/^\/dashboard\/(groups|receive|calls)$/);
         if (m) {
           return ['dashboard', 'dashboard-' + m[1], {}];
         }
@@ -3925,11 +4056,21 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       }));
     }
     if (pageArgs.objectId) {
-      wait.push (GR.object.get (pageArgs.objectId, pageArgs.objectRevisionId).then (_ => params.object = _).then (() => {
-        // XXX use first index_type=[123] index
-        var indexId = Object.keys (params.object.data.index_ids || {})[0];
-        if (indexId) {
-          return GR.index.info (indexId).then (_ => params.index = _);
+      wait.push (Promise.all ([
+        GR.index.list (),
+        GR.object.get (pageArgs.objectId, pageArgs.objectRevisionId).then (_ => params.object = _),
+      ]).then (_ => {
+        var [indexList] = _;
+        var indexIds = Object.keys (params.object.data.index_ids || {});
+        for (var i = 0; i < indexIds.length; i++) {
+          var index = indexList[indexIds[i]];
+          if (index &&
+              (index.index_type == 1 /* blog */ ||
+               index.index_type == 2 /* wiki */ ||
+               index.index_type == 3 /* todo */)) {
+            params.index = index;
+            break;
+          }
         }
       }));
     }
@@ -4128,6 +4269,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         GR.page.setSearch (null);
       }
       GR.page.setTitle (title.join (' - '));
+      GR._state.currentPage = params;
       return GR.theme.set (params.theme);
     });
   }).then (_ => {
@@ -4390,6 +4532,32 @@ defineElement ({
   document.head.appendChild (def);
 
   var hasPush = !(!navigator.serviceWorker || !window.PushManager || !(location.protocol === 'https:' || location.hostname === 'localhost'));
+
+  if (location.pathname !== '/dashboard/receive')
+  GR.idle (() => {
+    fetch ('/account/configsummary.json').then (res => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then (json => {
+      if (!json.email && !localStorage.hideEmailMN) {
+        GR.page.showMiniNotification ({template: "mn-email", close: () => {
+          localStorage.hideEmailMN = true;
+        }});
+      }
+      if (!json.push && !localStorage.hidePushMN && hasPush) {
+        GR.page.showMiniNotification ({template: "mn-push", close: () => {
+          localStorage.hidePushMN = true;
+        }});
+      }
+    });
+  });
+  
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'resetConfig');
+  e.pcHandler = function (args) {
+    delete localStorage[args.args[1]];
+  }; // resetConfig
+  document.head.appendChild (e);
 
   defineElement ({
     name: 'gr-push-config',

@@ -399,7 +399,9 @@ gr-editable-tr form:not([hidden]) {
 }
 
 input:not([type]),
-input[type=search] {
+input[type=search],
+input[type=url],
+input[type=email] {
   box-sizing: border-box;
   width: 100%;
   border: dotted 1px;
@@ -852,6 +854,30 @@ td .icon {
   height: 1.5em;
 }
 
+gr-account-list > gr-account + gr-account {
+  margin-left: .5em;
+}
+
+gr-index-list > a + a {
+  margin-left: .5em;
+}
+
+gr-index-list > a:not([hidden]) {
+  display: inline-block;
+  border-radius: .5em;
+  padding: .4em;
+  min-width: 3em;
+  font-size: 90%;
+  line-height: 1.0;
+  text-align: center;
+  background: var(--dark-background-color);
+  color: var(--dark-color);
+}
+
+gr-index-list > a:not(:hover):not(:focus):not(:active) {
+  text-decoration: none;
+}
+
 enum-value.todo-state:not([hidden]) {
   display: inline-block;
   margin: .5em;
@@ -1238,18 +1264,22 @@ gr-nav-panel gr-group:not([hidden]) {
   margin-top: .5em;
 }
 
+.main-menu-list-container:not([hidden]) {
+  display: contents;
+}
+
 .main-menu-list {
   padding: 0;
 }
 
-.main-menu-list > li:not([hidden]) {
+.main-menu-list > :not([hidden]) {
   display: block;
   margin: .5em 1em;
   font-size: 150%;
 }
 
-.main-menu-list > li > a:not([hidden]),
-.main-menu-list > li > button:not([hidden]) {
+.main-menu-list > * > a:not([hidden]),
+.main-menu-list > * > button:not([hidden]) {
   -webkit-appearance: none;
   display: block;
   border-style: none;
@@ -1258,11 +1288,23 @@ gr-nav-panel gr-group:not([hidden]) {
   font-size: 100%;
 }
 
-.main-menu-list > li > a:not(:hover):not(:focus):not(:active),
-.main-menu-list > li > button:not(:hover):not(:focus):not(:active) {
+.main-menu-list > * > a:not(:hover):not(:focus):not(:active):not(.antenna-item),
+.main-menu-list > * > button:not(:hover):not(:focus):not(:active) {
   color: inherit;
   background: transparent;
+}
+
+.main-menu-list > * > a:not(:hover):not(:focus):not(:active),
+.main-menu-list > * > button:not(:hover):not(:focus):not(:active) {
   text-decoration: none;
+}
+
+.main-menu-list > * > * > small:not([hidden]) {
+  display: block;
+  margin-bottom: -0.5em;
+  font-size: .9rem;
+  line-height: 1.0;
+  text-align: right;
 }
 
 number-unit {
@@ -1376,7 +1418,7 @@ hatena-star img.hatena-user-icon {
 
 .notes:not([hidden]) {
   display: block;
-  margin: 1em 2em;
+  margin: 1em 2em 1em 4em;
   padding: .5em;
   font-size: 90%;
   color: var(--small-color);
@@ -1386,6 +1428,40 @@ hatena-star img.hatena-user-icon {
 small {
   color: var(--small-color);
   background-color: var(--small-background-color);
+}
+
+gr-mn-list:not(:empty):not([hidden]) {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 50%;
+  overflow: auto;
+  z-index: 100000;
+}
+
+gr-mn-item:not([hidden]) {
+  display: flex;
+  margin: 1em;
+  padding: .4em;
+  font-size: 90%;
+  color: var(--light-1-color);
+  background-color: var(--light-1-background-color);
+  box-shadow: .2em .2em var(--light-1-shadow-color);
+  align-items: center;
+}
+
+gr-mn-main {
+  flex-grow: 1;
+}
+
+gr-mn-main > * {
+  vertical-align: middle;
+}
+
+gr-mn-item .cancel-button {
+  min-width: 2em;
 }
 
 gr-backdrop:not([hidden]) {

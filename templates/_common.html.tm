@@ -67,6 +67,28 @@
     </gr-navigate-status>
 
 <!-- also in dashboard.html.tm -->
+<template-set name=mn-email>
+  <template>
+    <gr-mn-main>
+      メールアドレスが登録されていません。
+      <a href=/dashboard/receive#emails class=main-button>登録する</a>
+    </gr-mn-main>
+    <button type=button class=cancel-button title="今後このメッセージを表示しない">×</button>
+  </template>
+</template-set>
+
+<!-- also in dashboard.html.tm -->
+<template-set name=mn-push>
+  <template>
+    <gr-mn-main>
+      通知の受信設定がありません。
+      <a href=/dashboard/receive#notifications class=main-button>設定する</a>
+    </gr-mn-main>
+    <button type=button class=cancel-button title="今後このメッセージを表示しない">×</button>
+  </template>
+</template-set>
+
+<!-- also in dashboard.html.tm -->
 <template-set name=gr-menu>
   <template>
     <popup-menu>
@@ -125,36 +147,20 @@
 
 <template-set name=page-index>
   <template>
-      
-  <section class=page>
-    <section>
-      <h1>最近の更新</>
 
-      <gr-list-container src=i/list.json?index_type=1&index_type=2&index_type=3 key=index_list sortkey=updated class=index-list>
+    <section>
+      <h1>最近の更新</h1>
+
+      <list-container loader=recentIndexListLoader class=main-menu-list-container>
         <template>
-          <p>
-            <a href data-href-template="i/{index_id}/#{updated}">
-              <time data-field=updated />
-              <strong data-field=title></strong>
-            </a>
-            <gr-list-container
-                data-src-template="o/get.json?index_id={index_id}&limit=5"
-                data-parent-template=i/{index_id}/
-                data-context-template={index_type}
-                key=objects sortkey=timestamp,created>
-              <template>
-                <a href data-href-template="o/{object_id}/"
-                    data-2-href-template={PARENT}wiki/{title}#{updated}>
-                  <strong data-field=title data-empty=■ />
-                  (<time data-field=updated data-format=ambtime />)
-                </a>
-              </template>
-              <list-main/>
-            </gr-list-container>
+          <a href data-href-template="i/{index_id}/#{updated}" class=antenna-item>
+            <span data-field=title data-empty=■></span>
+            <small><time data-field=updated data-format=ambtime /></small>
+          </a>
         </template>
-        <list-main/>
-        <gr-action-status hidden stage-load=読込中... />
-      </gr-list-container>
+        <list-main class=main-menu-list />
+        <action-status hidden stage-loader=読込中... />
+      </list-container>
     </section>
 
   </template>
@@ -291,7 +297,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=groupGo:i/{index_id}/config>
+              data-next="reloadIndexInfo groupGo:i/{index_id}/config">
             <table class=config>
               <tbody>
                 <tr>
@@ -316,7 +322,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=groupGo:i/{index_id}/config>
+              data-next="reloadIndexInfo groupGo:i/{index_id}/config">
             <table class=config>
               <tbody>
                 <tr>
@@ -342,7 +348,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=groupGo:i/{index_id}/config>
+              data-next="reloadIndexInfo groupGo:i/{index_id}/config">
             <table class=config>
               <tbody>
                 <tr>
@@ -365,7 +371,7 @@
             <summary>ラベルの作成</summary>
 
             <form is=save-data data-saver=groupSaver method=post action=i/create.json
-                data-next=groupGo:i/{index_id}/config>
+                data-next="reloadIndexInfo groupGo:i/{index_id}/config">
               <table class=config>
                 <tbody>
                   <tr>
@@ -384,7 +390,7 @@
             <summary>マイルストーンの作成</summary>
 
             <form is=save-data data-saver=groupSaver method=post action=i/create.json
-                data-next=groupGo:i/{index_id}/config>
+                data-next="reloadIndexInfo groupGo:i/{index_id}/config">
               <table class=config>
                 <tbody>
                   <tr>
@@ -408,7 +414,7 @@
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
-              data-next=groupGo:i/{index_id}/config>
+              data-next="reloadIndexInfo groupGo:i/{index_id}/config">
             <table class=config>
               <tbody>
                 <tr>
@@ -619,7 +625,7 @@
         <h1>設定</h1>
         <a href=/help#config target=help>ヘルプ</a>
       </header>
-      <form is=save-data data-saver=groupSaver method=post data-action-template=i/{index.index_id}/edit.json id=edit-form>
+      <form is=save-data data-saver=groupSaver method=post data-action-template=i/{index.index_id}/edit.json id=edit-form data-next=reloadIndexInfo>
         <table class=config>
           <tbody>
             <tr>
@@ -635,7 +641,7 @@
                 <enum-value data-field=index.subtype
                     label-image=アルバム
                     label-file=ファイルアップローダー
-                    label-null />
+                    label-null label-undefined />
             <tr>
               <th><label for=edit-title>名前</>
               <td><input name=title data-field=index.title id=edit-title required>
@@ -777,7 +783,7 @@
                   stage-edit=保存中...
                   ok=保存しました />
               <gr-account-list data-data-field=assigned_account_ids title=担当者 />
-              <index-list data-data-field=index_ids />
+              <gr-index-list data-data-field=index_ids nocurrentindex />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
           </footer>
@@ -890,10 +896,6 @@
               <button type=button class=edit-button>新しい記事を書く</button>
           </article>
 
-        <template id=index-list-item-template data-name>
-          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
-        </template>
-
         <list-main></list-main>
 
       <gr-action-status hidden stage-load=読込中... />
@@ -921,11 +923,13 @@
             </a>
           <p class=info-line>
             <gr-count data-data-field=checked_checkbox_count data-all-data-field=all_checkbox_count data-filled=all template=gr-count />
-            <time data-field=created data-format=ambtime />
-            (<time data-field=updated data-format=ambtime /> 編集)
-            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "5"}]' title=マイルストーン />
-            <index-list data-data-field=index_ids filters='[{"key": ["index_type"], "value": "4"}]' title=ラベル />
-              <gr-account-list data-data-field=assigned_account_ids title=担当者 />
+            <gr-timestamp>
+              <time data-field=created data-format=ambtime />
+              (<time data-field=updated data-format=ambtime /> 編集)
+            </gr-timestamp>
+            <gr-index-list data-data-field=index_ids indextype=5 title=マイルストーン />
+            <gr-index-list data-data-field=index_ids indextype=4 title=ラベル />
+            <gr-account-list data-data-field=assigned_account_ids title=担当者 />
         </template>
 
           <article class="object new" data-gr-if-index-type=3><!-- todos -->
@@ -938,84 +942,8 @@
             <label><input type=radio name=todo value=open> 未完了</label>
             <label><input type=radio name=todo value=closed> 完了済</label>
             <label><input type=radio name=todo value=all> すべて</label>
-
-            <list-control name=index_id key=index_ids list=index-list>
-              <template data-name=view>
-                <list-item-label data-data-field=title data-color-data-field=color />
-              </template>
-              <template data-name=edit>
-                <label data-color-data-field=color>
-                  <input type=checkbox data-data-field=index_id data-checked-field=selected>
-                  <span data-data-field=title></span>
-                </label>
-              </template>
-              <template data-name=edit-milestone>
-                <label data-color-data-field=color>
-                  <input type=radio name=MILESTONE data-data-field=index_id data-checked-field=selected>
-                  <span data-data-field=title></span>
-                </label>
-              </template>
-              <template data-name=edit-milestone-clear>
-                <label>
-                  <input type=radio name=MILESTONE value checked>
-                  (制約なし)
-                </label>
-              </template>
-
-              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "5"}]' data-empty=(マイルストーン制約なし) />
-              <gr-popup-menu>
-                <button type=button title=選択>...</button>
-                <menu hidden>
-                  <form action=javascript:>
-                    <list-control-list editable template=edit-milestone clear-template=edit-milestone-clear filters='[{"key": ["data", "index_type"], "value": "5"}]' />
-                  </form>
-                </menu>
-              </gr-popup-menu>
-
-              <list-control-list template=view filters='[{"key": ["data", "index_type"], "value": "4"}]' data-empty=(ラベル制約なし) />
-              <gr-popup-menu>
-                <button type=button title=選択>...</button>
-                <menu hidden>
-                  <list-control-list editable template=edit filters='[{"key": ["data", "index_type"], "value": "4"}]' />
-                </menu>
-              </gr-popup-menu>
-            </list-control>
-
-            <list-control name=assigned_account_id key=assigned_account_ids list=member-list>
-              <template data-name=view>
-                <list-item-label data-data-account-field=name />
-              </template>
-              <template data-name=edit>
-                <label>
-                  <input type=radio name=ONE data-data-field=account_id data-checked-field=selected>
-                  <span data-data-account-field=name></span>
-                </label>
-              </template>
-              <template data-name=edit-clear>
-                <label>
-                  <input type=radio name=ONE value checked>
-                  (制約なし)
-                </label>
-              </template>
-
-              <list-control-list template=view data-empty=(担当者制約なし) />
-              <gr-popup-menu>
-                <button type=button title=変更>...</button>
-                <menu hidden>
-                  <form action=javascript:>
-                    <list-control-list editable template=edit clear-template=edit-clear />
-                  </form>
-                </menu>
-              </gr-popup-menu>
-            </list-control>
           </list-query>
-
-          <button type=button class=reload-button hidden>再読込</button>
         </menu>
-
-        <template id=index-list-item-template data-name>
-          <a data-href-template=./?index={index_id} data-field=title data-color-field=color class=label-index></a>
-        </template>
 
         <list-main/>
 
@@ -1103,10 +1031,6 @@
                 <button type=button name=upload-button class=edit-button data-gr-if-index-subtype=file>ファイルをアップロード...</button>
           </form>
 
-        <template id=index-list-item-template data-name>
-          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
-        </template>
-
         <list-main></list-main>
 
       <gr-action-status hidden stage-load=読込中... />
@@ -1136,6 +1060,12 @@
         <gr-account-name data-field=name data-empty=■ />
       </a>
     </gr-account>
+  </template>
+</template-set>
+
+<template-set name=gr-index-list-item>
+  <template>
+    <a data-href-template=/g/{index.group_id}/i/{index.index_id}/ data-field=index.title data-class-field=class data-style-field=style data-filled=style data-empty=■ />
   </template>
 </template-set>
 
@@ -1200,7 +1130,7 @@
                   stage-edit=保存中...
                   ok=保存しました />
               <gr-account-list data-data-field=assigned_account_ids title=担当者 />
-              <index-list data-data-field=index_ids />
+              <gr-index-list data-data-field=index_ids nocurrentindex />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
           </footer>
@@ -1306,10 +1236,6 @@
           </details>
 
           </article-comments>
-        </template>
-
-        <template id=index-list-item-template data-name>
-          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
 
         <list-main></list-main>
@@ -1434,7 +1360,7 @@
                   stage-edit=保存中...
                   ok=保存しました />
               <gr-account-list data-data-field=assigned_account_ids title=担当者 />
-              <index-list data-data-field=index_ids />
+              <gr-index-list data-data-field=index_ids nocurrentindex />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
           </footer>
@@ -1540,10 +1466,6 @@
           </details>
 
           </article-comments>
-        </template>
-
-        <template id=index-list-item-template data-name>
-          <a data-href-template={GROUP}/i/{index_id}/ data-field=title data-color-field=color class=label-index></a>
         </template>
 
         <list-main></list-main>
