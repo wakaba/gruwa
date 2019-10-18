@@ -2,17 +2,7 @@
   <body>
 
     <gr-nav-button>
-      <button type=button onclick="
-        var active = ! document.querySelector ('gr-nav-button').hasAttribute ('active');
-        document.querySelectorAll ('gr-nav-button, gr-nav-panel').forEach (_ => {
-          if (active) {
-            _.setAttribute ('active', '');
-          } else {
-            _.removeAttribute ('active');
-          }
-        });
-        document.querySelector ('gr-nav-panel').focus ();
-      " title=メニュー>
+      <button type=button title=メニュー>
         <button-label>メニュー</button-label>
       </button>
     </gr-nav-button>

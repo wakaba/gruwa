@@ -4319,6 +4319,44 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
   });
 }; // _show
 
+defineElement ({
+  name: 'gr-nav-button',
+  props: {
+    pcInit: function () {
+      this.querySelectorAll ('button').forEach (_ => {
+        _.onclick = () => {
+          var active = ! this.hasAttribute ('active');
+          document.querySelectorAll ('gr-nav-button, gr-nav-panel').forEach (_ => {
+            if (active) {
+              _.setAttribute ('active', '');
+            } else {
+              _.removeAttribute ('active');
+            }
+          });
+          document.querySelector ('gr-nav-panel').focus ();
+        };
+      });
+    }, // pcInit
+  },
+}); // <gr-nav-button>
+
+defineElement ({
+  name: 'gr-nav-panel',
+  props: {
+    pcInit: function () {
+      this.onclick = (ev) => {
+        if (ev.target.localName === 'a' ||
+            ev.target.localName === 'button') {
+          this.grClose ();
+        }
+      };
+    }, // pcInit
+    grClose: function () {
+      document.querySelectorAll ('gr-nav-button button').forEach (_ => _.click ());
+    }, // grClose
+  },
+}); // <gr-nav-panel>
+
 (() => {
   
   var e = document.createElementNS ('data:,pc', 'templateselector');
