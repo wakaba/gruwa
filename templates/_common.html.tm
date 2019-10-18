@@ -89,6 +89,17 @@
 </template-set>
 
 <!-- also in dashboard.html.tm -->
+<template-set name=gr-navigate-external>
+  <template>
+    <p>外部 (<code data-field=origin></code>) に移動しようとしています。
+    <p class=buttons>
+      <a data-href-field=href target=_top rel="noreferrer" class=main-button>このまま移動する</a>
+      <a data-href-field=href target=_blank rel="noreferrer noopener" class=main-button>別窓で開く</a>
+      <a href=javascript: class="main-button">移動しない</a>
+  </template>
+</template-set>
+
+<!-- also in dashboard.html.tm -->
 <template-set name=gr-menu>
   <template>
     <popup-menu>

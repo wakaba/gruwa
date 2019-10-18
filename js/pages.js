@@ -3960,7 +3960,9 @@ GR.navigate.go = function (u, args) {
             }];
 
             return ['site', url];
-          } else { // not in same group
+          } else if (path.match (/^\/g\//)) {
+            return ['external', url];
+          } else { // dashboard, etc.
             return ['site', url];
           }
         });
@@ -3981,6 +3983,8 @@ GR.navigate.go = function (u, args) {
       } else {
         throw new Error ('Bad navigate partition |'+GR._state.navigatePartition+'|');
       }
+    } else if (url.origin === location.origin) { // ! GR.navigate.avail ()
+      return ['site', url];
     }
     return ['external', url];
   }).then (_ => {
@@ -4014,7 +4018,7 @@ GR.navigate.go = function (u, args) {
       status.grStop ();
       location.hash = _[1].hash;
       sendPing ();
-    } else { // external or site
+    } else if (_[0] === 'site') {
       if (location.href === _[1].href) {
         var e = new Error ('Failed to navigate to URL <'+_[1]+'>');
         status.grThrow (e);
@@ -4027,6 +4031,12 @@ GR.navigate.go = function (u, args) {
         }
         sendPing ();
       }
+    } else if (_[0] === 'external') {
+      var e = document.createElement ('gr-navigate-dialog');
+      e.setAttribute ('href', _[1]);
+      // sendPing
+      document.body.appendChild (e);
+      status.grStop ();
     }
   });
 }; // go
@@ -4280,10 +4290,10 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
   }, e => {
     if (GR._state.currentNavigate !== opts.thisNavigate) {
       if (e && e.name === 'AbortError') {
-        console.log ("Navigation to <"+url+"> canceled");
+        console.log ("Navigation to <"+opts.url+"> canceled");
         return;
       } else {
-        console.log ("Navigation to <"+url+"> canceled and errored");
+        console.log ("Navigation to <"+opts.url+"> canceled and errored");
         throw e;
       }
     }
@@ -4402,6 +4412,38 @@ addEventListener ('popstate', ev => {
   nav.setAttribute ('popstate', '');
   document.body.appendChild (nav);
 });
+
+defineElement ({
+  name: 'gr-navigate-dialog',
+  props: {
+    pcInit: function () {
+      this.grShow ();
+    }, // pcInit
+    grShow: function () {
+      return $getTemplateSet ('gr-navigate-external').then (ts => {
+        var backdrop = document.createElement ('gr-backdrop');
+        var url = new URL (this.getAttribute ('href'));
+        var obj = {
+          href: url.href,
+          origin: url.origin,
+        };
+        var container = ts.createFromTemplate ('article', obj);
+        container.className = 'dialog msgbox';
+        container.querySelectorAll ('a').forEach (_ => {
+          _.onclick = () => this.grClose ();
+        });
+        backdrop.onclick = (ev) => {
+          if (ev.target === ev.currentTarget) this.grClose ();
+        };
+        backdrop.appendChild (container);
+        this.appendChild (backdrop);
+      });
+    }, // grShow
+    grClose: function () {
+      this.remove ();
+    }, // grClose
+  },
+}); // <gr-navigate-dialog>
 
 defineElement ({
   name: 'gr-count',

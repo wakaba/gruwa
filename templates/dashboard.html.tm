@@ -33,7 +33,7 @@
 
   <gr-navigate partition=dashboard />
 
-<!-- also in dashboard.html.tm -->
+<!-- also in _common.html.tm -->
 <template-set name=mn-email>
   <template>
     <gr-mn-main>
@@ -44,7 +44,7 @@
   </template>
 </template-set>
 
-<!-- also in dashboard.html.tm -->
+<!-- also in _common.html.tm -->
 <template-set name=mn-push>
   <template>
     <gr-mn-main>
@@ -52,6 +52,17 @@
       <a href=/dashboard/receive#notifications class=main-button>設定する</a>
     </gr-mn-main>
     <button type=button class=cancel-button title="今後このメッセージを表示しない">×</button>
+  </template>
+</template-set>
+
+<!-- also in _common.html.tm -->
+<template-set name=gr-navigate-external>
+  <template>
+    <p>外部 (<code data-field=origin></code>) に移動しようとしています。
+    <p class=buttons>
+      <a data-href-field=href target=_top rel="noreferrer" class=main-button>このまま移動する</a>
+      <a data-href-field=href target=_blank rel="noreferrer noopener" class=main-button>別窓で開く</a>
+      <a href=javascript: class="main-button">移動しない</a>
   </template>
 </template-set>
 

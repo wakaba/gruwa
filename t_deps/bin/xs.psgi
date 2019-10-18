@@ -56,6 +56,10 @@ return sub {
       return $app->send_error (200);
     }
 
+    if ($path eq '/abcde') {
+      return $app->send_plain_text (q{abcde});
+    }
+
     if ($path =~ m{^/push/([0-9A-Za-z._-]+)$}) {
       my $key = $1;
       if ($http->request_method eq 'POST') {
@@ -72,7 +76,7 @@ return sub {
 
     if ($path eq '/news') {
       $http->set_response_header ('access-control-allow-origin', '*');
-      return $app->send_text (q{
+      return $app->send_plain_text (q{
         <!DOCTYPE HTML>
         <section id=2012-04-02>
           <h1>News 4</h1>

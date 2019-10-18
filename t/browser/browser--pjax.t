@@ -319,6 +319,62 @@ Test {
   });
 } n => 2, name => ['copy button'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var link = document.createElement ('a');
+      link.href = 'http://xs.server.test/abcde';
+      document.body.appendChild (link);
+      link.click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-backdrop .dialog .buttons a[target=_top]',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      setTimeout (() => document.querySelector ('gr-backdrop .dialog .buttons a[target=_top]').click (), 0);
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html',
+      text => 'abcde',
+    });
+  })->then (sub {
+    return $current->b (1)->url;
+  })->then (sub {
+    my $url = $_[0];
+    test {
+      is $url->stringify, 'http://xs.server.test/abcde';
+    } $current->c;
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return {referrer: document.referrer};
+    });
+  })->then (sub {
+    my $values = $_[0]->json->{value};
+    test {
+      is $values->{referrer}, '';
+    } $current->c;
+  });
+} n => 2, name => ['external link'], browser => 1;
+
 RUN;
 
 =head1 LICENSE

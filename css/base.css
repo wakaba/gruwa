@@ -1490,6 +1490,28 @@ gr-backdrop > .dialog:not([hidden]) {
   background-color: var(--main-background-color);
 }
 
+gr-backdrop > .dialog.msgbox:not([hidden]) {
+  height: auto;
+}
+
+.dialog.msgbox {
+  padding: 1em;
+}
+
+.dialog.msgbox > p:first-child {
+  margin-bottom: 1em;
+}
+
+.dialog.msgbox > p.buttons {
+  text-align: right;
+}
+
+.dialog.msgbox > p.buttons a:not([hidden]) {
+  display: inline-block;
+  min-width: 6em;
+  text-align: center;
+}
+
 .page-in-iframe .not-in-iframe {
   display: none;
 }
