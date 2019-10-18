@@ -399,7 +399,9 @@ gr-editable-tr form:not([hidden]) {
 }
 
 input:not([type]),
-input[type=search] {
+input[type=search],
+input[type=url],
+input[type=email] {
   box-sizing: border-box;
   width: 100%;
   border: dotted 1px;
@@ -1416,7 +1418,7 @@ hatena-star img.hatena-user-icon {
 
 .notes:not([hidden]) {
   display: block;
-  margin: 1em 2em;
+  margin: 1em 2em 1em 4em;
   padding: .5em;
   font-size: 90%;
   color: var(--small-color);

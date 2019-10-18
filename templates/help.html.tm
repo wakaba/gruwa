@@ -427,6 +427,7 @@
           <li><a href=#dashboard-groups>グループ</a>
           <li><a href=#jump>ジャンプリスト</a>
           <li><a href=#dashboard-calls>記事通知</a>
+          <li><a href=#dashboard-receive>受信設定</a>
         </ul>
         
       <section id=dashboard-groups>
@@ -464,7 +465,7 @@
       <p><a href=/jump>ジャンプリスト</a>ページでは、
       登録した各項目のラベル (文字列) を変更したり、
       項目を削除したりできます。
-    </section>
+      </section>
 
       <section id=dashboard-calls>
         <h1>記事通知</h1>
@@ -472,15 +473,43 @@
         <p><a href=/dashboard/calls>記事通知</a>ページには、
         受信した<dfn id=object-call>記事通知</dfn>が表示されます。
 
+        <p><a href=#object-call>記事通知</a>をプッシュ通知やインターネットメールで受け取るには、
+        <a href=#dashboard-receive>受信設定</a>ページから設定してください。
+      </section>
+
+      <section id=dashboard-receive>
+        <h1>受信設定</h1>
+        
         <p id=notifications>「デスクトップ/スマートフォン通知」
         欄では、<a href=#object-call>記事通知</a>があったとき、
-        デスクトップOSやスマートフォンの通知機能でお知らせするよう設定できます。
+        デスクトップOSやスマートフォンの通知機能
+        (プッシュ通知)
+        でお知らせするよう設定できます。
         (お使いの Web ブラウザーが対応している必要があります。)
 
           <ul class=notes>
             <li>同じ Web ブラウザーで複数の<a href=#accounts>アカウント</a>を使い分けていると、
             通知は正しく動作しません。
           </ul>
+
+        <p id=emails>「インターネットメール」
+        欄では、<a href=#object-call>記事通知</a>や<a href=#groups>グループ</a>の更新のレポートメールを受け取るメールアドレスを設定できます。
+        メールアドレスは複数登録できます。
+        どのアドレスにも同じ内容が配信されます。
+          
+          
+          <ul class=notes>
+            <li>メールアドレスを追加すると、
+            確認メールを送信します。確認メールから登録を完了すると、
+            そのメールアドレスで受信できるようになります。
+            <li>登録されたメールアドレスは、
+            レポートメール送信のほか、
+            サービス運営者からのお知らせのため使用することがあります。
+            (<a href=#privacy target=help>プライバシーについて</a>)
+            <li>メール送信のエラーが繰り返される場合、
+            そのメールアドレスへの配信を停止することがあります。
+          </ul>
+          
       </section>
       
     </section>

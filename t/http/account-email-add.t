@@ -93,7 +93,7 @@ Test {
     my $res = $_[0];
     test {
       is $res->status, 302;
-      is $res->header ('location'), $current->resolve ('/dashboard/calls#emails')->stringify;
+      is $res->header ('location'), $current->resolve ('/dashboard/receive#emails')->stringify;
     } $current->c;
     return $current->get_json (['account', 'email', 'list.json'], {}, account => 'a1');
   })->then (sub {
@@ -110,8 +110,16 @@ Test {
     test {
       is $res->status, 400;
     } $current->c;
+    return $current->post_json (['account', 'email', 'add.json'], {
+      addr => $current->o ('e1'),
+    }, account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok ! $result->{json}->{sent};
+    } $current->c;
   });
-} n => 14, name => 'email association';
+} n => 15, name => 'email association';
 
 RUN;
 

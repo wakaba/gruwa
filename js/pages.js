@@ -911,7 +911,7 @@ GR.dashboard._groupList = function () {
     });
   };
   document.head.appendChild (e);
-
+  
 }) ();
 
 defineElement ({
@@ -3215,6 +3215,13 @@ function upgradeForm (form) {
     });
   }; // groupGo
   document.head.appendChild (e);
+
+  var def = document.createElementNS ('data:,pc', 'formsaved');
+  def.setAttribute ('name', 'reloadList');
+  def.pcHandler = function (args) {
+    document.querySelectorAll (args.args[1]).forEach (_ => _.load ({}));
+  };
+  document.head.appendChild (def);
 }) ();
 
 defineElement ({
@@ -3945,7 +3952,7 @@ GR.navigate.go = function (u, args) {
           return ['dashboard', 'jump', {}];
         }
 
-        var m = path.match (/^\/dashboard\/(groups|calls)$/);
+        var m = path.match (/^\/dashboard\/(groups|receive|calls)$/);
         if (m) {
           return ['dashboard', 'dashboard-' + m[1], {}];
         }

@@ -213,7 +213,7 @@ sub account_email ($$$) {
           return json $app, {sent => 1};
         });
       } else { # verified
-        return $app->json ({});
+        return json $app, {};
       }
     }, sub {
       return $app->throw_error (400, reason_phrase => $_[0]->{reason})
@@ -228,7 +228,7 @@ sub account_email ($$$) {
       key => $app->text_param ('key'),
     })->then (sub {
       my $json = $_[0];
-      return $app->send_redirect ('/dashboard/calls#emails');
+      return $app->send_redirect ('/dashboard/receive#emails');
     }, sub {
       return $app->throw_error (400, reason_phrase => $_[0]->{reason})
           if ref $_[0] eq 'HASH';

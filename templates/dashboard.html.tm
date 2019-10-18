@@ -79,6 +79,7 @@
       <li><a href=/dashboard/groups>グループ</a>
       <li><a href=/jump>ジャンプリスト</a>
       <li><a href=/dashboard/calls>記事通知</a>
+      <li><a href=/dashboard/receive>受信設定</a>
       
     </ul>
   
@@ -218,7 +219,13 @@
         <button type=button class=list-next>もっと昔</button>
     </list-container>
 
-  </section>
+      <p><a href=/dashboard/receive>受信設定</a>
+    </section>
+  </template>
+</template-set>
+
+<template-set name=page-dashboard-receive>
+  <template title=受信設定 class=is-subpage>
   
     <section id=push-notifications>
       <header class=section>
@@ -226,7 +233,7 @@
         <a href=/help#notifications target=help>ヘルプ</a>
       </header>
 
-      <p>記事通知を受信した時、
+      <p><a href=/dashboard/calls>記事通知</a>を受信した時、
       デスクトップ/スマートフォン通知を受け取ることができます。</p>
 
       <list-container src=/account/push/list.json filter=uaLabelFilter key=items type=table class="main-table push-list">
@@ -285,6 +292,73 @@
           通知に対応していません。
         </gr-no-push>
       </gr-push-config>
+    </section>
+  
+    <section id=emails>
+      <header class=section>
+        <h1>インターネットメール</h1>
+        <a href=/help#emails target=help>ヘルプ</a>
+      </header>
+
+      <p><a href=/dashboard/calls>記事通知</a>やグループの更新のレポートメールを受け取ることができます。</p>
+
+      <list-container src=/account/email/list.json key=items type=table class="email-list main-table">
+        <table>
+          <thead>
+            <tr>
+              <th>メールアドレス
+              <th>操作
+          <tbody/>
+          <template>
+            <td><code data-field=addr />
+            <td>
+              <form method=post action=/account/unlink.json is=save-data data-confirm=削除します。 data-next=reloadList:.email-list class=transparent>
+                <input type=hidden name=server value=email>
+                <input type=hidden name=account_link_id data-field=account_link_id />
+                <button type=submit class=delete-button>削除する</button>
+                <action-status />
+              </form>
+          </template>
+        </table>
+        <action-status stage-loader=読込中... />
+        <list-is-empty>
+          メールアドレスが登録されていません。
+        </list-is-empty>
+      </list-container>
+
+      <details>
+        <summary>メールアドレスの追加</summary>
+        
+        <form method=post action=/account/email/add.json is=save-data>
+          <table class=config>
+            <tbody>
+              <tr>
+                <th><label for=email-add-addr>メールアドレス</label>
+                <td><input type=email name=addr value required id=email-add-addr>
+          </table>
+          <p class=operations>
+            <button type=submit class=save-button>追加する</button>
+            <action-status ok=確認メールを送信しました。 />
+        </form>
+        
+        <ul class=notes>
+          <li>確認メールを送信します。数十分経っても届かない場合、
+          メールアドレスが正しいか、
+          迷惑メール判定されていないかご確認ください。
+          <li>確認メールには完了のためのリンクが含まれています。
+          この Web ブラウザーで開いてください。
+          <li>確認メールには有効期限があります。
+          発行から時間が経っている場合は、
+          もう一度追加してください。
+        </ul>
+      </details>
+
+      <ul class=notes>
+        <li>登録されたメールアドレスは、
+        レポートメール送信のほか、
+        サービス運営者からのお知らせのため使用することがあります。
+        (<a href=/help#privacy target=help>プライバシーについて</a>)
+      </ul>
     </section>
   
   </template>
