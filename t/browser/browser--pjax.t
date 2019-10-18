@@ -129,7 +129,7 @@ Test {
       is $values->{path}, '/g/'.$current->o ('g1')->{group_id}.'/i/32523533/config';
       is $values->{state}, 123445;
       ok ! $values->{statusHidden}, $values->{statusHidden};
-      like $values->{status}, qr{404 Not Found};
+      like $values->{status}, qr{404 Index \|32523533\| not found};
       is $values->{pageMain}, '';
     } $current->c;
     return $current->b_wait (1 => {

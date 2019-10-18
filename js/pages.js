@@ -461,7 +461,7 @@ GR.index._updateList = (opts) => {
       !(performance.now () - GR._timestamp.indexList < 3*60*1000)) {
     //
   } else {
-    return Promise.resolve ();
+    return GR.index.list ();
   }
   delete GR._state.getIndexList;
   return GR.index.list ();
@@ -475,8 +475,9 @@ GR.index.info = function (indexId) {
     return GR.index._updateList ({}).then (list => {
       var info = list[indexId];
       if (info) return info;
-      console.log ('Index |'+indexId+'| not found');
-      return {index_id: indexId, title: indexId, group_id: GR._state.group.group_id};
+      throw new Error ('404 Index |'+indexId+'| not found');
+      //console.log ('Index |'+indexId+'| not found');
+      //return {index_id: indexId, title: indexId, group_id: GR._state.group.group_id};
     });
   });
 }; // GR.index.info

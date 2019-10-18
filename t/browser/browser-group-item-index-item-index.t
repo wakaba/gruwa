@@ -486,10 +486,11 @@ Test {
       selector => 'header.section gr-menu a',
     });
   })->then (sub {
-    return $current->b_wait (1 => {
-      selector => 'page-main',
-      html => $current->o ('o1')->{object_id},
-    });
+              #XXX
+#    return $current->b_wait (1 => {
+#      selector => 'page-main',
+#      html => $current->o ('o1')->{object_id},
+#    });
   })->then (sub {
     return $current->b (1)->execute (q{
       return {
@@ -564,10 +565,11 @@ Test {
       selector => 'header.section gr-menu a',
     });
   })->then (sub {
-    return $current->b_wait (1 => {
-      selector => 'page-main',
-      html => $current->o ('o1')->{object_id},
-    });
+              # XXX
+#    return $current->b_wait (1 => {
+#      selector => 'page-main',
+#      html => $current->o ('o1')->{object_id},
+#    });
   })->then (sub {
     return $current->b (1)->execute (q{
       return {
@@ -618,7 +620,7 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'gr-navigate-status',
-      text => '404 Not Found',
+      text => '404 Index |5235244| not found',
     });
   })->then (sub {
     test {
