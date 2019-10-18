@@ -3,7 +3,7 @@
 html {
   background: transparent;
   color: var(--main-color);
-  line-height: 1.8;  
+  line-height: 1.8;
 }
 
 body {
@@ -15,7 +15,8 @@ body[data-source-type="3"] {
   white-space: normal;
 }
 
-section > h1:not([hidden]) {
+section > h1:not([hidden]),
+hatena-html div.section > h3.title {
   border-style: var(--header3-border-style);
   border-width: var(--header3-border-width);
   border-color: var(--header3-border-color);
@@ -25,9 +26,34 @@ section > h1:not([hidden]) {
   min-height: var(--header3-min-height);
   box-sizing: border-box;
   text-align: var(--header3-align);
+  font-size: 100%;
 }
 
-section section > h1:not([hidden]) {
+hatena-html div.section > h3.title {
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 0;
+}
+hatena-html div.section > p.sectionheader {
+  border-style: var(--header3-border-style);
+  border-width: var(--header3-border-width);
+  border-color: var(--header3-border-color);
+  padding: var(--header3-padding);
+  margin-top: 0;
+  border-top: none;
+  padding-top: 0;
+  margin-bottom: 1rem;
+}
+
+hatena-html div.section > p.sectionheader .timestamp {
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+  font-size: 90%;
+  line-height: 1.0;
+}
+
+section section > h1:not([hidden]),
+hatena-html h4 {
   border-style: var(--header4-border-style);
   border-width: var(--header4-border-width);
   border-color: var(--header4-border-color);
@@ -37,6 +63,32 @@ section section > h1:not([hidden]) {
   min-height: var(--header4-min-height);
   box-sizing: border-box;
   text-align: var(--header4-align);
+}
+
+section section section > h1:not([hidden]),
+hatena-html h5 {
+  border-style: var(--header5-border-style);
+  border-width: var(--header5-border-width);
+  border-color: var(--header5-border-color);
+  padding: var(--header5-padding);
+  background: var(--header5-background);
+  color: var(--header5-color);
+  min-height: var(--header5-min-height);
+  box-sizing: border-box;
+  text-align: var(--header5-align);
+}
+
+section section section section > h1:not([hidden]),
+hatena-html h6 {
+  border-style: var(--header6-border-style);
+  border-width: var(--header6-border-width);
+  border-color: var(--header6-border-color);
+  padding: var(--header6-padding);
+  background: var(--header6-background);
+  color: var(--header6-color);
+  min-height: var(--header6-min-height);
+  box-sizing: border-box;
+  text-align: var(--header6-align);
 }
 
 menu.context {
@@ -56,7 +108,7 @@ menu.context button {
 }
 
 ul, ol {
-  margin: 0;
+  margin: 0 1em;
   padding: 0 0 0 1.5em;
 }
 
@@ -70,6 +122,14 @@ li[data-checked] {
   text-decoration: line-through;
 }
 
+blockquote {
+  margin: 1em;
+  border-color: var(--enclosed-border-color);
+  border-style: solid;
+  border-width: 1px;
+  padding: 0.5em 1em;
+}
+
 img {
   max-width: 100%;
 }
@@ -78,8 +138,30 @@ hatena-html {
   white-space: normal;
 }
 
+hatena-html h4,
+hatena-html h5,
+hatena-html h6 {
+  margin-top: 1.5em;
+  font-size: 100%;
+}
+
 hatena-html section h1:empty::before {
   content: "■";
+}
+
+hatena-html p {
+  margin: 0.6em 0;
+}
+
+hatena-html .okeyword {
+  border-bottom: 1px dotted;
+  padding-bottom: 0.03em;
+  text-decoration: none;
+}
+
+hatena-html .okeyword:not(:hover):not(:focus):not(:active) {
+  color: inherit;
+  background: transparent;
 }
 
 /*
@@ -97,6 +179,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 */

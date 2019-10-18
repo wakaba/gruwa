@@ -35,6 +35,8 @@ html { /* [data-thema=green] */
   --menu-color: var(--main-color);
   --menu-border-color: var(--accented-border-color);
   --menu-shadow-color: var(--main-shadow-color);
+  
+  --enclosed-border-color: var(--accented-border-color);
 
   --error-color: red;
   --error-background-color: transparent;
@@ -75,20 +77,38 @@ html { /* [data-thema=green] */
   --pageheader-padding: 1em;
   --pageheader-align: start;
 
-  --header4-color: var(--accented-color);
-  --header4-background: var(--accented-background-color);
-  --header4-min-height: 0;
-  --header4-border-width: 1px;
-  --header4-border-style: none none solid none;
-  --header4-border-color: var(--accented-border-color);
-  --header4-padding: 0.3em;
-  --header4-align: start;
+  --header6-color: var(--accented-color);
+  --header6-background: var(--accented-background-color);
+  --header6-min-height: 0;
+  --header6-border-width: 1px;
+  --header6-border-style: none;
+  --header6-border-color: var(--accented-border-color);
+  --header6-padding: 0.3em;
+  --header6-align: start;
+
+  --header5-color: var(--header6-color);
+  --header5-background: var(--header6-background);
+  --header5-min-height: var(--header6-min-height);
+  --header5-border-width: var(--header6-border-width);
+  --header5-border-style: none none dotted none;
+  --header5-border-color: var(--header6-border-color);
+  --header5-padding: var(--header6-padding);
+  --header5-align: var(--header6-align);
+
+  --header4-color: var(--header5-color);
+  --header4-background: var(--header5-background);
+  --header4-min-height: var(--header5-min-height);
+  --header4-border-width: var(--header5-border-width);
+  --header4-border-style: none none dashed none;
+  --header4-border-color: var(--header5-border-color);
+  --header4-padding: var(--header5-padding);
+  --header4-align: var(--header5-align);
 
   --header3-color: var(--header4-color);
   --header3-background: var(--header4-background);
   --header3-min-height: var(--header4-min-height);
   --header3-border-width: var(--header4-border-width);
-  --header3-border-style: none; /* var(--header4-border-style); */
+  --header3-border-style: none none solid none;
   --header3-border-color: var(--header4-border-color);
   --header3-padding: var(--header4-padding);
   --header3-align: var(--header4-align);
@@ -188,14 +208,19 @@ body {
   word-break: break-word;
 }
 
-section:not([hidden]) {
+section:not([hidden]),
+hatena-html div.section {
   display: block;
   margin: 0 1em 1em 1em;
   padding: 0 0 0.1px 0;
 }
 
 section > h1:not([hidden]),
-section > header.section:not([hidden]) {
+section > header.section:not([hidden]),
+hatena-html div.section > h3.title,
+hatena-html h4,
+hatena-html h5,
+hatena-html h6 {
   display: flex;
   align-items: center;
   margin: 0 0 1rem 0;
@@ -203,20 +228,28 @@ section > header.section:not([hidden]) {
 }
   
 section > h1,
-section > header.section {
-  border-style: var(--header4-border-style);
-  border-width: var(--header4-border-width);
-  border-color: var(--header4-border-color);
-  padding: var(--header4-padding);
-  background: var(--header4-background);
-  color: var(--header4-color);
-  min-height: var(--header4-min-height);
-  text-align: var(--header4-text-align);
+section > header.section,
+hatena-html h3.title,
+hatena-html h4,
+hatena-html h5,
+hatena-html h6 {
+  border-style: var(--header6-border-style);
+  border-width: var(--header6-border-width);
+  border-color: var(--header6-border-color);
+  padding: var(--header6-padding);
+  background: var(--header6-background);
+  color: var(--header6-color);
+  min-height: var(--header6-min-height);
+  text-align: var(--header6-text-align);
   --timejs-serialization: dtsjp1;
 }
 
 section > h1,
-section > header.section > h1 {
+section > header.section > h1,
+hatena-html h3.title,
+hatena-html h4,
+hatena-html h5,
+hatena-html h6 {
   font-size: 130%;
 }
 
@@ -658,8 +691,8 @@ a:active {
   background-color: var(--hover-background-color);
 }
 
-h1 a:link,
-h1 a:visited {
+h1 a:link, h1 a:visited,
+h3 a:link, h3 a:visited {
   color: inherit;
   background: transparent;
   text-decoration: none;
