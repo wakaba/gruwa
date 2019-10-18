@@ -2,17 +2,7 @@
   <body>
 
     <gr-nav-button>
-      <button type=button onclick="
-        var active = ! document.querySelector ('gr-nav-button').hasAttribute ('active');
-        document.querySelectorAll ('gr-nav-button, gr-nav-panel').forEach (_ => {
-          if (active) {
-            _.setAttribute ('active', '');
-          } else {
-            _.removeAttribute ('active');
-          }
-        });
-        document.querySelector ('gr-nav-panel').focus ();
-      " title=メニュー>
+      <button type=button title=メニュー>
         <button-label>メニュー</button-label>
       </button>
     </gr-nav-button>
@@ -85,6 +75,17 @@
       <a href=/dashboard/receive#notifications class=main-button>設定する</a>
     </gr-mn-main>
     <button type=button class=cancel-button title="今後このメッセージを表示しない">×</button>
+  </template>
+</template-set>
+
+<!-- also in dashboard.html.tm -->
+<template-set name=gr-navigate-external>
+  <template>
+    <p>外部 (<code data-field=origin></code>) に移動しようとしています。
+    <p class=buttons>
+      <a data-href-field=href target=_top rel="noreferrer" class=main-button>このまま移動する</a>
+      <a data-href-field=href target=_blank rel="noreferrer noopener" class=main-button>別窓で開く</a>
+      <a href=javascript: class="main-button">移動しない</a>
   </template>
 </template-set>
 
