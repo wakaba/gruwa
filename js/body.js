@@ -102,6 +102,12 @@ function handleMessage (ev) {
         changeChecked (e);
       }
     });
+  } else if (ev.data === 'reloadStylesheets') { // for debug tools
+    document.querySelectorAll ('link[rel~=stylesheet]').forEach (el => {
+      var url = new URL (el.href);
+      url.search = "?r=local-" + Math.random ();
+      el.href = url;
+    });
   } else {
     console.log ('Unknown message', ev.data);
   }
