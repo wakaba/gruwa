@@ -24,6 +24,10 @@ sub config ($) {
   return $_[0]->{app_config};
 } # config
 
+sub db ($) {
+  return $_[0]->{db};
+} # db
+
 sub rev ($) {
   return $_[0]->{app_config}->{git_sha};
 } # rev
