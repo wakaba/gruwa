@@ -36,6 +36,7 @@ sub run ($%) {
     accounts => {
       handler => 'ServerSet::AccountsHandler',
       requires => ['mysqld', 'storage'],
+      debug => 1,
     },
     apploach => {
       handler => 'ServerSet::ApploachHandler',

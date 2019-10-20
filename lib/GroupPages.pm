@@ -19,6 +19,7 @@ use Web::Transport::BasicClient;
 
 use Pager;
 use Results;
+use Reports;
 
 sub get_index ($$$) {
   my $db = shift;
@@ -832,12 +833,15 @@ sub edit_object ($$$$$) {
             });
           }
   })->then (sub {
-    return promised_for {
-      my $account_id = shift;
-      return $app->apploach (['notification', 'send', 'push.json'], {
-        'nevent_subscriber_nobj_key' => 'account-' . $account_id,
-      });
-    } [keys %$called_account_ids];
+    return Promise->all ([
+      (promised_for {
+        my $account_id = shift;
+        return $app->apploach (['notification', 'send', 'push.json'], {
+          'nevent_subscriber_nobj_key' => 'account-' . $account_id,
+        });
+      } [keys %$called_account_ids]),
+      Reports->touch_group_accounts ($app, $group_id, [keys %$called_account_ids], $time, 2), # call report
+    ]);
   })->then (sub {
     return {
       object_revision_id => ''.$object->{data}->{object_revision_id},

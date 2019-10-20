@@ -186,6 +186,8 @@ return sub {
           warn "ERROR: $_[0]\n";
         }
         return $app->send_error (500);
+      })->then (sub {
+        return Reports->run ($app, not 'force');
       });
     } else {
       # XXX tests

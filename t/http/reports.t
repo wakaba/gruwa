@@ -6,47 +6,59 @@ use Tests;
 
 Test {
   my $current = shift;
-  my $now = time;
+  $current->generate_email_addr (e1 => {});
   return $current->create (
-    [a1 => account => {}],
+    [a1 => account => {email => [$current->o ('e1')]}],
     [g1 => group => {members => ['a1']}],
   )->then (sub {
-    return $current->post_json (['reports', 'heartbeat'], {
-    });
+    return $current->reset_email_count ('e1');
   })->then (sub {
-    return $current->get_json (['reports', 'requests.json'], {
-      group_id => [$current->o ('g1')->{group_id}],
-    });
-  })->then (sub {
-    my $result = $_[0];
-    test {
-      my $req = [grep {
-        $_->{account_id} eq $current->o ('a1')->{account_id};
-      } @{$result->{json}->{items}}]->[0];
-      ok $req->{next_report_after} >= $now;
-      $current->set_o (req1 => $req);
-    } $current->c;
     return $current->create (
-      [i1 => index => {group => 'g1', account => 'a1'}],
+      [o1 => object => {group => 'g1', account => 'a1'}],
     );
   })->then (sub {
-    return $current->post_json (['reports', 'heartbeat'], {
-    });
+    return $current->get_email ('e1');
   })->then (sub {
-    return $current->get_json (['reports', 'requests.json'], {
-      group_id => [$current->o ('g1')->{group_id}],
-    });
-  })->then (sub {
-    my $result = $_[0];
+    my $item = $_[0];
     test {
-      my $req = [grep {
-        $_->{account_id} eq $current->o ('a1')->{account_id};
-      } @{$result->{json}->{items}}]->[0];
-      is $req->{next_report_after}, $current->o ('req1')->{next_report_after};
-      ok $req->{touch_timestamp} > $current->o ('req1')->{touch_timestamp};
-    } $current->c, name => 'new touch before reporting';
+      is $item->{from}, 'info@gruwa.test';
+      is $item->{to}, $current->o ('e1');
+      my $msg = $item->{message};
+      $msg =~ s/=([0-9A-F]{2})/pack 'C', hex $1/ge;
+      #warn $msg;
+      like $msg, qr{daily-report};
+    } $current->c;
   });
-} n => 3, name => 'report';
+} n => 3, name => 'daily report';
+
+Test {
+  my $current = shift;
+  $current->generate_email_addr (e1 => {});
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {email => [$current->o ('e1')]}],
+    [g1 => group => {members => ['a1', 'a2']}],
+  )->then (sub {
+    return $current->reset_email_count ('e1');
+  })->then (sub {
+    return $current->create (
+      [o1 => object => {group => 'g1', account => 'a1',
+                        called_account => 'a2'}],
+    );
+  })->then (sub {
+    return $current->get_email ('e1', pattern => qr/call-report/);
+  })->then (sub {
+    my $item1 = $_[0];
+    test {
+      use utf8;
+      is $item1->{from}, 'info@gruwa.test';
+      is $item1->{to}, $current->o ('e1');
+      my $msg1 = $item1->{message};
+      $msg1 =~ s/=([0-9A-F]{2})/pack 'C', hex $1/ge;
+      #warn $msg1;
+    } $current->c;
+  });
+} n => 2, name => 'call report';
 
 RUN;
 
