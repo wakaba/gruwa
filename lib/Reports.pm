@@ -286,13 +286,13 @@ sub get_email_args ($$$$%) {
 sub run ($$$) {
   my ($class, $app, $force) = @_;
   return Promise->resolve->then (sub {
-    return unless $force or rand > 0.7;
+    return unless $force or rand > 0.9; # 10%
     return $class->check_groups ($app);
   })->then (sub {
-    return unless $force or rand > 0.7;
+    return unless $force or rand > 0.9; # 10%
     return $class->process_report_requests ($app, 1); # daily report
   })->then (sub {
-    return unless $force or rand > 0.1;
+    return unless $force or rand > 0.6; # 40%
     return $class->process_report_requests ($app, 2); # call report
   });
 } # run
