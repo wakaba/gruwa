@@ -4,8 +4,7 @@
   <head>
     <title>Gruwa 活動レポート</title>
   <body>
-    <p>Gruwa をご利用いただきありがとうございます。
-    参加中のグループの最近の活動をお知らせします。</p>
+    <p>参加中のグループの最近の活動をお知らせします。</p>
 
     <t:for as=$gm x=$group_memberships>
       <section>
@@ -21,7 +20,7 @@
       </section>
     </t:for>
 
-    <div style="text-align:center;margin:2em;font-size:200%">
+    <div style="text-align:center;margin:1em;font-size:200%">
       <p><a pl:href="$app->config->{origin}.'/dashboard/groups'">グループ一覧を開く</a>
     </div>
 

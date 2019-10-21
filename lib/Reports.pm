@@ -208,12 +208,76 @@ sub get_email_args ($$$$%) {
         });
       } $groups;
     })->then (sub {
+      #$groups = [grep { !!@{$_->{indexes}} } @$groups];
+      #return undef unless @$groups;
       return \%args;
     });
   } elsif ($report_type == 2) { # call report
-    return Promise->resolve->then (sub {
-      # XXX
-      return \%args;
+    return $app->db->select ('object_call', {
+      to_account_id => $account_id,
+      read => 0,
+      timestamp => {'>', $args{start_time}, '<=', $args{end_time}},
+    }, fields => [
+      'group_id', 'object_id', 'thread_id',
+    ], order => ['timestamp', 'asc'], limit => 30)->then (sub {
+      my $calls = $_[0]->all;
+      return undef unless @$calls;
+
+      my $by_group = {};
+      for (@$calls) {
+        push @{$by_group->{$_->{group_id}}->{calls} ||= []}, $_;
+      }
+      return $app->accounts (['group', 'byaccount'], {
+        context_key => $app->config->{accounts}->{context} . ':group',
+        account_id => $account_id,
+        group_id => [keys %$by_group],
+        user_status => 1, # open
+        owner_status => 1, # open
+        limit => 100,
+        with_group_data => ['title'],
+      })->then (sub {
+        for (values %{$_[0]->{memberships}}) {
+          next unless defined $by_group->{$_->{group_id}};
+          $by_group->{$_->{group_id}}->{group_title} = $_->{group_data}->{title};
+        }
+
+        return promised_for {
+          my $group_id = shift;
+          my $gc = $by_group->{$group_id};
+          return unless defined $gc->{group_title};
+          my $oids = {map {
+            (
+              $_->{object_id} => 1,
+              $_->{thread_id} => 1,
+            );
+          } @{$gc->{calls}}};
+          return $app->db->select ('object', {
+            group_id => Dongry::Type->serialize ('text', $group_id),
+            object_id => {-in => [keys %$oids]},
+            user_status => 1, # open
+            owner_status => 1, # open
+          }, field => ['object_id', 'title'])->then (sub {
+            my $to_title = {};
+            for (@{$_[0]->all}) {
+              $to_title->{$_->{object_id}} = Dongry::Type->parse ('text', $_->{title});
+            }
+            for (@{$gc->{calls}}) {
+              if (length ($to_title->{$_->{object_id}} // '')) {
+                $_->{computed_title} = $to_title->{$_->{object_id}};
+              } elsif (length ($to_title->{$_->{thread_id}} // '')) {
+                $_->{computed_title} = 'Re: '.$to_title->{$_->{thread_id}};
+              }
+            }
+            $gc->{calls} = [grep { defined $_->{computed_title} } @{$gc->{calls}}];
+            $gc->{group_id} = $group_id;
+            $args{group_calls}->{$group_id} = $gc if @{$gc->{calls}};
+          });
+        } [keys %$by_group];
+      })->then (sub {
+        return undef unless keys %{$args{group_calls}};
+        $args{group_calls} = [values %{$args{group_calls}}];
+        return \%args;
+      });
     });
   }
   return Promise->resolve (undef);
