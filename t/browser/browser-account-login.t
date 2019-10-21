@@ -129,6 +129,8 @@ Test {
       shown => 1, scroll => 1,
     });
   })->then (sub {
+    return $current->b_screenshot (1, 'before submit');
+  })->then (sub {
     return $current->b (1)->execute (q{
       setTimeout (() => {
         document.querySelector ('form button[type=submit]').click ();
@@ -139,6 +141,8 @@ Test {
   })->then (sub {
     my $res = $_[0];
     die $res if $res->is_error;
+    return $current->b_screenshot (1, 'after iframe');
+  })->then (sub {
     return $current->b_wait (1 => {
       selector => 'gr-account-dialog > gr-backdrop > .dialog',
     });
