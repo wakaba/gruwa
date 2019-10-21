@@ -7,9 +7,13 @@
   "push_server_public_key": "11,22,...",
   "terms_url": "https://path/to/terms",
   "news_url": "https://path/to/news",
-  "email_from_addr": "info@gruwa.test",
-  "mailgun_url": null,
-  "mailgun_key": null,
+  "emails": {
+    "from_addr": "info@gruwa.test",
+    "mailgun_url": null,
+    "mailgun_key": null,
+    "call_report_interval": 60,
+    "daily_report_interval": 600
+  },
   "accounts": {
     "url": "https://invalid",
     "key": "...",

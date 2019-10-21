@@ -24,6 +24,10 @@ sub config ($) {
   return $_[0]->{app_config};
 } # config
 
+sub db ($) {
+  return $_[0]->{db};
+} # db
+
 sub rev ($) {
   return $_[0]->{app_config}->{git_sha};
 } # rev
@@ -31,7 +35,9 @@ sub rev ($) {
 sub accounts ($$$) {
   my ($app, $path, $params) = @_;
   my $accounts = $app->{accounts_client} ||= Web::Transport::BasicClient->new_from_url
-      (Web::URL->parse_string ($app->config->{accounts}->{url}));
+      (Web::URL->parse_string ($app->config->{accounts}->{url}), {
+        #debug => 2,
+      });
   return $accounts->request (
     method => 'POST',
     path => $path,
@@ -179,7 +185,7 @@ sub _send_to_addr ($$%) {
   $body =~ s/([=\x80-\xFF])/sprintf '=%02X', ord $1/ge;
 
   my $email = encode_web_utf8 join "\x0D\x0A",
-      'From: '.$from_name.' <'.$app->config->{email_from_addr}.'>',
+      'From: '.$from_name.' <'.$app->config->{emails}->{from_addr}.'>',
       'To: '.$to_name.' <'.$display_to_addr.'>',
       (map { 'Cc: <' . $_ . '>' } @$display_cc_addrs),
       'Subject: ' . $subject,
@@ -191,7 +197,7 @@ sub _send_to_addr ($$%) {
       $body,
       ;
 
-  my $url = Web::URL->parse_string ($app->config->{mailgun_url});
+  my $url = Web::URL->parse_string ($app->config->{emails}->{mailgun_url});
   unless (defined $url) { # dev
     warn "==========\n";
     warn $email . "\n";
@@ -204,9 +210,9 @@ sub _send_to_addr ($$%) {
   return $client->request (
     url => $url,
     method => 'POST',
-    basic_auth => ['api', $app->config->{mailgun_key}],
+    basic_auth => ['api', $app->config->{emails}->{mailgun_key}],
     params => {
-      from => $app->config->{email_from_addr},
+      from => $app->config->{emails}->{from_addr},
       to => $to_addr,
     },
     files => {

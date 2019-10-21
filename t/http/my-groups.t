@@ -92,24 +92,24 @@ Test {
   })->then (sub {
     return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('u1')->{account_id},
-      user_status => 1,
+      user_status => 1, # open
     }, account => 'u1');
   })->then (sub {
     return $current->get_json (['my', 'groups.json'], {}, account => 'u1');
   })->then (sub {
     my $result = $_[0];
     test {
-      is 0+keys %{$result->{json}->{groups}}, 1;
-      my $g1 = $result->{json}->{groups}->{$current->o ('g1')->{group_id}};
-      is $g1->{group_id}, $current->o ('g1')->{group_id};
-      is $g1->{member_type}, 0;
-      is $g1->{user_status}, 1;
-      is $g1->{owner_status}, 0;
-      is $g1->{default_index_id}, undef;
-      is $g1->{title}, undef;
+      is 0+keys %{$result->{json}->{groups}}, 0;
+      #my $g1 = $result->{json}->{groups}->{$current->o ('g1')->{group_id}};
+      #is $g1->{group_id}, $current->o ('g1')->{group_id};
+      #is $g1->{member_type}, 0;
+      #is $g1->{user_status}, 1;
+      #is $g1->{owner_status}, 0;
+      #is $g1->{default_index_id}, undef;
+      #is $g1->{title}, undef;
     } $current->c;
   });
-} n => 7, name => 'not member';
+} n => 1, name => 'not member';
 
 Test {
   my $current = shift;
@@ -120,30 +120,30 @@ Test {
   })->then (sub {
     return $current->post_json (['g', $current->o ('g1')->{group_id}, 'members', 'status.json'], {
       account_id => $current->o ('u1')->{account_id},
-      owner_status => 2,
+      owner_status => 2, # closed
     }, account => 'u2');
   })->then (sub {
     return $current->get_json (['my', 'groups.json'], {}, account => 'u1');
   })->then (sub {
     my $result = $_[0];
     test {
-      is 0+keys %{$result->{json}->{groups}}, 1;
-      my $g1 = $result->{json}->{groups}->{$current->o ('g1')->{group_id}};
-      is $g1->{group_id}, $current->o ('g1')->{group_id};
-      is $g1->{member_type}, 0;
-      is $g1->{user_status}, 1;
-      is $g1->{owner_status}, 0;
-      is $g1->{default_index_id}, undef;
-      is $g1->{title}, undef;
+      is 0+keys %{$result->{json}->{groups}}, 0;
+      #my $g1 = $result->{json}->{groups}->{$current->o ('g1')->{group_id}};
+      #is $g1->{group_id}, $current->o ('g1')->{group_id};
+      #is $g1->{member_type}, 0;
+      #is $g1->{user_status}, 1;
+      #is $g1->{owner_status}, 0;
+      #is $g1->{default_index_id}, undef;
+      #is $g1->{title}, undef;
     } $current->c;
   });
-} n => 7, name => 'no longer member';
+} n => 1, name => 'no longer member';
 
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -156,6 +156,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

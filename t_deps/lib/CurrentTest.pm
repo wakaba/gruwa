@@ -974,8 +974,9 @@ sub reset_email_count ($$) {
   });
 } # reset_email_count
 
-sub get_email ($$) {
-  my ($self, $name) = @_;
+sub get_email ($$;%) {
+  my ($self, $name, %args) = @_;
+  my $n = $args{n} || 1;
   my $addr = $self->o ($name);
   my $url = Web::URL->parse_string ("http://xs.server.test/mailgun/get");
   my $new;
@@ -990,17 +991,27 @@ sub get_email ($$) {
       die $res unless $res->status == 200;
       my $data = json_bytes2perl $res->body_bytes;
       my $new_count = 0+@$data;
-      unless ($new_count >= ($self->{email_counts}->{$addr} || 0) + 1) {
-        return promised_sleep (3)->then (sub { return not 'done' });
+      unless ($new_count >= ($self->{email_counts}->{$addr} || 0) + $n) {
+        return $self->post_json (['reports', 'heartbeat'], {})->then (sub {
+          return not 'done';
+        });
       }
-      $new = $data->[$self->{email_counts}->{$addr}];
-      $self->{email_counts}->{$addr}++;
+      $new = [@$data[$self->{email_counts}->{$addr}..($self->{email_counts}->{$addr}+$n-1)]];
+      if (defined $args{pattern}) {
+        unless ($new->[0]->{message} =~ /$args{pattern}/) {
+          $self->{email_counts}->{$addr}++;
+          return $self->post_json (['reports', 'heartbeat'], {})->then (sub {
+            return not 'done';
+          });
+        }
+      }
+      $self->{email_counts}->{$addr} += $n;
       return 'done';
     });
   } timeout => 62, name => 'waiting for email')->then (sub {
-    return $new;
+    return $n == 1 ? $new->[0] : $new;
   }));
-} # reset_email_count
+} # get_email
 
 sub done ($) {
   my $self = $_[0];

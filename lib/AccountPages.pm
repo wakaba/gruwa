@@ -436,7 +436,10 @@ sub mygroups ($$$) {
     return $acall->(['group', 'byaccount'], {
       context_key => $app->config->{accounts}->{context} . ':group',
       account_id => $account_data->{account_id},
+      owner_status => 1, # open
       with_data => ['default_index_id'],
+      with_group_updated => 1,
+      with_group_data => ['title'],
       ref => $result->{next_ref},
     })->(sub {
       $result->{groups} = {map {
@@ -446,29 +449,12 @@ sub mygroups ($$$) {
           user_status => $_->{user_status},
           owner_status => ($_->{owner_status} == 1 ? $_->{owner_status} : 0),
           default_index_id => ($_->{owner_status} == 1 ? $_->{data}->{default_index_id} ? $_->{data}->{default_index_id} : undef : undef),
+          title => $_->{group_data}->{title} // '',
+          updated => $_->{group_updated},
         };
       } values %{$_[0]->{memberships}}};
       $result->{next_ref} = $_[0]->{next_ref};
       $result->{has_next} = $_[0]->{has_next};
-    });
-  })->then (sub {
-    my $allowed_groups = [map { $_->{group_id} }
-                          grep { $_->{owner_status} == 1 }
-                          values %{$result->{groups}}];
-    return unless @$allowed_groups;
-    return $acall->(['group', 'profiles'], {
-      context_key => $app->config->{accounts}->{context} . ':group',
-      group_id => $allowed_groups,
-      # XXX
-      admin_status => 1, # open
-      owner_status => 1, # open
-      with_data => ['title'],
-    })->(sub {
-      my $gs = $_[0]->{groups};
-      for (values %{$result->{groups}}) {
-        $_->{title} = $gs->{$_->{group_id}}->{data}->{title};
-        $_->{updated} = $gs->{$_->{group_id}}->{updated};
-      }
     });
   })->then (sub {
     return json $app, $result;

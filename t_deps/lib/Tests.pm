@@ -12,6 +12,7 @@ use Time::HiRes qw(time);
 use Promise;
 use Promised::Flow;
 use Exporter::Lite;
+use Web::Encoding;
 use Web::URL;
 use Web::URL::Encoding;
 
@@ -23,6 +24,7 @@ our @EXPORT = grep { not /^\$/ }
     @Test::X1::EXPORT,
     @Promised::Flow::EXPORT,
     @JSON::PS::EXPORT,
+    @Web::Encoding::EXPORT,
     @Web::URL::Encoding::EXPORT,
     'time';
 

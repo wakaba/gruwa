@@ -15,6 +15,7 @@ use AccountPages;
 use GroupPages;
 use JumpPages;
 use ImportPages;
+use Reports;
 
 my $config_path = path ($ENV{CONFIG_FILE} // die "No |CONFIG_FILE|");
 my $Config = json_bytes2perl $config_path->slurp;
@@ -80,6 +81,7 @@ return sub {
       }
 
       my $db = Dongry::Database->new (%$DBSources);
+      $app->{db} = $db;
       my $acall = accounts $app;
       return promised_cleanup {
         return Promise->all ([
@@ -170,6 +172,11 @@ return sub {
           return CommonPages->main ($app, $path, $db);
         }
 
+        if ($path->[0] eq 'reports') {
+          # /reports/...
+          return Reports->main ($app, $path);
+        }
+
         return $app->send_error (404, reason_phrase => 'Page not found');
       })->catch (sub {
         return if UNIVERSAL::isa ($_[0], 'Warabe::App::Done');
@@ -179,6 +186,8 @@ return sub {
           warn "ERROR: $_[0]\n";
         }
         return $app->send_error (500);
+      })->then (sub {
+        return Reports->run ($app, not 'force');
       });
     } else {
       # XXX tests
