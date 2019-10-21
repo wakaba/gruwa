@@ -12,7 +12,6 @@ sub check_groups ($$) {
   my ($class, $app) = @_;
   return $app->db->select ('account_report_request', {
     report_type => 0, # group
-    group_id => 0,
     account_id => 0,
   }, fields => ['touch_timestamp'])->then (sub {
     my $now = time;
@@ -62,7 +61,6 @@ sub touch_group_accounts ($$$$$$) {
 
   my $data = [map { +{
     report_type => $report_type,
-    group_id => Dongry::Type->serialize ('text', $group_id),
     account_id => Dongry::Type->serialize ('text', $_),
     prev_report_timestamp => 0,
     touch_timestamp => 0+$updated,
@@ -71,7 +69,6 @@ sub touch_group_accounts ($$$$$$) {
 
   push @$data, {
     report_type => 0, # group
-    group_id => 0,
     account_id => 0,
     prev_report_timestamp => 0,
     touch_timestamp => 0+$updated,
@@ -100,7 +97,7 @@ sub process_report_requests ($$$) {
   die "Bad interval for report type |$report_type|: |$interval|"
       unless $interval > 5;
 
-  return $app->db->execute (q{select `group_id`, `account_id`, `processing`,
+  return $app->db->execute (q{select `account_id`, `processing`,
     `report_type`, `prev_report_timestamp`
     from `account_report_request` where
     `report_type` = :report_type and
@@ -121,7 +118,6 @@ sub process_report_requests ($$$) {
         $app->db->update ('account_report_request', {
           processing => $now,
         }, where => {
-          group_id => $w->{group_id},
           account_id => $w->{account_id},
           processing => $w->{processing},
           report_type => $w->{report_type},
@@ -149,7 +145,7 @@ sub process_report_requests ($$$) {
         my $start_time = $w->{prev_report_timestamp}; # <
         my $end_time = $now; # <=
         return $class->get_email_args (
-          $app, $report_type, $w->{group_id}, $w->{account_id},
+          $app, $report_type, $w->{account_id},
           start_time => $start_time,
           end_time => $end_time,
         )->then (sub {
@@ -166,7 +162,6 @@ sub process_report_requests ($$$) {
           prev_report_timestamp => $now,
           processing => 0,
         }, where => {
-          group_id => $w->{group_id},
           account_id => $w->{account_id},
           processing => $now,
           report_type => $w->{report_type},
@@ -176,8 +171,8 @@ sub process_report_requests ($$$) {
   });
 } # process_report_requests
 
-sub get_email_args ($$$$$%) {
-  my ($class, $app, $report_type, $group_id, $account_id, %args) = @_;
+sub get_email_args ($$$$%) {
+  my ($class, $app, $report_type, $account_id, %args) = @_;
   if ($report_type == 1) { # daily report
     return $app->accounts (['group', 'byaccount'], {
       context_key => $app->config->{accounts}->{context} . ':group',
@@ -192,6 +187,7 @@ sub get_email_args ($$$$$%) {
         $a->{group_updated} <=> $b->{group_updated};
       } grep {
         $_->{group_updated} > $args{start_time};
+        # $args{end_time}
       } values %{$_[0]->{memberships}}];
       return undef unless @$groups;
       splice @$groups, 10;
@@ -199,12 +195,12 @@ sub get_email_args ($$$$$%) {
       return promised_for {
         my $gm = shift;
         return $app->db->select ('index', {
-          group_id => $group_id,
+          group_id => Dongry::Type->serialize ('text', $gm->{group_id}),
           owner_status => 1, # open
           user_status => 1, # open
           index_type => {-in => [1, 2, 3]}, # blog wiki todo
-          updated => {'>', $args{start_time}},
-        }, fields => ['index_id', 'title'], order => ['updated', 'asc'])->then (sub {
+          updated => {'>', $args{start_time}}, # $args{end_time}
+        }, fields => ['index_id', 'title'], order => ['updated', 'asc'], limit => 20)->then (sub {
           $gm->{indexes} = my $indexes = $_[0]->all;
           for (@$indexes) {
             $_->{title} = Dongry::Type->parse ('text', $_->{title});
