@@ -6,6 +6,10 @@
     <p>Gruwa で参加中のグループ内で呼ばれました。</p>
 
 
+    <div style="text-align:center;margin:2em;font-size:200%">
+      <p><a pl:href="$app->config->{origin}.'/dashboard/calls'">記事通知一覧を開く</a>
+    </div>
+
     <ul class=notes style="font-size:90%;margin-top:1em">
       <li>このレポートは、
       <a pl:href="$app->config->{origin}">Gruwa</a>

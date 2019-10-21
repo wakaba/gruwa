@@ -9,7 +9,8 @@ Test {
   $current->generate_email_addr (e1 => {});
   return $current->create (
     [a1 => account => {email => [$current->o ('e1')]}],
-    [g1 => group => {members => ['a1']}],
+    [g1 => group => {members => ['a1'],
+                     title => $current->generate_text (t1 => {})}],
   )->then (sub {
     return $current->reset_email_count ('e1');
   })->then (sub {
@@ -25,11 +26,50 @@ Test {
       is $item->{to}, $current->o ('e1');
       my $msg = $item->{message};
       $msg =~ s/=([0-9A-F]{2})/pack 'C', hex $1/ge;
+      $msg = decode_web_utf8 $msg;
       #warn $msg;
       like $msg, qr{daily-report};
+      like $msg, qr{\Q@{[$current->o ('t1')]}\E};
+      like $msg, qr{\Qhttp://app.server.test/g/@{[$current->o ('g1')->{group_id}]}/\E};
     } $current->c;
   });
-} n => 3, name => 'daily report';
+} n => 5, name => 'daily report (no index)';
+
+Test {
+  my $current = shift;
+  $current->generate_email_addr (e1 => {});
+  return $current->create (
+    [a1 => account => {email => [$current->o ('e1')]}],
+    [g1 => group => {members => ['a1'],
+                     title => $current->generate_text (t1 => {})}],
+    [i1 => index => {group => 'g1',
+                     title => $current->generate_text (t2 => {}),
+                     account => 'a1'}],
+  )->then (sub {
+    return $current->reset_email_count ('e1');
+  })->then (sub {
+    return $current->create (
+      [o1 => object => {group => 'g1', account => 'a1', index => 'i1'}],
+    );
+  })->then (sub {
+    return $current->get_email ('e1');
+  })->then (sub {
+    my $item = $_[0];
+    test {
+      is $item->{from}, 'info@gruwa.test';
+      is $item->{to}, $current->o ('e1');
+      my $msg = $item->{message};
+      $msg =~ s/=([0-9A-F]{2})/pack 'C', hex $1/ge;
+      $msg = decode_web_utf8 $msg;
+      #warn $msg;
+      like $msg, qr{daily-report};
+      like $msg, qr{\Q@{[$current->o ('t1')]}\E};
+      like $msg, qr{\Qhttp://app.server.test/g/@{[$current->o ('g1')->{group_id}]}/\E};
+      like $msg, qr{\Q@{[$current->o ('t2')]}\E};
+      like $msg, qr{\Qhttp://app.server.test/g/@{[$current->o ('g1')->{group_id}]}/i/@{[$current->o ('i1')->{index_id}]}/\E};
+    } $current->c;
+  });
+} n => 7, name => 'daily report (no index)';
 
 Test {
   my $current = shift;

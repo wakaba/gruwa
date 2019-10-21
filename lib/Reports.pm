@@ -43,13 +43,12 @@ sub touch_group_members ($$$$) {
     return $app->accounts (['group', 'members'], {
       context_key => $app->config->{accounts}->{context} . ':group',
       group_id => $group_id,
+      user_status => 1, # open
+      owner_status => 1, # open
       ref => $ref,
     })->then (sub {
       $ref = $_[0]->{next_ref};
-      my $account_ids = [map { $_->{account_id} } grep {
-        $_->{user_status} == 1 and # open
-        $_->{owner_status} == 1; # open
-      } values %{$_[0]->{memberships}}];
+      my $account_ids = [map { $_->{account_id} } values %{$_[0]->{memberships}}];
       return $class->touch_group_accounts ($app, $group_id, $account_ids, $group_updated, 1)->then (sub { # daily report
         return ! $_[0]->{has_next};
       });
@@ -149,15 +148,18 @@ sub process_report_requests ($$$) {
 
         my $start_time = $w->{prev_report_timestamp}; # <
         my $end_time = $now; # <=
-
-        return ((promised_for {
-          my $to_addr = shift;
-          return $app->temma_email ($template, {
-            start_time => $start_time,
-            end_time => $end_time,
-            #debug => 1,
-          }, undef, undef, $to_addr);
-        } $to_addrs)->then (sub { return 1 }));
+        return $class->get_email_args (
+          $app, $report_type, $w->{group_id}, $w->{account_id},
+          start_time => $start_time,
+          end_time => $end_time,
+        )->then (sub {
+          my $args = shift;
+          return unless defined $args;
+          return promised_for {
+            my $to_addr = shift;
+            return $app->temma_email ($template, $args, undef, undef, $to_addr);
+          } $to_addrs;
+        })->then (sub { return 1 });
       })->then (sub {
         return unless $_[0];
         return $app->db->update ('account_report_request', {
@@ -173,6 +175,53 @@ sub process_report_requests ($$$) {
     } $v;
   });
 } # process_report_requests
+
+sub get_email_args ($$$$$%) {
+  my ($class, $app, $report_type, $group_id, $account_id, %args) = @_;
+  if ($report_type == 1) { # daily report
+    return $app->accounts (['group', 'byaccount'], {
+      context_key => $app->config->{accounts}->{context} . ':group',
+      account_id => $account_id,
+      user_status => 1, # open
+      owner_status => 1, # open
+      limit => 100,
+      with_group_data => ['title'],
+      with_group_updated => 1,
+    })->then (sub {
+      my $groups = [sort {
+        $a->{group_updated} <=> $b->{group_updated};
+      } grep {
+        $_->{group_updated} > $args{start_time};
+      } values %{$_[0]->{memberships}}];
+      return undef unless @$groups;
+      splice @$groups, 10;
+      $args{group_memberships} = $groups;
+      return promised_for {
+        my $gm = shift;
+        return $app->db->select ('index', {
+          group_id => $group_id,
+          owner_status => 1, # open
+          user_status => 1, # open
+          index_type => {-in => [1, 2, 3]}, # blog wiki todo
+          updated => {'>', $args{start_time}},
+        }, fields => ['index_id', 'title'], order => ['updated', 'asc'])->then (sub {
+          $gm->{indexes} = my $indexes = $_[0]->all;
+          for (@$indexes) {
+            $_->{title} = Dongry::Type->parse ('text', $_->{title});
+          }
+        });
+      } $groups;
+    })->then (sub {
+      return \%args;
+    });
+  } elsif ($report_type == 2) { # call report
+    return Promise->resolve->then (sub {
+      # XXX
+      return \%args;
+    });
+  }
+  return Promise->resolve (undef);
+} # get_email_args
 
 sub run ($$$) {
   my ($class, $app, $force) = @_;
