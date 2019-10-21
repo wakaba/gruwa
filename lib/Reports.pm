@@ -285,6 +285,7 @@ sub get_email_args ($$$$%) {
 
 sub run ($$$) {
   my ($class, $app, $force) = @_;
+  return if not $force and $app->config->{is_test_script} and rand > 0.7; # 30%
   return Promise->resolve->then (sub {
     return unless $force or rand > 0.9; # 10%
     return $class->check_groups ($app);
