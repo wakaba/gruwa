@@ -349,7 +349,7 @@ Test {
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      setTimeout (() => document.querySelector ('gr-backdrop .dialog .buttons a[target=_top]').click (), 0);
+      setTimeout (() => document.querySelector ('gr-backdrop .dialog .buttons a[target=_top]').click (), 10);
     });
   })->then (sub {
     return $current->b_wait (1 => {
