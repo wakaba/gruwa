@@ -128,6 +128,7 @@ Test {
         headerTitle: document.querySelector ('header.page h1').textContent,
         headerURL: document.querySelector ('header.page h1 a').pathname,
         headerLink: document.querySelector ('header.page gr-menu a').pathname,
+        resultItemURL: document.querySelector ('.search-result list-main list-item a[href]').pathname,
       };
     });
   })->then (sub {
@@ -140,9 +141,10 @@ Test {
       is $values->{headerTitle}, $current->o ('t3');
       is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
       is $values->{headerLink}, $values->{headerURL};
+      is $values->{resultItemURL}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/wiki/'.(percent_encode_c $current->o ('t4'));
     } $current->c;
   });
-} n => 5, name => ['initial load (wiki)'], browser => 1;
+} n => 6, name => ['initial load (wiki)'], browser => 1;
 
 Test {
   my $current = shift;

@@ -268,7 +268,6 @@ sub get_email_args ($$$$%) {
                 $_->{computed_title} = 'Re: '.$to_title->{$_->{thread_id}};
               }
             }
-            $gc->{calls} = [grep { defined $_->{computed_title} } @{$gc->{calls}}];
             $gc->{group_id} = $group_id;
             $args{group_calls}->{$group_id} = $gc if @{$gc->{calls}};
           });

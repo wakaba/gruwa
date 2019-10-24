@@ -3154,7 +3154,8 @@ function upgradeForm (form) {
   e.setAttribute ('name', 'groupLoader');
   e.pcHandler = function (opts) {
     if (!this.hasAttribute ('src')) return {};
-    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/' + this.getAttribute ('src');
+    var urlPrefix = (document.documentElement.getAttribute ('data-group-url') || '') + '/';
+    var url = urlPrefix + this.getAttribute ('src');
     var isSearch = this.hasAttribute ('loader-search');
     if (isSearch) {
       if (GR._state.searchWord) {
@@ -3184,7 +3185,7 @@ function upgradeForm (form) {
       if (isSearch) {
         list = list.map (_ => {
           return {
-            url: '/g/'+_.group_id+'/o/'+_.object_id+'/',
+            url: urlPrefix+'o/'+_.object_id+'/',
             object: _,
           };
         });

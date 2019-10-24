@@ -38,6 +38,7 @@ Test {
       return {
         title: document.title,
         url: location.href,
+        resultItemURL: document.querySelector ('.search-result list-main list-item a[href]').pathname,
       };
     });
   })->then (sub {
@@ -47,9 +48,10 @@ Test {
       use utf8;
       is $values->{title}, $current->o ('t2') . ' - 検索 - ' . $current->o ('t1');
       like $values->{url}, qr{/search\?q=.+};
+      is $values->{resultItemURL}, '/g/'.$current->o ('g1')->{group_id}.'/o/'.$current->o ('o1')->{object_id}.'/';
     } $current->c;
   });
-} n => 2, name => ['search found'], browser => 1;
+} n => 3, name => ['search found'], browser => 1;
 
 Test {
   my $current = shift;
