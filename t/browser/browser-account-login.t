@@ -120,13 +120,13 @@ Test {
       shown => 1, scroll => 1,
     });
   })->then (sub {
-    return $current->b_screenshot (1, 'before switch');
-  })->then (sub {
-    return $current->b (1)->switch_to_frame_by_selector ('gr-backdrop > .dialog');
-  })->then (sub {
     return $current->b_screenshot (1, 'before set xs');
   })->then (sub {
     return $current->b_set_xs_name (1 => 'ax1');
+  })->then (sub {
+    return $current->b_screenshot (1, 'before switch');
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('gr-backdrop > .dialog');
   })->then (sub {
     return $current->b_screenshot (1, 'before submit wait');
   })->then (sub { # signed in with new account
