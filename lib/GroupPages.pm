@@ -930,6 +930,7 @@ sub main ($$$$$) {
   if (
     (@$path == 3 and {
       '' => 1,         # /g/{group_id}/
+      'files' => 1,   # /g/{group_id}/files
       'search' => 1,   # /g/{group_id}/search
       'config' => 1,   # /g/{group_id}/config
       'members' => 1,  # /g/{group_id}/members
@@ -1619,6 +1620,7 @@ sub group_index ($$$$) {
           theme => $_->{options}->{theme},
           color => $_->{options}->{color},
           deadline => $_->{options}->{deadline},
+          subtype => $_->{options}->{subtype},
         };
       } grep {
         keys %$subtypes ? $subtypes->{$_->{options}->{subtype}} : 1;

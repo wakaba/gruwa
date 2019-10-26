@@ -118,9 +118,35 @@ Test {
       is $data->{color}, '#ffaa42';
       is $data->{theme}, 'red';
       is $data->{deadline}, 2565129600;
+      is $data->{subtype}, undef;
     } $current->c;
   });
-} n => 3, name => '/g/{}/i/list.json options';
+} n => 4, name => '/g/{}/i/list.json options';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1',
+                                          color => '#ffaa42',
+                                          theme => 'red',
+                                          deadline => '2051-04-15',
+                                          index_type => 6,
+                                          subtype => 'image'});
+  })->then (sub {
+    return $current->get_json (['i', 'list.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $data = $result->{json}->{index_list}->{$current->o ('i1')->{index_id}};
+      is $data->{color}, '#ffaa42';
+      is $data->{theme}, 'red';
+      is $data->{deadline}, 2565129600;
+      is $data->{subtype}, 'image';
+    } $current->c;
+  });
+} n => 4, name => '/g/{}/i/list.json options - fileset';
 
 Test {
   my $current = shift;
@@ -147,15 +173,16 @@ Test {
       ok $result->{json}->{index_list}->{$current->o ('i2')->{index_id}};
       ok $result->{json}->{index_list}->{$current->o ('i3')->{index_id}};
       ok $result->{json}->{index_list}->{$current->o ('i5')->{index_id}};
+      is $result->{json}->{index_list}->{$current->o ('i5')->{index_id}}->{subtype}, 'bar';
     } $current->c;
   });
-} n => 4, name => '/g/{}/i/list.json subtype';
+} n => 5, name => '/g/{}/i/list.json subtype';
 
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -168,6 +195,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut

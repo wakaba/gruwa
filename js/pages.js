@@ -458,6 +458,20 @@ GR.group.activeMembers = function () {
   };
   document.head.appendChild (e);
 
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'filesetIndexListLoader');
+  e.pcHandler = function (opts) {
+    return GR.index.list ().then (list => {
+      list = Object.values (list).filter (_ => {
+        return _.index_type == 6;
+      }).sort ((a, b) => b.updated - a.updated);
+      return {
+        data: list,
+      };
+    });
+  };
+  document.head.appendChild (e);
+
 }) ();
 
 GR.index = {};
@@ -3901,7 +3915,7 @@ GR.navigate.go = function (u, args) {
               return ['group', 'index', {}];
             }
 
-            var m = path.match (/^(search|config|members)$/);
+            var m = path.match (/^(files|search|config|members)$/);
             if (m) return ['group', m[1], {
               q: url.searchParams.get ('q'),
             }];

@@ -310,7 +310,7 @@
     </template>
     <list-main/>
     <list-is-empty hidden>
-      このグループには<a href=/help#fileset-file target=help>ファイルアップローダー</a>がありません。
+      このグループには<a href=/help#fileset-file target=help>ファイルフォルダー</a>がありません。
     </list-is-empty>
     <gr-action-status hidden stage-load=読み込み中... />
   </gr-list-container>

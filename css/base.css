@@ -1332,6 +1332,19 @@ gr-nav-panel gr-group:not([hidden]) {
   text-decoration: none;
 }
 
+.main-menu-list > * > .fileset-image::before,
+.main-menu-list > * > .fileset-file::before {
+  display: inline-block;
+  margin-right: .2em;
+  font-size: 130%;
+}
+.main-menu-list > * > .fileset-image::before {
+  content: "\1F3A8";
+}
+.main-menu-list > * > .fileset-file::before {
+  content: "\1F4C4";
+}
+
 .main-menu-list > * > * > small:not([hidden]) {
   display: block;
   margin-bottom: -0.5em;
