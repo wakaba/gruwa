@@ -818,7 +818,7 @@
     <section>
       <h1>記事一覧</h1>
       
-      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype=index.index_type loader-limit=50 data-filled="loader-indexid loader-indextype" template=gr-search-result-item class=search-result>
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=50 data-filled="loader-indexid loader-indextype" template=gr-search-result-item class=search-result>
         <list-main></list-main>
         <list-is-empty hidden>
           <p>記事は見つかりませんでした。</p>
