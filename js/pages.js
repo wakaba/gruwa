@@ -588,7 +588,8 @@ GR.object.get = function (objectId, objectRevisionId) {
   e.setAttribute ('name', 'groupIndexLoader');
   e.pcHandler = function (opts) {
     var indexId = this.getAttribute ('loader-indexid');
-    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/o/get.json?index_id=' + encodeURIComponent (indexId) + '&with_title=1&with_snippet=1';
+    var indexType = this.getAttribute ('loader-indextype');
+    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/o/get.json?index_id=' + encodeURIComponent (indexId) + (this.hasAttribute ('loader-withdata') ? '&with_data=1' : '&with_title=1&with_snippet=1');
     if (opts.ref) url += '&ref=' + encodeURIComponent (opts.ref);
     var limit = this.getAttribute ('loader-limit') || opts.limit;
     if (limit) url += '&limit=' + encodeURIComponent (limit);
@@ -604,7 +605,7 @@ GR.object.get = function (objectId, objectRevisionId) {
         return b.timestamp - a.timestamp;
       }).map (_ => {
         return {
-          url: '/g/'+_.group_id+'/i/'+indexId+'/wiki/'+encodeURIComponent (_.title)+'#' + _.object_id,
+          url: (indexType == 2 /* wiki */ ? '/g/'+_.group_id+'/i/'+indexId+'/wiki/'+encodeURIComponent (_.title)+'#' + _.object_id : '/g/'+_.group_id+'/o/'+_.object_id+'/'),
           object: _,
         };
       });
@@ -2747,12 +2748,13 @@ function initUploader (form) {
       as.stageStart ("show");
       return gFetch ('o/get.json?with_data=1&object_id=' + data.object_id, {});
     }).then (function (json) {
-      var ev = new Event ('gruwaobjectsadded', {bubbles: true});
-      ev.objects = json.objects;
-      var promise = new Promise (function (a, b) { ev.wait = a });
-      form.dispatchEvent (ev);
-      ev.wait (null);
-      return promise;
+      // XXX loadPrev ({})
+      document.querySelectorAll ('list-container.search-result').forEach (_ => _.load ({}));
+
+      $$ (document, 'edit-container gr-list-container[key=objects]').map (function (e) {
+        return e.showObjects (json.objects, {prepend: true});
+      });
+      
     }).then (function () {
       as.end ({ok: true});
     }, function (error) {
@@ -3758,21 +3760,6 @@ function showTooltip (e, opts) {
   } // showURLTooltip
 }) ();
 
-var RunAction = {};
-
-RunAction.installPrependNewObjects = function () {
-  this.parentNode.addEventListener ('gruwaobjectsadded', function (ev) {
-    return ev.wait (Promise.all ($$c (this, 'gr-list-container[key=objects]').map (function (e) {
-      return e.showObjects (ev.objects, {prepend: true});
-    })));
-  });
-}; // installPrependNewObjects
-
-function upgradeRunAction (e) {
-  var action = RunAction[e.getAttribute ('name')];
-  action.apply (e);
-} // upgradeRunAction
-
 function Formatter () { }
 
 Formatter.html = function (source) {
@@ -3837,11 +3824,6 @@ Formatter.hatena = function (source) {
       } else if (x.localName) {
         $$ (x, 'with-sidebar').forEach (upgradeWithSidebar);
       }
-      if (x.localName === 'run-action') {
-        upgradeRunAction (x);
-      } else if (x.localName) {
-        $$ (x, 'run-action').forEach (upgradeRunAction);
-      }
       if (x.localName === 'object-ref') {
         upgradeObjectRef (x);
       } else if (x.localName) {
@@ -3854,7 +3836,6 @@ $$ (document, 'gr-list-container').forEach (upgradeList);
 $$ (document, 'form').forEach (upgradeForm);
 $$ (document, 'gr-popup-menu').forEach (upgradePopupMenu);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
-$$ (document, 'run-action').forEach (upgradeRunAction);
 $$ (document, 'object-ref').forEach (upgradeObjectRef);
 
 GR.navigate = {};
@@ -4092,7 +4073,8 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           if (index &&
               (index.index_type == 1 /* blog */ ||
                index.index_type == 2 /* wiki */ ||
-               index.index_type == 3 /* todo */)) {
+               index.index_type == 3 /* todo */ ||
+               index.index_type == 6 /* fileset */)) {
             params.index = index;
             break;
           }
@@ -4152,13 +4134,16 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         params.theme = params.index.theme;
         params.url += 'i/' + params.index.index_id + '/';
         params.title = params.index.title;
+      } else if (params.index && params.index.index_type == 6 /* fileset */) {
+        params.url += 'i/' + params.index.index_id + '/';
+        params.title = params.index.title;
       }
       
       document.querySelectorAll ('body > header.page').forEach (_ => {
         $fill (_, params);
 
         var menu = _.querySelector ('gr-menu');
-        if (params.index && params.index.theme) {
+        if (params.index && (params.index.theme || params.index.index_type == 6 /* fileset */)) {
           menu.setAttribute ('type', 'index');
           menu.setAttribute ('indexid', params.index.index_id);
           _.querySelector ('header.page > a').style.visibility = 'visible';
@@ -4250,11 +4235,6 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         } else if (pageName === 'index-index') {
           div.querySelectorAll ('gr-list-container[key=objects]').forEach (list => {
             list.setAttribute ('src-index_id', params.index.index_id);
-            if (params.index.subtype === 'image') {
-              list.setAttribute ('class', 'image-list');
-            } else if (params.index.subtype === 'file') {
-              list.setAttribute ('class', 'file-list');
-            }
           });
           div.querySelectorAll ('[data-form-type=uploader]').forEach (_ => {
             _.setAttribute ('data-context', params.index.index_id);

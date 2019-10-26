@@ -241,8 +241,6 @@
   <gr-list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />
 
 <template id=template-panel-image-list>
-  <run-action name=installPrependNewObjects />
-
   <gr-list-container src=i/list.json?index_type=6&subtype=image
       key=index_list sortkey=updated
       loaded-actions=clickFirstButton>
@@ -300,8 +298,6 @@
 </template>
 
 <template id=template-panel-file-list>
-  <run-action name=installPrependNewObjects />
-
   <gr-list-container src=i/list.json?index_type=6&subtype=file
       key=index_list sortkey=updated
       loaded-actions=clickFirstButton>

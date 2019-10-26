@@ -659,7 +659,8 @@ page-main form[is=gr-search] .search-button {
   padding: .5em;
 }
 
-.search-result list-item > a cite {
+.search-result list-item > a cite,
+.search-result list-item > a gr-object-name {
   flex-grow: 1;
   font-weight: bolder;
   font-style: normal;
@@ -684,6 +685,30 @@ page-main form[is=gr-search] .search-button {
 
 .search-result .object-summary > *:last-child {
   text-align: right;
+}
+
+.search-result.fileset-image list-item:not([hidden]) {
+  display: inline-block;
+}
+
+.search-result figure {
+  margin: 0.3em;
+}
+
+.search-result figure > a {
+  display: block;
+  width: 13em;
+  height: 13em;
+  margin-bottom: .3em;
+  line-height: 13em;
+  text-align: center;
+}
+
+.search-result figure > a > img {
+  width: 13em;
+  height: 13em;
+  object-fit: cover;
+  vertical-align: middle;
 }
 
 .todo-list list-main {
@@ -1195,8 +1220,6 @@ index-list-item .colored:not([hidden]) {
 .embedded .note {
   font-size: 80%;
 }
-
-run-action { display: none !important }
 
 gr-push-config form:not([hidden]) {
   display: inline-block;

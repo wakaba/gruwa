@@ -271,6 +271,47 @@
   </template>
 </template-set>
 
+<template-set name=gr-fileset-list-item-file>
+  <template>
+    <a href data-href-template={url}file download>
+      <gr-object-name>
+        <code data-field=object.data.file_name />
+      </gr-object-name>
+      <time data-field=object.timestamp data-format=date></time>
+    </a>
+    <p class=object-summary>
+      <gr-object-meta>
+        <cite data-field=object.title data-empty=■></cite>
+        <unit-number data-field=object.data.file_size type=bytes />
+        <code data-field=object.data.mime_type />
+      </gr-object-meta>
+      <span>
+        更新: <a href data-href-field=url><time data-field=object.updated></time></a>
+      </span>
+  </template>
+</template-set>
+
+<template-set name=gr-fileset-list-item-image>
+  <template>
+    <figure>
+      <a href data-href-template={url}image data-title-field=object.data.title>
+        <img src data-src-template={url}image>
+      </a>
+      <figcaption class=object-summary>
+        <gr-object-meta>
+          <cite data-field=object.data.title data-empty=■ />
+          <code data-field=object.data.file_name data-empty=■></code>
+          <unit-number data-field=object.data.file_size type=bytes />
+          <code data-field=object.data.mime_type />
+        </gr-object-meta>
+        <span>
+          <a href data-href-field=url><time data-field=object.timestamp data-format=date></time></a>
+        </span>
+      </figcaption>
+    </figure>
+  </template>
+</template-set>
+
 <template-set name=page-config>
   <template title=設定 class=is-subpage>
     <section>
@@ -777,7 +818,7 @@
     <section>
       <h1>記事一覧</h1>
       
-      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id loader-limit=50 data-filled=loader-indexid template=gr-search-result-item class=search-result>
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype=index.index_type loader-limit=50 data-filled="loader-indexid loader-indextype" template=gr-search-result-item class=search-result>
         <list-main></list-main>
         <list-is-empty hidden>
           <p>記事は見つかりませんでした。</p>
@@ -949,7 +990,6 @@
       <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
-      <run-action name=installPrependNewObjects />
     </gr-list-container>
   </template><!-- blog -->
   <template data-name=todos>
@@ -998,58 +1038,10 @@
       <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
-      <run-action name=installPrependNewObjects />
       </gr-list-container>
     </section>
   </template><!-- todos -->
   <template data-name=fileset>
-    <section>
-      <header class=section>
-        <h1><a data-href-template=/g/{group.group_id}/i/{index.index_id}/ data-field=index.title data-empty=■ /></h1>
-        <gr-menu type=index />
-      </header>
-
-      <gr-list-container key=objects sortkey=created src-limit=100>
-          <template data-gr-if-index-subtype=image>
-            <gr-popup-menu>
-              <button type=button>⋁</button>
-                <menu hidden>
-                  <li><a is=copy-url data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
-              </menu>
-            </gr-popup-menu>
-            <figure>
-              <a data-href-template={GROUP}/o/{object_id}/image data-title-data-field=title>
-                <img src data-src-template={GROUP}/o/{object_id}/image>
-              </a>
-              <figcaption>
-                <code data-data-field=file_name></code>
-                <unit-number data-data-field=file_size type=bytes />
-                <code data-data-field=mime_type />
-                <a data-href-template={GROUP}/o/{object_id}/>
-                  <time data-field=timestamp data-format=ambtime />
-                </a>
-              </figcaption>
-            </figure>
-          </template>
-          <template data-gr-if-index-subtype=file>
-            <gr-popup-menu>
-              <button type=button>⋁</button>
-                <menu hidden>
-                  <li><a is=copy-url data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
-              </menu>
-            </gr-popup-menu>
-            <p class=main-line>
-              <a data-href-template={GROUP}/o/{object_id}/file download>
-                <span data-data-field=title data-empty=■ />
-                <code data-data-field=file_name></code>
-              </a>
-            <p class=info-line>
-              <unit-number data-data-field=file_size type=bytes />
-              <code data-data-field=mime_type />
-              <a data-href-template={GROUP}/o/{object_id}/>
-                <time data-field=timestamp data-format=ambtime />
-              </a>
-          </template>
 
           <form action=javascript: method=post data-form-type=uploader>
             <gr-list-container type=table>
@@ -1079,13 +1071,31 @@
                 <button type=button name=upload-button class=edit-button data-gr-if-index-subtype=file>ファイルをアップロード...</button>
           </form>
 
+    <section>
+      <header class=section>
+        <h1 data-gr-if-index-subtype=image>アルバム</h1>
+        <h1 data-gr-if-index-subtype=file>ファイル一覧</h1>
+      </header>
+      
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=50 loader-withdata data-filled="loader-indexid loader-indextype" template=gr-fileset-list-item-file class="search-result fileset-file" data-gr-if-index-subtype=file>
         <list-main></list-main>
-
-      <gr-action-status hidden stage-load=読込中... />
+        <list-is-empty hidden>
+          <p>このフォルダーは空です。</p>
+        </list-is-empty>
+        <action-status hidden stage-loader=読込中... />
         <p class="operations pager">
-          <button type=button class=next-page-button hidden>もっと昔</button>
-      <run-action name=installPrependNewObjects />
-    </gr-list-container>
+          <button type=button class=list-next hidden>もっと昔</button>
+      </list-container>
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=36 loader-withdata data-filled="loader-indexid loader-indextype" template=gr-fileset-list-item-image class="search-result fileset-image" data-gr-if-index-subtype=image>
+        <list-main></list-main>
+        <list-is-empty hidden>
+          <p>このフォルダーは空です。</p>
+        </list-is-empty>
+        <action-status hidden stage-loader=読込中... />
+        <p class="operations pager">
+          <button type=button class=list-next hidden>もっと昔</button>
+      </list-container>
+    </section>
   </template><!-- fileset -->
 </template-set>
 
@@ -1537,7 +1547,6 @@
         </list-is-empty>
 
         <gr-action-status hidden stage-load=読込中... />
-        <run-action name=installPrependNewObjects />
       </gr-list-container>
 
       <article-comments>
