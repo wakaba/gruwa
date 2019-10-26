@@ -1227,13 +1227,11 @@ FieldCommands.setListIndex = function () {
   var panel = $$ancestor (this, 'section');
   $$c (panel, 'panel-main').forEach (function (s) {
     fillFields (s, s, s, object, {});
+    $$c (s, 'gr-uploader').forEach (_ => _.setAttribute ('indexid', object.index_id));
     $$c (s, 'gr-list-container[data-src-template]').forEach (function (list) {
       list.removeAttribute ('disabled');
       list.clearObjects ();
       list.load ();
-    });
-    $$c (s, 'form[data-form-type=uploader] gr-list-container').forEach (function (list) {
-      list.clearObjects ();
     });
     s.hidden = false;
   });
@@ -1282,6 +1280,8 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       field.setAttribute ('value', value);
     } else if (field.localName === 'gr-object-author') {
       field.value = value;
+    } else if (field.localName === 'unit-number') {
+      field.setAttribute ('value', value);
     } else if (field.localName === 'object-ref') {
       field.setAttribute ('value', value);
       field.hidden = false;
@@ -2728,92 +2728,119 @@ function uploadFile (file, data, as) {
   });
 } // uploadFile
 
-function initUploader (form) {
-  var upload = function (file) {
-    var list = form.querySelector ('gr-list-container');
-    var data = {
-      file_name: file.name,
-      file_size: file.size,
-      mime_type: file.type,
-      timestamp: file.lastModified / 1000,
-      index_id: form.getAttribute ('data-context'),
-    };
-    var as;
-    return list.showObjects ([{data: data}], {}).then (function (r) {
-      var item = r.items[0];
-      as = getActionStatus (item);
-      as.start ({stages: ["create", "upload", "close", "show"]});
-      return uploadFile (file, data, as);
-    }).then (function () {
-      as.stageStart ("show");
-      return gFetch ('o/get.json?with_data=1&object_id=' + data.object_id, {});
-    }).then (function (json) {
-      // XXX loadPrev ({})
-      document.querySelectorAll ('list-container.search-result').forEach (_ => _.load ({}));
+defineElement ({
+  name: 'gr-uploader',
+  props: {
+    pcInit: function () {
+      return $getTemplateSet ('gr-uploader').then (ts => {
+        var e = ts.createFromTemplate ('div', {});
+        this.textContent = '';
+        while (e.firstChild) this.appendChild (e.firstChild);
 
-      $$ (document, 'edit-container gr-list-container[key=objects]').map (function (e) {
-        return e.showObjects (json.objects, {prepend: true});
+        var subtype = this.getAttribute ('indexsubtype');
+        this.querySelectorAll ('input[type=file]').forEach (_ => {
+          if (subtype === 'image') _.accept = 'image/*';
+          _.onchange = () => {
+            Array.prototype.forEach.call (_.files, (file) => this.grUploadFile (file)); 
+            _.form.reset ();
+          };
+        });
+        this.querySelectorAll ('button[is=gr-uploader-button]').forEach (_ => {
+          _.onclick = () => this.grOpenDialog ();
+        });
+        
+        var setDropEffect = function (dt) {
+          var hasFile = false;
+          var items = dt.items;
+          for (var i = 0; i < items.length; i++) {
+            if (items[i].kind === "file") {
+              hasFile = true;
+              break;
+            }
+          }
+          if (hasFile) {
+            dt.dropEffect = "copy";
+            return false;
+          } else {
+            dt.dropEffect = "none";
+            return true;
+          }
+        }; // setDropEffect
+        var targetted = 0;
+        this.ondragenter = (ev) => {
+          targetted++;
+          if (!setDropEffect (ev.dataTransfer)) {
+            this.classList.add ('drop-target');
+            return false;
+          }
+        };
+        this.ondragover = (ev) => {
+          return setDropEffect (ev.dataTransfer);
+        };
+        this.ondragleave = (ev) => {
+          targetted--;
+          if (targetted <= 0) {
+            this.classList.remove ('drop-target');
+          }
+        };
+        this.ondrop = (ev) => {
+          this.classList.remove ('drop-target');
+          targetted = 0;
+          Array.prototype.forEach.call (ev.dataTransfer.files, (file) => {
+            this.grUploadFile (file);
+          });
+          return false;
+        };
       });
-      
-    }).then (function () {
-      as.end ({ok: true});
-    }, function (error) {
-      as.end ({ok: false, error: error});
-    });
-  }; // upload
-
-  form.elements["upload-button"].onclick = function () {
-    form.elements.file.click ();
-  };
-  form.elements.file.onchange = function () {
-    Array.prototype.forEach.call (form.elements.file.files, function (file) {
-      upload (file);
-    });
-    form.reset ();
-  };
-  var setDropEffect = function (dt) {
-    var hasFile = false;
-    var items = dt.items;
-    for (var i = 0; i < items.length; i++) {
-      if (items[i].kind === "file") {
-        hasFile = true;
-        break;
-      }
-    }
-    if (hasFile) {
-      dt.dropEffect = "copy";
-      return false;
-    } else {
-      dt.dropEffect = "none";
-      return true;
-    }
-  }; // setDropEffect
-  var targetted = 0;
-  form.ondragenter = function (ev) {
-    targetted++;
-    if (!setDropEffect (ev.dataTransfer)) {
-      form.classList.add ('drop-target');
-      return false;
-    }
-  };
-  form.ondragover = function (ev) {
-    return setDropEffect (ev.dataTransfer);
-  };
-  form.ondragleave = function (ev) {
-    targetted--;
-    if (targetted <= 0) {
-      form.classList.remove ('drop-target');
-    }
-  };
-  form.ondrop = function (ev) {
-    form.classList.remove ('drop-target');
-    targetted = 0;
-    Array.prototype.forEach.call (ev.dataTransfer.files, function (file) {
-      upload (file);
-    });
-    return false;
-  };
-} // initUploader
+    }, // pcInit
+    grOpenDialog: function () {
+      this.querySelector ('input[type=file]').click ();
+    }, // grOpenDialog
+    grUploadFile: function (file) {
+      var data = {
+        file_name: file.name,
+        file_size: file.size,
+        mime_type: file.type,
+        timestamp: file.lastModified / 1000,
+        index_id: this.getAttribute ('indexid'),
+      };
+      var as;
+      var list = this.querySelector ('gr-list-container');
+      return list.showObjects ([data], {}).then (function (r) {
+        var item = r.items[0];
+        as = getActionStatus (item);
+        as.start ({stages: ["create", "upload", "close", "show"]});
+        return uploadFile (file, data, as);
+      }).then (() => {
+        as.stageStart ("show");
+        var sel = this.getAttribute ('listselector');
+        if (sel) {
+          // XXX loadPrev
+          var ancestor;
+          var ancestorName = this.getAttribute ('listancestor');
+          if (ancestorName) {
+            ancestor = this;
+            while (ancestor.localName !== ancestorName) {
+              ancestor = ancestor.parentNode;
+            }
+            if (!ancestor) throw new Error ('Bad |listancestor|: |'+ancestorName+'|');
+          }
+          (ancestor || document).querySelectorAll (sel).forEach (_ => {
+            if (_.reload) { // XXX gr-list-container
+              _.reload ();
+            } else { // list-container
+              _.load ({});
+            }
+          });
+        }
+      }).then (function () {
+        as.end ({ok: true});
+      }, function (error) {
+        as.end ({ok: false, error: error});
+      });
+    }, // grUploadFile
+  },
+}); // <gr-uploader>
 
 function applyFilters (objects, filtersText) {
   if (filtersText) {
@@ -3100,11 +3127,8 @@ stageActions.updateParent = function (args) {
 function upgradeForm (form) {
   if (form.hasAttribute ('is')) return;
   
-  var formType = form.getAttribute ('data-form-type');
-  if (formType === 'uploader') {
-    return initUploader (form);
-  } else if (form.getAttribute ('action') === 'javascript:' &&
-             form.hasAttribute ('data-action')) {
+  if (form.getAttribute ('action') === 'javascript:' &&
+      form.hasAttribute ('data-action')) {
     //
   } else {
     return;
@@ -4235,9 +4259,6 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         } else if (pageName === 'index-index') {
           div.querySelectorAll ('gr-list-container[key=objects]').forEach (list => {
             list.setAttribute ('src-index_id', params.index.index_id);
-          });
-          div.querySelectorAll ('[data-form-type=uploader]').forEach (_ => {
-            _.setAttribute ('data-context', params.index.index_id);
           });
         }
 

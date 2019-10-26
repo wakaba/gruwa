@@ -510,6 +510,20 @@ Test {
       #is $values->{sectionURL}, $values->{url};
       #is $values->{sectionLink}, $values->{url};
     } $current->c;
+    return $current->b_wait (1 => {
+      selector => 'gr-uploader input[type=file]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var file = new Blob ([1, 2, 3]);
+      file.name = arguments[0];
+      document.querySelector ('gr-uploader').grUploadFile (file);
+    }, [$current->generate_text (name1 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.search-result',
+      text => $current->o ('name1'),
+    });
   });
 } n => 5, name => ['initial load (fileset image)'], browser => 1;
 
@@ -579,6 +593,20 @@ Test {
       #is $values->{sectionURL}, $values->{url};
       #is $values->{sectionLink}, $values->{url};
     } $current->c;
+    return $current->b_wait (1 => {
+      selector => 'gr-uploader input[type=file]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var file = new Blob ([1, 2, 3]);
+      file.name = arguments[0];
+      document.querySelector ('gr-uploader').grUploadFile (file);
+    }, [$current->generate_text (name1 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.search-result',
+      text => $current->o ('name1'),
+    });
   });
 } n => 5, name => ['initial load (fileset file)'], browser => 1;
 

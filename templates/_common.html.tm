@@ -1042,41 +1042,17 @@
     </section>
   </template><!-- todos -->
   <template data-name=fileset>
-
-          <form action=javascript: method=post data-form-type=uploader>
-            <gr-list-container type=table>
-              <template>
-                <td class=file-name><code data-data-field=file_name />
-                <td class=file-size><unit-number data-data-field=file_size type=bytes />
-                <td class=progress><gr-action-status hidden
-                        stage-create=作成中...
-                        stage-upload=アップロード中...
-                        stage-close=保存中...
-                        stage-show=読込中...
-                        ok=アップロード完了 />
-              </template>
-              <table>
-                <thead>
-                  <tr>
-                    <th class=file-name>ファイル名
-                    <th class=file-size>サイズ
-                    <th class=progress>進捗
-                <tbody>
-              </table>
-            </gr-list-container>
-            <p class=operations>
-                <input type=file name=file multiple hidden accept=image/* data-gr-if-index-subtype=image>
-                <button type=button name=upload-button class=edit-button data-gr-if-index-subtype=image>画像をアップロード...</button>
-                <input type=file name=file multiple hidden data-gr-if-index-subtype=file>
-                <button type=button name=upload-button class=edit-button data-gr-if-index-subtype=file>ファイルをアップロード...</button>
-          </form>
-
     <section>
       <header class=section>
         <h1 data-gr-if-index-subtype=image>アルバム</h1>
         <h1 data-gr-if-index-subtype=file>ファイル一覧</h1>
       </header>
-      
+
+      <details>
+        <summary>ファイルを追加</summary>
+        <gr-uploader data-indexid-field=index.index_id data-indexsubtype-field=index.subtype data-filled="indexid indexsubtype" listselector=.search-result />
+      </details>
+
       <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=50 loader-withdata data-filled="loader-indexid loader-indextype" template=gr-fileset-list-item-file class="search-result fileset-file" data-gr-if-index-subtype=file>
         <list-main></list-main>
         <list-is-empty hidden>
@@ -1124,6 +1100,32 @@
 <template-set name=gr-index-list-item>
   <template>
     <a data-href-template=/g/{index.group_id}/i/{index.index_id}/ data-field=index.title data-class-field=class data-style-field=style data-filled=style data-empty=■ />
+  </template>
+</template-set>
+
+<template-set name=gr-uploader>
+  <template>
+    <form method=post action=javascript:>
+      <gr-list-container>
+        <template>
+          <p><code data-field=file_name />
+          (<unit-number data-field=file_size type=bytes />)
+          <gr-action-status hidden
+                    stage-create=作成中...
+                    stage-upload=アップロード中...
+                    stage-close=保存中...
+                    stage-show=読み込み中...
+                    ok=アップロード完了 />
+        </template>
+        <list-main/>
+      </gr-list-container>
+
+      <p>枠内にファイルをドロップしてもアップロードできます。
+
+      <p class=operations>
+        <input type=file name=file multiple hidden>
+        <button type=button is=gr-uploader-button class=edit-button>アップロード...</button>
+    </form>
   </template>
 </template-set>
 

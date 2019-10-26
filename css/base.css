@@ -411,6 +411,15 @@ gr-editable-tr form:not([hidden]) {
   display: contents;
 }
 
+gr-uploader:not([hidden]) {
+  display: block;
+}
+
+.drop-target {
+  background-color: var(--hover-background-color);
+  color: var(--hover-color);
+}
+
 .operations {
   margin: 0;
   direction: rtl;
