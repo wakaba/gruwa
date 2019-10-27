@@ -675,7 +675,7 @@ function insertImage (url) {
   var a = document.createElement ('a');
   a.href = url;
   var img = document.createElement ('img');
-  img.src = url + '/image';
+  img.src = url + 'image';
   a.appendChild (img);
   replaceSelectionBy (a, false);
 } // insertImage
@@ -683,7 +683,7 @@ function insertImage (url) {
 function insertFile (url) {
   var iframe = document.createElement ('iframe');
   iframe.className = 'embed';
-  iframe.src = url + '/embed';
+  iframe.src = url + 'embed';
   replaceSelectionBy (iframe, false);
 } // insertFile
 

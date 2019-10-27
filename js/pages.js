@@ -193,6 +193,24 @@ GR.Favicon.redraw = function () {
   
 }) ();
 
+GR._findPointedElement = function (context, prefix) {
+  var sel = context.getAttribute (prefix + 'selector');
+  if (sel) {
+    var ancestor;
+    var ancestorName = context.getAttribute (prefix + 'ancestor');
+    if (ancestorName) {
+      ancestor = context.parentNode;
+      while (ancestor && ancestor.localName !== ancestorName) {
+        ancestor = ancestor.parentNode;
+      }
+      if (!ancestor) throw new Error ('Bad |'+prefix+'ancestor|: |'+ancestorName+'|');
+    }
+    return Array.prototype.slice.call ((ancestor || document).querySelectorAll (sel)); // or throw
+  } else {
+    return [];
+  }
+}; // GR._findPointedElement
+
 GR._updateMyInfo = function () {
   delete GR._state.getMembers;
   
@@ -568,6 +586,61 @@ defineElement ({
   },
 }); // <gr-index-list>
 
+defineElement ({
+  name: 'gr-select-index',
+  props: {
+    pcInit: function () {
+      var val = this.value; // or undefined
+      Object.defineProperty (this, 'value', {
+        get: () => val,
+        set: function (v) {
+          val = v;
+          this.querySelectorAll ('select').forEach (_ => _.value = val);
+        },
+      });
+      return GR.index.list ().then (list => {
+        this.textContent = '';
+        var select = document.createElement ('select');
+        var filter = () => true;
+        var type = this.getAttribute ('type');
+        if (type === 'file' || type === 'image') {
+          filter = _ => {
+            return _.index_type == 6 /* fileset */ && _.subtype === type;
+          };
+        }
+        list = Object.values (list).filter (filter).sort ((a, b) => {
+          return b.updated - a.updated;
+        });
+        if (list.length) {
+          list.forEach (idx => {
+            var opt = document.createElement ('option');
+            opt.value = idx.index_id;
+            opt.label = idx.title;
+            select.appendChild (opt);
+          });
+        } else {
+          var opt = document.createElement ('option');
+          opt.label = this.getAttribute ('empty');
+          opt.value = '';
+          select.appendChild (opt);
+        }
+        select.value = val;
+        select.onchange = () => val = select.value;
+        if (select.selectedIndex === -1) {
+          select.selectedIndex = 0;
+          if (select.selectedIndex !== -1) {
+            val = select.value;
+            setTimeout (() => {
+              this.dispatchEvent (new Event ('change', {bubbles: true}));
+            }, 0);
+          }
+        }
+        this.appendChild (select);
+      });
+    }, // pcInit
+  },
+}); // <gr-select-index>
+
 GR.object = {};
 
 GR.object.get = function (objectId, objectRevisionId) {
@@ -625,6 +698,33 @@ GR.object.get = function (objectId, objectRevisionId) {
   document.head.appendChild (e);
 
 }) ()
+
+defineElement ({
+  name: 'gr-index-viewer',
+  props: {
+    pcInit: function () {
+      var selects = GR._findPointedElement (this, 'select');
+      selects.forEach (select => {
+        select.addEventListener ('change', () => {
+          this.grSetIndex (select.value);
+        });
+        this.grSetIndex (select.value);
+      });
+    }, // pcInit
+    grSetIndex: function (indexId) {
+      if (indexId == null || indexId === '') {
+        this.textContent = '';
+        return;
+      }
+
+      return $getTemplateSet ('gr-index-viewer-' + this.getAttribute ('type')).then (tm => {
+        var e = tm.createFromTemplate ('panel-main', {index_id: indexId});
+        this.textContent = '';
+        this.appendChild (e);
+      });
+    }, // grSetIndex
+  },
+}); // <gr-index-viewer>
 
 GR.wiki = {};
 
@@ -1221,24 +1321,6 @@ FieldCommands.deleteJump = function () {
     as.end ({error: error});
   });
 }; // deleteJump
-
-FieldCommands.setListIndex = function () {
-  var object = {index_id: this.getAttribute ('value')};
-  var panel = $$ancestor (this, 'section');
-  $$c (panel, 'panel-main').forEach (function (s) {
-    fillFields (s, s, s, object, {});
-    $$c (s, 'gr-uploader').forEach (_ => _.setAttribute ('indexid', object.index_id));
-    $$c (s, 'gr-list-container[data-src-template]').forEach (function (list) {
-      list.removeAttribute ('disabled');
-      list.clearObjects ();
-      list.load ();
-    });
-    s.hidden = false;
-  });
-  $$c (panel.querySelector ('gr-list-container[key=index_list]'), 'button[data-command=setListIndex]').forEach (function (b) {
-    b.classList.toggle ('active', b.value === object.index_id);
-  });
-}; // setListIndex
 
 function fillFields (contextEl, rootEl, el, object, opts) {
   $$c (el, '[data-field]').forEach (function (field) {
@@ -1919,13 +2001,6 @@ TemplateSelectors.object = function (object, templates) {
   });
 }) ();
 
-var LoadedActions = {};
-
-LoadedActions.clickFirstButton = function () {
-  var button = this.querySelector ('button');
-  if (button) button.click ();
-}; // clickFirstButton
-
 var AddedActions = {};
 
 AddedActions.editCommands = function () {
@@ -2274,9 +2349,6 @@ function upgradeList (el) {
     }).then (function () {
       reloads.forEach (function (e) {
         e.hidden = false;
-      });
-      (el.getAttribute ('loaded-actions') || '').split (/\s+/).filter (function (_) { return _.length }).forEach (function (n) {
-        LoadedActions[n].call (el);
       });
     });
   }; // load
@@ -2813,26 +2885,15 @@ defineElement ({
         return uploadFile (file, data, as);
       }).then (() => {
         as.stageStart ("show");
-        var sel = this.getAttribute ('listselector');
-        if (sel) {
-          // XXX loadPrev
-          var ancestor;
-          var ancestorName = this.getAttribute ('listancestor');
-          if (ancestorName) {
-            ancestor = this;
-            while (ancestor.localName !== ancestorName) {
-              ancestor = ancestor.parentNode;
-            }
-            if (!ancestor) throw new Error ('Bad |listancestor|: |'+ancestorName+'|');
+        var lists = GR._findPointedElement (this, 'list');
+        lists.forEach (_ => {
+          if (_.reload) { // XXX gr-list-container
+            _.reload ();
+          } else { // list-container
+            // XXX loadPrev
+            _.load ({});
           }
-          (ancestor || document).querySelectorAll (sel).forEach (_ => {
-            if (_.reload) { // XXX gr-list-container
-              _.reload ();
-            } else { // list-container
-              _.load ({});
-            }
-          });
-        }
+        });
       }).then (function () {
         as.end ({ok: true});
       }, function (error) {
