@@ -241,33 +241,30 @@
   <gr-list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />
 
 <template id=template-panel-image-list>
-  <gr-list-container src=i/list.json?index_type=6&subtype=image
-      key=index_list sortkey=updated
-      loaded-actions=clickFirstButton>
-    <template>
-      <button type=button data-command=setListIndex data-value-template={index_id} data-field=title />
-    </template>
-    <list-main/>
-    <list-is-empty hidden>
-      このグループには<a href=/help#fileset-image target=help>アルバム</a>がありません。
-    </list-is-empty>
-    <gr-action-status hidden stage-load=読み込み中... />
-  </gr-list-container>
+  <gr-select-index type=image empty=アルバムがありません。 title=アルバム />
+  <gr-index-viewer type=image selectselector=gr-select-index selectancestor=section />
+</template>
 
-  <panel-main hidden>
+<template id=template-panel-file-list>
+  <gr-select-index type=file empty=ファイルフォルダーがありません。 title=ファイルフォルダー />
+  <gr-index-viewer type=file selectselector=gr-select-index selectancestor=section />
+</template>
+
+<template-set name=gr-index-viewer-image>
+  <template><!-- <panel-main> -->
     <details>
       <summary>新しい画像</summary>
-      <gr-uploader indexid indexsubtype=image listselector=gr-list-container[key=objects] listancestor=panel-main />
+      <gr-uploader data-indexid-field=index_id indexsubtype=image listselector=gr-list-container[key=objects] listancestor=panel-main data-filled=indexid />
     </details>
 
-    <gr-list-container disabled
+    <gr-list-container
         data-src-template="o/get.json?index_id={index_id}&limit=9"
         key=objects sortkey=timestamp,created
         added-actions=editCommands>
       <template>
         <button type=button
             data-edit-command=insertImage
-            data-value-template={GROUP}/o/{object_id}>
+            data-value-template={GROUP}/o/{object_id}/>
           <img src data-src-template={GROUP}/o/{object_id}/image>
         </button>
       </template>
@@ -276,38 +273,24 @@
       <p class="operations pager">
         <button type=button class=next-page-button hidden>もっと昔</button>
     </gr-list-container>
-  </panel-main>
+  </template>
+</template-set>
 
-</template>
-
-<template id=template-panel-file-list>
-  <gr-list-container src=i/list.json?index_type=6&subtype=file
-      key=index_list sortkey=updated
-      loaded-actions=clickFirstButton>
-    <template>
-      <button type=button data-command=setListIndex data-value-template={index_id} data-field=title />
-    </template>
-    <list-main/>
-    <list-is-empty hidden>
-      このグループには<a href=/help#fileset-file target=help>ファイルフォルダー</a>がありません。
-    </list-is-empty>
-    <gr-action-status hidden stage-load=読み込み中... />
-  </gr-list-container>
-
-  <panel-main hidden>
+<template-set name=gr-index-viewer-file>
+  <template><!-- <panel-main> -->
     <details>
       <summary>新しいファイル</summary>
-      <gr-uploader indexid indexsubtype=file listselector=gr-list-container[key=objects] listancestor=panel-main />
+      <gr-uploader data-indexid-field=index_id indexsubtype=file listselector=gr-list-container[key=objects] listancestor=panel-main data-filled=indexid />
     </details>
 
-    <gr-list-container disabled
+    <gr-list-container
         data-src-template="o/get.json?index_id={index_id}&limit=10&with_data=1"
         key=objects sortkey=timestamp,created
         added-actions=editCommands>
       <template>
         <button type=button
             data-edit-command=insertFile
-            data-value-template={GROUP}/o/{object_id}
+            data-value-template={GROUP}/o/{object_id}/
             data-data-field=file_name>
         </button>
       </template>
@@ -316,6 +299,5 @@
       <p class="operations pager">
         <button type=button class=next-page-button hidden>もっと昔</button>
     </gr-list-container>
-  </panel-main>
-
-</template>
+  </template>
+</template-set>

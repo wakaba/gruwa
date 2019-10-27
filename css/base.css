@@ -415,9 +415,20 @@ gr-uploader:not([hidden]) {
   display: block;
 }
 
+gr-select-index:not([hidden]) {
+  display: contents;
+}
+gr-select-index select {
+  width: 100%;
+}
+
 .drop-target {
   background-color: var(--hover-background-color);
   color: var(--hover-color);
+}
+
+gr-index-viewer:not([hidden]) {
+  display: contents;
 }
 
 .operations {
