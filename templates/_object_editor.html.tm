@@ -241,8 +241,6 @@
   <gr-list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />
 
 <template id=template-panel-image-list>
-  <run-action name=installPrependNewObjects />
-
   <gr-list-container src=i/list.json?index_type=6&subtype=image
       key=index_list sortkey=updated
       loaded-actions=clickFirstButton>
@@ -259,24 +257,7 @@
   <panel-main hidden>
     <details>
       <summary>新しい画像</summary>
-      <form action=javascript: method=post data-form-type=uploader data-context-template={index_id}>
-        <gr-list-container>
-          <template>
-            <p><code data-data-field=file_name />
-            (<unit-number data-data-field=file_size type=bytes />)
-            <p><gr-action-status hidden
-                    stage-create=作成中...
-                    stage-upload=アップロード中...
-                    stage-close=保存中...
-                    stage-show=読み込み中...
-                    ok=アップロード完了 />
-          </template>
-          <list-main/>
-        </gr-list-container>
-        <p class=operations>
-          <input type=file name=file multiple hidden accept=image/*>
-          <button type=button name=upload-button class=edit-button>アップロード...</button>
-      </form>
+      <gr-uploader indexid indexsubtype=image listselector=gr-list-container[key=objects] listancestor=panel-main />
     </details>
 
     <gr-list-container disabled
@@ -300,8 +281,6 @@
 </template>
 
 <template id=template-panel-file-list>
-  <run-action name=installPrependNewObjects />
-
   <gr-list-container src=i/list.json?index_type=6&subtype=file
       key=index_list sortkey=updated
       loaded-actions=clickFirstButton>
@@ -310,7 +289,7 @@
     </template>
     <list-main/>
     <list-is-empty hidden>
-      このグループには<a href=/help#fileset-file target=help>ファイルアップローダー</a>がありません。
+      このグループには<a href=/help#fileset-file target=help>ファイルフォルダー</a>がありません。
     </list-is-empty>
     <gr-action-status hidden stage-load=読み込み中... />
   </gr-list-container>
@@ -318,24 +297,7 @@
   <panel-main hidden>
     <details>
       <summary>新しいファイル</summary>
-      <form action=javascript: method=post data-form-type=uploader data-context-template={index_id}>
-        <gr-list-container>
-          <template>
-            <p><code data-data-field=file_name />
-            (<unit-number data-data-field=file_size type=bytes />)
-            <p><gr-action-status hidden
-                    stage-create=作成中...
-                    stage-upload=アップロード中...
-                    stage-close=保存中...
-                    stage-show=読み込み中...
-                    ok=アップロード完了 />
-          </template>
-          <list-main/>
-        </gr-list-container>
-        <p class=operations>
-          <input type=file name=file multiple hidden>
-          <button type=button name=upload-button class=edit-button>アップロード...</button>
-      </form>
+      <gr-uploader indexid indexsubtype=file listselector=gr-list-container[key=objects] listancestor=panel-main />
     </details>
 
     <gr-list-container disabled

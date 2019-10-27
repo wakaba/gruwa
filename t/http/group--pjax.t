@@ -9,6 +9,7 @@ for my $path (
   ['members'],
   ['config'],
   ['search'],
+  ['files'],
   ['wiki', rand],
   ['my', 'config'],
 ) {

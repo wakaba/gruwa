@@ -476,23 +476,13 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'page-main',
-      text => $current->o ('t3'), # index title
-    });
-  })->then (sub {
-    return $current->b_wait (1 => {
       selector => 'header.page gr-menu a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.section gr-menu a',
+      selector => 'page-main',
+      text => $current->o ('t4'),
     });
-  })->then (sub {
-              #XXX
-#    return $current->b_wait (1 => {
-#      selector => 'page-main',
-#      html => $current->o ('o1')->{object_id},
-#    });
   })->then (sub {
     return $current->b (1)->execute (q{
       return {
@@ -501,9 +491,9 @@ Test {
         headerTitle: document.querySelector ('header.page h1').textContent,
         headerURL: document.querySelector ('header.page h1 a').pathname,
         headerLink: document.querySelector ('header.page gr-menu a').pathname,
-        sectionTitle: document.querySelector ('header.section h1').textContent,
-        sectionURL: document.querySelector ('header.section a').pathname,
-        sectionLink: document.querySelector ('header.section gr-menu a').pathname,
+        //sectionTitle: document.querySelector ('header.section h1').textContent,
+        //sectionURL: document.querySelector ('header.section a').pathname,
+        //sectionLink: document.querySelector ('header.section gr-menu a').pathname,
       };
     });
   })->then (sub {
@@ -513,15 +503,29 @@ Test {
       use utf8;
       is $values->{title}, $current->o ('t3') . ' - ' . $current->o ('t1');
       is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
-      is $values->{headerTitle}, $current->o ('t1');
-      is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/';
+      is $values->{headerTitle}, $current->o ('t3');
+      is $values->{headerURL}, $values->{url};
       is $values->{headerLink}, $values->{headerURL};
-      is $values->{sectionTitle}, $current->o ('t3');
-      is $values->{sectionURL}, $values->{url};
-      is $values->{sectionLink}, $values->{url};
+      #is $values->{sectionTitle}, $current->o ('t3');
+      #is $values->{sectionURL}, $values->{url};
+      #is $values->{sectionLink}, $values->{url};
     } $current->c;
+    return $current->b_wait (1 => {
+      selector => 'gr-uploader input[type=file]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var file = new Blob ([1, 2, 3]);
+      file.name = arguments[0];
+      document.querySelector ('gr-uploader').grUploadFile (file);
+    }, [$current->generate_text (name1 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.search-result',
+      text => $current->o ('name1'),
+    });
   });
-} n => 8, name => ['initial load (fileset image)'], browser => 1;
+} n => 5, name => ['initial load (fileset image)'], browser => 1;
 
 Test {
   my $current = shift;
@@ -555,23 +559,13 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'page-main',
-      text => $current->o ('t3'), # index title
-    });
-  })->then (sub {
-    return $current->b_wait (1 => {
       selector => 'header.page gr-menu a',
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'header.section gr-menu a',
+      selector => 'page-main',
+      text => $current->o ('t4'),
     });
-  })->then (sub {
-              # XXX
-#    return $current->b_wait (1 => {
-#      selector => 'page-main',
-#      html => $current->o ('o1')->{object_id},
-#    });
   })->then (sub {
     return $current->b (1)->execute (q{
       return {
@@ -580,9 +574,9 @@ Test {
         headerTitle: document.querySelector ('header.page h1').textContent,
         headerURL: document.querySelector ('header.page h1 a').pathname,
         headerLink: document.querySelector ('header.page gr-menu a').pathname,
-        sectionTitle: document.querySelector ('header.section h1').textContent,
-        sectionURL: document.querySelector ('header.section a').pathname,
-        sectionLink: document.querySelector ('header.section gr-menu a').pathname,
+        //sectionTitle: document.querySelector ('header.section h1').textContent,
+        //sectionURL: document.querySelector ('header.section a').pathname,
+        //sectionLink: document.querySelector ('header.section gr-menu a').pathname,
       };
     });
   })->then (sub {
@@ -592,15 +586,29 @@ Test {
       use utf8;
       is $values->{title}, $current->o ('t3') . ' - ' . $current->o ('t1');
       is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
-      is $values->{headerTitle}, $current->o ('t1');
-      is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/';
+      is $values->{headerTitle}, $current->o ('t3');
+      is $values->{headerURL}, $values->{url};
       is $values->{headerLink}, $values->{headerURL};
-      is $values->{sectionTitle}, $current->o ('t3');
-      is $values->{sectionURL}, $values->{url};
-      is $values->{sectionLink}, $values->{url};
+      #is $values->{sectionTitle}, $current->o ('t3');
+      #is $values->{sectionURL}, $values->{url};
+      #is $values->{sectionLink}, $values->{url};
     } $current->c;
+    return $current->b_wait (1 => {
+      selector => 'gr-uploader input[type=file]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var file = new Blob ([1, 2, 3]);
+      file.name = arguments[0];
+      document.querySelector ('gr-uploader').grUploadFile (file);
+    }, [$current->generate_text (name1 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.search-result',
+      text => $current->o ('name1'),
+    });
   });
-} n => 8, name => ['initial load (fileset file)'], browser => 1;
+} n => 5, name => ['initial load (fileset file)'], browser => 1;
 
 Test {
   my $current = shift;

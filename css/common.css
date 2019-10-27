@@ -659,7 +659,8 @@ page-main form[is=gr-search] .search-button {
   padding: .5em;
 }
 
-.search-result list-item > a cite {
+.search-result list-item > a cite,
+.search-result list-item > a gr-object-name {
   flex-grow: 1;
   font-weight: bolder;
   font-style: normal;
@@ -684,6 +685,30 @@ page-main form[is=gr-search] .search-button {
 
 .search-result .object-summary > *:last-child {
   text-align: right;
+}
+
+.search-result.fileset-image list-item:not([hidden]) {
+  display: inline-block;
+}
+
+.search-result figure {
+  margin: 0.3em;
+}
+
+.search-result figure > a {
+  display: block;
+  width: 13em;
+  height: 13em;
+  margin-bottom: .3em;
+  line-height: 13em;
+  text-align: center;
+}
+
+.search-result figure > a > img {
+  width: 13em;
+  height: 13em;
+  object-fit: cover;
+  vertical-align: middle;
 }
 
 .todo-list list-main {
@@ -772,56 +797,6 @@ page-main form[is=gr-search] .search-button {
 .todo-list list-main > list-item .info-line gr-account .icon {
   width: 1.5em;
   height: 1.5em;
-}
-
-form[data-form-type=uploader].drop-target {
-  background-color: var(--hover-background-color);
-  color: var(--hover-color);
-}
-
-form[data-form-type=uploader] table {
-  width: 100%;
-  margin-bottom: 1em;
-}
-
-form[data-form-type=uploader] table thead tr {
-  background-color: var(--dark-background-color);
-  color: var(--dark-color);
-}
-
-form[data-form-type=uploader] table tbody tr {
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-}
-
-form[data-form-type=uploader] table tbody tr:nth-child(2n) {
-  background-color: var(--light-2-background-color);
-  color: var(--light-2-color);
-}
-
-form[data-form-type=uploader] table th,
-form[data-form-type=uploader] table td {
-  padding: .3rem;
-}
-
-form[data-form-type=uploader] table td.file-size {
-  text-align: right;
-}
-
-form[data-form-type=uploader] table gr-action-status:not([hidden]) {
-  display: block;
-  margin: 0;
-}
-
-form[data-form-type=uploader] table gr-action-status-message:not([hidden]) {
-  display: block;
-  margin: 0;
-  line-height: 1.3;
-}
-
-form[data-form-type=uploader] table progress:not([hidden]) {
-  display: block;
-  width: 100%;
 }
 
 .todo-list .pager {
@@ -1195,8 +1170,6 @@ index-list-item .colored:not([hidden]) {
 .embedded .note {
   font-size: 80%;
 }
-
-run-action { display: none !important }
 
 gr-push-config form:not([hidden]) {
   display: inline-block;

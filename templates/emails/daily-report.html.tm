@@ -8,8 +8,10 @@
 
     <t:for as=$gm x=$group_memberships>
       <section>
-        <h1><a pl:href="$app->config->{origin}.'/g/'.$gm->{group_id}.'/'"><t:text value="$gm->{group_data}->{title}"></a></h1>
+        <h1 style="font-size:100%"><a pl:href="$app->config->{origin}.'/g/'.$gm->{group_id}.'/'"><t:text value="$gm->{group_data}->{title}"></a></h1>
 
+        <p>更新がありました。</p>
+        
         <t:if x="@{$gm->{indexes}}">
           <ul>
             <t:for as=$index x="$gm->{indexes}">

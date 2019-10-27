@@ -106,14 +106,19 @@
 <template-set name=gr-menu-group>
   <template>
     <p><a data-href-template=/g/{group.group_id}/>トップ</a>
+    <p><a data-href-template=/g/{group.group_id}/files>ファイル</a>
+    <p><a data-href-template=/g/{group.group_id}/search>検索</a>
+    <hr>
     <p><a is=copy-url data-href-template=/g/{group.group_id}/>
       URLをコピー
     </a>
     <p><a is=gr-jump-add data-href-template=/g/{group.group_id}/ data-title-field=group.title>
       ジャンプリストに追加
     </a>
+    <hr>
     <p><a data-href-template=/g/{group.group_id}/members>参加者</a>
     <p><a data-href-template=/g/{group.group_id}/config>設定</a>
+    <hr>
     <p><a href=/help#groups target=help>ヘルプ</a>
   </template>
 </template-set>
@@ -167,6 +172,44 @@
   </template>
 </template-set>
 
+<template-set name=page-files>
+  <template title=ファイル class=is-subpage>
+    <section>
+      <header class=section>
+        <h1>フォルダー一覧</h1>
+        <popup-menu>
+          <button type=button title=メニュー>
+            <button-label>
+              メニュー
+            </button-label>
+          </button>
+          <menu-main>
+            <p><a data-href-template=/g/{group.group_id}/config#create-fileset>フォルダーの作成</a>
+            <hr>
+            <p><a is=copy-url href>URLをコピー</a>
+            <p><a is=gr-jump-add href>ジャンプリストに追加</a>
+            <hr>
+            <p><a href=/help#filesets target=help>ヘルプ</a>
+          </menu-main>
+        </popup-menu>
+      </header>
+
+      <list-container loader=filesetIndexListLoader class=main-menu-list-container>
+        <template>
+          <a href data-href-template="i/{index_id}/#{updated}" data-class-template="antenna-item fileset-{subtype}">
+            <span data-field=title data-empty=■></span>
+            <small><time data-field=updated data-format=ambtime /></small>
+          </a>
+        </template>
+        <list-main class=main-menu-list />
+        <action-status hidden stage-loader=読込中... />
+      </list-container>
+      
+    </section>
+
+  </template>
+</template-set>
+
 <template-set name=page-search>
   <template title=検索 class=is-subpage>
     <section>
@@ -181,6 +224,7 @@
           <menu-main>
             <p><a is=copy-url href>URLをコピー</a>
             <p><a is=gr-jump-add href>ジャンプリストに追加</a>
+            <hr>
             <p><a href=/help#search target=help>ヘルプ</a>
           </menu-main>
         </popup-menu>
@@ -224,6 +268,47 @@
     <p class=object-summary>
       <gr-search-snippet data-field=object.snippet></gr-search-snippet>
       <span>更新: <time data-field=object.updated></time></span>
+  </template>
+</template-set>
+
+<template-set name=gr-fileset-list-item-file>
+  <template>
+    <a href data-href-template={url}file download>
+      <gr-object-name>
+        <code data-field=object.data.file_name />
+      </gr-object-name>
+      <time data-field=object.timestamp data-format=date></time>
+    </a>
+    <p class=object-summary>
+      <gr-object-meta>
+        <cite data-field=object.title data-empty=■></cite>
+        <unit-number data-field=object.data.file_size type=bytes />
+        <code data-field=object.data.mime_type />
+      </gr-object-meta>
+      <span>
+        更新: <a href data-href-field=url><time data-field=object.updated></time></a>
+      </span>
+  </template>
+</template-set>
+
+<template-set name=gr-fileset-list-item-image>
+  <template>
+    <figure>
+      <a href data-href-template={url}image data-title-field=object.data.title>
+        <img src data-src-template={url}image>
+      </a>
+      <figcaption class=object-summary>
+        <gr-object-meta>
+          <cite data-field=object.data.title data-empty=■ />
+          <code data-field=object.data.file_name data-empty=■></code>
+          <unit-number data-field=object.data.file_size type=bytes />
+          <code data-field=object.data.mime_type />
+        </gr-object-meta>
+        <span>
+          <a href data-href-field=url><time data-field=object.timestamp data-format=date></time></a>
+        </span>
+      </figcaption>
+    </figure>
   </template>
 </template-set>
 
@@ -408,10 +493,10 @@
         </section>
 
         <section id=create-fileset>
-          <h1>アップローダー</h1>
+          <h1>フォルダー</h1>
 
           <section-intro>
-            <p>新しいアップローダーを作成します。 (この操作は取り消せません。)
+            <p>新しいフォルダーを作成します。 (この操作は取り消せません。)
           </section-intro>
 
           <form is=save-data data-saver=groupSaver method=post action=i/create.json
@@ -424,7 +509,7 @@
                 <tr>
                   <th>種別
                   <td>
-                    <label><input type=radio name=subtype value=file checked required> ファイルアップローダー</label>
+                    <label><input type=radio name=subtype value=file checked required> ファイルフォルダー</label>
                     <label><input type=radio name=subtype value=image required> アルバム</label>
             </table>
 
@@ -641,7 +726,7 @@
                     label-6 />
                 <enum-value data-field=index.subtype
                     label-image=アルバム
-                    label-file=ファイルアップローダー
+                    label-file=ファイルフォルダー
                     label-null label-undefined />
             <tr>
               <th><label for=edit-title>名前</>
@@ -733,7 +818,7 @@
     <section>
       <h1>記事一覧</h1>
       
-      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id loader-limit=50 data-filled=loader-indexid template=gr-search-result-item class=search-result>
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=50 data-filled="loader-indexid loader-indextype" template=gr-search-result-item class=search-result>
         <list-main></list-main>
         <list-is-empty hidden>
           <p>記事は見つかりませんでした。</p>
@@ -764,8 +849,7 @@
               </button>
               <menu-main>
                 <p><a data-href-template={GROUP}/o/{object_id}/>記事ページ</a>
-                <p><a is=copy-url data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
-                <p><a is=gr-jump-add data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                <hr>
                 <p><button type=button class=edit-button>編集</button>
                 <form is=save-data data-saver=objectSaver method=post data-action-template=o/{object_id}/edit.json data-confirm=削除します。 data-next=markAncestorArticleDeleted>
                   <input type=hidden name=user_status value=2><!-- deleted -->
@@ -773,6 +857,10 @@
                     <button type=submit class=delete-button>削除</button>
                 </form>
                 <p><a data-href-template={GROUP}/o/{object_id}/revisions>編集履歴</a>
+                <hr>
+                <p><a is=copy-url data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                <p><a is=gr-jump-add data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                <hr>
                 <p><a href=/help#objects target=help>ヘルプ</a>
               </menu-main>
             </popup-menu>
@@ -902,7 +990,6 @@
       <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
-      <run-action name=installPrependNewObjects />
     </gr-list-container>
   </template><!-- blog -->
   <template data-name=todos>
@@ -951,94 +1038,40 @@
       <gr-action-status hidden stage-load=読込中... />
         <p class="operations pager">
           <button type=button class=next-page-button hidden>もっと昔</button>
-      <run-action name=installPrependNewObjects />
       </gr-list-container>
     </section>
   </template><!-- todos -->
   <template data-name=fileset>
     <section>
       <header class=section>
-        <h1><a data-href-template=/g/{group.group_id}/i/{index.index_id}/ data-field=index.title data-empty=■ /></h1>
-        <gr-menu type=index />
+        <h1 data-gr-if-index-subtype=image>アルバム</h1>
+        <h1 data-gr-if-index-subtype=file>ファイル一覧</h1>
       </header>
 
-      <gr-list-container key=objects sortkey=created src-limit=100>
-          <template data-gr-if-index-subtype=image>
-            <gr-popup-menu>
-              <button type=button>⋁</button>
-                <menu hidden>
-                  <li><a is=copy-url data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
-              </menu>
-            </gr-popup-menu>
-            <figure>
-              <a data-href-template={GROUP}/o/{object_id}/image data-title-data-field=title>
-                <img src data-src-template={GROUP}/o/{object_id}/image>
-              </a>
-              <figcaption>
-                <code data-data-field=file_name></code>
-                <unit-number data-data-field=file_size type=bytes />
-                <code data-data-field=mime_type />
-                <a data-href-template={GROUP}/o/{object_id}/>
-                  <time data-field=timestamp data-format=ambtime />
-                </a>
-              </figcaption>
-            </figure>
-          </template>
-          <template data-gr-if-index-subtype=file>
-            <gr-popup-menu>
-              <button type=button>⋁</button>
-                <menu hidden>
-                  <li><a is=copy-url data-href-template={GROUP}/o/{object_id}/>記事URLをコピー</a>
-              </menu>
-            </gr-popup-menu>
-            <p class=main-line>
-              <a data-href-template={GROUP}/o/{object_id}/file download>
-                <span data-data-field=title data-empty=■ />
-                <code data-data-field=file_name></code>
-              </a>
-            <p class=info-line>
-              <unit-number data-data-field=file_size type=bytes />
-              <code data-data-field=mime_type />
-              <a data-href-template={GROUP}/o/{object_id}/>
-                <time data-field=timestamp data-format=ambtime />
-              </a>
-          </template>
+      <details>
+        <summary>ファイルを追加</summary>
+        <gr-uploader data-indexid-field=index.index_id data-indexsubtype-field=index.subtype data-filled="indexid indexsubtype" listselector=.search-result />
+      </details>
 
-          <form action=javascript: method=post data-form-type=uploader>
-            <gr-list-container type=table>
-              <template>
-                <td class=file-name><code data-data-field=file_name />
-                <td class=file-size><unit-number data-data-field=file_size type=bytes />
-                <td class=progress><gr-action-status hidden
-                        stage-create=作成中...
-                        stage-upload=アップロード中...
-                        stage-close=保存中...
-                        stage-show=読込中...
-                        ok=アップロード完了 />
-              </template>
-              <table>
-                <thead>
-                  <tr>
-                    <th class=file-name>ファイル名
-                    <th class=file-size>サイズ
-                    <th class=progress>進捗
-                <tbody>
-              </table>
-            </gr-list-container>
-            <p class=operations>
-                <input type=file name=file multiple hidden accept=image/* data-gr-if-index-subtype=image>
-                <button type=button name=upload-button class=edit-button data-gr-if-index-subtype=image>画像をアップロード...</button>
-                <input type=file name=file multiple hidden data-gr-if-index-subtype=file>
-                <button type=button name=upload-button class=edit-button data-gr-if-index-subtype=file>ファイルをアップロード...</button>
-          </form>
-
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=50 loader-withdata data-filled="loader-indexid loader-indextype" template=gr-fileset-list-item-file class="search-result fileset-file" data-gr-if-index-subtype=file>
         <list-main></list-main>
-
-      <gr-action-status hidden stage-load=読込中... />
+        <list-is-empty hidden>
+          <p>このフォルダーは空です。</p>
+        </list-is-empty>
+        <action-status hidden stage-loader=読込中... />
         <p class="operations pager">
-          <button type=button class=next-page-button hidden>もっと昔</button>
-      <run-action name=installPrependNewObjects />
-    </gr-list-container>
+          <button type=button class=list-next hidden>もっと昔</button>
+      </list-container>
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=36 loader-withdata data-filled="loader-indexid loader-indextype" template=gr-fileset-list-item-image class="search-result fileset-image" data-gr-if-index-subtype=image>
+        <list-main></list-main>
+        <list-is-empty hidden>
+          <p>このフォルダーは空です。</p>
+        </list-is-empty>
+        <action-status hidden stage-loader=読込中... />
+        <p class="operations pager">
+          <button type=button class=list-next hidden>もっと昔</button>
+      </list-container>
+    </section>
   </template><!-- fileset -->
 </template-set>
 
@@ -1067,6 +1100,32 @@
 <template-set name=gr-index-list-item>
   <template>
     <a data-href-template=/g/{index.group_id}/i/{index.index_id}/ data-field=index.title data-class-field=class data-style-field=style data-filled=style data-empty=■ />
+  </template>
+</template-set>
+
+<template-set name=gr-uploader>
+  <template>
+    <form method=post action=javascript:>
+      <gr-list-container>
+        <template>
+          <p><code data-field=file_name />
+          (<unit-number data-field=file_size type=bytes />)
+          <gr-action-status hidden
+                    stage-create=作成中...
+                    stage-upload=アップロード中...
+                    stage-close=保存中...
+                    stage-show=読み込み中...
+                    ok=アップロード完了 />
+        </template>
+        <list-main/>
+      </gr-list-container>
+
+      <p>枠内にファイルをドロップしてもアップロードできます。
+
+      <p class=operations>
+        <input type=file name=file multiple hidden>
+        <button type=button is=gr-uploader-button class=edit-button>アップロード...</button>
+    </form>
   </template>
 </template-set>
 
@@ -1112,14 +1171,17 @@
               </button>
               <menu-main>
                 <p><a data-href-template={GROUP}/o/{object_id}/>記事ページ</a>
-                <p><a is=copy-url data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
-                <p><a is=gr-jump-add data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                <hr>
                 <p><button type=button class=edit-button>編集</button>
                 <form is=save-data data-saver=objectSaver method=post data-action-template=o/{object_id}/edit.json data-confirm=削除します。 data-next=markAncestorArticleDeleted>
                   <input type=hidden name=user_status value=2><!-- deleted -->
                   <p><button type=submit class=delete-button>削除</button>
                 </form>
                 <p><a data-href-template={GROUP}/o/{object_id}/revisions>編集履歴</a>
+                <hr>
+                <p><a is=copy-url data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                <p><a is=gr-jump-add data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                <hr>
                 <p><a href=/help#objects target=help>ヘルプ</a>
               </menu-main>
             </popup-menu>
@@ -1259,10 +1321,13 @@
               </button>
               <menu-main>
                 <p><a data-href-template=./>記事ページ</a>
-                <p><a is=copy-url data-href-template=./>URLをコピー</a>
-                <p><a is=gr-jump-add data-href-template=./ data-title-data-field=title>ジャンプリストに追加</a>
+                <hr>
                 <!-- XXX edit, delete -->
                 <p><a href=revisions>編集履歴</a>
+                <hr>
+                <p><a is=copy-url data-href-template=./>URLをコピー</a>
+                <p><a is=gr-jump-add data-href-template=./ data-title-data-field=title>ジャンプリストに追加</a>
+                <hr>
                 <p><a href=/help#objects target=help>ヘルプ</a>
               </menu-main>
             </popup-menu>
@@ -1342,14 +1407,17 @@
               </button>
               <menu-main>
                 <p><a data-href-template={GROUP}/o/{object_id}/>記事ページ</a>
-                <p><a is=copy-url data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
-                <p><a is=gr-jump-add data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                <hr>
                 <p><button type=button class=edit-button>編集</button>
                 <form is=save-data data-saver=objectSaver method=post data-action-template=o/{object_id}/edit.json data-confirm=削除します。 data-next=markAncestorArticleDeleted>
                   <input type=hidden name=user_status value=2><!-- deleted -->
                   <p><button type=submit class=delete-button>削除</button>
                 </form>
                 <p><a data-href-template={GROUP}/o/{object_id}/revisions>編集履歴</a>
+                <hr>
+                <p><a is=copy-url data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                <p><a is=gr-jump-add data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                <hr>
                 <p><a href=/help#objects target=help>ヘルプ</a>
               </menu-main>
             </popup-menu>
@@ -1481,7 +1549,6 @@
         </list-is-empty>
 
         <gr-action-status hidden stage-load=読込中... />
-        <run-action name=installPrependNewObjects />
       </gr-list-container>
 
       <article-comments>

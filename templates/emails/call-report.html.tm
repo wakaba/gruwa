@@ -8,11 +8,11 @@
 
     <t:for as=$gc x=$group_calls>
       <section>
-        <h1><a pl:href="$app->config->{origin}.'/g/'.$gc->{group_id}.'/'"><t:text value="$gc->{group_title}"></a></h1>
+        <h1 style="font-size:100%"><a pl:href="$app->config->{origin}.'/g/'.$gc->{group_id}.'/'"><t:text value="$gc->{group_title}"></a></h1>
 
         <ul>
           <t:for as=$call x="$gc->{calls}">
-            <li><a pl:href="$app->config->{origin}.'/g/'.$gc->{group_id}.'/o/'.$call->{object_id}.'/'"><t:text value="length $call->{computed_title} ? $call->{computed_title} : '■'"></a>
+            <li><a pl:href="$app->config->{origin}.'/g/'.$gc->{group_id}.'/o/'.$call->{object_id}.'/'" style="font-size:120%"><t:text value="length $call->{computed_title} ? $call->{computed_title} : '■'"></a>
           </t:for>
         </ul>
       </section>

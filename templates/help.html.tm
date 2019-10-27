@@ -38,7 +38,7 @@
         <li><a href=#todos>TODO リスト</a>
         <li><a href=#labels>ラベル</a>
         <li><a href=#milestones>マイルストーン</a>
-        <li><a href=#filesets>アップローダー</a>
+        <li><a href=#filesets>ファイル</a>
       </ul>
 
       <p id=group-create><a href=#groups>グループ</a>は、
@@ -113,7 +113,7 @@
         <a href=#todos>TODO リスト</a>、
         <a href=#labels>ラベル</a>、
         <a href=#milestones>マイルストーン</a>、
-        <a href=#filesets>アップローダー</a>の<dfn id=menu>メニュー</dfn>から「設定」を選ぶと、
+        <a href=#filesets>フォルダー</a>の<dfn id=menu>メニュー</dfn>から「設定」を選ぶと、
         設定を変更できます。
 
           <div class=note>
@@ -139,7 +139,7 @@
                 <a href=#todos>TODO リスト</a>、
                 <a href=#labels>ラベル</a>、
                 <a href=#milestones>マイルストーン</a>、
-                <a href=#filesets>アップローダー</a>
+                <a href=#filesets>フォルダー</a>
               <td>
                 名前 (題名) です。
             <tr>
@@ -172,7 +172,7 @@
         <a href=#todos>TODO リスト</a>、
         <a href=#labels>ラベル</a>、
         <a href=#milestones>マイルストーン</a>、
-        <a href=#filesets>アップローダー</a>を作成できます。
+        <a href=#filesets>フォルダー</a>を作成できます。
         (この操作は取り消せないのでご注意ください。)
 
         <p><a href=#groups>グループ</a>の<a href=#config>設定</a>ページから、
@@ -286,14 +286,19 @@
     </section>
 
     <section id=filesets>
-      <h1>アップローダー</h1>
+      <h1>ファイル</h1>
 
-      <p>グループ内に<dfn>アップローダー</dfn>を作ることができます。
-      アップローダーには、
-      どんなファイルでもアップロードできる<dfn id=fileset-file>ファイルアップローダー</dfn>と、
+      <p><a href=#groups>グループ</a>には、
+      ファイルを入れる<dfn>フォルダー</dfn>を作ることができます。
+
+      <p><a href=#groups>グループ</a>の「ファイル」ページに、
+      <a href=#filesets>フォルダー</a>の一覧が表示されます。
+      新しい<a href=#filesets>フォルダー</a>は、
+      <a href=#groups>グループ</a>の「設定」ページから作成できます。
+
+      <p><a href=#filesets>フォルダー</a>には、
+      どんなファイルでもアップロードできる<dfn id=fileset-file>ファイルフォルダー</dfn>と、
       画像をアップロードできる<dfn id=fileset-image>アルバム</dfn>があります。
-
-      <p>アップローダーは、グループの設定ページから作成できます。
 
       <hr>
 
@@ -302,13 +307,13 @@
       新しい画像をアップロードしたり、既存の画像を選んだりして、
       画像を記事に挿入できます。
 
-      <p>ファイルアップローダーは、記事編集ツールバーのファイル (&#x1F4C4;)
+      <p>ファイルフォルダーは、記事編集ツールバーのファイル (&#x1F4C4;)
       ボタンから呼び出すことができます。
       新しいファイルをアップロードしたり、既存のファイルを選んだりして、
       ファイルへのリンクを記事に挿入できます。
 
       <p>アップロードした画像やファイルは、
-      他のグループ参加者が閲覧・ダウンロードできるようになります。
+      グループ参加者が閲覧・ダウンロードできるようになります。
 
       <p>アップロードボタンの他に、
       ドラッグしたファイルをアップロード欄枠線内にドロップすることでも、
@@ -689,7 +694,7 @@
                 (はてなグループから取得できないため)。
             <tr>
               <td>ファイル
-              <td><a href=#fileset-file>ファイルアップローダー</a>のファイル
+              <td><a href=#fileset-file>ファイルフォルダー</a>のファイル
               <td>
                 ファイル一覧の読み取り権限がある場合のみ。
         </table>

@@ -930,6 +930,7 @@ sub main ($$$$$) {
   if (
     (@$path == 3 and {
       '' => 1,         # /g/{group_id}/
+      'files' => 1,   # /g/{group_id}/files
       'search' => 1,   # /g/{group_id}/search
       'config' => 1,   # /g/{group_id}/config
       'members' => 1,  # /g/{group_id}/members
@@ -1619,6 +1620,7 @@ sub group_index ($$$$) {
           theme => $_->{options}->{theme},
           color => $_->{options}->{color},
           deadline => $_->{options}->{deadline},
+          subtype => $_->{options}->{subtype},
         };
       } grep {
         keys %$subtypes ? $subtypes->{$_->{options}->{subtype}} : 1;
@@ -1992,7 +1994,7 @@ sub group_object ($$$$) {
       } elsif (@$path == 5 and $path->[4] eq 'upload.json') {
         # /g/{group_id}/o/{object_id}/upload.json
         $app->requires_request_method ({POST => 1});
-        $app->requires_same_origin;
+        $app->requires_same_origin_or_referer_origin; # backcompat with form POST (Firefox)
 
         my $token = $app->bare_param ('token') // '';
         unless (defined $object->{data}->{upload_token} and
@@ -2437,7 +2439,7 @@ sub invitation ($$$$) {
       $path->[3] eq '') {
     # /invitation/{group_id}/{invitation_key}/
     if ($app->http->request_method eq 'POST') {
-      $app->requires_same_origin;
+      $app->requires_same_origin_or_referer_origin; # backcompat with form POST (Firefox)
       return $acall->(['info'], {
         sk_context => $app->config->{accounts}->{context},
         sk => $app->http->request_cookies->{sk},

@@ -411,6 +411,15 @@ gr-editable-tr form:not([hidden]) {
   display: contents;
 }
 
+gr-uploader:not([hidden]) {
+  display: block;
+}
+
+.drop-target {
+  background-color: var(--hover-background-color);
+  color: var(--hover-color);
+}
+
 .operations {
   margin: 0;
   direction: rtl;
@@ -1330,6 +1339,19 @@ gr-nav-panel gr-group:not([hidden]) {
 .main-menu-list > * > a:not(:hover):not(:focus):not(:active),
 .main-menu-list > * > button:not(:hover):not(:focus):not(:active) {
   text-decoration: none;
+}
+
+.main-menu-list > * > .fileset-image::before,
+.main-menu-list > * > .fileset-file::before {
+  display: inline-block;
+  margin-right: .2em;
+  font-size: 130%;
+}
+.main-menu-list > * > .fileset-image::before {
+  content: "\1F3A8";
+}
+.main-menu-list > * > .fileset-file::before {
+  content: "\1F4C4";
 }
 
 .main-menu-list > * > * > small:not([hidden]) {
