@@ -166,26 +166,25 @@
         <t:if x="$app->config->{no_create_group_key}">
           (サーバー管理者が発行したキーが必要です。)
         </t:if>
-        
-      <form method=post action=javascript: data-action=g/create.json
-          data-next="createGroupWiki go:/g/{group_id}/config"
-          data-prompt="グループを作成します。この操作は取り消せません。よろしいですか。">
-        <table class=config>
-          <tbody>
-            <tr>
-              <th><label for=create-title>グループ名</>
-              <td><input name=title id=create-title required>
-        </table>
 
-        <p class=operations>
-          <button type=submit class=save-button>作成する</>
-          <gr-action-status hidden
-              stage-fetch=グループを作成中...
-              stage-creategroupwiki_1=グループのWikiを作成中...
-              stage-creategroupwiki_2=グループの設定中...
-              stage-next=グループに移動します... />
-      </form>
-    </details>
+        <form is=save-data method=post action=/g/create.json
+            data-next="createGroupInitials go:/g/{group_id}/config"
+            data-prompt="グループを作成します。この操作は取り消せません。よろしいですか。"
+            data-wikititle=Wiki
+            data-iconsettitle=アイコン>
+          
+          <table class=config>
+            <tbody>
+              <tr>
+                <th><label for=create-title>グループ名</label>
+                <td><input name=title id=create-title required>
+          </table>
+
+          <p class=operations>
+            <button type=submit class=save-button>作成する</button>
+            <action-status hidden stage-saver=作成中... />
+        </form>
+      </details>
 
     </section>
     

@@ -433,6 +433,33 @@ GR.group.activeMembers = function () {
     });
   };
   document.head.appendChild (e);
+
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'createGroupInitials');
+  e.pcHandler = function (args) {
+    return args.json ().then (json => {
+      return Promise.all ([
+        (() => {
+          var fd = new FormData;
+          fd.append ('title', this.getAttribute ('data-wikititle'));
+          fd.append ('index_type', 2);
+          return gFetch ("g/" + json.group_id + '/i/create.json', {post: true, formData: fd}).then (function (json) {
+            var fd2 = new FormData;
+            fd2.append ('default_wiki_index_id', json.index_id);
+            return gFetch ("g/" + json.group_id + '/edit.json', {post: true, formData: fd2});
+          });
+        }) (),
+        (() => {
+          var fd = new FormData;
+          fd.append ('title', this.getAttribute ('data-iconsettitle'));
+          fd.append ('index_type', 6);
+          fd.append ('subtype', 'icon');
+          return gFetch ("g/" + json.group_id + '/i/create.json', {post: true, formData: fd});
+        }) (),
+      ]);
+    });
+  }; // createGroupInitials
+  document.head.appendChild (e);
   
   var e = document.createElementNS ('data:,pc', 'formsaved');
   e.setAttribute ('name', 'reloadGroupInfo');
@@ -454,7 +481,7 @@ GR.group.activeMembers = function () {
     });
   }; // reloadGroupInfo
   document.head.appendChild (e);
-  
+
   var e = document.createElementNS ('data:,pc', 'formsaved');
   e.setAttribute ('name', 'reloadIndexInfo');
   e.pcHandler = function (args) {
@@ -3073,23 +3100,6 @@ ActionStatus.prototype.end = function (opts) {
 
 
 var stageActions = [];
-
-stageActions.createGroupWiki = function (args) {
-  args.as.stageStart ('creategroupwiki_1');
-  var fd = new FormData;
-  fd.append ('title', 'Wiki');
-  fd.append ('index_type', 2);
-  return gFetch ("g/" + args.result.group_id + '/i/create.json', {post: true, formData: fd}).then (function (json) {
-    args.as.stageEnd ('creategroupwiki_1');
-    args.as.stageStart ('creategroupwiki_2');
-    var fd2 = new FormData;
-    fd2.append ('default_wiki_index_id', json.index_id);
-    return gFetch ("g/" + args.result.group_id + '/edit.json', {post: true, formData: fd2});
-  }).then (function () {
-    args.as.stageEnd ('creategroupwiki_2');
-  });
-}; // createGroupWiki
-stageActions.createGroupWiki.stages = ["creategroupwiki_1", "creategroupwiki_2"];
 
 stageActions.resetForm = function (args) {
   args.form.reset ();
