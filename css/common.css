@@ -901,14 +901,14 @@ list-is-empty:not([hidden]) {
   font-size: 90%;
 }
 
-.panel.image-list gr-list-container[key=index_list],
-.panel.file-list gr-list-container[key=index_list] {
+.panel.image-list list-container,
+.panel.file-list list-container {
   display: block;
   margin: 0;
 }
 
-.panel.image-list gr-list-container[key=index_list] list-item,
-.panel.file-list gr-list-container[key=index_list] list-item {
+.panel.image-list list-container list-item,
+.panel.file-list list-container list-item {
   display: block;
   margin: 0;
   padding: 0;
@@ -917,14 +917,14 @@ list-is-empty:not([hidden]) {
   width: auto;
 }
 
-.panel.image-list gr-list-container[key=index_list] list-item:nth-child(2n),
-.panel.file-list gr-list-container[key=index_list] list-item:nth-child(2n) {
+.panel.image-list list-container list-item:nth-child(2n),
+.panel.file-list list-container list-item:nth-child(2n) {
   background-color: var(--light-2-background-color);
   color: var(--light-2-color);
 }
 
-.panel.image-list gr-list-container[key=index_list] list-item > button,
-.panel.file-list gr-list-container[key=index_list] list-item > button {
+.panel.image-list list-container list-item > button,
+.panel.file-list list-container list-item > button {
   display: block;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -939,19 +939,19 @@ list-is-empty:not([hidden]) {
   text-align: left;
 }
 
-.panel.image-list gr-list-container[key=index_list] list-item > button.active,
-.panel.file-list gr-list-container[key=index_list] list-item > button.active {
+.panel.image-list list-container list-item > button.active,
+.panel.file-list list-container list-item > button.active {
   text-indent: -1em;
   font-weight: bolder;
 }
 
-.panel.image-list gr-list-container[key=index_list] list-item > button.active::before,
-.panel.file-list gr-list-container[key=index_list] list-item > button.active::before {
+.panel.image-list list-container list-item > button.active::before,
+.panel.file-list list-container list-item > button.active::before {
   content: "\0025C8  ";
 }
 
-.panel.image-list gr-list-container[key=index_list] list-is-empty,
-.panel.file-list gr-list-container[key=index_list] list-is-empty {
+.panel.image-list list-container list-is-empty,
+.panel.file-list list-container list-is-empty {
   margin: 0;
 }
 
@@ -977,50 +977,11 @@ list-is-empty:not([hidden]) {
   min-height: 10em;
 }
 
-.panel.image-list panel-main > details list-item,
-.panel.file-list panel-main > details list-item {
-  display: block;
-  width: auto;
-  margin: 0 0 .2em 0;
-  padding: .4em;
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-}
-
-.panel.image-list panel-main > details list-item:nth-child(2n),
-.panel.file-list panel-main > details list-item:nth-child(2n) {
-  background-color: var(--light-2-background-color);
-  color: var(--light-2-color);
-}
-
-.panel.image-list panel-main > details list-item gr-action-status:not([hidden]),
-.panel.file-list panel-main > details list-item gr-action-status:not([hidden]) {
-  display: block;
-  margin: .4em 0 0 0;
-}
-
-.panel.image-list panel-main > details list-item gr-action-status gr-action-status-message:not([hidden]),
-.panel.file-list panel-main > details list-item gr-action-status gr-action-status-message:not([hidden]) {
-  display: block;
-  margin: 0;
-  padding: 0;
-}
-
-.panel.image-list panel-main > details list-item gr-action-status progress:not([hidden]),
-.panel.file-list panel-main > details list-item gr-action-status progress:not([hidden]) {
-  width: 100%;
-}
-
-.panel.image-list panel-main > gr-list-container:not([hidden]) {
-  display: inline;
-  margin: 0;
-}
-
-.panel.image-list panel-main > gr-list-container list-main:not([hidden]) {
+.panel.image-list panel-main > list-container list-main:not([hidden]) {
   display: inline;
 }
 
-.panel.image-list panel-main > gr-list-container list-main > list-item {
+.panel.image-list panel-main > list-container list-main > list-item {
   display: inline-block;
   margin: 0;
   padding: 0;
@@ -1028,18 +989,18 @@ list-is-empty:not([hidden]) {
   height: 6em;
 }
 
-.panel.file-list panel-main > gr-list-container list-main > list-item {
+.panel.file-list panel-main > list-container list-main > list-item {
   margin: 0;
   padding: 0;
   color: inherit;
   background: transparent;
 }
 
-.panel.file-list panel-main > gr-list-container list-main > list-item:last-of-type {
+.panel.file-list panel-main > list-container list-main > list-item:last-of-ype {
   margin-bottom: .2em;
 }
 
-.panel.image-list panel-main > gr-list-container list-main > list-item button {
+.panel.image-list panel-main > list-container list-main > list-item button {
   display: block;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -1054,7 +1015,7 @@ list-is-empty:not([hidden]) {
   line-height: 6;
 }
 
-.panel.file-list panel-main > gr-list-container list-main > list-item button {
+.panel.file-list panel-main > list-container list-main > list-item button {
   display: block;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -1073,15 +1034,15 @@ list-is-empty:not([hidden]) {
 .panel.image-list panel-main > details > summary:hover,
 .panel.file-list panel-main > details > summary:active,
 .panel.file-list panel-main > details > summary:hover,
-.panel.image-list panel-main > gr-list-container list-main > list-item button:active,
-.panel.image-list panel-main > gr-list-container list-main > list-item button:hover,
-.panel.file-list panel-main > gr-list-container list-main > list-item button:active,
-.panel.file-list panel-main > gr-list-container list-main > list-item button:hover {
+.panel.image-list panel-main > list-container list-main > list-item button:active,
+.panel.image-list panel-main > list-container list-main > list-item button:hover,
+.panel.file-list panel-main > list-container list-main > list-item button:active,
+.panel.file-list panel-main > list-container list-main > list-item button:hover {
   background-color: var(--toolbar-hover-background-color);
   color: var(--toolbar-hover-color);
 }
 
-.panel.image-list panel-main > gr-list-container list-main > list-item img {
+.panel.image-list panel-main > list-container list-main > list-item img {
   max-width: 6em;
   max-height: 6em;
   vertical-align: middle;

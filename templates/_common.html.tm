@@ -312,6 +312,48 @@
   </template>
 </template-set>
 
+<template-set name=gr-index-viewer-image>
+  <template><!-- <panel-main> -->
+    <details>
+      <summary>新しい画像</summary>
+      <gr-uploader data-indexid-field=index_id indexsubtype=image listselector=gr-list-container[key=objects] listancestor=panel-main data-filled=indexid />
+    </details>
+
+    <list-container loader=groupIndexLoader data-loader-indexid-field=index_id loader-indextype=6 loader-limit=9 data-filled="loader-indexid">
+      <template>
+        <button type=button data-value-field=url data-filled=value>
+          <img src data-src-template={url}image>
+        </button>
+      </template>
+      <list-main/>
+      <action-status hidden stage-loader=読込中... />
+      <p class="operations pager">
+        <button type=button class=list-next hidden>もっと昔</button>
+    </list-container>
+  </template>
+</template-set>
+
+<template-set name=gr-index-viewer-file>
+  <template><!-- <panel-main> -->
+    <details>
+      <summary>新しいファイル</summary>
+      <gr-uploader data-indexid-field=index_id indexsubtype=file listselector=gr-list-container[key=objects] listancestor=panel-main data-filled=indexid />
+    </details>
+
+    <list-container loader=groupIndexLoader data-loader-indexid-field=index_id loader-indextype=6 loader-limit=10 loader-withdata data-filled="loader-indexid">
+      <template>
+        <button type=button data-value-field=url data-filled=value>
+          <code data-field=object.data.file_name />
+        </button>
+      </template>
+      <list-main/>
+      <action-status hidden stage-loader=読込中... />
+      <p class="operations pager">
+        <button type=button class=list-next hidden>もっと昔</button>
+    </list-container>
+  </template>
+</template-set>
+
 <template-set name=page-config>
   <template title=設定 class=is-subpage>
     <section>

@@ -240,64 +240,12 @@
   <gr-list-container type=$with id=index-list src=i/list.json key=index_list itemkey=index_id />
   <gr-list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />
 
-<template id=template-panel-image-list>
+<template id=template-panel-image-list data-selectobject-command=insertImage>
   <gr-select-index type=image empty=アルバムがありません。 title=アルバム />
   <gr-index-viewer type=image selectselector=gr-select-index selectancestor=section />
 </template>
 
-<template id=template-panel-file-list>
+<template id=template-panel-file-list data-selectobject-command=insertFile>
   <gr-select-index type=file empty=ファイルフォルダーがありません。 title=ファイルフォルダー />
   <gr-index-viewer type=file selectselector=gr-select-index selectancestor=section />
 </template>
-
-<template-set name=gr-index-viewer-image>
-  <template><!-- <panel-main> -->
-    <details>
-      <summary>新しい画像</summary>
-      <gr-uploader data-indexid-field=index_id indexsubtype=image listselector=gr-list-container[key=objects] listancestor=panel-main data-filled=indexid />
-    </details>
-
-    <gr-list-container
-        data-src-template="o/get.json?index_id={index_id}&limit=9"
-        key=objects sortkey=timestamp,created
-        added-actions=editCommands>
-      <template>
-        <button type=button
-            data-edit-command=insertImage
-            data-value-template={GROUP}/o/{object_id}/>
-          <img src data-src-template={GROUP}/o/{object_id}/image>
-        </button>
-      </template>
-      <list-main/>
-      <gr-action-status hidden stage-load=読み込み中... />
-      <p class="operations pager">
-        <button type=button class=next-page-button hidden>もっと昔</button>
-    </gr-list-container>
-  </template>
-</template-set>
-
-<template-set name=gr-index-viewer-file>
-  <template><!-- <panel-main> -->
-    <details>
-      <summary>新しいファイル</summary>
-      <gr-uploader data-indexid-field=index_id indexsubtype=file listselector=gr-list-container[key=objects] listancestor=panel-main data-filled=indexid />
-    </details>
-
-    <gr-list-container
-        data-src-template="o/get.json?index_id={index_id}&limit=10&with_data=1"
-        key=objects sortkey=timestamp,created
-        added-actions=editCommands>
-      <template>
-        <button type=button
-            data-edit-command=insertFile
-            data-value-template={GROUP}/o/{object_id}/
-            data-data-field=file_name>
-        </button>
-      </template>
-      <list-main/>
-      <gr-action-status hidden stage-load=読み込み中... />
-      <p class="operations pager">
-        <button type=button class=next-page-button hidden>もっと昔</button>
-    </gr-list-container>
-  </template>
-</template-set>

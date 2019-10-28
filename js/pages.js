@@ -721,6 +721,16 @@ defineElement ({
         var e = tm.createFromTemplate ('panel-main', {index_id: indexId});
         this.textContent = '';
         this.appendChild (e);
+        this.onclick = (ev) => {
+          var e = ev.target;
+          while (e && e.localName !== 'button') {
+            e = e.parentNode;
+          }
+          if (!e) return;
+          var ev = new Event ('grSelectObject', {bubbles: true});
+          ev.grObjectURL = e.value;
+          this.dispatchEvent (ev);
+        };
       });
     }, // grSetIndex
   },
@@ -2001,20 +2011,6 @@ TemplateSelectors.object = function (object, templates) {
   });
 }) ();
 
-var AddedActions = {};
-
-AddedActions.editCommands = function () {
-  var self = this;
-  $$ (self, '[data-edit-command]').forEach (function (e) {
-    e.onclick = function () {
-      var ev = new Event ('gruwaeditcommand', {bubbles: true});
-      ev.data = {type: this.getAttribute ('data-edit-command'),
-                 value: this.value};
-      self.dispatchEvent (ev);
-    };
-  });
-}; // editCommands
-
 function upgradeList (el) {
   if (el.upgraded) return;
   el.upgraded = true;
@@ -2251,9 +2247,6 @@ function upgradeList (el) {
     });
 
     return Promise.all (wait).then (function () {
-      (el.getAttribute ('added-actions') || '').split (/\s+/).filter (function (_) { return _.length }).forEach (function (n) {
-        AddedActions[n].call (el);
-      });
       return result;
     });
   }; // showObjects
@@ -2754,6 +2747,17 @@ function togglePanel (name, container) {
     section.appendChild (template.content.cloneNode (true));
     container.panels[name] = section;
     container.appendChild (section);
+    
+    var cmd = template.getAttribute ('data-selectobject-command');
+    if (cmd) {
+      console.log(cmd, section);
+      section.addEventListener ('grSelectObject', (ev0) => {
+        var ev = new Event ('gruwaeditcommand', {bubbles: true});
+        ev.data = {type: cmd, value: ev0.grObjectURL};
+        console.log(ev);
+        section.dispatchEvent (ev);
+      });
+    }
   }
   var hideContainer = false;
   for (var n in container.panels) {
