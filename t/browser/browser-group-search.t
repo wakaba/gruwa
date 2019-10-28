@@ -46,7 +46,7 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, $current->o ('t2') . ' - 検索 - ' . $current->o ('t1');
+      is $values->{title}, "\x{2066}" . $current->o ('t2') . "\x{2069} - \x{2066}検索\x{2069} - \x{2066}" . $current->o ('t1') . "\x{2069}";
       like $values->{url}, qr{/search\?q=.+};
       is $values->{resultItemURL}, '/g/'.$current->o ('g1')->{group_id}.'/o/'.$current->o ('o1')->{object_id}.'/';
     } $current->c;

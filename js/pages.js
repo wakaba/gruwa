@@ -283,8 +283,8 @@ GR._myinfo = function () {
 
 GR.page = {};
 
-GR.page.setTitle = function (title) {
-  GR._state.title = title;
+GR.page.setTitle = function (titles) {
+  GR._state.title = titles.map (_ => "\u2066"+_+"\u2069").join (" - ");
   GR.page._title ();
 }; // GR.page.setTitle
 
@@ -302,7 +302,7 @@ GR.page.setSearch = function (args) {
 
 GR.page._title = function () {
   if (GR._state.searchWord) {
-    document.title = GR._state.searchWord + ' - ' + GR._state.title;
+    document.title = "\u2066" + GR._state.searchWord + "\u2069 - \u2066" + GR._state.title + "\u2069";
   } else {
     document.title = GR._state.title;
   }
@@ -4391,7 +4391,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       } else {
         GR.page.setSearch (null);
       }
-      GR.page.setTitle (title.join (' - '));
+      GR.page.setTitle (title);
       GR._state.currentPage = params;
       return GR.theme.set (params.theme);
     });

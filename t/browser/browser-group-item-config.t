@@ -43,7 +43,7 @@ Test {
     test {
       use utf8;
       is $values->{config_url}, '/g/'.$current->o ('g1')->{group_id}.'/config';
-      is $values->{title}, '設定 - ' . $current->o ('t1');
+      is $values->{title}, "\x{2066}設定\x{2069} - \x{2066}" . $current->o ('t1') . "\x{2069}";
       is $values->{header}, $current->o ('t1');
       ok $values->{theme_color};
       is $values->{subTitle}, '設定';
