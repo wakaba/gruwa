@@ -1128,6 +1128,24 @@ defineElement ({
   },
 }); // <gr-dashboard-item>
 
+defineElement ({
+  name: 'form',
+  is: 'invitation-accept',
+  props: {
+    pcInit: function () {
+      return fetch ('/my/info.json', {credentials: 'same-origin', referrerPolicy: 'origin'}).then (function (res) {
+        return res.json ();
+      }).then ((json) => {
+        if (json.account_id) {
+          this.querySelectorAll ('.login-button').forEach (function (e) { e.hidden = true });
+          this.querySelectorAll ('.save-button').forEach (function (e) { e.hidden = false });
+          document.querySelectorAll ('.no-account').forEach (function (e) { e.hidden = true });
+        }
+      });
+    }, // pcInit
+  },
+}); // <form is=invitation-accept>
+
 function $$c (n, s) {
   return Array.prototype.filter.call (n.querySelectorAll (s), function (e) {
     var f = e.parentNode;
