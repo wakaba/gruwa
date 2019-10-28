@@ -603,7 +603,7 @@ defineElement ({
         var select = document.createElement ('select');
         var filter = () => true;
         var type = this.getAttribute ('type');
-        if (type === 'file' || type === 'image') {
+        if (type === 'file' || type === 'image' || type === 'icon' || type === 'stamp') {
           filter = _ => {
             return _.index_type == 6 /* fileset */ && _.subtype === type;
           };
@@ -2815,7 +2815,9 @@ defineElement ({
 
         var subtype = this.getAttribute ('indexsubtype');
         this.querySelectorAll ('input[type=file]').forEach (_ => {
-          if (subtype === 'image') _.accept = 'image/*';
+          if (subtype === 'image' ||
+              subtype === 'icon' ||
+              subtype === 'stamp') _.accept = 'image/*';
           _.onchange = () => {
             Array.prototype.forEach.call (_.files, (file) => this.grUploadFile (file)); 
             _.form.reset ();
