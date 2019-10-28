@@ -1518,6 +1518,17 @@ hatena-star img.hatena-user-icon {
   background-color: var(--small-background-color);
 }
 
+gr-invitation-text:not([hidden]) {
+  display: block;
+  margin: 1em;
+  padding: .5em;
+  font-size: 90%;
+  color: var(--light-1-color);
+  background-color: var(--light-1-background-color);
+  box-shadow: .3em .3em var(--light-1-shadow-color);
+  white-space: pre-wrap;
+}
+
 small {
   color: var(--small-color);
   background-color: var(--small-background-color);

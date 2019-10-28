@@ -513,6 +513,7 @@ Test {
       is $data->{user_status}, 1; # open
       is $data->{owner_status}, 1; # open
       is $data->{member_type}, 1; # normal
+      is $data->{default_index_id}, undef;
     } $current->c;
     return $current->get_json (['members', 'invitations', 'list.json'], {
     }, account => 'a1', group => 'g1');
@@ -537,7 +538,37 @@ Test {
       ok $inv2->{used} > $inv2->{created};
     } $current->c;
   });
-} n => 19, name => 'POST normal member using normal member invitation';
+} n => 20, name => 'POST normal member using normal member invitation';
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [g1 => group => {owner => 'a1'}],
+    [x1 => index => {account => 'a1', group => 'g1', index_type => 1}],
+    [i1 => invitation => {
+      group => 'g1', account => 'a1',
+      default_index => 'x1',
+    }],
+  )->then (sub {
+    return $current->post_redirect (['invitation',
+      $current->o ('g1')->{group_id},
+      $current->o ('i1')->{invitation_key},
+    ''], {}, account => 'a2');
+  })->then (sub {
+    return $current->get_json (['members', 'list.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $data = $result->{json}->{members}->{$current->o ('a2')->{account_id}};
+      is $data->{user_status}, 1; # open
+      is $data->{owner_status}, 1; # open
+      is $data->{member_type}, 1; # normal
+      is $data->{default_index_id}, $current->o ('x1')->{index_id};
+    } $current->c;
+  });
+} n => 4, name => 'default_index_id specified by invitation';
 
 RUN;
 

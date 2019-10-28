@@ -55,7 +55,7 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, $current->o ('t4') . ' - ' . $current->o ('t1');
+      is $values->{title}, "\x{2066}" . $current->o ('t4') . "\x{2069} - \x{2066}" . $current->o ('t1') . "\x{2069}";
       is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/o/'.$current->o ('o1')->{object_id}.'/';
       is $values->{headerTitle}, $current->o ('t1');
       is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/';
@@ -118,7 +118,7 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, $current->o ('t4') . ' - ' . $current->o ('t2') . ' - ' . $current->o ('t1');
+      is $values->{title}, "\x{2066}" . $current->o ('t4') . "\x{2069} - \x{2066}" . $current->o ('t2') . "\x{2069} - \x{2066}" . $current->o ('t1') . "\x{2069}";
       is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/o/'.$current->o ('o1')->{object_id}.'/';
       is $values->{headerTitle}, $current->o ('t2');
       is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
@@ -216,7 +216,7 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, $current->o ('t4') . ' - ' . $current->o ('t2') . ' - ' . $current->o ('t1');
+      is $values->{title}, "\x{2066}" . $current->o ('t4') . "\x{2069} - \x{2066}" . $current->o ('t2') . "\x{2069} - \x{2066}" . $current->o ('t1') . "\x{2069}";
       is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/o/'.$current->o ('o1')->{object_id}.'/';
       is $values->{headerTitle}, $current->o ('t2');
       is $values->{headerURL}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';

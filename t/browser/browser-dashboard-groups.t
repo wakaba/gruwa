@@ -69,7 +69,7 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, 'グループ - Gruwa';
+      is $values->{title}, "\x{2066}グループ\x{2069} - \x{2066}Gruwa\x{2069}";
       is $values->{url}, '/dashboard/groups';
       is $values->{headerTitle}, 'ダッシュボード';
       is $values->{headerURL}, '/dashboard';

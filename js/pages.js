@@ -283,8 +283,8 @@ GR._myinfo = function () {
 
 GR.page = {};
 
-GR.page.setTitle = function (title) {
-  GR._state.title = title;
+GR.page.setTitle = function (titles) {
+  GR._state.title = titles.map (_ => "\u2066"+_+"\u2069").join (" - ");
   GR.page._title ();
 }; // GR.page.setTitle
 
@@ -302,7 +302,7 @@ GR.page.setSearch = function (args) {
 
 GR.page._title = function () {
   if (GR._state.searchWord) {
-    document.title = GR._state.searchWord + ' - ' + GR._state.title;
+    document.title = "\u2066" + GR._state.searchWord + "\u2069 - " + GR._state.title;
   } else {
     document.title = GR._state.title;
   }
@@ -634,10 +634,20 @@ defineElement ({
           filter = _ => {
             return _.index_type == 6 /* fileset */ && _.subtype === type;
           };
+        } else if (type === 'blog') {
+          filter = _ => {
+            return _.index_type == 1;
+          };
         }
         list = Object.values (list).filter (filter).sort ((a, b) => {
           return b.updated - a.updated;
         });
+        if (this.hasAttribute ('optional')) {
+          var opt = document.createElement ('option');
+          opt.value = '';
+          opt.label = this.getAttribute ('optional');
+          select.appendChild (opt);
+        }
         if (list.length) {
           list.forEach (idx => {
             var opt = document.createElement ('option');
@@ -646,10 +656,12 @@ defineElement ({
             select.appendChild (opt);
           });
         } else {
-          var opt = document.createElement ('option');
-          opt.label = this.getAttribute ('empty');
-          opt.value = '';
-          select.appendChild (opt);
+          if (!select.firstChild) {
+            var opt = document.createElement ('option');
+            opt.label = this.getAttribute ('empty');
+            opt.value = '';
+            select.appendChild (opt);
+          }
         }
         select.value = val;
         select.onchange = () => val = select.value;
@@ -665,6 +677,11 @@ defineElement ({
         this.appendChild (select);
       });
     }, // pcInit
+    pcModifyFormData: function (fd) {
+      var name = this.getAttribute ('name');
+      if (!name) return;
+      fd.append (name, this.value || '');
+    }, // pcModifyFormData
   },
 }); // <gr-select-index>
 
@@ -1127,6 +1144,24 @@ defineElement ({
     }, // grRender
   },
 }); // <gr-dashboard-item>
+
+defineElement ({
+  name: 'form',
+  is: 'invitation-accept',
+  props: {
+    pcInit: function () {
+      return fetch ('/my/info.json', {credentials: 'same-origin', referrerPolicy: 'origin'}).then (function (res) {
+        return res.json ();
+      }).then ((json) => {
+        if (json.account_id) {
+          this.querySelectorAll ('.login-button').forEach (function (e) { e.hidden = true });
+          this.querySelectorAll ('.save-button').forEach (function (e) { e.hidden = false });
+          document.querySelectorAll ('.no-account').forEach (function (e) { e.hidden = true });
+        }
+      });
+    }, // pcInit
+  },
+}); // <form is=invitation-accept>
 
 function $$c (n, s) {
   return Array.prototype.filter.call (n.querySelectorAll (s), function (e) {
@@ -3351,9 +3386,28 @@ function upgradeForm (form) {
   var def = document.createElementNS ('data:,pc', 'formsaved');
   def.setAttribute ('name', 'reloadList');
   def.pcHandler = function (args) {
-    document.querySelectorAll (args.args[1]).forEach (_ => _.load ({}));
+    document.querySelectorAll (args.args[1]).forEach (_ => {
+      if (_.localName === 'gr-list-container') {
+        _.reload ();
+      } else {
+        _.load ({});
+      }
+    });
   };
   document.head.appendChild (def);
+
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'fill');
+  e.pcHandler = function (args) {
+    return args.json ().then ((json) => {
+      document.querySelectorAll (args.args[1]).forEach (_ => {
+        $fill (_, json);
+        _.hidden = false;
+      });
+    });
+  }; // fill
+  document.head.appendChild (e);
+
 }) ();
 
 defineElement ({
@@ -4391,7 +4445,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       } else {
         GR.page.setSearch (null);
       }
-      GR.page.setTitle (title.join (' - '));
+      GR.page.setTitle (title);
       GR._state.currentPage = params;
       return GR.theme.set (params.theme);
     });

@@ -49,7 +49,7 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, $current->o ('t1');
+      is $values->{title}, "\x{2066}" . $current->o ('t1') . "\x{2069}";
       is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/';
     } $current->c;
   });

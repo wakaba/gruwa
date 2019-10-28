@@ -1396,6 +1396,12 @@ sub group_members ($$$$) {
     $app->throw_error (403, reason_phrase => 'Not an owner')
         unless $opts->{group_member}->{member_type} == 2; # owner
 
+    my $data = {
+      member_type => $app->bare_param ('member_type') // 1, # member
+      default_index_id => $app->bare_param ('default_index_id') // '',
+    };
+    delete $data->{default_index_id}
+        unless length $data->{default_index_id};
     return $opts->{acall}->(['invite', 'create'], {
       sk_context => $app->config->{accounts}->{context},
       sk => $app->http->request_cookies->{sk},
@@ -1403,9 +1409,7 @@ sub group_members ($$$$) {
       context_key => $app->config->{accounts}->{context} . ':group',
       invitation_context_key => 'group-' . $opts->{group}->{group_id},
       account_id => $opts->{account}->{account_id},
-      data => (perl2json_chars {
-        member_type => $app->bare_param ('member_type') // 1, # member
-      }),
+      data => (perl2json_chars $data),
       expires => time + 3*24*60*60,
     })->(sub {
       my $json = $_[0];
@@ -1765,7 +1769,7 @@ sub group_index ($$$$) {
             account_id => $opts->{account}->{account_id},
             name => 'default_index_id',
             value => ($is_default ? $path->[3] : 0),
-            # XXX touch
+            # no touch
           })->();
         }
         return Promise->all (\@p)->then (sub {
@@ -2480,13 +2484,38 @@ sub invitation ($$$$) {
             user_status => 1, # open
             owner_status => $account_data->{group_membership}->{owner_status} || 1, # open
           })->(sub {
-            return $acall->(['group', 'member', 'data'], {
-              context_key => $app->config->{accounts}->{context} . ':group',
-              group_id => $account_data->{group}->{group_id},
-              account_id => $account_data->{account_id},
-              name => 'name',
-              value => $account_data->{name},
-            })->() unless defined $account_data->{group_membership}->{data}->{name};
+            my $gmdata_names = [];
+            my $gmdata_values = [];
+            unless (defined $account_data->{group_membership}->{data}->{name}) {
+              push @$gmdata_names, 'name';
+              push @$gmdata_values, $account_data->{name};
+            }
+            return Promise->resolve->then (sub {
+              my $default_index_id = $data->{default_index_id} // '';
+              if (length $default_index_id) {
+                return $app->db->select ('index', {
+                  group_id => Dongry::Type->serialize ('text', $account_data->{group}->{group_id}),
+                  owner_status => 1, # open
+                  user_status => 1, # open
+                  index_type => 1, # blog
+                }, fields => ['index_id'])->then (sub {
+                  my $x = $_[0]->first;
+                  if (defined $x) {
+                    push @$gmdata_names, 'default_index_id';
+                    push @$gmdata_values, $x->{index_id};
+                  }
+                });
+              }
+            })->then (sub {
+              return $acall->(['group', 'member', 'data'], {
+                context_key => $app->config->{accounts}->{context} . ':group',
+                group_id => $account_data->{group}->{group_id},
+                account_id => $account_data->{account_id},
+                name => $gmdata_names,
+                value => $gmdata_values,
+                # no touch
+              })->() if @$gmdata_names;
+            });
           })->then (sub {
             return $app->send_redirect ("/g/$account_data->{group}->{group_id}/my/config?welcome=1");
           });

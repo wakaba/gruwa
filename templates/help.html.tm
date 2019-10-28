@@ -92,6 +92,10 @@
         1枚の<a href=#invitation>招待状</a>で参加できるのは1人だけです。
         <a href=#invitation>招待状</a>には有効期限が設定されています。
 
+        <p><a href=#invitation>招待状</a>発行時に
+        「既定の日記」を指定すると、
+        指定した<a href=#blogs>日記</a>が<a href=#default-blog-index>既定の日記</a>となった状態で参加させることができます。
+        
         <p>「発行済招待状」にはこれまでに発行した<a href=#invitation>招待状</a>が表示されます
         (<a href=#owner>所有者</a>のみ)。
         発行済の<a href=#invitation>招待状</a>を無効にすることもできます。

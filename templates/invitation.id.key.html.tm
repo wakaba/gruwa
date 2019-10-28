@@ -1,47 +1,31 @@
 <html t:params="$group_title $app"
     pl:data-env="$app->config->{env_name}"
     data-theme=green>
-  <head>
-    <t:include path=_other_head.html.tm m:app=$app m:needreferrer=1>
-      グループに参加 - <t:text value=$group_title>
-    </t:include>
-  <body>
+<head>
+  <t:include path=_other_head.html.tm m:app=$app m:needreferrer=1>
+    &#x2066;グループに参加&#x2069; - &#x2066;<t:text value=$group_title>&#x2069;
+  </t:include>
 
-<header class=common>
-  <header-area>
-    <hgroup>
-      <h1><a href=/ rel=top>Gruwa</h1>
-    </>
-  </header-area>
-  <header-area>
-    <a href=/dashboard>ダッシュボード</a>
-    <a href=/help target=help>ヘルプ</a>
-  </header-area>
-</header>
+<body>
+  <header class=page>
+    <h1><t:text value=$group_title></h1>
+  </header>
 
-  <section>
-    <h1><t:text value="$group_title"></h1>
+  <form method=post action=./ referrerpolicy=origin is=invitation-accept>
+    <p>グループ「<bdi><t:text value="$group_title"></bdi>」に参加しますか?
 
-    <form method=post action=./ referrerpolicy=origin>
-      <p>グループ「<t:text value="$group_title">」に参加しますか?
+    <p class=operations>
+      <a pl:href="'/account/login?next=' . Web::URL::Encoding::percent_encode_c $app->http->url->stringify" class="button login-button">進む</a>
+      <button type=submit class=save-button hidden>参加する</button>
+  </form>
 
-      <p class=operations>
-        <a pl:href="'/account/login?next=' . Web::URL::Encoding::percent_encode_c $app->http->url->stringify" class=button>進む</a>
-        <button type=submit class=save-button hidden>参加する</button>
-        <!-- XXX -->
-        <script>
-          fetch ('/my/info.json', {credentials: 'same-origin', referrerPolicy: 'origin'}).then (function (res) {
-            return res.json ();
-          }).then (function (json) {
-            if (json.account_id) {
-              $$ (document, '.operations a.button').forEach (function (e) { e.hidden = true });
-              $$ (document, '.operations [type=submit]').forEach (function (e) { e.hidden = false });
-            }
-          });
-        </script>
-    </form>
-
-  </section>
+  <ul class=notes>
+    <li><a href=/>Gruwa</a> でグループに参加しようとしています。
+    <li><a href=/>Gruwa</a> はグループ活動のためのツール (グループウェア)
+    です。詳しくは<a href=/help target=help>ヘルプ</a>をご覧ください。
+    <li class=no-account>参加するにはまずログイン (初めての方は初回登録)
+    する必要があります。このまま先へ進んでください。
+  </ul>
 
 <!--
 

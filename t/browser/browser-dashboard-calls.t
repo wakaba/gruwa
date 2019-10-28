@@ -76,7 +76,7 @@ Test {
     my $values = $res->json->{value};
     test {
       use utf8;
-      is $values->{title}, '記事通知 - Gruwa';
+      is $values->{title}, "\x{2066}記事通知\x{2069} - \x{2066}Gruwa\x{2069}";
       is $values->{url}, '/dashboard/calls';
       is $values->{headerTitle}, 'ダッシュボード';
       is $values->{headerURL}, '/dashboard';

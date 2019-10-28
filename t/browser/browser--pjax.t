@@ -52,7 +52,7 @@ Test {
     test {
       use utf8;
       is $values->{path}, '/g/'.$current->o ('g1')->{group_id}.'/members';
-      is $values->{title}, '参加者 - ' . $current->o ('t1');
+      is $values->{title}, "\x{2066}参加者\x{2069} - \x{2066}" . $current->o ('t1') . "\x{2069}";
       is $values->{state}, 123445;
     } $current->c;
     return $current->b_wait (1 => {
@@ -76,7 +76,7 @@ Test {
     test {
       use utf8;
       is $values->{path}, '/g/'.$current->o ('g1')->{group_id}.'/config';
-      is $values->{title}, '設定 - ' . $current->o ('t1');
+      is $values->{title}, "\x{2066}設定\x{2069} - \x{2066}" . $current->o ('t1') . "\x{2069}";
       is $values->{state}, 123445;
     } $current->c;
   });
@@ -153,7 +153,7 @@ Test {
     test {
       use utf8;
       is $values->{path}, '/g/'.$current->o ('g1')->{group_id}.'/config';
-      is $values->{title}, '設定 - ' . $current->o ('t1');
+      is $values->{title}, "\x{2066}設定\x{2069} - \x{2066}" . $current->o ('t1') . "\x{2069}";
       is $values->{state}, 123445;
     } $current->c;
   });
@@ -211,7 +211,7 @@ Test {
     test {
       use utf8;
       is $values->{path}, '/g/'.$current->o ('g1')->{group_id}.'/members';
-      is $values->{title}, '参加者 - ' . $current->o ('t1');
+      is $values->{title}, "\x{2066}参加者\x{2069} - \x{2066}" . $current->o ('t1') . "\x{2069}";
       is $values->{state}, undef;
     } $current->c;
   });
