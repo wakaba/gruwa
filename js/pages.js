@@ -476,7 +476,7 @@ GR.group.activeMembers = function () {
         _.href += '?' + Math.random ();
       });
       document.querySelectorAll ('img.icon').forEach (_ => {
-        _.src += '?' + Math.random ();
+        if (_.src.match (/^https?:/)) _.src += '?' + Math.random ();
       });
     });
   }; // reloadGroupInfo
@@ -2777,11 +2777,9 @@ function togglePanel (name, container) {
     
     var cmd = template.getAttribute ('data-selectobject-command');
     if (cmd) {
-      console.log(cmd, section);
       section.addEventListener ('grSelectObject', (ev0) => {
         var ev = new Event ('gruwaeditcommand', {bubbles: true});
         ev.data = {type: cmd, value: ev0.grObjectURL};
-        console.log(ev);
         section.dispatchEvent (ev);
       });
     }
@@ -2920,12 +2918,8 @@ defineElement ({
         as.stageStart ("show");
         var lists = GR._findPointedElement (this, 'list');
         lists.forEach (_ => {
-          if (_.reload) { // XXX gr-list-container
-            _.reload ();
-          } else { // list-container
-            // XXX loadPrev
-            _.load ({});
-          }
+          // XXX loadPrev
+          _.load ({});
         });
       }).then (function () {
         as.end ({ok: true});
@@ -3401,18 +3395,35 @@ defineElement ({
 }); // <gr-editable-tr>
 
 defineElement ({
-  name: 'gr-icon-editor',
+  name: 'gr-select-icon',
   props: {
     pcInit: function () {
       this.setAttribute ('formcontrol', '');
-      this.querySelectorAll ('.generate-icon-button').forEach (_ => {
-        _.onclick = (ev) => this.grGenerate (ev.target);
-      });
-      this.querySelectorAll ('.reset-icon-button').forEach (_ => {
-        _.onclick = (ev) => this.grSetImage (null);
+      return $getTemplateSet ('gr-select-icon').then (ts => {
+        var e = ts.createFromTemplate ('div', {});
+        this.textContent = '';
+        while (e.firstChild) this.appendChild (e.firstChild);
+
+        this.querySelectorAll ('gr-index-viewer').forEach (_ => {
+          _.addEventListener ('click', (ev) => {
+            ev.stopPropagation (); // cancel popup-menu click
+          });
+          _.addEventListener ('grSelectObject', (ev) => {
+            this.grSetImage (ev.grObjectURL);
+          });
+        });
+        this.querySelectorAll ('.generate-icon-button').forEach (_ => {
+          _.hidden = ! this.hasAttribute ('generationtextselector');
+          _.onclick = (ev) => this.grGenerate ();
+        });
+        this.querySelectorAll ('.reset-icon-button').forEach (_ => {
+          _.onclick = (ev) => this.grSetImage (null);
+        });
+
+        this.grSetImage (null);
       });
     }, // pcInit
-    grGenerate: function (e) {
+    grGenerate: function () {
       var defs = [
         {name: 'dark'},
         {name: 'light-1'},
@@ -3421,7 +3432,7 @@ defineElement ({
       var def = defs[Math.floor (defs.length * Math.random ())];
       var bgs = ['●', '■', '★', '▲', '▼', '\u25B6', '\u25C0'];
       var bg = bgs[Math.floor (bgs.length * Math.random ())];
-      var text = document.querySelector (e.getAttribute ('data-text-selector')).value;
+      var text = document.querySelector (this.getAttribute ('generationtextselector')).value;
       text = text.substring (Math.floor (text.length * Math.random ())).substring (0, 1);
       var style = getComputedStyle (document.documentElement);
       var canvas = document.createElement ('canvas');
@@ -3438,18 +3449,22 @@ defineElement ({
       ctx.fillText (text, 80, 80);
       this.grSetImage (canvas);
     }, // grGenerate
-    grSetImage: function (obj) {
+    grSetImage: function (obj) { 
+      delete this.grImageObjectURL;
+      delete this.grImageObject;
+
       if (obj) {
-        this.grImageObject = obj;
-        this.querySelectorAll ('img').forEach (_ => _.src = obj.toDataURL ());
+        if (typeof obj === 'string') {
+          this.grImageObjectURL = obj;
+          this.querySelectorAll ('popup-menu > button img').forEach (_ => _.src = obj + 'image');
+        } else {
+          this.grImageObject = obj;
+          this.querySelectorAll ('popup-menu > button img').forEach (_ => _.src = obj.toDataURL ());
+        }
         return;
       }
       
-      return GR.group.info ().then (group => {
-        url = '/g/' + group.group_id + '/icon';
-        this.querySelectorAll ('img').forEach (_ => _.src = url);
-        delete this.grImageObject;
-      });
+      this.querySelectorAll ('popup-menu > button img').forEach (_ => _.src = this.getAttribute ('src'));
     }, // grSetURL
     pcModifyFormData: function (fd) {
       var name = this.getAttribute ('name');
@@ -3462,14 +3477,19 @@ defineElement ({
           nullAs.start ({stages: []});
           return uploadFile (blob, {
             mime_type: 'image/png',
+            index_id: this.querySelector ('gr-select-index').value,
           }, nullAs);
         }).then (obj => {
           fd.append (name, obj.object_id);
         });
+      } else if (this.grImageObjectURL) {
+        var m = this.grImageObjectURL.match (/\/g\/[0-9]+\/o\/([0-9]+)\//);
+        if (!m[1]) throw new Error ('Bad grImageObjectURL |'+this.grImageObjectURL+'|');
+        fd.append (name, m[1]);
       }
     }, // pcModifyFormData
   },
-}); // <gr-icon-editor>
+}); // <gr-select-icon>
 
 defineElement ({
   name: 'gr-called-editor',

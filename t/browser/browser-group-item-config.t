@@ -163,6 +163,104 @@ Test {
   });
 } n => 1, name => ['create an index (blog)'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [i1 => index => {index_type => 6, subtype => 'icon',
+                     account => 'a1', group => 'g1'}],
+    [o1 => object => {account => 'a1', group => 'g1',
+                      index => 'i1'}],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'config'],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-select-icon popup-menu .generate-icon-button',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-select-icon gr-select-index option',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('gr-select-icon popup-menu > button').click ();
+      document.querySelector ('gr-select-icon popup-menu .generate-icon-button').click ();
+      return document.querySelector ('gr-select-icon popup-menu > button img').src;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      like $res->json->{value}, qr{^data:image/png};
+    } $current->c;
+    return $current->b (1)->execute (q{
+      document.querySelector ('#edit-form button[type=submit]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#edit-form button[type=submit]:enabled',
+    });
+  })->then (sub {
+    return $current->get_json (['my', 'info.json'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $g = $result->{json}->{group};
+      ok $g->{icon_object_id};
+      $current->set_o (icon => {object_id => $g->{icon_object_id}});
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('icon')->{object_id},
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = $result->{json}->{objects}->{$current->o ('icon')->{object_id}};
+      ok $obj->{data}->{index_ids}->{$current->o ('i1')->{index_id}};
+      is $obj->{data}->{mime_type}, 'image/png';
+    } $current->c;
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-select-icon popup-menu list-item button',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('gr-select-icon popup-menu list-item button').click ();
+      return document.querySelector ('gr-select-icon popup-menu > button img').src;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      like $res->json->{value}, qr{/o/@{[$current->o ('o1')->{object_id}]}/image};
+    } $current->c;
+    return $current->b (1)->execute (q{
+      document.querySelector ('#edit-form button[type=submit]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#edit-form button[type=submit]:enabled',
+    });
+  })->then (sub {
+    return $current->get_json (['my', 'info.json'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $g = $result->{json}->{group};
+      is $g->{icon_object_id}, $current->o ('o1')->{object_id};
+    } $current->c;
+});
+} n => 6, name => ['edit icon'], browser => 1;
+
 RUN;
 
 =head1 LICENSE

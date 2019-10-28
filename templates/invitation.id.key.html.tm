@@ -26,7 +26,7 @@
       <p>グループ「<t:text value="$group_title">」に参加しますか?
 
       <p class=operations>
-        <a pl:href="'/account/login?next=' . Web::URL::Encoding::percent_encode_c $app->http->url->stringify" class=button>ログイン</a>
+        <a pl:href="'/account/login?next=' . Web::URL::Encoding::percent_encode_c $app->http->url->stringify" class=button>進む</a>
         <button type=submit class=save-button hidden>参加する</button>
         <!-- XXX -->
         <script>
