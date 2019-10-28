@@ -319,22 +319,17 @@
       <gr-uploader data-indexid-field=index_id indexsubtype=image listselector=gr-list-container[key=objects] listancestor=panel-main data-filled=indexid />
     </details>
 
-    <gr-list-container
-        data-src-template="o/get.json?index_id={index_id}&limit=9"
-        key=objects sortkey=timestamp,created
-        added-actions=editCommands>
+    <list-container loader=groupIndexLoader data-loader-indexid-field=index_id loader-indextype=6 loader-limit=9 data-filled="loader-indexid">
       <template>
-        <button type=button
-            data-edit-command=insertImage
-            data-value-template={GROUP}/o/{object_id}/>
-          <img src data-src-template={GROUP}/o/{object_id}/image>
+        <button type=button data-value-field=url data-filled=value>
+          <img src data-src-template={url}image>
         </button>
       </template>
       <list-main/>
-      <gr-action-status hidden stage-load=読み込み中... />
+      <action-status hidden stage-loader=読込中... />
       <p class="operations pager">
-        <button type=button class=next-page-button hidden>もっと昔</button>
-    </gr-list-container>
+        <button type=button class=list-next hidden>もっと昔</button>
+    </list-container>
   </template>
 </template-set>
 
@@ -345,22 +340,17 @@
       <gr-uploader data-indexid-field=index_id indexsubtype=file listselector=gr-list-container[key=objects] listancestor=panel-main data-filled=indexid />
     </details>
 
-    <gr-list-container
-        data-src-template="o/get.json?index_id={index_id}&limit=10&with_data=1"
-        key=objects sortkey=timestamp,created
-        added-actions=editCommands>
+    <list-container loader=groupIndexLoader data-loader-indexid-field=index_id loader-indextype=6 loader-limit=10 loader-withdata data-filled="loader-indexid">
       <template>
-        <button type=button
-            data-edit-command=insertFile
-            data-value-template={GROUP}/o/{object_id}/
-            data-data-field=file_name>
+        <button type=button data-value-field=url data-filled=value>
+          <code data-field=object.data.file_name />
         </button>
       </template>
       <list-main/>
-      <gr-action-status hidden stage-load=読み込み中... />
+      <action-status hidden stage-loader=読込中... />
       <p class="operations pager">
-        <button type=button class=next-page-button hidden>もっと昔</button>
-    </gr-list-container>
+        <button type=button class=list-next hidden>もっと昔</button>
+    </list-container>
   </template>
 </template-set>
 

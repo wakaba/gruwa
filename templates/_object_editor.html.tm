@@ -240,12 +240,12 @@
   <gr-list-container type=$with id=index-list src=i/list.json key=index_list itemkey=index_id />
   <gr-list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />
 
-<template id=template-panel-image-list>
+<template id=template-panel-image-list data-selectobject-command=insertImage>
   <gr-select-index type=image empty=アルバムがありません。 title=アルバム />
   <gr-index-viewer type=image selectselector=gr-select-index selectancestor=section />
 </template>
 
-<template id=template-panel-file-list>
+<template id=template-panel-file-list data-selectobject-command=insertFile>
   <gr-select-index type=file empty=ファイルフォルダーがありません。 title=ファイルフォルダー />
   <gr-index-viewer type=file selectselector=gr-select-index selectancestor=section />
 </template>
