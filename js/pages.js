@@ -302,7 +302,7 @@ GR.page.setSearch = function (args) {
 
 GR.page._title = function () {
   if (GR._state.searchWord) {
-    document.title = "\u2066" + GR._state.searchWord + "\u2069 - \u2066" + GR._state.title + "\u2069";
+    document.title = "\u2066" + GR._state.searchWord + "\u2069 - " + GR._state.title;
   } else {
     document.title = GR._state.title;
   }
