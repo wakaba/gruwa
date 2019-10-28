@@ -553,6 +553,8 @@
                   <td>
                     <label><input type=radio name=subtype value=file checked required> ファイルフォルダー</label>
                     <label><input type=radio name=subtype value=image required> アルバム</label>
+                    <label><input type=radio name=subtype value=icon required> アイコン集</label>
+                    <label><input type=radio name=subtype value=stamp required> スタンプセット</label>
             </table>
 
             <p class=operations>
@@ -769,6 +771,8 @@
                 <enum-value data-field=index.subtype
                     label-image=アルバム
                     label-file=ファイルフォルダー
+                    label-icon=アイコン集
+                    label-stamp=スタンプセット
                     label-null label-undefined />
             <tr>
               <th><label for=edit-title>名前</>
@@ -1087,7 +1091,9 @@
     <section>
       <header class=section>
         <h1 data-gr-if-index-subtype=image>アルバム</h1>
-        <h1 data-gr-if-index-subtype=file>ファイル一覧</h1>
+        <h1 data-gr-if-index-subtype=file>ファイルフォルダー</h1>
+        <h1 data-gr-if-index-subtype=icon>アイコン集</h1>
+        <h1 data-gr-if-index-subtype=stamp>スタンプセット</h1>
       </header>
 
       <details>
@@ -1104,7 +1110,7 @@
         <p class="operations pager">
           <button type=button class=list-next hidden>もっと昔</button>
       </list-container>
-      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=36 loader-withdata data-filled="loader-indexid loader-indextype" template=gr-fileset-list-item-image class="search-result fileset-image" data-gr-if-index-subtype=image>
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=36 loader-withdata data-filled="loader-indexid loader-indextype" template=gr-fileset-list-item-image class="search-result fileset-image" data-gr-if-index-subtype="image icon stamp">
         <list-main></list-main>
         <list-is-empty hidden>
           <p>このフォルダーは空です。</p>

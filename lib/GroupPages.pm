@@ -1611,6 +1611,8 @@ sub group_index ($$$$) {
     }, fields => ['index_id', 'index_type', 'title', 'updated', 'options'])->then (sub {
       my $subtypes = {map { $_ => 1 } @{$app->bare_param_list ('subtype')}};
       return json $app, {index_list => {map {
+        $_->{options}->{subtype} //= 'file' # backcompat
+            if $_->{index_type} == 6; # fileset
         $_->{index_id} => {
           group_id => $path->[1],
           index_id => ''.$_->{index_id},

@@ -1353,16 +1353,24 @@ gr-nav-panel gr-group:not([hidden]) {
 }
 
 .main-menu-list > * > .fileset-image::before,
-.main-menu-list > * > .fileset-file::before {
+.main-menu-list > * > .fileset-file::before,
+.main-menu-list > * > .fileset-icon::before,
+.main-menu-list > * > .fileset-stamp::before {
   display: inline-block;
   margin-right: .2em;
   font-size: 130%;
 }
 .main-menu-list > * > .fileset-image::before {
-  content: "\1F3A8";
+  content: "\1F5BC";
 }
 .main-menu-list > * > .fileset-file::before {
   content: "\1F4C4";
+}
+.main-menu-list > * > .fileset-icon::before {
+  content: "\1F3AD";
+}
+.main-menu-list > * > .fileset-stamp::before {
+  content: "\1F4A5";
 }
 
 .main-menu-list > * > * > small:not([hidden]) {

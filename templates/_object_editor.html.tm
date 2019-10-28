@@ -35,7 +35,7 @@
           ><button type=button data-action=link data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
 
               <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button
-              ><button type=button data-action=panel data-value=image-list title=画像>&#x1F3A8;</button
+              ><button type=button data-action=panel data-value=image-list title=画像>&#x1F5BC;</button
               ><button type=button data-action=panel data-value=file-list title=ファイル>&#x1F4C4;</button>
             </menu>
             <iframe />

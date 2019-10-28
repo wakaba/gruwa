@@ -540,6 +540,172 @@ Test {
       account => 'a1',
       title => $current->generate_text (t3 => {}),
       index_type => 6, # fileset
+      subtype => 'icon',
+    }],
+    [o1 => object => {
+      group => 'g1',
+      account => 'a1',
+      title => $current->generate_text (t4 => {}),
+      index => 'i1',
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'i', $current->o ('i1')->{index_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('t4'),
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return {
+        title: document.title,
+        url: location.pathname,
+        headerTitle: document.querySelector ('header.page h1').textContent,
+        headerURL: document.querySelector ('header.page h1 a').pathname,
+        headerLink: document.querySelector ('header.page gr-menu a').pathname,
+        //sectionTitle: document.querySelector ('header.section h1').textContent,
+        //sectionURL: document.querySelector ('header.section a').pathname,
+        //sectionLink: document.querySelector ('header.section gr-menu a').pathname,
+      };
+    });
+  })->then (sub {
+    my $res = $_[0];
+    my $values = $res->json->{value};
+    test {
+      use utf8;
+      is $values->{title}, $current->o ('t3') . ' - ' . $current->o ('t1');
+      is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
+      is $values->{headerTitle}, $current->o ('t3');
+      is $values->{headerURL}, $values->{url};
+      is $values->{headerLink}, $values->{headerURL};
+      #is $values->{sectionTitle}, $current->o ('t3');
+      #is $values->{sectionURL}, $values->{url};
+      #is $values->{sectionLink}, $values->{url};
+    } $current->c;
+    return $current->b_wait (1 => {
+      selector => 'gr-uploader input[type=file]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var file = new Blob ([1, 2, 3]);
+      file.name = arguments[0];
+      document.querySelector ('gr-uploader').grUploadFile (file);
+    }, [$current->generate_text (name1 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.search-result',
+      text => $current->o ('name1'),
+    });
+  });
+} n => 5, name => ['initial load (fileset icon)'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'], title => $current->generate_text (t1 => {}),
+      theme => 'red',
+    }],
+    [i1 => index => {
+      group => 'g1',
+      account => 'a1',
+      title => $current->generate_text (t3 => {}),
+      index_type => 6, # fileset
+      subtype => 'stamp',
+    }],
+    [o1 => object => {
+      group => 'g1',
+      account => 'a1',
+      title => $current->generate_text (t4 => {}),
+      index => 'i1',
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'i', $current->o ('i1')->{index_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.page gr-menu a',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('t4'),
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return {
+        title: document.title,
+        url: location.pathname,
+        headerTitle: document.querySelector ('header.page h1').textContent,
+        headerURL: document.querySelector ('header.page h1 a').pathname,
+        headerLink: document.querySelector ('header.page gr-menu a').pathname,
+        //sectionTitle: document.querySelector ('header.section h1').textContent,
+        //sectionURL: document.querySelector ('header.section a').pathname,
+        //sectionLink: document.querySelector ('header.section gr-menu a').pathname,
+      };
+    });
+  })->then (sub {
+    my $res = $_[0];
+    my $values = $res->json->{value};
+    test {
+      use utf8;
+      is $values->{title}, $current->o ('t3') . ' - ' . $current->o ('t1');
+      is $values->{url}, '/g/'.$current->o ('g1')->{group_id}.'/i/'.$current->o ('i1')->{index_id}.'/';
+      is $values->{headerTitle}, $current->o ('t3');
+      is $values->{headerURL}, $values->{url};
+      is $values->{headerLink}, $values->{headerURL};
+      #is $values->{sectionTitle}, $current->o ('t3');
+      #is $values->{sectionURL}, $values->{url};
+      #is $values->{sectionLink}, $values->{url};
+    } $current->c;
+    return $current->b_wait (1 => {
+      selector => 'gr-uploader input[type=file]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var file = new Blob ([1, 2, 3]);
+      file.name = arguments[0];
+      document.querySelector ('gr-uploader').grUploadFile (file);
+    }, [$current->generate_text (name1 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.search-result',
+      text => $current->o ('name1'),
+    });
+  });
+} n => 5, name => ['initial load (fileset stamp)'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'], title => $current->generate_text (t1 => {}),
+      theme => 'red',
+    }],
+    [i1 => index => {
+      group => 'g1',
+      account => 'a1',
+      title => $current->generate_text (t3 => {}),
+      index_type => 6, # fileset
       subtype => 'file',
     }],
     [o1 => object => {
