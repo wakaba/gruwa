@@ -901,30 +901,29 @@ list-is-empty:not([hidden]) {
   font-size: 90%;
 }
 
-.panel.image-list list-container,
-.panel.file-list list-container {
+gr-index-viewer list-container:not([hidden]) {
   display: block;
   margin: 0;
 }
 
-.panel.image-list list-container list-item,
-.panel.file-list list-container list-item {
+gr-index-viewer list-container list-item:not([hidden]) {
   display: block;
   margin: 0;
   padding: 0;
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
   width: auto;
 }
 
-.panel.image-list list-container list-item:nth-child(2n),
-.panel.file-list list-container list-item:nth-child(2n) {
+gr-index-viewer[type=file] list-container list-item {
+  background-color: var(--light-1-background-color);
+  color: var(--light-1-color);
+}
+
+gr-index-viewer[type=file] list-container list-item:nth-child(2n) {
   background-color: var(--light-2-background-color);
   color: var(--light-2-color);
 }
 
-.panel.image-list list-container list-item > button,
-.panel.file-list list-container list-item > button {
+gr-index-viewer list-container list-item > button:not([hidden]) {
   display: block;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -939,68 +938,55 @@ list-is-empty:not([hidden]) {
   text-align: left;
 }
 
-.panel.image-list list-container list-item > button.active,
-.panel.file-list list-container list-item > button.active {
-  text-indent: -1em;
-  font-weight: bolder;
-}
-
-.panel.image-list list-container list-item > button.active::before,
-.panel.file-list list-container list-item > button.active::before {
-  content: "\0025C8  ";
-}
-
-.panel.image-list list-container list-is-empty,
-.panel.file-list list-container list-is-empty {
-  margin: 0;
-}
-
-.panel.image-list panel-main:not([hidden]),
-.panel.file-list panel-main:not([hidden]) {
+gr-index-viewer panel-main:not([hidden]) {
   display: block;
   margin: 0;
   padding: .2rem;
   text-align: center;
 }
 
-.panel.image-list panel-main > details,
-.panel.file-list panel-main > details {
+gr-index-viewer panel-main > details {
   margin-bottom: 0.5em;
   text-align: left;
   font-size: 80%;
 }
 
-.panel.image-list panel-main > details > form,
-.panel.file-list panel-main > details > form {
+gr-index-viewer panel-main > details > form {
   margin: 0;
   padding: .2em;
   min-height: 10em;
 }
 
-.panel.image-list panel-main > list-container list-main:not([hidden]) {
+gr-index-viewer[type=image] panel-main > list-container list-main:not([hidden]),
+gr-index-viewer[type=icon] panel-main > list-container list-main:not([hidden]),
+gr-index-viewer[type=stamp] panel-main > list-container list-main:not([hidden]) {
   display: inline;
 }
 
-.panel.image-list panel-main > list-container list-main > list-item {
+gr-index-viewer[type=image] panel-main > list-container list-main > list-item:not([hidden]),
+gr-index-viewer[type=icon] panel-main > list-container list-main > list-item:not([hidden]),
+gr-index-viewer[type=stamp] panel-main > list-container list-main > list-item:not([hidden]) {
   display: inline-block;
-  margin: 0;
+  margin: 0.3em;
   padding: 0;
   width: 6em;
   height: 6em;
 }
 
-.panel.file-list panel-main > list-container list-main > list-item {
+gr-index-viewer[type=file] panel-main > list-container list-main > list-item {
   margin: 0;
   padding: 0;
   color: inherit;
   background: transparent;
 }
 
-.panel.file-list panel-main > list-container list-main > list-item:last-of-ype {
+gr-index-viewer[type=file] panel-main > list-container list-main > list-item:last-of-ype {
   margin-bottom: .2em;
 }
 
-.panel.image-list panel-main > list-container list-main > list-item button {
+gr-index-viewer[type=image] panel-main > list-container list-main > list-item button:not([hidden]),
+gr-index-viewer[type=icon] panel-main > list-container list-main > list-item button:not([hidden]),
+gr-index-viewer[type=stamp] panel-main > list-container list-main > list-item button:not([hidden]) {
   display: block;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -1011,11 +997,12 @@ list-is-empty:not([hidden]) {
   color: inherit;
   background: transparent;
   width: 100%;
+  font-size: 100%;
   min-height: 6em;
   line-height: 6;
 }
 
-.panel.file-list panel-main > list-container list-main > list-item button {
+gr-index-viewer[type=file] panel-main > list-container list-main > list-item button:not([hidden]) {
   display: block;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -1030,21 +1017,18 @@ list-is-empty:not([hidden]) {
   text-align: left;
 }
 
-.panel.image-list panel-main > details > summary:active,
-.panel.image-list panel-main > details > summary:hover,
-.panel.file-list panel-main > details > summary:active,
-.panel.file-list panel-main > details > summary:hover,
-.panel.image-list panel-main > list-container list-main > list-item button:active,
-.panel.image-list panel-main > list-container list-main > list-item button:hover,
-.panel.file-list panel-main > list-container list-main > list-item button:active,
-.panel.file-list panel-main > list-container list-main > list-item button:hover {
+gr-index-viewer panel-main > details > summary:active,
+gr-index-viewer panel-main > details > summary:hover,
+gr-index-viewer panel-main > list-container list-main > list-item button:active,
+gr-index-viewer panel-main > list-container list-main > list-item button:hover {
   background-color: var(--toolbar-hover-background-color);
   color: var(--toolbar-hover-color);
 }
 
-.panel.image-list panel-main > list-container list-main > list-item img {
-  max-width: 6em;
-  max-height: 6em;
+gr-index-viewer panel-main > list-container list-main > list-item img {
+  width: 6em;
+  height: 6em;
+  object-fit: cover;
   vertical-align: middle;
 }
 

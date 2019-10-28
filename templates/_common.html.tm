@@ -316,7 +316,28 @@
   <template><!-- <panel-main> -->
     <details>
       <summary>新しい画像</summary>
-      <gr-uploader data-indexid-field=index_id indexsubtype=image listselector=gr-list-container[key=objects] listancestor=panel-main data-filled=indexid />
+      <gr-uploader data-indexid-field=index_id indexsubtype=image listselector=list-container listancestor=panel-main data-filled=indexid />
+    </details>
+
+    <list-container loader=groupIndexLoader data-loader-indexid-field=index_id loader-indextype=6 loader-limit=9 data-filled="loader-indexid">
+      <template>
+        <button type=button data-value-field=url data-filled=value>
+          <img src data-src-template={url}image>
+        </button>
+      </template>
+      <list-main/>
+      <action-status hidden stage-loader=読込中... />
+      <p class="operations pager">
+        <button type=button class=list-next hidden>もっと昔</button>
+    </list-container>
+  </template>
+</template-set>
+
+<template-set name=gr-index-viewer-icon>
+  <template><!-- <panel-main> -->
+    <details>
+      <summary>新しい画像</summary>
+      <gr-uploader data-indexid-field=index_id indexsubtype=icon listselector=list-container listancestor=panel-main data-filled=indexid />
     </details>
 
     <list-container loader=groupIndexLoader data-loader-indexid-field=index_id loader-indextype=6 loader-limit=9 data-filled="loader-indexid">
@@ -337,7 +358,7 @@
   <template><!-- <panel-main> -->
     <details>
       <summary>新しいファイル</summary>
-      <gr-uploader data-indexid-field=index_id indexsubtype=file listselector=gr-list-container[key=objects] listancestor=panel-main data-filled=indexid />
+      <gr-uploader data-indexid-field=index_id indexsubtype=file listselector=list-container listancestor=panel-main data-filled=indexid />
     </details>
 
     <list-container loader=groupIndexLoader data-loader-indexid-field=index_id loader-indextype=6 loader-limit=10 loader-withdata data-filled="loader-indexid">
@@ -388,18 +409,8 @@
             <tr>
               <th>アイコン
               <td>
-                <gr-icon-editor name=icon_object_id>
-                  <figure>
-                    <img src=icon class=icon>
-                  </figure>
-                  <button type=button class=generate-icon-button
-                      data-text-selector="input[name=title]">
-                    自動生成
-                  </button>
-                  <button type=button class=reset-icon-button>
-                    編集前に戻す
-                  </button>
-                </gr-icon-editor>
+                <gr-select-icon name=icon_object_id src=icon
+                    generationtextselector="input[name=title]" />
         </table>
         <p class=operations>
           <button type=submit class=save-button data-enable-by-fill>保存する</>
@@ -1151,9 +1162,35 @@
   </template>
 </template-set>
 
+<template-set name=gr-select-icon>
+  <template>
+    <popup-menu>
+      <button type=button>
+        <figure>
+          <img class=icon>
+        </figure>
+      </button>
+      <menu-main>
+        <gr-select-index type=icon empty=アイコン集がありません。 title=アイコン集 />
+
+        <gr-index-viewer type=icon selectselector=gr-select-index selectancestor=gr-select-icon />
+
+        <p>
+          <button type=button class=generate-icon-button>
+            自動生成
+          </button>
+        <p>
+          <button type=button class=reset-icon-button>
+            編集前に戻す
+          </button>
+      </menu-main>
+    </popup-menu>
+  </template>
+</template-set>
+
 <template-set name=gr-uploader>
   <template>
-    <form method=post action=javascript:>
+    <form method=post action=javascript: class=explicit>
       <gr-list-container>
         <template>
           <p><code data-field=file_name />
@@ -1734,18 +1771,9 @@
             <tr>
               <th>アイコン
               <td>
-                <gr-icon-editor name=icon_object_id>
-                  <figure>
-                    <img data-src-template=/g/{group.group_id}/account/{account.account_id}/icon class=icon>
-                  </figure>
-                  <button type=button class=generate-icon-button
-                      data-text-selector="input[name=name]">
-                    自動生成
-                  </button>
-                  <button type=button class=reset-icon-button>
-                    編集前に戻す
-                  </button>
-                </gr-icon-editor>
+                <gr-select-icon name=icon_object_id
+                    data-src-template=/g/{group.group_id}/account/{account.account_id}/icon
+                    generationtextselector="input[name=title]" />
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>

@@ -472,13 +472,32 @@ input[type=date] {
   background-color: var(--main-background-color);
 }
 
-select {
+select:not([hidden]),
+gr-select-icon:not([hidden]) {
+  display: inline-block;
   border: dotted 1px;
   border-color: var(--accented-border-color);
   padding: .3em;
   color: var(--main-color);
   background-color: var(--main-background-color);
   min-width: 10em;
+}
+
+gr-select-icon popup-menu > button:not([hidden]) {
+  display: flex;
+  width: 100%;
+  align-items: center;
+}
+
+gr-select-icon popup-menu > button figure:not([hidden]) {
+  display: inline;
+  flex-grow: 1;
+  margin: 0;
+}
+
+gr-select-icon popup-menu > button .icon {
+  width: 6em;
+  height: 6em;
 }
 
 list-control {
@@ -1152,8 +1171,8 @@ gr-nav-panel form {
   line-height: 1.5;
 }
 
-menu-main p a:not([hidden]),
-menu-main p button:not([hidden]) {
+menu-main p:not(.operations) a:not([hidden]),
+menu-main p:not(.operations) button:not([hidden]) {
   -webkit-appearance: none;
   display: block;
   margin: 0;
@@ -1169,7 +1188,7 @@ menu-main p button:not([hidden]) {
   text-align: left;
 }
 
-popup-menu > menu-main form:not([hidden]) {
+popup-menu > menu-main form:not([hidden]):not(.explicit) {
   display: contents;
 }
 
