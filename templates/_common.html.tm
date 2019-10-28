@@ -681,6 +681,10 @@
               <tr>
                 <th>有効期間
                 <td>発行から72時間
+              <tr>
+                <th>既定の日記
+                <td>
+                  <gr-select-index type=blog optional=指定しない name=default_index_id />
           </table>
   
           <p class=operations>
@@ -738,7 +742,7 @@ Web ブラウザーで開いてください。
                 <p><time data-field=used />
               </only-if>
               <only-if data-field=used cond="==0" hidden>
-                <form method=post action=javascript: data-data-action-template=members/invitations/{invitation_key}/invalidate.json data-next=reloadList:invitations-list>
+                <form method=post action=javascript: data-data-action-template=members/invitations/{invitation_key}/invalidate.json data-next=reloadList:invitations-list class=transparent>
                   <gr-action-status hidden stage-fetch=変更中... />
                   <button type=submit class=delete-button>無効にする</>
                 </form>

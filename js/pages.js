@@ -634,10 +634,20 @@ defineElement ({
           filter = _ => {
             return _.index_type == 6 /* fileset */ && _.subtype === type;
           };
+        } else if (type === 'blog') {
+          filter = _ => {
+            return _.index_type == 1;
+          };
         }
         list = Object.values (list).filter (filter).sort ((a, b) => {
           return b.updated - a.updated;
         });
+        if (this.hasAttribute ('optional')) {
+          var opt = document.createElement ('option');
+          opt.value = '';
+          opt.label = this.getAttribute ('optional');
+          select.appendChild (opt);
+        }
         if (list.length) {
           list.forEach (idx => {
             var opt = document.createElement ('option');
@@ -646,10 +656,12 @@ defineElement ({
             select.appendChild (opt);
           });
         } else {
-          var opt = document.createElement ('option');
-          opt.label = this.getAttribute ('empty');
-          opt.value = '';
-          select.appendChild (opt);
+          if (!select.firstChild) {
+            var opt = document.createElement ('option');
+            opt.label = this.getAttribute ('empty');
+            opt.value = '';
+            select.appendChild (opt);
+          }
         }
         select.value = val;
         select.onchange = () => val = select.value;
@@ -665,6 +677,11 @@ defineElement ({
         this.appendChild (select);
       });
     }, // pcInit
+    pcModifyFormData: function (fd) {
+      var name = this.getAttribute ('name');
+      if (!name) return;
+      fd.append (name, this.value || '');
+    }, // pcModifyFormData
   },
 }); // <gr-select-index>
 

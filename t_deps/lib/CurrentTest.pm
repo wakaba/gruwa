@@ -437,8 +437,15 @@ sub object ($$%) {
 
 sub create_invitation ($$) {
   my ($self, $name, $opts) = @_;
+  if (exists $opts->{default_index}) {
+    for (ref $opts->{default_index} ? @{$opts->{default_index}} : $opts->{default_index}) {
+      my $index = $self->_get_o ($_) // die $_;
+      $opts->{default_index_id} = $index->{index_id};
+    }
+  }
   return $self->post_json (['members', 'invitations', 'create.json'], {
     member_type => $opts->{member_type},
+    default_index_id => $opts->{default_index_id},
   }, account => $opts->{account}, group => $opts->{group})->then (sub {
     $self->{objects}->{$name} = $_[0]->{json};
   });
