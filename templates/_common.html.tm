@@ -1773,7 +1773,7 @@
               <td>
                 <gr-select-icon name=icon_object_id
                     data-src-template=/g/{group.group_id}/account/{account.account_id}/icon
-                    generationtextselector="input[name=title]" />
+                    generationtextselector="input[name=name]" />
         </table>
         <p class=operations>
           <button type=submit class=save-button>保存する</>

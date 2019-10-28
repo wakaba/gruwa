@@ -188,6 +188,10 @@ Test {
       selector => 'gr-select-icon popup-menu .generate-icon-button',
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-select-icon gr-select-index option',
+    });
+  })->then (sub {
     return $current->b (1)->execute (q{
       document.querySelector ('gr-select-icon popup-menu > button').click ();
       document.querySelector ('gr-select-icon popup-menu .generate-icon-button').click ();
