@@ -2488,12 +2488,12 @@ sub invitation ($$$$) {
               value => $account_data->{name},
             })->() unless defined $account_data->{group_membership}->{data}->{name};
           })->then (sub {
-            return $app->send_redirect ("/g/$account_data->{group}->{group_id}/");
+            return $app->send_redirect ("/g/$account_data->{group}->{group_id}/my/config?welcome=1");
           });
         }, sub {
           my $reason = $_[0]->{reason};
           if ($reason eq 'Bad invitation') {
-            return $app->send_redirect ("/g/$path->[1]/");
+            return $app->send_redirect ("/g/$path->[1]/my/config?welcome=1");
           } else {
             return $app->throw_error (400, reason_phrase => $reason);
           }
@@ -2508,7 +2508,7 @@ sub invitation ($$$$) {
       })->(sub {
         my $json = $_[0];
         if ($json->{used}) {
-          return $app->send_redirect ("/g/$path->[1]/");
+          return $app->send_redirect ("/g/$path->[1]/my/config?welcome=1");
         }
 
         return $acall->(['group', 'profiles'], {
@@ -2524,7 +2524,7 @@ sub invitation ($$$$) {
       }, sub {
         my $json = $_[0];
         if ($json->{reason} eq 'Bad invitation') {
-          return $app->send_redirect ("/g/$path->[1]/");
+          return $app->send_redirect ("/g/$path->[1]/my/config?welcome=1");
         } else {
           return $app->throw_error (400, reason_phrase => $json->{reason});
         }

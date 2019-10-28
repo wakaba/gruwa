@@ -24,14 +24,14 @@ Test {
       ''], {}, account => 'a2'],
       [
         {path => ['invitation', '124', 'abc', ''], status => 302,
-         response_headers => {location => $current->resolve ("/g/124/")->stringify}},
+         response_headers => {location => $current->resolve ("/g/124/my/config?welcome=1")->stringify}},
         {path => ['invitation', '124', $current->o ('i1')->{invitation_key}, ''], status => 302,
-         response_headers => {location => $current->resolve ("/g/124/")->stringify}},
+         response_headers => {location => $current->resolve ("/g/124/my/config?welcome=1")->stringify}},
         {path => ['invitation', '000'.$current->o ('g1')->{group_id}, $current->o ('i1')->{invitation_key}, ''], status => 404},
         {path => ['invitation', $current->o ('g1')->{group_id}, 'baegeee', ''], status => 302,
-         response_headers => {location => $current->resolve ("/g/".$current->o ('g1')->{group_id}."/")->stringify}},
+         response_headers => {location => $current->resolve ("/g/".$current->o ('g1')->{group_id}."/my/config?welcome=1")->stringify}},
         {path => ['invitation', $current->o ('g2')->{group_id}, $current->o ('i1')->{invitation_key}, ''], status => 302,
-         response_headers => {location => $current->resolve ("/g/".$current->o ('g2')->{group_id}."/")->stringify}},
+         response_headers => {location => $current->resolve ("/g/".$current->o ('g2')->{group_id}."/my/config?welcome=1")->stringify}},
       ],
     );
   })->then (sub {
@@ -99,7 +99,7 @@ Test {
     my $result = $_[0];
     test {
       is $result->{res}->header ('Location'),
-         $current->resolve ("/g/".$current->o ('g1')->{group_id}."/")->stringify;
+         $current->resolve ("/g/".$current->o ('g1')->{group_id}."/my/config?welcome=1")->stringify;
     } $current->c;
     return $current->get_redirect (['invitation',
       $current->o ('g1')->{group_id},
@@ -109,7 +109,7 @@ Test {
     my $result = $_[0];
     test {
       is $result->{res}->header ('Location'),
-         $current->resolve ("/g/".$current->o ('g1')->{group_id}."/")->stringify;
+         $current->resolve ("/g/".$current->o ('g1')->{group_id}."/my/config?welcome=1")->stringify;
     } $current->c;
     return $current->get_redirect (['invitation',
       $current->o ('g1')->{group_id},
@@ -119,7 +119,7 @@ Test {
     my $result = $_[0];
     test {
       is $result->{res}->header ('Location'),
-         $current->resolve ("/g/".$current->o ('g1')->{group_id}."/")->stringify;
+         $current->resolve ("/g/".$current->o ('g1')->{group_id}."/my/config?welcome=1")->stringify;
     } $current->c;
   });
 } n => 3, name => 'GET a used invitation';
@@ -146,14 +146,14 @@ Test {
       ''], {}, account => 'a2'],
       [
         {path => ['invitation', '124', 'abc', ''], status => 302,
-         response_headers => {location => $current->resolve ("/g/124/")->stringify}},
+         response_headers => {location => $current->resolve ("/g/124/my/config?welcome=1")->stringify}},
         {path => ['invitation', '124', $current->o ('i1')->{invitation_key}, ''], status => 302,
-         response_headers => {location => $current->resolve ("/g/124/")->stringify}},
+         response_headers => {location => $current->resolve ("/g/124/my/config?welcome=1")->stringify}},
         {path => ['invitation', '000'.$current->o ('g1')->{group_id}, $current->o ('i1')->{invitation_key}, ''], status => 404},
         {path => ['invitation', $current->o ('g1')->{group_id}, 'baegeee', ''], status => 302,
-         response_headers => {location => $current->resolve ("/g/".$current->o ('g1')->{group_id}."/")->stringify}},
+         response_headers => {location => $current->resolve ("/g/".$current->o ('g1')->{group_id}."/my/config?welcome=1")->stringify}},
         {path => ['invitation', $current->o ('g2')->{group_id}, $current->o ('i1')->{invitation_key}, ''], status => 302,
-         response_headers => {location => $current->resolve ("/g/".$current->o ('g2')->{group_id}."/")->stringify}},
+         response_headers => {location => $current->resolve ("/g/".$current->o ('g2')->{group_id}."/my/config?welcome=1")->stringify}},
         {account => undef, status => 403, name => 'no account'},
         {account => 'a3', status => 403, name => 'bad terms_version'},
         {origin => undef, status => 400},
@@ -169,7 +169,7 @@ Test {
     test {
       is $result->{status}, 302;
       is $result->{res}->header ('Location'),
-         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
+         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/my/config?welcome=1')->stringify;
     } $current->c;
     return $current->get_json (['members', 'list.json'], {}, account => 'a2', group => 'g1');
   })->then (sub {
@@ -231,7 +231,7 @@ Test {
     test {
       is $result->{status}, 302, $result;
       is $result->{res}->header ('Location'),
-         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
+         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/my/config?welcome=1')->stringify;
     } $current->c, name => 'Used invitation';
   })->then (sub {
     return $current->get_json (['members', 'list.json'], {}, account => 'a2', group => 'g1');
@@ -285,7 +285,7 @@ Test {
     test {
       is $result->{status}, 302;
       is $result->{res}->header ('Location'),
-         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
+         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/my/config?welcome=1')->stringify;
     } $current->c;
     return $current->get_json (['members', 'list.json'], {}, account => 'a2', group => 'g1');
   })->then (sub {
@@ -344,7 +344,7 @@ Test {
     test {
       is $result->{status}, 302;
       is $result->{res}->header ('Location'),
-         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
+         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/my/config?welcome=1')->stringify;
     } $current->c;
     return $current->get_json (['members', 'list.json'], {}, account => 'a2', group => 'g1');
   })->then (sub {
@@ -397,7 +397,7 @@ Test {
     test {
       is $result->{status}, 302;
       is $result->{res}->header ('Location'),
-         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
+         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/my/config?welcome=1')->stringify;
     } $current->c;
     return $current->get_json (['members', 'list.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
@@ -449,7 +449,7 @@ Test {
     test {
       is $result->{status}, 302;
       is $result->{res}->header ('Location'),
-         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
+         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/my/config?welcome=1')->stringify;
     } $current->c;
     return $current->get_json (['members', 'list.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
@@ -503,7 +503,7 @@ Test {
     test {
       is $result->{status}, 302;
       is $result->{res}->header ('Location'),
-         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/')->stringify;
+         $current->resolve ("/g/" . $current->o ('g1')->{group_id} . '/my/config?welcome=1')->stringify;
     } $current->c;
     return $current->get_json (['members', 'list.json'], {}, account => 'a1', group => 'g1');
   })->then (sub {
