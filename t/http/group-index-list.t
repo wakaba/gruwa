@@ -153,6 +153,31 @@ Test {
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_group (g1 => {members => ['a1']});
   })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1',
+                                          color => '#ffaa42',
+                                          theme => 'red',
+                                          deadline => '2051-04-15',
+                                          index_type => 6,
+                                          subtype => undef});
+  })->then (sub {
+    return $current->get_json (['i', 'list.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $data = $result->{json}->{index_list}->{$current->o ('i1')->{index_id}};
+      is $data->{color}, '#ffaa42';
+      is $data->{theme}, 'red';
+      is $data->{deadline}, 2565129600;
+      is $data->{subtype}, 'file';
+    } $current->c;
+  });
+} n => 4, name => '/g/{}/i/list.json options - fileset no subtype';
+
+Test {
+  my $current = shift;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
     return $current->create_index (i1 => {index_type => 9, group => 'g1', account => 'a1'});
   })->then (sub {
     return $current->create_index (i2 => {index_type => 9, subtype => "foo", group => 'g1', account => 'a1'});
