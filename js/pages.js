@@ -3369,9 +3369,28 @@ function upgradeForm (form) {
   var def = document.createElementNS ('data:,pc', 'formsaved');
   def.setAttribute ('name', 'reloadList');
   def.pcHandler = function (args) {
-    document.querySelectorAll (args.args[1]).forEach (_ => _.load ({}));
+    document.querySelectorAll (args.args[1]).forEach (_ => {
+      if (_.localName === 'gr-list-container') {
+        _.reload ();
+      } else {
+        _.load ({});
+      }
+    });
   };
   document.head.appendChild (def);
+
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'fill');
+  e.pcHandler = function (args) {
+    return args.json ().then ((json) => {
+      document.querySelectorAll (args.args[1]).forEach (_ => {
+        $fill (_, json);
+        _.hidden = false;
+      });
+    });
+  }; // fill
+  document.head.appendChild (e);
+
 }) ();
 
 defineElement ({

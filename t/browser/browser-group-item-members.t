@@ -201,7 +201,49 @@ Test {
       ok 1;
     } $current->c;
   });
-} n => 1, name => ['invitations'], browser => 1;
+} n => 1, name => ['invitations list'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {name => $current->generate_text (t1 => {})}],
+    [g1 => group => {
+      owners => ['a1'],
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'members'],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#invite button[type=submit]:enabled',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-invitation-text',
+      shown => 1, not => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('#invite button[type=submit]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-invitation-text',
+      shown => 1,
+      text => q{/invitation/},
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#invitations table tbody tr',
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['invitations invite'], browser => 1;
 
 RUN;
 

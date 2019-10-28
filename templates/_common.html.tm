@@ -665,7 +665,7 @@
         をメールなどで渡して、 Web ブラウザーで開いてもらってください。
       </section-intro>
             
-      <form method=post action=javascript: data-action=members/invitations/create.json data-next="fill:invite-invitation reloadList:invitations-list" data-gr-if-group-owner>
+      <form is=save-data data-saver=groupSaver method=post action=members/invitations/create.json data-next="fill:#invite-invitation reloadList:#invitations-list" data-gr-if-group-owner>
 
           <table class=config>
             <tbody>
@@ -685,11 +685,22 @@
   
           <p class=operations>
             <button type=submit class=save-button>発行する</button>
-            <gr-action-status hidden stage-fetch=発行中... ok=発行しました />
+            <action-status hidden stage-saver=発行中... ok=発行しました />
+          </p>
+          
+          <div id=invite-invitation hidden>
+            <p>次の文面を招待したい人に渡してください。</p>
 
-          <p id=invite-invitation hidden>招待状の URL は
-            <code data-field=invitation_url />
-          です。招待したい人に渡して、 Web ブラウザーで開いてもらってください。
+<gr-invitation-text>
+グループの招待状です。
+Web ブラウザーで開いてください。
+&lt;<code data-field=invitation_url />>
+</gr-invitation-text>
+
+            <p class=operations>
+              <button type=button is=copy-text-content data-selector=gr-invitation-text>コピー</button>
+          </div>
+          
       </form>
 
       <section-intro data-gr-if-group-non-owner>
