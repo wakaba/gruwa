@@ -75,8 +75,41 @@ Test {
       is $values->{headerURL}, '/dashboard';
       is $values->{headerLink}, $values->{headerURL};
     } $current->c;
+    return $current->b (1)->execute (q{
+      var t = document.querySelector ('#create-title');
+      t.value = arguments[0];
+      t.form.removeAttribute ('data-prompt');
+      t.form.querySelector ('button[type=submit]').click ();
+    }, [$current->generate_text (t4 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'header.page',
+      text => $current->o ('t4'),
+      name => 'new group title',
+    });
+  })->then (sub {
+    return $current->b (1)->url;
+  })->then (sub {
+    my $url = $_[0];
+    test {
+      ok $url->stringify =~ m{/g/([0-9]+)/};
+      $current->set_o (g3 => {group_id => $1});
+    } $current->c;
+    return $current->get_json (['i', 'list.json'], {}, account => 'a1', group => 'g3');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $indexes = $result->{json}->{index_list};
+      my $wikis = [grep { $_->{index_type} == 2 } values %$indexes];
+      is 0+@$wikis, 1;
+      ok $wikis->[0]->{title};
+      my $files = [grep { $_->{index_type} == 6 } values %$indexes];
+      is 0+@$files, 1;
+      ok $files->[0]->{title};
+      is $files->[0]->{subtype}, 'icon';
+    } $current->c;
   });
-} n => 5, name => ['initial load'], browser => 1;
+} n => 11, name => ['initial load'], browser => 1;
 
 RUN;
 

@@ -1753,6 +1753,7 @@
       </form>
 
       <p><a href=/jump>ジャンプリストの編集</a>
+      <p><a href=/dashboard/receive>通知の受信設定</a>
     </section>
   </template>
 </template-set>
