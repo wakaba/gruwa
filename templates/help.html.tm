@@ -168,6 +168,13 @@
                   <li>アイコンが変更されてから反映されるまで、
                   時間がかかることがあります。
                 </ul>
+            <tr id=group-guide>
+              <th>ガイドページ
+              <td>
+                <a href=#groups>グループ</a>
+              <td>
+                <a href=#groups>グループ</a>の利用案内や、
+                <a href=#owner>所有者</a>の決めたグループ利用規約を記述できる<a href=#objects>記事</a>です。
         </table>
 
         <p id=group-config-create><a href=#groups>グループ</a>の<a href=#config>設定</a>ページでは、

@@ -384,7 +384,6 @@
       </header>
 
       <form is=save-data data-saver=groupSaver method=post action=edit.json id=edit-form data-next=reloadGroupInfo>
-        <!-- XXX data-next=update group info -->
         <table class=config>
           <tbody>
             <tr>
@@ -415,6 +414,15 @@
         <p class=operations>
           <button type=submit class=save-button data-enable-by-fill>保存する</>
           <action-status hidden stage-saver=保存中... ok=保存しました。 />
+      </form>
+
+      <p id=guide-link><a data-href-template=o/{group.guide_object_id}/>グループのガイドページ</a>があります。
+      <form id=guide-create-form is=save-data data-saver=groupSaver method=post action=edit.json data-next="reloadGroupInfo">
+        <p><a href=/help#group-guide target=help>グループのガイドページ</a>がありません。
+        <gr-create-object name=guide_object_id />
+        <p class=operations>
+          <button type=submit class=save-button>作成する</>
+          <action-status hidden stage-saver=作成中... ok=作成しました。 />
       </form>
     </section>
 

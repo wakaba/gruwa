@@ -478,6 +478,24 @@ GR.group.activeMembers = function () {
       document.querySelectorAll ('img.icon').forEach (_ => {
         if (_.src.match (/^https?:/)) _.src += '?' + Math.random ();
       });
+      return GR.group.info ();
+    }).then (group => {
+      if (group.guide_object_id) {
+        document.querySelectorAll ('#guide-create-form').forEach (_ => {
+          _.hidden = true;
+        });
+        document.querySelectorAll ('#guide-link').forEach (_ => {
+          _.hidden = false;
+          $fill (_, {group: group});
+        });
+      } else {
+        document.querySelectorAll ('#guide-create-form').forEach (_ => {
+          _.hidden = false;
+        });
+        document.querySelectorAll ('#guide-link').forEach (_ => {
+          _.hidden = true;
+        });
+      }
     });
   }; // reloadGroupInfo
   document.head.appendChild (e);
@@ -698,6 +716,22 @@ GR.object.get = function (objectId, objectRevisionId) {
     }
   });
 }; // GR.object.get
+
+defineElement ({
+  name: 'gr-create-object',
+  props: {
+    pcInit: function () {
+      this.setAttribute ('formcontrol', '');
+    }, // pcInit
+    pcModifyFormData: function (fd) {
+      var name = this.getAttribute ('name');
+      if (!name) return;
+      return gFetch ('o/create.json', {post: true}).then (function (json) {
+        fd.append (name, json.object_id);
+      });
+    }, // pcModifyFormData
+  },
+}); // <gr-create-object>
 
 (() => {
 
@@ -3382,6 +3416,13 @@ function upgradeForm (form) {
     });
   }; // groupGo
   document.head.appendChild (e);
+  
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'groupReload');
+  e.pcHandler = function (args) {
+    return GR.navigate.go ('', {reload: true});
+  }; // groupGo
+  document.head.appendChild (e);
 
   var def = document.createElementNS ('data:,pc', 'formsaved');
   def.setAttribute ('name', 'reloadList');
@@ -4347,6 +4388,15 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           } else {
             div.querySelectorAll ('[data-gr-if-group-owner]').forEach (_ => {
               _.remove ();
+            });
+          }
+          if (params.group.guide_object_id) {
+            div.querySelectorAll ('#guide-create-form').forEach (_ => {
+              _.hidden = true;
+            });
+          } else {
+            div.querySelectorAll ('#guide-link').forEach (_ => {
+              _.hidden = true;
             });
           }
         } // params.group

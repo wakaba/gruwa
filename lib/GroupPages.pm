@@ -1004,9 +1004,9 @@ sub main ($$$$$) {
     admin_status => 1,
     owner_status => 1,
     with_group_data => ['title', 'theme', 'default_wiki_index_id',
-                        'object_id', 'icon_object_id'],
+                        'object_id', 'icon_object_id', 'guide_object_id'],
     with_group_member_data => ['name', 'default_index_id',
-                               'icon_object_id'],
+                               'icon_object_id', 'guide_object_id'],
   })->(sub {
     my $account_data = $_[0];
     unless (defined $account_data->{account_id}) {
@@ -1098,17 +1098,26 @@ sub group ($$$$) {
         $dd->{default_wiki_index_id} = $wiki_id;
       });
     })->then (sub {
-      my $icon_id = $app->bare_param ('icon_object_id');
-      return unless defined $icon_id;
+      my $oids = {
+        icon_object_id => $app->bare_param ('icon_object_id') // '',
+        guide_object_id => $app->bare_param ('guide_object_id') // '',
+      };
+      for (keys %$oids) {
+        delete $oids->{$_} unless length $oids->{$_};
+      }
+      return unless keys %$oids;
       return $db->select ('object', {
         group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
-        object_id => $icon_id,
+        object_id => {-in => [values %$oids]},
       }, fields => ['object_id'])->then (sub {
-        return $app->throw_error (400, reason_phrase => 'Bad |object_id|')
-            unless $_[0]->first;
-        push @name, 'icon_object_id';
-        push @value, $icon_id;
-        $dd->{icon_object_id} = $icon_id;
+        my $found = $_[0]->all;
+        for my $key (keys %$oids) {
+          return $app->throw_error (400, reason_phrase => 'Bad |'.$key.'|')
+              unless (grep { $oids->{$key} eq $_->{object_id} } @$found);
+          push @name, $key;
+          push @value, $oids->{$key};
+          $dd->{$key} = $oids->{$key};
+        }
       });
     })->then (sub {
       return unless @name;
@@ -1299,6 +1308,7 @@ sub group_my ($$$$) {
         account_id => ''.$acc->{account_id},
         name => $gm->{data}->{name} // $acc->{name},
         icon_object_id => $gm->{data}->{icon_object_id}, # or undef
+        guide_object_id => $gm->{data}->{guide_object_id}, # or undef
       },
       group => {
         group_id => ''.$g->{group_id},
@@ -1309,6 +1319,7 @@ sub group_my ($$$$) {
         default_wiki_index_id => $g->{data}->{default_wiki_index_id}, # or undef
         object_id => $g->{data}->{object_id}, # or undef
         icon_object_id => $g->{data}->{icon_object_id}, # or undef
+        guide_object_id => $g->{data}->{guide_object_id}, # or undef
       },
       group_member => {
         theme => $gm->{data}->{theme},
@@ -1331,16 +1342,25 @@ sub group_my ($$$$) {
       push @$values, $name;
     }
 
-    my $icon_id = $app->bare_param ('icon_object_id') // '';
-    if (length $icon_id) {
-      push @$waits, $opts->{db}->select ('object', {
+    my $oids = {
+      icon_object_id => $app->bare_param ('icon_object_id') // '',
+      guide_object_id => $app->bare_param ('guide_object_id') // '',
+    };
+    for (keys %$oids) {
+      delete $oids->{$_} unless length $oids->{$_};
+    }
+    if (keys %$oids) {
+      push @$waits, $app->db->select ('object', {
         group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
-        object_id => $icon_id,
+        object_id => {-in => [values %$oids]},
       }, fields => ['object_id'])->then (sub {
-        return $app->throw_error (400, reason_phrase => 'Bad |object_id|')
-            unless $_[0]->first;
-        push @$names, 'icon_object_id';
-        push @$values, $icon_id;
+        my $found = $_[0]->all;
+        for my $key (keys %$oids) {
+          return $app->throw_error (400, reason_phrase => 'Bad |'.$key.'|')
+              unless (grep { $oids->{$key} eq $_->{object_id} } @$found);
+          push @$names, $key;
+          push @$values, $oids->{$key};
+        }
       });
     }
 
@@ -1573,13 +1593,14 @@ sub group_members_list ($$$$) {
           default_index_id => undef,
           desc => '',
           name => $membership->{data}->{name} // $account_data->{account_id},
+          guide_object_id => undef,
         },
       }} unless $is_member;
 
       return $acall->(['group', 'members'], {
         context_key => $app->config->{accounts}->{context} . ':group',
         group_id => $group_id,
-        with_data => ['name', 'default_index_id', 'desc'],
+        with_data => ['name', 'default_index_id', 'desc', 'guide_object_id'],
         ref => $app->text_param ('ref'),
       })->(sub {
         my $members = {map {
@@ -1591,6 +1612,7 @@ sub group_members_list ($$$$) {
             default_index_id => ($_->{data}->{default_index_id} ? $_->{data}->{default_index_id} : undef),
             desc => $_->{data}->{desc} // '',
             name => $_->{data}->{name} // ''.$_->{account_id},
+            guide_object_id => $_->{data}->{guide_object_id}, # or undef
           };
         } values %{$_[0]->{memberships}}};
         return json $app, {members => $members,
