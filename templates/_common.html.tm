@@ -1784,6 +1784,158 @@ Web ブラウザーで開いてください。
                 <enum-value data-field=account.owner_status
                     label-1=承認済 label-2=未承認 />
         </table>
+      
+      <gr-list-container key=objects listitemtype=object>
+        <template class=object>
+          <header>
+            <div class=edit-by-dblclick>
+              <enum-value class=todo-state data-data-field=todo_state
+                  label-1=未完了 label-2=完了済
+                  label-undefined
+              />
+              <h1><a data-data-field=title data-empty=■ data-href-template={GROUP}/o/{object_id}/ /></h1>
+            </div>
+            <popup-menu>
+              <button type=button title=メニュー>
+                <button-label>
+                  メニュー
+                </button-label>
+              </button>
+              <menu-main>
+                <p><a data-href-template={GROUP}/o/{object_id}/>記事ページ</a>
+                <hr>
+                <p><button type=button class=edit-button>編集</button>
+                <form is=save-data data-saver=objectSaver method=post data-action-template=o/{object_id}/edit.json data-confirm=削除します。 data-next=markAncestorArticleDeleted>
+                  <input type=hidden name=user_status value=2><!-- deleted -->
+                  <p><button type=submit class=delete-button>削除</button>
+                </form>
+                <p><a data-href-template={GROUP}/o/{object_id}/revisions>編集履歴</a>
+                <hr>
+                <p><a is=copy-url data-href-template={GROUP}/o/{object_id}/>URLをコピー</a>
+                <p><a is=gr-jump-add data-href-template={GROUP}/o/{object_id}/ data-title-data-field=title>ジャンプリストに追加</a>
+                <hr>
+                <p><a href=/help#objects target=help>ヘルプ</a>
+              </menu-main>
+            </popup-menu>
+          </header>
+          <main><iframe data-data-field=body /></main>
+          <footer>
+            <p>
+              <gr-action-status hidden
+                  stage-edit=保存中...
+                  ok=保存しました />
+              <gr-account-list data-data-field=assigned_account_ids title=担当者 />
+              <gr-index-list data-data-field=index_ids nocurrentindex />
+              <time data-field=created data-format=ambtime />
+              (<time data-field=updated data-format=ambtime /> 編集)
+          </footer>
+
+          <article-comments>
+
+            <gr-list-container class=comment-list
+                data-src-template=o/get.json?parent_object_id={object_id}&limit=30&with_data=1
+                key=objects sortkey=timestamp,created prepend
+                template-selector=object>
+              <template>
+                <article itemscope itemtype=http://schema.org/Comment>
+                  <header>
+                    <gr-object-author template=gr-object-author data-field=data />
+
+                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
+                      <time data-field=timestamp data-format=ambtime />
+                      (<time data-field=updated data-format=ambtime />)
+                    </a>
+                  </header>
+                  <main><iframe data-data-field=body /></main>
+                </article>
+              </template>
+              <template data-name=close class=change-action>
+                <p><!-- XXX が -->閉じました。
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=reopen class=change-action>
+                <p><!-- XXX が -->開き直しました。
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=changed class=change-action>
+                <p><!-- XXX が -->
+                変更しました。
+                <!--
+                <index-list data-field=data.body_data.new.index_ids />
+                を追加しました。
+
+                <index-list data-field=data.body_data.old.index_ids />
+                を削除しました。
+
+                <index-list data-field=data.body_data.new.assigned_account_ids />
+                に割り当てました。
+
+                <index-list data-field=data.body_data.old.assigned_account_ids />
+                への割当を削除しました。
+                -->
+                (<time data-field=created data-format=ambtime />)
+              </template>
+              <template data-name=trackback class=trackback>
+                <time data-field=created data-format=ambtime />にこの記事が参照されました。
+                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
+              </template>
+              <p class="operations pager">
+                <button type=button class=next-page-button hidden>もっと昔</button>
+              </p>
+              <gr-action-status hidden stage-load=読込中... />
+              <list-main/>
+            </gr-list-container>
+
+          <details class=actions>
+            <summary>コメントを書く</summary>
+
+            <form action=javascript: data-action=o/create.json
+                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
+                data-child-form>
+              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
+
+              <gr-account self>
+                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
+                <gr-account-name data-field=name data-filling>アカウント</>
+              </gr-account>
+
+              <textarea data-edit-created-object data-name=body required></textarea>
+              <p class=operations>
+                <button type=submit class=save-button>投稿する</>
+
+                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
+                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
+                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
+
+                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
+                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
+                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
+
+                <gr-action-status hidden
+                    stage-fetch=作成中...
+                    stage-editcreatedobject_fetch=保存中...
+                    stage-editobject_fetch=状態を変更中...
+                    stage-showcreatedobjectincommentlist=読込中...
+                    ok=投稿しました />
+
+              <p>
+                <gr-group>
+                  <img data-src-template=/g/{group_id}/icon class=icon alt>
+                  <gr-group-name data-field=title data-filling>グループ</>
+                </gr-group>
+                <span>
+                  通知送信先:
+                  <gr-called-editor template=gr-called-editor data-edit-created-object />
+                </span>
+            </form>
+          </details>
+
+          </article-comments>
+        </template>
+
+        <list-main></list-main>
+        <gr-action-status hidden stage-load=読込中... />
+      </gr-list-container>
     </section>
   </template>
 </template-set>
@@ -1827,6 +1979,17 @@ Web ブラウザーで開いてください。
       </gr-if-welcome>
 
       <gr-if-not-welcome>
+        <div id=account-guide>
+          <p id=account-guide-link><a data-href-template=/g/{group.group_id}/account/{account.account_id}/#guide>自己紹介ページ</a>があります。
+          <form id=account-guide-create-form is=save-data data-saver=groupSaver method=post action=my/edit.json data-next="reloadGroupInfo">
+            <p>自己紹介ページがありません。
+            <gr-create-object name=guide_object_id />
+            <p class=operations>
+              <button type=submit class=save-button>作成する</>
+              <action-status hidden stage-saver=作成中... ok=作成しました。 />
+          </form>
+        </div>
+
         <p><a href=/jump>ジャンプリストの編集</a>
         <p><a href=/dashboard/receive>通知の受信設定</a>
       </gr-if-not-welcome>

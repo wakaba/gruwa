@@ -470,6 +470,21 @@ GR.group.activeMembers = function () {
     ]).then (() => {
       return GR.account.info ();
     }).then (account => {
+      if (account.guide_object_id) {
+        document.querySelectorAll ('#account-guide-create-form').forEach (_ => {
+          _.hidden = true;
+        });
+        document.querySelectorAll ('#account-guide-link').forEach (_ => {
+          _.hidden = false;
+        });
+      } else {
+        document.querySelectorAll ('#account-guide-create-form').forEach (_ => {
+          _.hidden = false;
+        });
+        document.querySelectorAll ('#account-guide-link').forEach (_ => {
+          _.hidden = true;
+        });
+      }
       return gFetch ('account/'+account.account_id+'/icon', {reload: true, ignoreError: true});
     }).then (() => {
       document.querySelectorAll ('head link[rel~=icon]').forEach (_ => {
@@ -4459,6 +4474,18 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           });
         }
 
+        if (pageArgs.myAccount) {
+          if (params.account.guide_object_id) {
+            div.querySelectorAll ('#account-guide-create-form').forEach (_ => {
+              _.hidden = true;
+            });
+          } else {
+            div.querySelectorAll ('#account-guide-link').forEach (_ => {
+              _.hidden = true;
+            });
+          }
+        }
+        
         if (pageArgs.welcome !== undefined) {
           if (pageArgs.welcome) {
             div.querySelectorAll ('gr-if-not-welcome').forEach (_ => {
@@ -4475,6 +4502,11 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
         if (pageName === 'object-index') {
           var list = div.querySelector ('gr-list-container[key=objects]');
           list.setAttribute ('src-object_id', params.object.object_id);
+        } else if (pageName === 'account-index') {
+          if (params.account && params.account.guide_object_id) {
+            var list = div.querySelector ('gr-list-container[key=objects]');
+            list.setAttribute ('src-object_id', params.account.guide_object_id);
+          }
         } else if (pageName === 'wiki') {
           var list = div.querySelector ('gr-list-container[key=objects]');
           list.setAttribute ('src-index_id', params.index.index_id);
