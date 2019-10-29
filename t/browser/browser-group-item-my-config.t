@@ -26,6 +26,16 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'page-main gr-if-welcome',
+      not => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main gr-if-not-welcome',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'page-main input[name=name]:valid',
     });
   })->then (sub {
@@ -156,6 +166,40 @@ Test {
     } $current->c;
 });
 } n => 6, name => ['edit icon'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'my', 'config'],
+      params => {welcome => 1},
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main gr-if-not-welcome',
+      not => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main gr-if-welcome',
+      shown => 1,
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['welcome'], browser => 1;
 
 RUN;
 

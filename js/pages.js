@@ -4168,6 +4168,7 @@ GR.navigate.go = function (u, args) {
             m = path.match (/^my\/(config)$/);
             if (m) return ['group', 'my-config', {
               myAccount: true,
+              welcome: url.searchParams.has ('welcome'),
             }];
 
             if (path === 'guide') {
@@ -4456,6 +4457,18 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           div.querySelectorAll ('[data-gr-if-revision]').forEach (_ => {
             _.remove ();
           });
+        }
+
+        if (pageArgs.welcome !== undefined) {
+          if (pageArgs.welcome) {
+            div.querySelectorAll ('gr-if-not-welcome').forEach (_ => {
+              _.remove ();
+            });
+          } else {
+            div.querySelectorAll ('gr-if-welcome').forEach (_ => {
+              _.remove ();
+            });
+          }
         }
 
         // XXX

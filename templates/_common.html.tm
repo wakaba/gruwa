@@ -1819,12 +1819,17 @@ Web ブラウザーで開いてください。
           <action-status hidden stage-saver=保存中... ok=保存しました。 />
       </form>
 
-      <p><a href=/jump>ジャンプリストの編集</a>
-      <p><a href=/dashboard/receive>通知の受信設定</a>
+      <gr-if-welcome>
+        <p>グループに参加する準備は以上です。
+        
+        <p class=operations>
+          <a data-href-template=/g/{group.group_id}/guide class=button>グループのガイドへ</a>
+      </gr-if-welcome>
 
-      <ul class=main-menu-list>
-        <li><a href=/g/{group.group_id}/guide>グループのガイド</a>
-      </ul>
+      <gr-if-not-welcome>
+        <p><a href=/jump>ジャンプリストの編集</a>
+        <p><a href=/dashboard/receive>通知の受信設定</a>
+      </gr-if-not-welcome>
     </section>
   </template>
 </template-set>
