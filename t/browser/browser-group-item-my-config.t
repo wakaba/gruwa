@@ -36,19 +36,19 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'page-main input[name=name]:valid',
+      selector => '#edit-form input[name=name]:valid',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      var input = document.querySelector ('page-main input[name=name]');
+      var input = document.querySelector ('#edit-form input[name=name]');
       var value = input.value;
       input.value = arguments[0];
-      document.querySelector ('page-main button[type=submit]').click ();
+      document.querySelector ('#edit-form button[type=submit]').click ();
       return value;
     }, [$current->generate_text (t2 => {})]);
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'page-main button[type=submit]:enabled',
+      selector => '#edit-form button[type=submit]:enabled',
     });
   })->then (sub {
     return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
@@ -192,7 +192,7 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'page-main gr-if-welcome',
-      shown => 1,
+      shown => 1, scroll => 1,
     });
   })->then (sub {
     test {

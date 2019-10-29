@@ -1529,6 +1529,11 @@ gr-invitation-text:not([hidden]) {
   white-space: pre-wrap;
 }
 
+gr-if-welcome:not([hidden]),
+gr-if-not-welcome:not([hidden]) {
+  display: block;
+}
+
 small {
   color: var(--small-color);
   background-color: var(--small-background-color);
