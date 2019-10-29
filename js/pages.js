@@ -486,7 +486,6 @@ GR.group.activeMembers = function () {
         });
         document.querySelectorAll ('#guide-link').forEach (_ => {
           _.hidden = false;
-          $fill (_, {group: group});
         });
       } else {
         document.querySelectorAll ('#guide-create-form').forEach (_ => {
@@ -4171,6 +4170,16 @@ GR.navigate.go = function (u, args) {
               myAccount: true,
             }];
 
+            if (path === 'guide') {
+              if (group.guide_object_id) {
+                return ['group', 'object-index', {
+                  objectId: group.guide_object_id,
+                }];
+              } else {
+                return ['group', 'guide-none', {}];
+              }
+            }
+            
             return ['site', url];
           } else if (path.match (/^\/g\//)) {
             return ['external', url];

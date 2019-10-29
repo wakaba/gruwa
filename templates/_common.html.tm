@@ -119,6 +119,7 @@
     <p><a data-href-template=/g/{group.group_id}/members>参加者</a>
     <p><a data-href-template=/g/{group.group_id}/config>設定</a>
     <hr>
+    <p><a data-href-template=/g/{group.group_id}/guide>グループのガイド</a>
     <p><a href=/help#groups target=help>ヘルプ</a>
   </template>
 </template-set>
@@ -169,6 +170,19 @@
       </list-container>
     </section>
 
+  </template>
+</template-set>
+
+<template-set name=page-guide-none>
+  <template>
+    <section>
+      <header class=page>
+        <h1>グループのガイド</h1>
+      </header>
+      
+      <p>このグループのガイドはまだありません。
+      <a href=config#guide>設定ページから作成</a>してください。
+    </section>
   </template>
 </template-set>
 
@@ -416,14 +430,16 @@
           <action-status hidden stage-saver=保存中... ok=保存しました。 />
       </form>
 
-      <p id=guide-link><a data-href-template=o/{group.guide_object_id}/>グループのガイドページ</a>があります。
-      <form id=guide-create-form is=save-data data-saver=groupSaver method=post action=edit.json data-next="reloadGroupInfo">
-        <p><a href=/help#group-guide target=help>グループのガイドページ</a>がありません。
-        <gr-create-object name=guide_object_id />
-        <p class=operations>
-          <button type=submit class=save-button>作成する</>
-          <action-status hidden stage-saver=作成中... ok=作成しました。 />
-      </form>
+      <div id=guide>
+        <p id=guide-link><a href=guide>グループのガイドページ</a>があります。
+        <form id=guide-create-form is=save-data data-saver=groupSaver method=post action=edit.json data-next="reloadGroupInfo">
+          <p><a href=/help#group-guide target=help>グループのガイドページ</a>がありません。
+          <gr-create-object name=guide_object_id />
+          <p class=operations>
+            <button type=submit class=save-button>作成する</>
+            <action-status hidden stage-saver=作成中... ok=作成しました。 />
+        </form>
+      </div>
     </section>
 
     <section id=create>
@@ -1805,6 +1821,10 @@ Web ブラウザーで開いてください。
 
       <p><a href=/jump>ジャンプリストの編集</a>
       <p><a href=/dashboard/receive>通知の受信設定</a>
+
+      <ul class=main-menu-list>
+        <li><a href=/g/{group.group_id}/guide>グループのガイド</a>
+      </ul>
     </section>
   </template>
 </template-set>

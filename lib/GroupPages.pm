@@ -931,6 +931,7 @@ sub main ($$$$$) {
     (@$path == 3 and {
       '' => 1,         # /g/{group_id}/
       'files' => 1,   # /g/{group_id}/files
+      'guide' => 1,   # /g/{group_id}/guide
       'search' => 1,   # /g/{group_id}/search
       'config' => 1,   # /g/{group_id}/config
       'members' => 1,  # /g/{group_id}/members
