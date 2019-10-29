@@ -65,22 +65,26 @@ Test {
       is $member->{user_status}, 3;
       is $member->{owner_status}, 0;
       is $member->{group_index_id}, undef;
+      is $member->{guide_object_id}, undef;
       is $member->{desc}, '';
     } $current->c, name => 'user_status changed';
   });
-} n => 15, name => 'non-member';
+} n => 16, name => 'non-member';
 
 Test {
   my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->create_account (a2 => {});
-  })->then (sub {
-    return $current->create_account (owner => {});
-  })->then (sub {
-    return $current->create_account ("other member" => {});
-  })->then (sub {
-    return $current->create_group (g1 => {owner => 'owner', members => ['a1', 'other member']});
-  })->then (sub {
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [owner => account => {}],
+    ['other member' => account => {}],
+    [g1 => group => {
+      owner => 'owner', members => ['a1', 'other member'],
+    }],
+    [o3 => object => {
+      group => 'g1', account => 'owner',
+    }],
+  )->then (sub {
     return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'a1');
   })->then (sub {
     my $result = $_[0];
@@ -188,10 +192,23 @@ Test {
       is $member->{user_status}, 2;
       is $member->{owner_status}, 4;
       is $member->{group_index_id}, undef;
+      is $member->{guide_object_id}, undef;
       is $member->{desc}, 'abc';
     } $current->c, name => 'changed by owner';
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'my', 'edit.json'], {
+      guide_object_id => $current->o ('o3')->{object_id},
+    }, account => 'other member');
+  })->then (sub {
+    return $current->get_json (['g', $current->o ('g1')->{group_id}, 'members', 'list.json'], {}, account => 'owner');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $member = $result->{json}->{members}->{$current->o ('other member')->{account_id}};
+      is $member->{guide_object_id}, $current->o ('o3')->{object_id};
+      like $result->{res}->body_bytes, qr{"guide_object_id"\s*:\s*"};
+    } $current->c, name => 'guide';
   });
-} n => 36, name => 'member';
+} n => 39, name => 'member';
 
 Test {
   my $current = shift;
