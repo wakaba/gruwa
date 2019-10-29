@@ -26,19 +26,29 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'page-main input[name=name]:valid',
+      selector => 'page-main gr-if-welcome',
+      not => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main gr-if-not-welcome',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#edit-form input[name=name]:valid',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      var input = document.querySelector ('page-main input[name=name]');
+      var input = document.querySelector ('#edit-form input[name=name]');
       var value = input.value;
       input.value = arguments[0];
-      document.querySelector ('page-main button[type=submit]').click ();
+      document.querySelector ('#edit-form button[type=submit]').click ();
       return value;
     }, [$current->generate_text (t2 => {})]);
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'page-main button[type=submit]:enabled',
+      selector => '#edit-form button[type=submit]:enabled',
     });
   })->then (sub {
     return $current->get_json (['my', 'info.json'], {}, account => 'a1', group => 'g1');
@@ -156,6 +166,127 @@ Test {
     } $current->c;
 });
 } n => 6, name => ['edit icon'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'my', 'config'],
+      params => {welcome => 1},
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main gr-if-not-welcome',
+      not => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main gr-if-welcome',
+      shown => 1, scroll => 1,
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['welcome'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'my', 'config'],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#account-guide-create-form',
+      shown => 1, scroll => 1,
+      name => 'create form shown (initial)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#account-guide-link',
+      shown => 1, not => 1,
+      name => 'link not shown (initial)',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('#account-guide-create-form button[type=submit]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#account-guide-create-form button[type=submit]:enabled',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#account-guide-create-form',
+      shown => 1, not => 1,
+      name => 'create form hidden',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#account-guide-link',
+      shown => 1, scroll => 1,
+      name => 'link shown'
+    });
+  })->then (sub {
+    return $current->get_json (['my', 'info.json'], {}, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $g = $result->{json}->{account};
+      ok $g->{guide_object_id};
+      $current->set_o (guide => {object_id => $g->{guide_object_id}});
+    } $current->c;
+    return $current->b (1)->execute (q{
+      document.querySelector ('#account-guide-link a').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b (1)->url;
+  })->then (sub {
+    my $url = $_[0];
+    test {
+      like $url->stringify, qr{/account/@{[$current->o ('a1')->{account_id}]}/};
+    } $current->c;
+    return $current->b_go (1, ['g', $current->o ('g1')->{group_id}, 'my', 'config']);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#account-guide-create-form',
+      shown => 1, not => 1,
+      name => 'create form not shown (new)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#account-guide-link',
+      shown => 1,
+      name => 'link shown (new)',
+    });
+  });
+} n => 2, name => ['guide object'], browser => 1;
 
 RUN;
 

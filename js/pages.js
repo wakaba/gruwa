@@ -470,6 +470,21 @@ GR.group.activeMembers = function () {
     ]).then (() => {
       return GR.account.info ();
     }).then (account => {
+      if (account.guide_object_id) {
+        document.querySelectorAll ('#account-guide-create-form').forEach (_ => {
+          _.hidden = true;
+        });
+        document.querySelectorAll ('#account-guide-link').forEach (_ => {
+          _.hidden = false;
+        });
+      } else {
+        document.querySelectorAll ('#account-guide-create-form').forEach (_ => {
+          _.hidden = false;
+        });
+        document.querySelectorAll ('#account-guide-link').forEach (_ => {
+          _.hidden = true;
+        });
+      }
       return gFetch ('account/'+account.account_id+'/icon', {reload: true, ignoreError: true});
     }).then (() => {
       document.querySelectorAll ('head link[rel~=icon]').forEach (_ => {
@@ -486,7 +501,6 @@ GR.group.activeMembers = function () {
         });
         document.querySelectorAll ('#guide-link').forEach (_ => {
           _.hidden = false;
-          $fill (_, {group: group});
         });
       } else {
         document.querySelectorAll ('#guide-create-form').forEach (_ => {
@@ -4169,8 +4183,19 @@ GR.navigate.go = function (u, args) {
             m = path.match (/^my\/(config)$/);
             if (m) return ['group', 'my-config', {
               myAccount: true,
+              welcome: url.searchParams.has ('welcome'),
             }];
 
+            if (path === 'guide') {
+              if (group.guide_object_id) {
+                return ['group', 'object-index', {
+                  objectId: group.guide_object_id,
+                }];
+              } else {
+                return ['group', 'guide-none', {}];
+              }
+            }
+            
             return ['site', url];
           } else if (path.match (/^\/g\//)) {
             return ['external', url];
@@ -4449,10 +4474,39 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
           });
         }
 
+        if (pageArgs.myAccount) {
+          if (params.account.guide_object_id) {
+            div.querySelectorAll ('#account-guide-create-form').forEach (_ => {
+              _.hidden = true;
+            });
+          } else {
+            div.querySelectorAll ('#account-guide-link').forEach (_ => {
+              _.hidden = true;
+            });
+          }
+        }
+        
+        if (pageArgs.welcome !== undefined) {
+          if (pageArgs.welcome) {
+            div.querySelectorAll ('gr-if-not-welcome').forEach (_ => {
+              _.remove ();
+            });
+          } else {
+            div.querySelectorAll ('gr-if-welcome').forEach (_ => {
+              _.remove ();
+            });
+          }
+        }
+
         // XXX
         if (pageName === 'object-index') {
           var list = div.querySelector ('gr-list-container[key=objects]');
           list.setAttribute ('src-object_id', params.object.object_id);
+        } else if (pageName === 'account-index') {
+          if (params.account && params.account.guide_object_id) {
+            var list = div.querySelector ('gr-list-container[key=objects]');
+            list.setAttribute ('src-object_id', params.account.guide_object_id);
+          }
         } else if (pageName === 'wiki') {
           var list = div.querySelector ('gr-list-container[key=objects]');
           list.setAttribute ('src-index_id', params.index.index_id);

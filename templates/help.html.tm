@@ -120,13 +120,20 @@
         <a href=#filesets>フォルダー</a>の<dfn id=menu>メニュー</dfn>から「設定」を選ぶと、
         設定を変更できます。
 
-          <div class=note>
+        <p><a href=#groups>グループ</a>の<a href=#group-members>参加者</a>の個別の設定は、
+        <a href=#groups>グループ</a>のメニューから「参加者」
+        ページを開き、「自分の参加者設定を変更」を選ぶと、変更できます。
 
-            <p>メニューは各ページの上部、右端にある
+          <ul class=notes>
+
+            <li>メニューは各ページの上部、右端にある
             「&#x25BC」印のボタンから開けます。
+            <li><a href=#group-members>参加者</a>設定は、
+            自身の設定のみ変更できます。
             
-          </div>
-
+          </ul>
+        
+        
         <table>
           <thead>
             <tr>
@@ -143,7 +150,8 @@
                 <a href=#todos>TODO リスト</a>、
                 <a href=#labels>ラベル</a>、
                 <a href=#milestones>マイルストーン</a>、
-                <a href=#filesets>フォルダー</a>
+                <a href=#filesets>フォルダー</a>、
+                <a href=#group-members>参加者</a>
               <td>
                 名前 (題名) です。
             <tr>
@@ -158,13 +166,13 @@
             <tr>
               <th>アイコン
               <td>
-                <a href=#groups>グループ</a>
+                <a href=#groups>グループ</a>、
+                <a href=#group-members>参加者</a>
               <td>
                 名前と共に表示されるアイコンです。
 
                 <ul class=notes>
-                  <li>アイコンは<a href=#groups>グループ</a>内の<a href=#objects>記事</a>として保存されます。
-
+                  <li>アイコンは<a href=#fileset-icon>アイコン集</a>から選ぶか、保存されます。
                   <li>アイコンが変更されてから反映されるまで、
                   時間がかかることがあります。
                 </ul>
@@ -175,6 +183,12 @@
               <td>
                 <a href=#groups>グループ</a>の利用案内や、
                 <a href=#owner>所有者</a>の決めたグループ利用規約を記述できる<a href=#objects>記事</a>です。
+            <tr>
+              <th>自己紹介ページ
+              <td>
+                <a href=#group-members>参加者</a>
+              <td>
+                <a href=#group-members>参加者</a>の紹介文を記述できる<a href=#objects>記事</a>です。
         </table>
 
         <p id=group-config-create><a href=#groups>グループ</a>の<a href=#config>設定</a>ページでは、

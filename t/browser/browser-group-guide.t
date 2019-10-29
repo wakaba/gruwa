@@ -8,17 +8,12 @@ Test {
   my $current = shift;
   return $current->create (
     [a1 => account => {}],
-    [a2 => account => {}],
     [g1 => group => {
-      members => ['a1', 'a2'],
+      members => ['a1'],
     }],
   )->then (sub {
-    return $current->post_json (['my', 'edit.json'], {
-      name => $current->generate_text (t2 => {}),
-    }, group => 'g1', account => 'a2');
-  })->then (sub {
     return $current->create_browser (1 => {
-      url => ['g', $current->o ('g1')->{group_id}, 'account', $current->o ('a2')->{account_id}, ''],
+      url => ['g', $current->o ('g1')->{group_id}, 'guide'],
       account => 'a1',
     });
   })->then (sub {
@@ -28,14 +23,17 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'page-main',
-      text => $current->o ('t2'),
+      html => q{config#guide},
     });
   })->then (sub {
+    return $current->b (1)->url;
+  })->then (sub {
+    my $url = $_[0];
     test {
-      ok 1;
+      is $url->{path}, '/g/'.$current->o ('g1')->{group_id}.'/guide';
     } $current->c;
   });
-} n => 1, name => ['page'], browser => 1;
+} n => 1, name => ['no guide page'], browser => 1;
 
 Test {
   my $current = shift;
@@ -44,46 +42,17 @@ Test {
     [g1 => group => {
       members => ['a1'],
     }],
-  )->then (sub {
-    return $current->create_browser (1 => {
-      url => ['g', $current->o ('g1')->{group_id}, 'account', 5235333, ''],
-      account => 'a1',
-    });
-  })->then (sub {
-    return $current->b_wait (1 => {
-      selector => 'html:not([data-navigating])',
-    });
-  })->then (sub {
-    return $current->b_wait (1 => {
-      selector => 'gr-navigate-status',
-      text => 'Account not found',
-    });
-  })->then (sub {
-    test {
-      ok 1;
-    } $current->c;
-  });
-} n => 1, name => ['Account not found'], browser => 1;
-
-Test {
-  my $current = shift;
-  return $current->create (
-    [a1 => account => {}],
-    [a2 => account => {}],
-    [g1 => group => {
-      members => ['a1', 'a2'],
-    }],
     [o1 => object => {
-      group => 'g1', account => 'a2',
+      group => 'g1', account => 'a1',
       title => $current->generate_text (t1 => {}),
     }],
   )->then (sub {
-    return $current->post_json (['my', 'edit.json'], {
+    return $current->post_json (['edit.json'], {
       guide_object_id => $current->o ('o1')->{object_id},
-    }, group => 'g1', account => 'a2');
+    }, account => 'a1', group => 'g1');
   })->then (sub {
     return $current->create_browser (1 => {
-      url => ['g', $current->o ('g1')->{group_id}, 'account', $current->o ('a2')->{account_id}, ''],
+      url => ['g', $current->o ('g1')->{group_id}, 'guide'],
       account => 'a1',
     });
   })->then (sub {
@@ -96,11 +65,14 @@ Test {
       text => $current->o ('t1'),
     });
   })->then (sub {
+    return $current->b (1)->url;
+  })->then (sub {
+    my $url = $_[0];
     test {
-      ok 1;
+      is $url->{path}, '/g/'.$current->o ('g1')->{group_id}.'/guide';
     } $current->c;
   });
-} n => 1, name => ['with guide page'], browser => 1;
+} n => 1, name => ['has guide page'], browser => 1;
 
 RUN;
 

@@ -336,7 +336,7 @@ Test {
   })->then (sub {
     my $url = $_[0];
     test {
-      like $url->stringify, qr{/o/@{[$current-> o ('guide')->{object_id}]}/};
+      like $url->stringify, qr{/guide};
     } $current->c;
     return $current->b_go (1, ['g', $current->o ('g1')->{group_id}, 'config']);
   })->then (sub {
