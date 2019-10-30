@@ -40,7 +40,7 @@ Test {
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      setTimeout (() => history.back (), 0);
+      setTimeout (() => history.back (), 10);
       return {
         path: location.pathname,
         title: document.title,
@@ -64,7 +64,7 @@ Test {
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      setTimeout (() => history.back (), 0);
+      setTimeout (() => history.back (), 10);
       return {
         path: location.pathname,
         title: document.title,
