@@ -914,7 +914,7 @@ Web ブラウザーで開いてください。
     <section>
       <h1>記事一覧</h1>
       
-      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=50 data-filled="loader-indexid loader-indextype" template=gr-search-result-item class=search-result>
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=30 data-filled="loader-indexid loader-indextype" template=gr-search-result-item class=search-result>
         <list-main></list-main>
         <list-is-empty hidden>
           <p>記事は見つかりませんでした。</p>
@@ -1095,7 +1095,7 @@ Web ブラウザーで開いてください。
         <gr-menu type=index />
       </header>
       
-      <gr-list-container key=objects sortkey=updated src-limit=100 query class=todo-list>
+      <gr-list-container key=objects sortkey=updated src-limit=50 query class=todo-list>
         <template>
             <enum-value class=todo-state data-data-field=todo_state
                 label-1=未完了 label-2=完了済
@@ -1151,7 +1151,7 @@ Web ブラウザーで開いてください。
         <gr-uploader data-indexid-field=index.index_id data-indexsubtype-field=index.subtype data-filled="indexid indexsubtype" listselector=.search-result />
       </details>
 
-      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=50 loader-withdata data-filled="loader-indexid loader-indextype" template=gr-fileset-list-item-file class="search-result fileset-file" data-gr-if-index-subtype=file>
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=30 loader-withdata data-filled="loader-indexid loader-indextype" template=gr-fileset-list-item-file class="search-result fileset-file" data-gr-if-index-subtype=file>
         <list-main></list-main>
         <list-is-empty hidden>
           <p>このフォルダーは空です。</p>
