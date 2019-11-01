@@ -79,8 +79,7 @@ Test {
     [g1 => group => {
       members => ['a1'],
     }],
-    [o2 => object => {account => 'a1', group => 'g1',
-                      title => $current->generate_text (t1 => {})}],
+    [o2 => object => {account => 'a1', group => 'g1'}],
   )->then (sub {
     return $current->create (
       [o1 => object => {account => 'a1', group => 'g1',
@@ -206,6 +205,158 @@ Test {
     } $current->c;
   });
 } n => 1, name => ['imported same group object link, tooltip'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {
+    }],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [o2 => object => {account => 'a1', group => 'g1',
+                      title => $current->generate_text (t2 => {})}],
+  )->then (sub {
+    return $current->create (
+      [o1 => object => {account => 'a1', group => 'g1',
+                        body_type => 1, # html
+                        body => qq{<a href=../@{[$current->o ('o2')->{object_id}]}/ style="display:block;width:100%;
+                                   height: 100%" class=o2-link>object</a>}}],
+    );
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article iframe',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      window.abc = 12345;
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('article iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.o2-link',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var link = document.querySelector ('.o2-link');
+      link.click ();
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b_wait (1 => {
+      selector => 'article h1',
+      text => $current->o ('t2'),
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-tooltip-box:not([hidden])',
+      not => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b (1)->execute (q{
+      return window.abc;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, 12345, 'not navigated';
+    } $current->c;
+  });
+} n => 1, name => ['group object link, clicked'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {
+    }],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [o2 => object => {account => 'a1', group => 'g1',
+                      title => $current->generate_text (t2 => {}),
+                      source_site => 'https://'.$current->generate_domain (d1 => {}),
+                      source_page => 'https://'.$current->o ('d1').'/abc'}],
+  )->then (sub {
+    return $current->create (
+      [o1 => object => {account => 'a1', group => 'g1',
+                        body_type => 1, # html
+                        body => qq{<a href=../../imported/@{[percent_encode_c "https://".$current->o ('d1')."/abc"]}/go style="display:block;width:100%;
+                                   height: 100%" class=o2-link>object</a>}}],
+    );
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      window.abc = 12345;
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article iframe',
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('article iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.o2-link',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var link = document.querySelector ('.o2-link');
+      link.click ();
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b_wait (1 => {
+      selector => 'article h1',
+      text => $current->o ('t2'),
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-tooltip-box:not([hidden])',
+      not => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b (1)->execute (q{
+      return window.abc;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, 12345;
+    } $current->c;
+  });
+} n => 1, name => ['imported same group object link, clicked'], browser => 1;
 
 RUN;
 

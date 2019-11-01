@@ -777,6 +777,7 @@ GR.object.get = function (objectId, opts) {
   });
 }; // GR.object.get
 
+// XXX cache eviction
 GR.object._cache = function (object, info) {
   var objectId = object.object_id;
   var v = {object: object, fetched: performance.now ()};
@@ -1739,6 +1740,10 @@ function fillFields (contextEl, rootEl, el, object, opts) {
             GR.tooltip.showURL (ev.data.url, {
               top: field.offsetTop + ev.data.top + ev.data.height,
               left: field.offsetLeft + ev.data.left,
+            });
+          } else if (ev.data.type === 'linkClicked') {
+            GR.navigate.go (ev.data.url, {
+              ping: ev.data.ping,
             });
           }
         };
@@ -4255,7 +4260,15 @@ GR.navigate.go = function (u, args) {
                 return ['group', 'guide-none', {}];
               }
             }
-            
+
+            m = path.match (/^imported\/([^\/]+)\/go$/);
+            args._depth = args._depth || 0;
+            if (m && args._depth < 10) {
+              return GR.group.resolveImportedURL (GR._decodeURL (m[1])).then (u => {
+                return ['recursive', u];
+              });
+            }
+
             return ['site', url];
           } else if (path.match (/^\/g\//)) {
             return ['external', url];
@@ -4285,6 +4298,11 @@ GR.navigate.go = function (u, args) {
     }
     return ['external', url];
   }).then (_ => {
+    if (_[0] === 'recursive') {
+      args._depth++;
+      return GR.navigate.go (_[1], args);
+    }
+    
     if (GR._state.currentNavigate) {
       GR._state.currentNavigate.abort ();
       delete GR._state.currentNavigate;

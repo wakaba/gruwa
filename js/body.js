@@ -195,6 +195,20 @@ onmouseout = function (ev) {
   }
 };
 
+onclick = function (ev) {
+  var n = ev.target;
+  while (n && n.localName !== 'a' && n.localName !== 'area' && n.localName !== 'link') {
+    n = n.parentElement;
+  }
+  if (n &&
+      (n.protocol === 'https:' || n.protocol === 'http:') &&
+      //n.target === '' &&
+      !n.hasAttribute ('is')) {
+    sendToParent ({type: "linkClicked", url: n.href, ping: n.ping});
+    ev.preventDefault ();
+  }
+}; // onclick
+
 onchange = function (ev) {
   if (ev.target.type === 'checkbox') {
     if (ev.target.checked !== ev.target.defaultChecked) {
