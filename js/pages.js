@@ -43,6 +43,14 @@ GR.Error.handle403 = function (res) {
   return e;
 }; // handle403
 
+GR._decodeURL = function (s) {
+  try {
+    return decodeURIComponent (s);
+  } catch (e) {
+    return null;
+  }
+}; // GR._decodeURL
+
 GR.theme = {};
 
 GR.theme.list = function () {
@@ -129,7 +137,8 @@ defineElement ({
   },
 });
 
-GR._state = {currentPage: {}};
+GR._state = {currentPage: {}, uToImported: {}};
+GR._objects = {};
 GR._timestamp = {};
 
 GR.Favicon = {};
@@ -551,6 +560,15 @@ GR.group.activeMembers = function () {
 
 }) ();
 
+GR.group.resolveImportedURL = function (u) {
+  if (GR._state.uToImported[u] !== undefined) {
+    return Promise.resolve (GR._state.uToImported[u]);
+  }
+  return gFetch ('imported/' + encodeURIComponent (u) + '/go.json', {}).then (function (json) {
+    return GR._state.uToImported[u] = json.url;
+  });
+}; // GR.group.resolveImportedURL
+
 GR.index = {};
 
 GR.index.list = () => {
@@ -719,17 +737,69 @@ defineElement ({
 
 GR.object = {};
 
-GR.object.get = function (objectId, objectRevisionId) {
-  // XXX cache
-  return gFetch ('o/get.json?with_data=1&object_id=' + objectId + (objectRevisionId ? '&object_revision_id=' + encodeURIComponent (objectRevisionId) : ''), {}).then (json => {
+GR.object.get = function (objectId, opts) {
+  if (!opts.revisionId) {
+    var v = GR._objects[objectId];
+    if (v) {
+      var needFetch = false;
+      if (opts.withTitle && !v.hasTitle) needFetch = true;
+      if (opts.withData && !v.hasData) needFetch = true;
+      if (opts.withSearchData && !v.hasSearchData) needFetch = true;
+      var age = performance.now () - v.fetched;
+      if (age > 60*60*1000) {
+        needFetch = true;
+      } else if (age > 60*1000 && opts.withData) {
+        needFetch = true;
+      }
+      if (!needFetch) {
+        return Promise.resolve (v.object);
+      }
+    }
+  }
+  return gFetch ('o/get.json?object_id=' + objectId
+                     + (opts.withTitle ? '&with_title=1' : '')
+                     + (opts.withData ? '&with_data=1' : '')
+                     + (opts.withSearchData ? '&with_snippet=1' : '')
+                     + (opts.revisionId ? '&object_revision_id=' + encodeURIComponent (opts.revisionId) : ''), {}).then (json => {
     var object = json.objects[objectId];
+    if (!object.data) object.data = {};
     if (object) {
+      if (!opts.revisionId) {
+        GR.object._cache (object, {
+          hasData: opts.withData, hasTitle: opts.withData,
+          hasSearchData: opts.withSearchData,
+        });
+      } // !opts.revisionId
       return object;
     } else {
       throw new Error ('Object not found');
     }
   });
 }; // GR.object.get
+
+GR.object._cache = function (object, info) {
+  var objectId = object.object_id;
+  var v = {object: object, fetched: performance.now ()};
+  if (GR._objects[objectId]) {
+    if (GR._objects[objectId].object.updated === object.updated) {
+      v = GR._objects[objectId];
+      // v.fetched
+      for (var k in object) {
+        if (k === 'data') {
+          for (var kk in object.data) {
+            v.object.data[kk] = object.data[kk];
+          }
+        } else {
+          v.object[k] = object[k];
+        }
+      }
+    }
+  }
+  GR._objects[objectId] = v;
+  if (info.hasData) v.hasData = true;
+  if (info.hasTitle) v.hasTitle = true;
+  if (info.hasSearchData) v.hasSearchData = true;
+}; // GR.object._cache
 
 defineElement ({
   name: 'gr-create-object',
@@ -769,6 +839,9 @@ defineElement ({
       var list = Object.values (json.objects).sort ((a, b) => {
         return b.timestamp - a.timestamp;
       }).map (_ => {
+        GR.object._cache (_, {
+          hasData: true, hasTitle: true, hasSearchData: true,
+        });
         return {
           url: (indexType == 2 /* wiki */ ? '/g/'+_.group_id+'/i/'+indexId+'/wiki/'+encodeURIComponent (_.title)+'#' + _.object_id : '/g/'+_.group_id+'/o/'+_.object_id+'/'),
           object: _,
@@ -1658,19 +1731,15 @@ function fillFields (contextEl, rootEl, el, object, opts) {
             var v = new Event ('editablecontrolchange', {bubbles: true});
             v.data = ev.data;
             field.dispatchEvent (v);
-          } else if (ev.data.type === 'getObjectWithSearchData') {
-            getObjectWithSearchData (ev.data.value).then (function (object) {
+          } else if (ev.data.type === 'getObjectWithData') {
+            GR.object.get (ev.data.value, {withData: true}).then (function (object) {
               ev.ports[0].postMessage (object);
             });
           } else if (ev.data.type === 'linkSelected') {
-            if (ev.data.url) {
-              showURLTooltip (ev.data.url, {
-                top: field.offsetTop + ev.data.top + ev.data.height,
-                left: field.offsetLeft + ev.data.left,
-              });
-            } else {
-              showTooltip (null, {});
-            }
+            GR.tooltip.showURL (ev.data.url, {
+              top: field.offsetTop + ev.data.top + ev.data.height,
+              left: field.offsetLeft + ev.data.left,
+            });
           }
         };
         field.onload = null;
@@ -1908,8 +1977,8 @@ function upgradeBodyControl (e, object, opts) {
         var args = ev.data.value;
         var result = prompt (args.prompt, args.default);
         ev.ports[0].postMessage ({result: result});
-      } else if (ev.data.type === 'getObjectWithSearchData') {
-        getObjectWithSearchData (ev.data.value).then (function (object) {
+      } else if (ev.data.type === 'getObjectWithData') {
+        getObjectWithData (ev.data.value, {withData: true}).then (function (object) {
           ev.ports[0].postMessage (object);
         });
       }
@@ -2029,8 +2098,8 @@ function upgradeBodyControl (e, object, opts) {
     mc.port2.onmessage = function (ev) {
       if (ev.data.type === 'focus') {
         field.dispatchEvent (new Event ("focus", {bubbles: true}));
-      } else if (ev.data.type === 'getObjectWithSearchData') {
-        getObjectWithSearchData (ev.data.value).then (function (object) {
+      } else if (ev.data.type === 'getObjectWithData') {
+        getObjectWithSearchData (ev.data.value, {withData: true}).then (function (object) {
           ev.ports[0].postMessage (object);
         });
       }
@@ -3921,74 +3990,62 @@ function upgradeObjectRef (e) {
     e.removeAttribute ('template');
   }
 
-  return getObjectWithSearchData (objectId).then (function (object) {
+  return GR.object.get (objectId, {withSearchData: true}).then (object => {
     fillFields (e, e, e, object, {});
   });
 } // upgradeObjectRef
 
-(function () {
-  var objects = {};
-  this.getObjectWithSearchData = function (objectId) {
-    if (objects[objectId]) return Promise.resolve (objects[objectId]);
+GR.tooltip = {};
 
-    var fd = new FormData;
-    fd.append ('object_id', objectId);
-    return gFetch ('o/get.json?with_data=1&with_snippet=1', {post: true, formData: fd}).then (function (json) {
-      return objects[objectId] = json.objects[objectId] || {};
-    });
-  } // getObjectWithSearchData
-}) ();
+GR.tooltip.show = function (opts) {
+  GR.tooltip.hideAll ();
+  var e = document.createElement ('gr-tooltip-box');
+  e.hidden = true;
+  document.body.appendChild (e);
+  return $getTemplateSet ('gr-tooltip-box-' + opts.type).then (tm => {
+    if (opts.top) e.style.top = opts.top + 'px';
+    if (opts.left) e.style.left = opts.left + 'px';
+    
+    var f = tm.createFromTemplate ('gr-tooltip-content', opts);
+    if (f.childNodes.length === 0) {
+      e.remove ();
+      return;
+    }
+    e.appendChild (f);
+    e.hidden = false;
+  });
+}; // GR.tooltip.show
 
-function showTooltip (e, opts) {
-  if (! e) {
-    var container = document.querySelector ('tooltip-box');
-    if (container) container.hidden = true;
-    return;
+GR.tooltip.showURL = function (u, opts) {
+  opts._depth = opts._depth || 0;
+  var url;
+  try {
+    url = new URL (u);
+  } catch (e) {
+    url = {};
   }
-
-  var container = document.querySelector ('tooltip-box') || document.createElement ('tooltip-box');
-  container.textContent = '';
-  container.style.top = opts.top + 'px';
-  container.style.left = opts.left + 'px';
-  container.hidden = false;
-  container.appendChild (e);
-  document.body.appendChild (container);
-} // showTooltip
-
-(function () {
-  var urlToImportedURL = {};
-
-  this.showURLTooltip = function (url, opts) {
-    var url;
-    try {
-      url = new URL (url);
-    } catch (e) {
-      url = {};
-    }
-    if (url.origin === location.origin) {
-      var m = url.pathname.match (/^\/g\/[^\/]+\/o\/([0-9]+)\//);
-      if (m) {
-        var ref = document.createElement ('object-ref');
-        ref.setAttribute ('value', m[1]);
-        ref.setAttribute ('template', '#object-ref-template');
-        showTooltip (ref, opts);
-        return;
-      }
-
-      if (url.pathname.match (/imported.+go$/)) {
-        if (urlToImportedURL[url.pathname]) {
-          return showURLTooltip (urlToImportedURL[url.pathname], opts);
-        }
-        return gFetch (url.pathname + '.json', {}).then (function (json) {
-          urlToImportedURL[url.pathname] = json.url;
-          return showURLTooltip (json.url, opts);
-        });
-      }
+  if (url.origin === location.origin) {
+    var m = url.pathname.match (/^\/g\/([^\/]+)\/o\/([0-9]+)\//);
+    if (m && m[1] == GR._state.group.group_id) {
+      opts.type = 'object';
+      opts.data = {group_id: m[1], object_id: m[2]};
+      return GR.tooltip.show (opts);
     }
 
-    return showTooltip (null, {});
-  } // showURLTooltip
-}) ();
+    m = url.pathname.match (/^\/g\/([^\/]+)\/imported\/([^\/]+)\/go/);
+    if (m && m[1] == GR._state.group.group_id && opts._depth < 10) {
+      return GR.group.resolveImportedURL (GR._decodeURL (m[2])).then (u => {
+        opts._depth++;
+        return GR.tooltip.showURL (u, opts); // recursive!
+      });
+    }
+  }
+  return GR.tooltip.hideAll ();
+}; // GR.tooltip.showURL
+
+GR.tooltip.hideAll = function () {
+  document.querySelectorAll ('gr-tooltip-box').forEach (_ => _.remove ());
+}; // GR.tooltip.hideAll
 
 function Formatter () { }
 
@@ -4107,6 +4164,7 @@ GR.navigate.go = function (u, args) {
   var url = new URL (u, location.href);
   var status = document.querySelector ('gr-navigate-status');
   status.grStart (url);
+  GR.tooltip.hideAll ();
   return Promise.resolve ().then (() => {
     if (GR.navigate.avail () &&
         url.origin === location.origin) {
@@ -4135,6 +4193,7 @@ GR.navigate.go = function (u, args) {
             if (m) return ['group', 'object-index', {
               objectId: m[1],
               objectRevisionId: url.searchParams.get ('object_revision_id') || null,
+              withObjectData: true,
             }];
 
             m = path.match (/^o\/([0-9]+)\/(revisions)$/);
@@ -4190,6 +4249,7 @@ GR.navigate.go = function (u, args) {
               if (group.guide_object_id) {
                 return ['group', 'object-index', {
                   objectId: group.guide_object_id,
+                  withObjectData: true,
                 }];
               } else {
                 return ['group', 'guide-none', {}];
@@ -4305,10 +4365,14 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
     if (pageArgs.objectId) {
       wait.push (Promise.all ([
         GR.index.list (),
-        GR.object.get (pageArgs.objectId, pageArgs.objectRevisionId).then (_ => params.object = _),
+        GR.object.get (pageArgs.objectId, {
+          revisionId: pageArgs.objectRevisionId,
+          withTitle: true,
+          withData: pageArgs.withObjectData,
+        }).then (_ => params.object = _),
       ]).then (_ => {
         var [indexList] = _;
-        var indexIds = Object.keys (params.object.data.index_ids || {});
+        var indexIds = Object.keys ((params.object.data || {}).index_ids || {});
         for (var i = 0; i < indexIds.length; i++) {
           var index = indexList[indexIds[i]];
           if (index &&
@@ -4541,7 +4605,7 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
       if (params.wiki) {
         title.unshift (params.wiki.name);
       } else if (params.object) {
-        title.unshift (params.object.data.title);
+        title.unshift (params.object.data.title || params.object.title);
       }
       if (contentTitle !== '') title.unshift (contentTitle);
       if (params.search) {

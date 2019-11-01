@@ -71,6 +71,142 @@ Test {
   });
 } n => 5, name => ['account and group'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {
+    }],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [o2 => object => {account => 'a1', group => 'g1',
+                      title => $current->generate_text (t1 => {})}],
+  )->then (sub {
+    return $current->create (
+      [o1 => object => {account => 'a1', group => 'g1',
+                        body_type => 1, # html
+                        body => qq{<a href=../@{[$current->o ('o2')->{object_id}]}/ style="display:block;width:100%;
+                                   height: 100%" class=o2-link>object</a>}}],
+    );
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article iframe',
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('article iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.o2-link',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var link = document.querySelector ('.o2-link');
+      return {
+        element: link,
+        left: link.offsetLeft, top: link.offsetTop,
+        width: link.offsetWidth, height: link.offsetHeight,
+      };
+    });
+  })->then (sub {
+    $current->set_o (iframelink => $_[0]->json->{value});
+    return $current->b_pointer_move (1, {
+      element => $current->o ('iframelink')->{element},
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b_wait (1 => {
+      selector => 'gr-tooltip-box:not([hidden])',
+      text => $current->o ('t1'),
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['group object link, tooltip'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {
+    }],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [o2 => object => {account => 'a1', group => 'g1',
+                      title => $current->generate_text (t1 => {}),
+                      source_site => 'https://'.$current->generate_domain (d1 => {}),
+                      source_page => 'https://'.$current->o ('d1').'/abc'}],
+  )->then (sub {
+    return $current->create (
+      [o1 => object => {account => 'a1', group => 'g1',
+                        body_type => 1, # html
+                        body => qq{<a href=../../imported/@{[percent_encode_c "https://".$current->o ('d1')."/abc"]}/go style="display:block;width:100%;
+                                   height: 100%" class=o2-link>object</a>}}],
+    );
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article iframe',
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('article iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.o2-link',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var link = document.querySelector ('.o2-link');
+      return {
+        element: link,
+        left: link.offsetLeft, top: link.offsetTop,
+        width: link.offsetWidth, height: link.offsetHeight,
+        href: link.href,
+      };
+    });
+  })->then (sub {
+    $current->set_o (iframelink => $_[0]->json->{value});
+    #warn $current->o ('iframelink')->{href};
+    return $current->b_pointer_move (1, {
+      element => $current->o ('iframelink')->{element},
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b_wait (1 => {
+      selector => 'gr-tooltip-box:not([hidden])',
+      text => $current->o ('t1'),
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['imported same group object link, tooltip'], browser => 1;
+
 RUN;
 
 =head1 LICENSE

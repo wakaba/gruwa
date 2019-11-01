@@ -387,6 +387,8 @@ sub index ($$;%) {
 sub create_object ($$$) {
   my ($self, $name, $opts) = @_;
   return $self->post_json (['o', 'create.json'], {
+    source_page => $opts->{source_page},
+    source_site => $opts->{source_site},
   },
     account => ($opts->{account} // die "No |account|"),
     group => ($opts->{group} // die "No |group|"),
@@ -915,6 +917,295 @@ sub b_wait ($$$) {
     });
   } timeout => 60*2;
 } # b_wait
+
+sub b_element_rect ($$$) {
+  my ($self, $name, $e) = @_;
+  #return $self->b ($name)->http_post (['element', $e->{ELEMENT}, 'rect'], {})->then (sub {
+  #  my $res = $_[0];
+  #  die $res if $res->is_error;
+  #  my $v = $res->json->{value};
+  #});
+  return $self->b ($name)->execute (q{
+    var rect = arguments[0].getClientRects ()[0];
+    return rect;
+  }, [$e])->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $res->json->{value};
+  });
+} # b_element_rect
+
+sub b_pointer_move ($$$) {
+  my ($self, $name, $opts) = @_;
+  my $id = '' . ($opts->{action_id} // rand);
+  return Promise->resolve->then (sub {
+    return if defined $self->{has_b_actions};
+
+    ## XXX Recent versions of ChromeDriver has /actions but somewhat
+    ## broken...
+    return $self->b ($name)->http_post (['moveto'], {
+      xoffset => 0,
+      yoffset => 0,
+    })->then (sub {
+      $self->{has_b_actions} = $_[0]->is_error;
+    });
+
+
+    return $self->b ($name)->http_post (['actions'], {
+      actions => [],
+    })->then (sub {
+      my $res = $_[0];
+      $self->{has_b_actions} = not $res->is_error;
+    });
+  })->then (sub {
+    if (defined $opts->{element} and not defined $opts->{point}) {
+      if ($self->{has_b_actions}) {
+        return $self->b ($name)->http_post (['actions'], {
+          actions => [{
+            type => 'pointer',
+            id => $id,
+            actions => [
+              {
+                type => 'pointerMove',
+                origin => $opts->{element}, x => 0, y => 0,
+              },
+            ],
+          }],
+        })->then (sub {
+          die $_[0] if $_[0]->is_error;
+        });
+      } else {
+        return $self->b ($name)->http_post (['moveto'], {
+          element => $opts->{element}->{ELEMENT},
+        })->then (sub {
+          die $_[0] if $_[0]->is_error;
+        });
+      }
+    } elsif (defined $opts->{element} and defined $opts->{point}) {
+      if ($self->{has_b_actions}) {
+        return $self->b_element_rect (1, $opts->{element})->then (sub {
+          my $v = $_[0];
+          return $self->b ($name)->http_post (['actions'], {
+            actions => [{
+              type => 'pointer',
+              id => $id,
+              actions => [
+                {
+                  type => 'pointerMove',
+                  origin => 'viewport',
+                  x => int ($v->{x} + $opts->{point}->[0]),
+                  y => int ($v->{y} + $opts->{point}->[1]),
+                },
+              ],
+            }],
+          })->then (sub {
+            die $_[0] if $_[0]->is_error;
+          });
+        });
+      } else {
+        return $self->b ($name)->http_post (['moveto'], {
+          element => $opts->{element}->{ELEMENT},
+          xoffset => int ($opts->{point}->[0]),
+          yoffset => int ($opts->{point}->[1]),
+        })->then (sub {
+          die $_[0] if $_[0]->is_error;
+        });
+      }
+    } elsif (defined $opts->{delta}) {
+      if ($self->{has_b_actions}) {
+        return $self->b ($name)->http_post (['actions'], {
+          actions => [{
+            type => 'pointer',
+            id => $id,
+            actions => [
+              {
+                type => 'pointerMove',
+                origin => 'pointer',
+                x => int ($opts->{delta}->[0]),
+                y => int ($opts->{delta}->[1]),
+                duration => 500,
+              },
+            ],
+          }],
+        })->then (sub {
+          die $_[0] if $_[0]->is_error;
+        });
+      } else {
+        return $self->b (1)->http_post (['moveto'], {
+          xoffset => int ($opts->{delta}->[0]/2),
+          yoffset => int ($opts->{delta}->[1]/2),
+        })->then (sub {
+          die $_[0] if $_[0]->is_error;
+          return $self->b (1)->http_post (['moveto'], {
+            xoffset => int ($opts->{delta}->[0]/2),
+            yoffset => int ($opts->{delta}->[1]/2),
+          })->then (sub {
+            die $_[0] if $_[0]->is_error;
+          });
+        });
+      }
+    }
+    # else, do nothing
+  });
+} # b_pointer_move
+
+# XXX
+sub b_drag ($$$) {
+  my ($self, $name, $opts) = @_;
+  my $id = '' . rand;
+  my $key_id = $id . 2;
+  my $primary_button = $opts->{right} ? 2 : 0;
+  my $secondary_button = $opts->{right} ? 0 : 2;
+  return Promise->resolve->then (sub {
+    die "No |start|" unless defined $opts->{start};
+    die "No |end|" unless defined $opts->{end};
+    return $self->b_pointer_move (1, {
+      %{$opts->{start} or {}},
+      action_id => $id,
+    });
+  })->then (sub {
+    return $self->b_screenshot (1, [$opts->{screenshot_name}, 'before'])
+        if defined $opts->{screenshot_name};
+  })->then (sub {
+    return unless $opts->{shift};
+    if ($self->{has_b_actions}) {
+      return $self->b ($name)->http_post (['actions'], {
+        actions => [{
+          type => 'key',
+          id => $key_id,
+          actions => [{
+            type => 'keyDown',
+            value => "\x{E008}", # Shift
+          }],
+        }],
+      })->then (sub {
+        die $_[0] if $_[0]->is_error;
+      });
+    } else {
+      return $self->b (1)->http_post (['keys'], {value => [
+        "\x{E008}", # Shift
+      ]})->then (sub {
+        die $_[0] if $_[0]->is_error;
+      });
+    }
+  })->then (sub {
+    if ($self->{has_b_actions}) {
+      return $self->b ($name)->http_post (['actions'], {
+        actions => [{
+          type => 'pointer',
+          id => $id,
+          actions => [{
+            type => 'pointerDown',
+            button => $primary_button,
+          }],
+        }],
+      })->then (sub {
+        die $_[0] if $_[0]->is_error;
+      });
+    } else {
+      return $self->b (1)->http_post (['buttondown'], {
+        button => $primary_button,
+      })->then (sub {
+        die $_[0] if $_[0]->is_error;
+      });
+    }
+
+  })->then (sub {
+    return promised_sleep 2 if $opts->{start}->{hold};
+
+  })->then (sub {
+    return unless $opts->{astray};
+    return $self->b_pointer_move ($name, {
+      delta => [300, 200],
+      action_id => $id,
+    });
+    
+  })->then (sub {
+    return $self->b_pointer_move ($name, {
+      %{$opts->{end} or {}},
+      action_id => $id,
+    });
+  })->then (sub {
+    return $self->b_screenshot (1, [$opts->{screenshot_name}, 'dropping'])
+        if defined $opts->{screenshot_name};
+  })->then (sub {
+    return unless $opts->{end}->{cancel};
+    if ($self->{has_b_actions}) {
+      return $self->b ($name)->http_post (['actions'], {
+        actions => [{
+          type => 'pointer',
+          id => $id,
+          actions => [{
+            type => 'pointerDown',
+            button => $secondary_button,
+          }, {
+            type => 'pointerUp',
+            button => $secondary_button,
+          }],
+        }],
+      })->then (sub {
+        die $_[0] if $_[0]->is_error;
+      });
+    } else {
+      return $self->b (1)->http_post (['buttondown'], {
+        button => $secondary_button,
+      })->then (sub {
+        die $_[0] if $_[0]->is_error;
+        return $self->b (1)->http_post (['buttonup'], {
+          button => $secondary_button,
+        });
+      })->then (sub {
+        die $_[0] if $_[0]->is_error;
+      });
+    }
+  })->then (sub {
+    if ($self->{has_b_actions}) {
+      return $self->b ($name)->http_post (['actions'], {
+        actions => [{
+          type => 'pointer',
+          id => $id,
+          actions => [{
+            type => 'pointerUp',
+            button => $primary_button,
+          }],
+        }],
+      })->then (sub {
+        die $_[0] if $_[0]->is_error;
+      });
+    } else {
+      return $self->b (1)->http_post (['buttonup'], {
+        button => $primary_button,
+      })->then (sub {
+        die $_[0] if $_[0]->is_error;
+      });
+    }
+  })->then (sub {
+    return unless $opts->{shift};
+    if ($self->{has_b_actions}) {
+      return $self->b ($name)->http_post (['actions'], {
+        actions => [{
+          type => 'key',
+          id => $key_id,
+          actions => [{
+            type => 'keyUp',
+            value => "\x{E008}", # Shift
+          }],
+        }],
+      })->then (sub {
+        die $_[0] if $_[0]->is_error;
+      });
+    } else {
+      return $self->b (1)->http_post (['keys'], {value => [
+        "\x{E008}", # Shift
+      ]})->then (sub {
+        die $_[0] if $_[0]->is_error;
+      });
+    }
+  })->then (sub {
+    return $self->b_screenshot (1, [$opts->{screenshot_name}, 'dropped'])
+        if defined $opts->{screenshot_name};
+  });
+} # b_drag
 
 sub b_screenshot ($$$) {
   my ($self, $name, $hint) = @_;
