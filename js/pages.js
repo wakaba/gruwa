@@ -762,8 +762,8 @@ GR.object.get = function (objectId, opts) {
                      + (opts.withSearchData ? '&with_snippet=1' : '')
                      + (opts.revisionId ? '&object_revision_id=' + encodeURIComponent (opts.revisionId) : ''), {}).then (json => {
     var object = json.objects[objectId];
-    if (!object.data) object.data = {};
     if (object) {
+      if (!object.data) object.data = {};
       if (!opts.revisionId) {
         GR.object._cache (object, {
           hasData: opts.withData, hasTitle: opts.withData,
