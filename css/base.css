@@ -1427,6 +1427,10 @@ object-ref a:not([hidden]) {
   text-decoration: none;
 }
 
+gr-tooltip-box object-ref a:not([hidden]) {
+  margin-left: 0;
+}
+
 ref-header:not([hidden]) {
   display: block;
 }
@@ -1454,7 +1458,7 @@ object-ref body-snippet:not([hidden]) {
   background-color: var(--small-background-color);
 }
 
-tooltip-box:not([hidden]) {
+gr-tooltip-box:not([hidden]) {
   position: absolute;
   display: block;
   margin: 0 !important;
@@ -1465,7 +1469,7 @@ tooltip-box:not([hidden]) {
   box-shadow: .3em .3em var(--light-1-shadow-color);
 }
 
-tooltip-box > object-ref a:not([hidden]) {
+gr-tooltip-box > object-ref a:not([hidden]) {
   margin-left: 0;
 }
 

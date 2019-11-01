@@ -249,7 +249,7 @@
         <button type=submit class=search-button>検索</button>
       </form>
       
-      <list-container loader=groupLoader src=o/search.json loader-search class=search-result key=objects template=gr-search-result-item>
+      <list-container loader=groupLoader src=o/search.json loader-search loader-limit=20 class=search-result key=objects template=gr-search-result-item>
 
         <gr-search-wiki-name hidden>
           <list-item>
@@ -914,7 +914,7 @@ Web ブラウザーで開いてください。
     <section>
       <h1>記事一覧</h1>
       
-      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=30 data-filled="loader-indexid loader-indextype" template=gr-search-result-item class=search-result>
+      <list-container loader=groupIndexLoader data-loader-indexid-field=index.index_id data-loader-indextype-field=index.index_type loader-limit=20 data-filled="loader-indexid loader-indextype" template=gr-search-result-item class=search-result>
         <list-main></list-main>
         <list-is-empty hidden>
           <p>記事は見つかりませんでした。</p>
@@ -1714,6 +1714,13 @@ Web ブラウザーで開いてください。
       <body-snippet data-field=snippet />
     </a>
   </template>
+
+<template-set name=gr-tooltip-box-object>
+  <template>
+    <object-ref data-value-field=data.object_id template=#object-ref-template />
+  </template>
+</template-set>
+
   <template class=body-template id=hatena-star-template>
     <a href data-href-template=https://profile.hatena.ne.jp/{name}/ referrerpolicy=no-referrer data-title-template=" {name} {quote}" data-class-template=star-type-{type}>
       <span>★</span><!--
