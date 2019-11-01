@@ -1983,7 +1983,7 @@ function upgradeBodyControl (e, object, opts) {
         var result = prompt (args.prompt, args.default);
         ev.ports[0].postMessage ({result: result});
       } else if (ev.data.type === 'getObjectWithData') {
-        getObjectWithData (ev.data.value, {withData: true}).then (function (object) {
+        GR.object.data (ev.data.value, {withData: true}).then (function (object) {
           ev.ports[0].postMessage (object);
         });
       }
@@ -2104,7 +2104,7 @@ function upgradeBodyControl (e, object, opts) {
       if (ev.data.type === 'focus') {
         field.dispatchEvent (new Event ("focus", {bubbles: true}));
       } else if (ev.data.type === 'getObjectWithData') {
-        getObjectWithSearchData (ev.data.value, {withData: true}).then (function (object) {
+        GR.object.data (ev.data.value, {withData: true}).then (function (object) {
           ev.ports[0].postMessage (object);
         });
       }
@@ -2276,7 +2276,22 @@ function upgradeList (el) {
         }; // startEdit
         item.updateView = function () {
           Array.prototype.forEach.call (item.children, function (f) {
-            if (f.localName !== 'edit-container') {
+            if (f.localName === 'article-comments') {
+              if (!item.grACFilled) {
+                item.grACFilled = true;
+                fillFields (el, item, f, object, {
+                  importedSites: opts.importedSites,
+                });
+              }
+              f.querySelectorAll ('details[is=gr-comment-form]').forEach (_ => {
+                _.setAttribute ('data-parentobjectid', object.object_id);
+                if (_.grObjectUpdated) {
+                  _.grObjectUpdated (object);
+                } else {
+                  _.grObject = object;
+                }
+              });
+            } else if (f.localName !== 'edit-container') {
               fillFields (el, item, f, object, {
                 importedSites: opts.importedSites,
               });
@@ -2291,6 +2306,7 @@ function upgradeList (el) {
           }
         }; // updateView
         item.addEventListener ('objectdataupdate', function (ev) {
+          if (ev.grNewTodoState) object.data.todo_state = ev.grNewTodoState;
           this.updateView ();
         });
         item.addEventListener ('editablecontrolchange', function (ev) {
@@ -2843,6 +2859,70 @@ function saveObject (article, form, object, opts) {
     });
     // XXX notify object update
   };
+  document.head.appendChild (e);
+
+  var e = document.createElementNS ('data:,pc', 'saver');
+  e.setAttribute ('name', 'newObjectSaver');
+  e.pcHandler = function (fd) {
+    var todoState = fd.get ('todo_state');
+    fd.delete ('todo_state');
+    return gFetch ('o/create.json', {post: true}).then (json => {
+      return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
+    }).then (() => {
+      if (todoState) {
+        var fd2 = new FormData;
+        fd2.append ('todo_state', todoState);
+        return gFetch ('o/' + fd.get ('parent_object_id') + '/edit.json', {post: true, formData: fd2}).then (() => {
+          var ev = new Event ('objectdataupdate', {bubbles: true});
+          ev.grNewTodoState = todoState;
+          this.dispatchEvent (ev);
+        });
+      }
+    });
+    // XXX notify object update
+  };
+  document.head.appendChild (e);
+
+  var def = document.createElementNS ('data:,pc', 'formvalidator');
+  def.setAttribute ('name', 'commentFormValidator');
+  def.pcHandler = (opts) => {
+    if (opts.formData.get ('body') === '' &&
+        !opts.formData.get ('todo_state')) {
+      throw this.getAttribute ('data-gr-emptybodyerror');
+    }
+  };
+  document.head.appendChild (def);
+  
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'reloadCommentList');
+  e.pcHandler = function (args) {
+    var e = this.parentNode;
+    while (e && e.localName !== 'article-comments') {
+      e = e.parentNode;
+    }
+    if (!e) return;
+    e.querySelectorAll ('gr-list-container[key=objects]').forEach (_ => {
+      // XXX loadPrev ()
+      _.reload ();
+    });
+  }; // reloadCommentList
+  document.head.appendChild (e);
+
+  // XXX paco integration
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'resetCalledEditor');
+  e.pcHandler = function (args) {
+    this.querySelectorAll ('gr-called-editor').forEach (_ => _.grReset ());
+  }; // resetCalledEditor
+  document.head.appendChild (e);
+
+  var e = document.createElementNS ('data:,pc', 'formsaved');
+  e.setAttribute ('name', 'grFocus');
+  e.pcHandler = function (args) {
+    setTimeout (() => {
+      this.querySelectorAll (args.args[1]).forEach (_ => _.focus ());
+    }, 100);
+  }; // grFocus
   document.head.appendChild (e);
 
   // XXX replace by article reload ()
@@ -3538,6 +3618,59 @@ function upgradeForm (form) {
   document.head.appendChild (e);
 
 }) ();
+
+defineElement ({
+  name: 'details',
+  is: 'gr-comment-form',
+  props: {
+    pcInit: function () {
+      this.grOpenHandler = _ => {
+        if (this.hasAttribute ('open')) this.grOpen ();
+      };
+      this.addEventListener ('toggle', this.grOpenHandler);
+    }, // pcInit
+    grOpen: function () {
+      if (this.grOpened) return;
+      this.grOpened = true;
+      this.removeEventListener ('toggle', this.grOpenHandler);
+      delete this.grOpenHandler;
+
+      return $getTemplateSet ('gr-comment-form').then (ts => {
+        var e = ts.createFromTemplate ('div', {
+          parent_object_id: this.getAttribute ('data-parentobjectid'),
+        });
+        while (e.firstChild) this.appendChild (e.firstChild);
+
+        if (this.grObject) {
+          this.grObjectUpdated (this.grObject);
+          delete this.grObject;
+        }
+
+        this.querySelectorAll ('textarea[name=body]').forEach (_ => _.focus ());
+      });
+    }, // grOpen
+    grObjectUpdated: function (obj) {
+      return GR.index.list ().then (indexList => {
+        var indexIds = Object.keys (obj.data.index_ids || {});
+        for (var i = 0; i < indexIds.length; i++) {
+          var index = indexList[indexIds[i]];
+          if (index && index.index_type == 3 /* todo */) {
+            return true;
+          }
+        }
+        return false;
+      }).then (isTodo => {
+        this.querySelectorAll ('[data-gr-if-parent-todo]').forEach (_ => {
+          if (isTodo) {
+            _.hidden = (_.value == obj.data.todo_state);
+          } else {
+            _.hidden = true;
+          }
+        });
+      });
+    }, // grObjectUpdated
+  },
+}); // <details is=gr-comment-form>
 
 defineElement ({
   name: 'gr-editable-tr',

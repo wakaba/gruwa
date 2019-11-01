@@ -1029,48 +1029,8 @@ Web ブラウザーで開いてください。
               <list-main/>
             </gr-list-container>
 
-          <details class=actions>
-            <summary>コメントを書く</summary>
-
-            <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
-                data-child-form>
-              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
-
-              <gr-account self>
-                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
-                <gr-account-name data-field=name data-filling>アカウント</>
-              </gr-account>
-
-              <textarea data-edit-created-object data-name=body required></textarea>
-              <p class=operations>
-                <button type=submit class=save-button>投稿する</>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
-                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
-                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
-
-                <gr-action-status hidden
-                    stage-fetch=作成中...
-                    stage-editcreatedobject_fetch=保存中...
-                    stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読込中...
-                    ok=投稿しました />
-
-              <p>
-                <gr-group>
-                  <img data-src-template=/g/{group_id}/icon class=icon alt>
-                  <gr-group-name data-field=title data-filling>グループ</>
-                </gr-group>
-                <span>
-                  通知送信先:
-                  <gr-called-editor template=gr-called-editor data-edit-created-object />
-                </span>
-              </form>
+            <details is=gr-comment-form data-parentobjectid>
+              <summary>コメントを書く</summary>
             </details>
 
           </article-comments>
@@ -1253,6 +1213,47 @@ Web ブラウザーで開いてください。
   </template>
 </template-set>
 
+<template-set name=gr-comment-form>
+  <template>
+    <tab-set>
+      <tab-menu/>
+      <section>
+        <h1>テキスト</h1>
+        <form is=save-data data-saver=newObjectSaver action method=post data-next="reloadCommentList reset resetCalledEditor grFocus:[name=body]" data-gr-emptybodyerror=本文がありません。 class=comment-form>
+      <input type=hidden name=parent_object_id data-field=parent_object_id>
+      <p>
+        <gr-account self>
+          <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon data-alt-field=name data-title-field=name data-filled=alt>
+        </gr-account>
+        <textarea name=body placeholder=コメント本文></textarea>
+        <input type=hidden name=body_type value=2><!-- plaintext -->
+        <p class=operations>
+          <span class=submit-buttons>
+            <button type=submit class=save-button>投稿する</>
+            <button type=submit class=save-button data-gr-if-parent-todo name=todo_state value=2>投稿・完了</button>
+            <button type=submit class=save-button data-gr-if-parent-todo name=todo_state value=1>投稿・未完了に戻す</button>
+          </span>
+
+          <span class=submit-options>
+            <gr-group>
+              <img data-src-template=/g/{group_id}/icon class=icon alt>
+              <gr-group-name data-field=title data-filling>グループ</>
+            </gr-group>
+            <span>
+              通知送信先:
+              <gr-called-editor template=gr-called-editor />
+            </span>
+          </span>
+
+          <span class=submit-status>
+            <action-status stage-saver=投稿中... />
+          </span>
+        </form>
+      </section>
+    </tab-set>
+  </template>
+</template-set>
+
 <template-set name=page-object-index>
   <template>
     <section>
@@ -1378,50 +1379,10 @@ Web ブラウザーで開いてください。
               <list-main/>
             </gr-list-container>
 
-          <details class=actions>
-            <summary>コメントを書く</summary>
-
-            <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
-                data-child-form>
-              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
-
-              <gr-account self>
-                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
-                <gr-account-name data-field=name data-filling>アカウント</>
-              </gr-account>
-
-              <textarea data-edit-created-object data-name=body required></textarea>
-              <p class=operations>
-                <button type=submit class=save-button>投稿する</>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
-                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
-                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
-
-                <gr-action-status hidden
-                    stage-fetch=作成中...
-                    stage-editcreatedobject_fetch=保存中...
-                    stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読込中...
-                    ok=投稿しました />
-
-              <p>
-                <gr-group>
-                  <img data-src-template=/g/{group_id}/icon class=icon alt>
-                  <gr-group-name data-field=title data-filling>グループ</>
-                </gr-group>
-                <span>
-                  通知送信先:
-                  <gr-called-editor template=gr-called-editor data-edit-created-object />
-                </span>
-            </form>
-          </details>
-
+            <details is=gr-comment-form data-parentobjectid>
+              <summary>コメントを書く</summary>
+            </details>
+            
           </article-comments>
         </template>
 
@@ -1614,49 +1575,9 @@ Web ブラウザーで開いてください。
               <list-main/>
             </gr-list-container>
 
-          <details class=actions>
-            <summary>コメントを書く</summary>
-
-            <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
-                data-child-form>
-              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
-
-              <gr-account self>
-                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
-                <gr-account-name data-field=name data-filling>アカウント</>
-              </gr-account>
-
-              <textarea data-edit-created-object data-name=body required></textarea>
-              <p class=operations>
-                <button type=submit class=save-button>投稿する</>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
-                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
-                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
-
-                <gr-action-status hidden
-                    stage-fetch=作成中...
-                    stage-editcreatedobject_fetch=保存中...
-                    stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読込中...
-                    ok=投稿しました />
-
-              <p>
-                <gr-group>
-                  <img data-src-template=/g/{group_id}/icon class=icon alt>
-                  <gr-group-name data-field=title data-filling>グループ</>
-                </gr-group>
-                <span>
-                  通知送信先:
-                  <gr-called-editor template=gr-called-editor data-edit-created-object />
-                </span>
-            </form>
-          </details>
+            <details is=gr-comment-form data-parentobjectid>
+              <summary>コメントを書く</summary>
+            </details>
 
           </article-comments>
         </template>
@@ -1893,49 +1814,9 @@ Web ブラウザーで開いてください。
               <list-main/>
             </gr-list-container>
 
-          <details class=actions>
-            <summary>コメントを書く</summary>
-
-            <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
-                data-child-form>
-              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
-
-              <gr-account self>
-                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
-                <gr-account-name data-field=name data-filling>アカウント</>
-              </gr-account>
-
-              <textarea data-edit-created-object data-name=body required></textarea>
-              <p class=operations>
-                <button type=submit class=save-button>投稿する</>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
-                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
-                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
-
-                <gr-action-status hidden
-                    stage-fetch=作成中...
-                    stage-editcreatedobject_fetch=保存中...
-                    stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読込中...
-                    ok=投稿しました />
-
-              <p>
-                <gr-group>
-                  <img data-src-template=/g/{group_id}/icon class=icon alt>
-                  <gr-group-name data-field=title data-filling>グループ</>
-                </gr-group>
-                <span>
-                  通知送信先:
-                  <gr-called-editor template=gr-called-editor data-edit-created-object />
-                </span>
-            </form>
-          </details>
+            <details is=gr-comment-form data-parentobjectid>
+              <summary>コメントを書く</summary>
+            </details>
 
           </article-comments>
         </template>
