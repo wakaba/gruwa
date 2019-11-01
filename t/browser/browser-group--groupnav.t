@@ -79,7 +79,8 @@ Test {
     [g1 => group => {
       members => ['a1'],
     }],
-    [o2 => object => {account => 'a1', group => 'g1'}],
+    [o2 => object => {account => 'a1', group => 'g1',
+                      title => $current->generate_text (t1 => {})}],
   )->then (sub {
     return $current->create (
       [o1 => object => {account => 'a1', group => 'g1',
