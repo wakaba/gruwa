@@ -1312,15 +1312,29 @@ Web ブラウザーで開いてください。
   <template>
     <article itemscope itemtype=http://schema.org/Comment>
       <gr-object-author template=gr-object-author data-field=object.data />
-      <gr-comment-main>
+      <gr-comment-main class=oldiframeviewer>
         <iframe is=gr-old-iframe-viewer data-field=object />
+        <gr-comment-info>
+          <a href data-href-template="/g/{object.group_id}/o/{object.object_id}/" class=timestamp>
+            <time data-field=object.timestamp data-format=ambtime />
+            (<time data-field=object.updated data-format=ambtime />)
+          </a>
+        </gr-comment-info>
       </gr-comment-main>
-      <gr-comment-info>
-        <a href data-href-template="/g/{object.group_id}/o/{object.object_id}/" class=timestamp>
-          <time data-field=object.timestamp data-format=ambtime />
-          (<time data-field=object.updated data-format=ambtime />)
-        </a>
-      </gr-comment-info>
+    </article>
+  </template>
+  <template data-name=plaintextbody>
+    <article itemscope itemtype=http://schema.org/Comment>
+      <gr-object-author template=gr-object-author data-field=object.data />
+      <gr-comment-main class=plaintextbody>
+        <gr-plaintext-body data-field=object.data.body />
+        <gr-comment-info>
+          <a href data-href-template="/g/{object.group_id}/o/{object.object_id}/" class=timestamp>
+            <time data-field=object.timestamp data-format=ambtime />
+            (<time data-field=object.updated data-format=ambtime />)
+          </a>
+        </gr-comment-info>
+      </gr-comment-main>
     </article>
   </template>
   <template data-name=empty />

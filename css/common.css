@@ -572,6 +572,11 @@ article-comments article gr-comment-main:not([hidden]) {
   background-color: var(--main-background-color);
   border-radius: .2em;
   margin-left: 3rem;
+  padding: .3em;
+}
+
+article-comments article gr-comment-main.plaintextbody {
+  width: fit-content;
 }
 
 article-comments article gr-comment-main > iframe {
@@ -581,7 +586,6 @@ article-comments article gr-comment-main > iframe {
 article-comments article gr-comment-info:not([hidden]) {
   display: flex;
   margin-left: 3rem;
-  padding-top: .5rem;
   font-size: 80%;
   color: var(--small-color);
   background-color: var(--small-background-color);
@@ -641,6 +645,8 @@ details[is=gr-comment-form] tab-set > section.active {
 
 .comment-form > p:first-of-type .icon {
   margin: 0 .5em .5em 0;
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .comment-form textarea {
@@ -650,6 +656,8 @@ details[is=gr-comment-form] tab-set > section.active {
   width: auto;
   border-radius: .2em;
   border-style: none;
+  font-size: 100%;
+  font-family: inherit;
 }
 
 .comment-form .operations {
