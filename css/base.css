@@ -438,7 +438,7 @@ gr-index-viewer:not([hidden]) {
 }
 
 .operations.pager {
-  text-align: center;
+  text-align: right;
 }
 
 .operations > * {
@@ -454,7 +454,8 @@ gr-index-viewer:not([hidden]) {
 input:not([type]),
 input[type=search],
 input[type=url],
-input[type=email] {
+input[type=email],
+textarea {
   box-sizing: border-box;
   width: 100%;
   border: dotted 1px;
@@ -473,7 +474,8 @@ input[type=date] {
 }
 
 select:not([hidden]),
-gr-select-icon:not([hidden]) {
+gr-select-icon:not([hidden]),
+gr-called-editor:not([hidden]) {
   display: inline-block;
   border: dotted 1px;
   border-color: var(--accented-border-color);
@@ -604,6 +606,7 @@ button:enabled {
 }
 
 .operations .edit-button,
+.list-next, .list-prev,
 .next-page-button {
   -webkit-appearance: none;
   margin-left: 1em;
@@ -614,12 +617,19 @@ button:enabled {
   background: rgba(236, 236, 255, 0.7);
 }
 
+.operations.pager .list-next,
+.operations.pager .list-prev {
+  min-width: 10em;
+}
+
 .operations .edit-button:hover:enabled,
+.list-next:hover:enabled, .list-prev:hover:enabled,
 .next-page-button:hover:enabled {
   background: rgb(236, 236, 255);
 }
 
 .operations .edit-button:disabled,
+.list-next:disabled, .list-prev:disabled,
 .next-page-button:disabled {
   color: gray;
 }
@@ -924,6 +934,14 @@ th .icon,
 td .icon {
   width: 1.5em;
   height: 1.5em;
+}
+
+figure.qrcode {
+  text-align: center;
+}
+
+qr-code {
+
 }
 
 gr-account-list > gr-account + gr-account {

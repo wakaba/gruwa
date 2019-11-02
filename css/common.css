@@ -262,6 +262,10 @@ section section section section > header.section {
   text-align: var(--header4-align);
 }
 
+footer.section {
+  margin: 1em 1.5em;
+}
+
 article.object:not([hidden]) {
   margin: 0 0.5em 1em 0.5em;
   border: 1px solid;
@@ -511,64 +515,178 @@ gr-list-container[key=objects] > list-is-empty > p {
   margin: 2em;
 }
 
-.comment-list article {
-  margin: .5rem;
-  border: 1px solid;
-  border-color: var(--main-border-color);
-  color: var(--main-color);
-  background-color: var(--main-background-color);
-}
-
-.comment-list article > header {
-  padding: .5rem;
-  font-size: 80%;
+article-comments:not([hidden]) {
+  display: block;
+  margin-top: .5em;
+  padding: .5em;
   color: var(--light-1-color);
   background-color: var(--light-1-background-color);
 }
 
-.comment-list article > header gr-person,
-.comment-list article > header gr-account {
-  margin-right: 0.5em;
-  font-size: 100%;
+article-comments.section {
+  margin: 1em 1.5em;
 }
 
-.comment-list article > header gr-person,
-.comment-list article > header gr-account gr-account-name {
-  font-weight: bolder;
+article-comments article:not([hidden]) {
+  display: block;
+  margin-bottom: .5rem;
 }
 
-.comment-list article > header gr-person .icon,
-.comment-list article > header gr-account .icon {
+article-comments article::after {
+  display: block;
+  clear: both;
+  content: "";
+}
+
+article-comments article gr-object-author {
+  font-size: 90%;
+}
+
+article-comments article gr-object-author .icon {
   width: 2em;
   height: 2em;
 }
 
-.comment-list article > header .timestamp {
-  color: var(--small-color);
-  background-color: var(--small-background-color);
+article-comments article gr-object-author .icon:first-child {
+  float: left;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin: .25rem .5rem .5rem 0;
+}
+
+article-comments article gr-object-author gr-person,
+article-comments article gr-object-author gr-account {
+  margin-right: 0.5em;
+  font-size: 100%;
+}
+
+article-comments article gr-object-author gr-person,
+article-comments article gr-object-author gr-account gr-account-name {
+  font-weight: bolder;
   text-decoration: none;
 }
 
-.comment-list main > iframe {
+article-comments article gr-comment-main:not([hidden]) {
+  display: block;
+  color: var(--main-color);
+  background-color: var(--main-background-color);
+  border-radius: .2em;
+  margin-left: 3rem;
+}
+
+article-comments article gr-comment-main > iframe {
+  vertical-align: bottom;
+}
+
+article-comments article gr-comment-info:not([hidden]) {
+  display: flex;
+  margin-left: 3rem;
+  padding-top: .5rem;
+  font-size: 80%;
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+  flex-direction: row-reverse;
+}
+
+article-comments article gr-comment-info a:not(:hover):not(:focus):not(:active) {
+  color: inherit;
+  background: transparent;
+  text-decoration: none;
+}
+
+iframe[is=gr-old-iframe-viewer] {
   border-style: none;
   width: 100%;
 }
 
-.comment-list > list-main > list-item.change-action:not([hidden]),
-.comment-list > list-main > list-item.trackback:not([hidden]) {
+gr-action-log:not([hidden]) {
   display: block;
-  margin: 0.5rem 3rem;
+  margin: 1rem 5rem;
+  font-size: 80%;
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+}
+
+gr-action-log gr-object-author {
+  margin-right: .5em;
+}
+
+gr-action-log gr-object-author .icon {
+  width: 1em;
+  height: 1em;
+}
+
+gr-action-log gr-object-author gr-person,
+gr-action-log gr-object-author gr-account gr-account-name {
+  text-decoration: none;
+}
+
+details[is=gr-comment-form] tab-set {
+  margin: 0;
+}
+
+details[is=gr-comment-form] tab-set > section.active {
+  padding: 0 0 .5em 0;
+}
+
+.comment-form {
+  margin: 0;
+  padding: .5em;
+}
+
+.comment-form > p:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.comment-form > p:first-of-type .icon {
+  margin: 0 .5em .5em 0;
+}
+
+.comment-form textarea {
+  flex-grow: 1;
+  min-height: 10em;
+  line-height: 1.5;
+  width: auto;
+  border-radius: .2em;
+  border-style: none;
+}
+
+.comment-form .operations {
+  margin: 0.5em 0 0 0;
+  direction: initial;
+  align-items: center;
+}
+
+.comment-form .submit-buttons:not([hidden]) {
+  order: 3;
+  display: flex;
+  flex-direction: row-reverse;
+}
+
+.comment-form .submit-buttons .save-button {
+  margin: 0 0 0 0.5em;
+}
+
+.comment-form .submit-options {
   font-size: 80%;
 }
 
-article-comments .actions form {
-  margin: 0 .5rem;
+.comment-form .submit-options > * {
+  margin-right: .5em;
 }
 
-article-comments .actions form textarea {
-  width: 100%;
-  min-height: 10em;
-  line-height: 1.5;
+.comment-form .submit-options .icon {
+  width: 1em;
+  height: 1em;
+}
+
+.comment-form .submit-options gr-called-editor {
+  padding: 0.1em;
+}
+
+.comment-form .submit-status {
+  flex-grow: 1;
 }
 
 .dashboard-call-list td:first-child {

@@ -77,6 +77,182 @@ Test {
   });
 } n => 3, name => ['comment authors'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a3 => account => {}],
+    [g1 => group => {
+      members => ['a1', 'a3'],
+    }],
+    [o1 => object => {
+      group => 'g1', account => 'a1',
+    }],
+    [o2 => object => {
+      parent_object => 'o1',
+      group => 'g1', account => 'a3',
+    }],
+  )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, group => 'g1', account => 'a3');
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details summary',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments details summary').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details textarea',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments details textarea').value = arguments[0];
+      document.querySelector ('article-comments button[type=submit]').click ();
+    }, [$current->generate_text (t4 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details button[type=submit]:enabled',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments',
+      text => $current->o ('t2'),
+      name => 'new comment author',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details button[type=submit][name=todo_state]',
+      shown => 1, not => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('article-comments details textarea').value;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, '', 'reset';
+    } $current->c;
+  });
+} n => 1, name => ['post a new comment'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a3 => account => {}],
+    [g1 => group => {
+      members => ['a1', 'a3'],
+    }],
+    [i1 => index => {
+      account => 'a1',
+      group => 'g1',
+      index_type => 3, # todo
+      todo_state => 1, # open
+    }],
+    [o1 => object => {
+      group => 'g1', account => 'a1',
+      index => 'i1',
+    }],
+    [o2 => object => {
+      parent_object => 'o1',
+      group => 'g1', account => 'a3',
+    }],
+  )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, group => 'g1', account => 'a3');
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details summary',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments details summary').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details textarea',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details button[type=submit][name=todo_state][value="2"]',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details button[type=submit][name=todo_state][value="1"]',
+      shown => 1, not => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments details textarea').value = arguments[0];
+      document.querySelector ('article-comments button[type=submit][name=todo_state][value="2"]').click ();
+    }, [$current->generate_text (t4 => {})]);
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details button[type=submit]:enabled',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments',
+      text => $current->o ('t2'),
+      name => 'new comment author',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details button[type=submit][name=todo_state][value="2"]',
+      shown => 1, not => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details button[type=submit][name=todo_state][value="1"]',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('article-comments details textarea').value;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, '', 'reset';
+    } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      with_data => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $obj->{data}->{todo_state}, 2;
+    } $current->c;
+  });
+} n => 2, name => ['post a new comment'], browser => 1;
+
 RUN;
 
 =head1 LICENSE

@@ -727,6 +727,16 @@ Web ブラウザーで開いてください。
 
             <p class=operations>
               <button type=button is=copy-text-content data-selector=gr-invitation-text>コピー</button>
+
+            <p>QRコードから招待状を開くこともできます。
+
+              <figure class=qrcode>
+                <qr-code data-data-field=invitation_url data-filled=data />
+              </figure>
+
+            <p class=operations>
+              <button type=button is=gr-download-img data-selector="#invite qr-code img" data-filename=qrcode.png>ダウンロード</button>
+
           </div>
           
       </form>
@@ -974,103 +984,16 @@ Web ブラウザーで開いてください。
           </footer>
 
           <article-comments>
-
-            <gr-list-container class=comment-list
-                data-src-template=o/get.json?parent_object_id={object_id}&limit=5&with_data=1
-                key=objects sortkey=timestamp,created prepend
-                template-selector=object>
-              <template>
-                <article itemscope itemtype=http://schema.org/Comment>
-                  <header>
-                    <gr-object-author template=gr-object-author data-field=data />
-
-                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
-                      <time data-field=timestamp data-format=ambtime />
-                      (<time data-field=updated data-format=ambtime />)
-                    </a>
-                  </header>
-                  <main><iframe data-data-field=body /></main>
-                </article>
-              </template>
-              <template data-name=close class=change-action>
-                <p><!-- XXX が -->閉じました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=reopen class=change-action>
-                <p><!-- XXX が -->開き直しました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=changed class=change-action>
-                <p><!-- XXX が -->
-                変更しました。
-                <!--
-                <index-list data-field=data.body_data.new.index_ids />
-                を追加しました。
-
-                <index-list data-field=data.body_data.old.index_ids />
-                を削除しました。
-
-                <index-list data-field=data.body_data.new.assigned_account_ids />
-                に割り当てました。
-
-                <index-list data-field=data.body_data.old.assigned_account_ids />
-                への割当を削除しました。
-                -->
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=trackback class=trackback>
-                <time data-field=created data-format=ambtime />にこの記事が参照されました。
-                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
-              </template>
+            <list-container loader=groupCommentLoader data-loader-parentobjectid-field=object.object_id loader-limit=5 data-filled="loader-parentobjectid" template=gr-comment-object reverse>
               <p class="operations pager">
-                <button type=button class=next-page-button hidden>もっと昔</button>
+                <button type=button class=list-next data-list-scroll=preserve hidden>もっと昔のコメント</button>
               </p>
-              <gr-action-status hidden stage-load=読込中... />
-              <list-main/>
-            </gr-list-container>
+              <action-status hidden stage-loader=読込中... />
+              <list-main></list-main>
+            </list-container>
 
-          <details class=actions>
-            <summary>コメントを書く</summary>
-
-            <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
-                data-child-form>
-              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
-
-              <gr-account self>
-                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
-                <gr-account-name data-field=name data-filling>アカウント</>
-              </gr-account>
-
-              <textarea data-edit-created-object data-name=body required></textarea>
-              <p class=operations>
-                <button type=submit class=save-button>投稿する</>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
-                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
-                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
-
-                <gr-action-status hidden
-                    stage-fetch=作成中...
-                    stage-editcreatedobject_fetch=保存中...
-                    stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読込中...
-                    ok=投稿しました />
-
-              <p>
-                <gr-group>
-                  <img data-src-template=/g/{group_id}/icon class=icon alt>
-                  <gr-group-name data-field=title data-filling>グループ</>
-                </gr-group>
-                <span>
-                  通知送信先:
-                  <gr-called-editor template=gr-called-editor data-edit-created-object />
-                </span>
-              </form>
+            <details is=gr-comment-form data-parentobjectid>
+              <summary>コメントを書く</summary>
             </details>
 
           </article-comments>
@@ -1253,6 +1176,47 @@ Web ブラウザーで開いてください。
   </template>
 </template-set>
 
+<template-set name=gr-comment-form>
+  <template>
+    <tab-set>
+      <tab-menu/>
+      <section>
+        <h1>テキスト</h1>
+        <form is=save-data data-saver=newObjectSaver action method=post data-next="reloadCommentList reset resetCalledEditor grFocus:[name=body]" data-gr-emptybodyerror=本文がありません。 class=comment-form>
+      <input type=hidden name=parent_object_id data-field=parent_object_id>
+      <p>
+        <gr-account self>
+          <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon data-alt-field=name data-title-field=name data-filled=alt>
+        </gr-account>
+        <textarea name=body placeholder=コメント本文 autofocus></textarea>
+        <input type=hidden name=body_type value=2><!-- plaintext -->
+        <p class=operations>
+          <span class=submit-buttons>
+            <button type=submit class=save-button>投稿する</>
+            <button type=submit class=save-button data-gr-if-parent-todo name=todo_state value=2>投稿・完了</button>
+            <button type=submit class=save-button data-gr-if-parent-todo name=todo_state value=1>投稿・未完了に戻す</button>
+          </span>
+
+          <span class=submit-options>
+            <gr-group>
+              <img data-src-template=/g/{group_id}/icon class=icon alt>
+              <gr-group-name data-field=title data-filling>グループ</>
+            </gr-group>
+            <span>
+              通知送信先:
+              <gr-called-editor template=gr-called-editor />
+            </span>
+          </span>
+
+          <span class=submit-status>
+            <action-status stage-saver=投稿中... />
+          </span>
+        </form>
+      </section>
+    </tab-set>
+  </template>
+</template-set>
+
 <template-set name=page-object-index>
   <template>
     <section>
@@ -1323,37 +1287,63 @@ Web ブラウザーで開いてください。
           </footer>
 
           <article-comments>
+            <list-container loader=groupCommentLoader data-loader-parentobjectid-field=object.object_id loader-limit=30 data-filled="loader-parentobjectid" template=gr-comment-object reverse>
+              <p class="operations pager">
+                <button type=button class=list-next data-list-scroll=preserve hidden>もっと昔のコメント</button>
+              </p>
+              <action-status hidden stage-loader=読込中... />
+              <list-main></list-main>
+            </list-container>
 
-            <gr-list-container class=comment-list
-                data-src-template=o/get.json?parent_object_id={object_id}&limit=30&with_data=1
-                key=objects sortkey=timestamp,created prepend
-                template-selector=object>
-              <template>
-                <article itemscope itemtype=http://schema.org/Comment>
-                  <header>
-                    <gr-object-author template=gr-object-author data-field=data />
+            <details is=gr-comment-form data-parentobjectid>
+              <summary>コメントを書く</summary>
+            </details>
+          </article-comments>
+        </template>
 
-                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
-                      <time data-field=timestamp data-format=ambtime />
-                      (<time data-field=updated data-format=ambtime />)
-                    </a>
-                  </header>
-                  <main><iframe data-data-field=body /></main>
-                </article>
-              </template>
-              <template data-name=close class=change-action>
-                <p><!-- XXX が -->閉じました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=reopen class=change-action>
-                <p><!-- XXX が -->開き直しました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=changed class=change-action>
-                <p><!-- XXX が -->
-                変更しました。
-                <!--
-                <index-list data-field=data.body_data.new.index_ids />
+        <list-main></list-main>
+        <gr-action-status hidden stage-load=読込中... />
+      </gr-list-container>
+    </section>
+  </template>
+</template-set>
+
+<template-set name=gr-comment-object templateselector=grCommentObjectTemplateSelector>
+  <template>
+    <article itemscope itemtype=http://schema.org/Comment>
+      <gr-object-author template=gr-object-author data-field=object.data />
+      <gr-comment-main>
+        <iframe is=gr-old-iframe-viewer data-field=object />
+      </gr-comment-main>
+      <gr-comment-info>
+        <a href data-href-template="/g/{object.group_id}/o/{object.object_id}/" class=timestamp>
+          <time data-field=object.timestamp data-format=ambtime />
+          (<time data-field=object.updated data-format=ambtime />)
+        </a>
+      </gr-comment-info>
+    </article>
+  </template>
+  <template data-name=empty />
+  <template data-name=close>
+    <gr-action-log>
+      <p><gr-object-author template=gr-object-author data-field=object.data />
+      閉じました。
+      <time data-field=object.created data-format=ambtime />
+    </gr-action-log>
+  </template>
+  <template data-name=reopen>
+    <gr-action-log>
+      <p><gr-object-author template=gr-object-author data-field=object.data />
+      開き直しました。
+      <time data-field=object.created data-format=ambtime />
+    </gr-action-log>
+  </template>
+  <template data-name=changed>
+    <gr-action-log>
+      <p><gr-object-author template=gr-object-author data-field=object.data />
+      記事情報を変更しました。
+      <!--
+          <index-list data-field=data.body_data.new.index_ids />
                 を追加しました。
 
                 <index-list data-field=data.body_data.old.index_ids />
@@ -1365,70 +1355,14 @@ Web ブラウザーで開いてください。
                 <index-list data-field=data.body_data.old.assigned_account_ids />
                 への割当を削除しました。
                 -->
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=trackback class=trackback>
-                <time data-field=created data-format=ambtime />にこの記事が参照されました。
-                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
-              </template>
-              <p class="operations pager">
-                <button type=button class=next-page-button hidden>もっと昔</button>
-              </p>
-              <gr-action-status hidden stage-load=読込中... />
-              <list-main/>
-            </gr-list-container>
-
-          <details class=actions>
-            <summary>コメントを書く</summary>
-
-            <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
-                data-child-form>
-              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
-
-              <gr-account self>
-                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
-                <gr-account-name data-field=name data-filling>アカウント</>
-              </gr-account>
-
-              <textarea data-edit-created-object data-name=body required></textarea>
-              <p class=operations>
-                <button type=submit class=save-button>投稿する</>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
-                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
-                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
-
-                <gr-action-status hidden
-                    stage-fetch=作成中...
-                    stage-editcreatedobject_fetch=保存中...
-                    stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読込中...
-                    ok=投稿しました />
-
-              <p>
-                <gr-group>
-                  <img data-src-template=/g/{group_id}/icon class=icon alt>
-                  <gr-group-name data-field=title data-filling>グループ</>
-                </gr-group>
-                <span>
-                  通知送信先:
-                  <gr-called-editor template=gr-called-editor data-edit-created-object />
-                </span>
-            </form>
-          </details>
-
-          </article-comments>
-        </template>
-
-        <list-main></list-main>
-        <gr-action-status hidden stage-load=読込中... />
-      </gr-list-container>
-    </section>
+      <time data-field=object.created data-format=ambtime />
+    </gr-action-log>
+  </template>
+  <template data-name=trackback class=trackback>
+    <gr-action-log>
+      <p><time data-field=object.created data-format=ambtime />に参照されました。
+      <gr-object-ref data-field=object.data.body_data.trackback.object_id />
+    </gr-action-log>
   </template>
 </template-set>
 
@@ -1559,104 +1493,17 @@ Web ブラウザーで開いてください。
           </footer>
 
           <article-comments>
-
-            <gr-list-container class=comment-list
-                data-src-template=o/get.json?parent_object_id={object_id}&limit=30&with_data=1
-                key=objects sortkey=timestamp,created prepend
-                template-selector=object>
-              <template>
-                <article itemscope itemtype=http://schema.org/Comment>
-                  <header>
-                    <gr-object-author template=gr-object-author data-field=data />
-
-                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
-                      <time data-field=timestamp data-format=ambtime />
-                      (<time data-field=updated data-format=ambtime />)
-                    </a>
-                  </header>
-                  <main><iframe data-data-field=body /></main>
-                </article>
-              </template>
-              <template data-name=close class=change-action>
-                <p><!-- XXX が -->閉じました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=reopen class=change-action>
-                <p><!-- XXX が -->開き直しました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=changed class=change-action>
-                <p><!-- XXX が -->
-                変更しました。
-                <!--
-                <index-list data-field=data.body_data.new.index_ids />
-                を追加しました。
-
-                <index-list data-field=data.body_data.old.index_ids />
-                を削除しました。
-
-                <index-list data-field=data.body_data.new.assigned_account_ids />
-                に割り当てました。
-
-                <index-list data-field=data.body_data.old.assigned_account_ids />
-                への割当を削除しました。
-                -->
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=trackback class=trackback>
-                <time data-field=created data-format=ambtime />にこの記事が参照されました。
-                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
-              </template>
+            <list-container loader=groupCommentLoader data-loader-parentobjectid-field=object.object_id loader-limit=30 data-filled="loader-parentobjectid" template=gr-comment-object reverse>
               <p class="operations pager">
-                <button type=button class=next-page-button hidden>もっと昔</button>
+                <button type=button class=list-next data-list-scroll=preserve hidden>もっと昔のコメント</button>
               </p>
-              <gr-action-status hidden stage-load=読込中... />
-              <list-main/>
-            </gr-list-container>
+              <action-status hidden stage-loader=読込中... />
+              <list-main></list-main>
+            </list-container>
 
-          <details class=actions>
-            <summary>コメントを書く</summary>
-
-            <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
-                data-child-form>
-              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
-
-              <gr-account self>
-                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
-                <gr-account-name data-field=name data-filling>アカウント</>
-              </gr-account>
-
-              <textarea data-edit-created-object data-name=body required></textarea>
-              <p class=operations>
-                <button type=submit class=save-button>投稿する</>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
-                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
-                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
-
-                <gr-action-status hidden
-                    stage-fetch=作成中...
-                    stage-editcreatedobject_fetch=保存中...
-                    stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読込中...
-                    ok=投稿しました />
-
-              <p>
-                <gr-group>
-                  <img data-src-template=/g/{group_id}/icon class=icon alt>
-                  <gr-group-name data-field=title data-filling>グループ</>
-                </gr-group>
-                <span>
-                  通知送信先:
-                  <gr-called-editor template=gr-called-editor data-edit-created-object />
-                </span>
-            </form>
-          </details>
+            <details is=gr-comment-form data-parentobjectid>
+              <summary>コメントを書く</summary>
+            </details>
 
           </article-comments>
         </template>
@@ -1675,26 +1522,17 @@ Web ブラウザーで開いてください。
         <gr-action-status hidden stage-load=読込中... />
       </gr-list-container>
 
-      <article-comments>
-
-        <gr-list-container class=comment-list
-            data-src-template=o/get.json?index_id={index.index_id}&parent_wiki_name={wiki.name}&limit=30&with_data=1
-            key=objects sortkey=timestamp,created prepend
-            template-selector=object>
-          <template />
-          <template data-name=trackback class=trackback>
-            <time data-field=created data-format=ambtime />にこのWikiページが参照されました。
-            <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
-          </template>
+      <article-comments class=section>
+        <list-container loader=groupCommentLoader data-loader-indexid-field=index.index_id data-loader-parentwikiname-field=wiki.name loader-limit=30 data-filled="loader-indexid loader-parentwikiname" template=gr-comment-object reverse>
           <p class="operations pager">
-            <button type=button class=next-page-button hidden>もっと昔</button>
+            <button type=button class=list-next data-list-scroll=preserve hidden>もっと昔のコメント</button>
           </p>
-          <gr-action-status hidden stage-load=読込中... />
-          <list-main/>
-        </gr-list-container>
+          <action-status hidden stage-loader=読込中... />
+          <list-main></list-main>
+        </list-container>
       </article-comments>
 
-      <footer>
+      <footer class=section>
         <p><a data-href-template=/g/{group.group_id}/search?q={url:wiki.name}>「<bdi data-field=wiki.name />」を含む記事を検索する</a></p>
       </footer>
     </section>
@@ -1838,104 +1676,17 @@ Web ブラウザーで開いてください。
           </footer>
 
           <article-comments>
-
-            <gr-list-container class=comment-list
-                data-src-template=o/get.json?parent_object_id={object_id}&limit=30&with_data=1
-                key=objects sortkey=timestamp,created prepend
-                template-selector=object>
-              <template>
-                <article itemscope itemtype=http://schema.org/Comment>
-                  <header>
-                    <gr-object-author template=gr-object-author data-field=data />
-
-                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
-                      <time data-field=timestamp data-format=ambtime />
-                      (<time data-field=updated data-format=ambtime />)
-                    </a>
-                  </header>
-                  <main><iframe data-data-field=body /></main>
-                </article>
-              </template>
-              <template data-name=close class=change-action>
-                <p><!-- XXX が -->閉じました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=reopen class=change-action>
-                <p><!-- XXX が -->開き直しました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=changed class=change-action>
-                <p><!-- XXX が -->
-                変更しました。
-                <!--
-                <index-list data-field=data.body_data.new.index_ids />
-                を追加しました。
-
-                <index-list data-field=data.body_data.old.index_ids />
-                を削除しました。
-
-                <index-list data-field=data.body_data.new.assigned_account_ids />
-                に割り当てました。
-
-                <index-list data-field=data.body_data.old.assigned_account_ids />
-                への割当を削除しました。
-                -->
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=trackback class=trackback>
-                <time data-field=created data-format=ambtime />にこの記事が参照されました。
-                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
-              </template>
+            <list-container loader=groupCommentLoader data-loader-parentobjectid-field=object.object_id loader-limit=30 data-filled="loader-parentobjectid" template=gr-comment-object reverse>
               <p class="operations pager">
-                <button type=button class=next-page-button hidden>もっと昔</button>
+                <button type=button class=list-next data-list-scroll=preserve hidden>もっと昔のコメント</button>
               </p>
-              <gr-action-status hidden stage-load=読込中... />
-              <list-main/>
-            </gr-list-container>
+              <action-status hidden stage-loader=読込中... />
+              <list-main></list-main>
+            </list-container>
 
-          <details class=actions>
-            <summary>コメントを書く</summary>
-
-            <form action=javascript: data-action=o/create.json
-                data-next="editCreatedObject editObject resetForm showCreatedObjectInCommentList updateParent resetCallEditor"
-                data-child-form>
-              <input type=hidden data-edit-created-object data-name=parent_object_id data-field=object_id>
-
-              <gr-account self>
-                <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
-                <gr-account-name data-field=name data-filling>アカウント</>
-              </gr-account>
-
-              <textarea data-edit-created-object data-name=body required></textarea>
-              <p class=operations>
-                <button type=submit class=save-button>投稿する</>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=1 data-subform=close>投稿・完了</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=close>
-                <input type=hidden data-edit-object data-name=todo_state value=2 data-subform=close class=data-field>
-
-                <button type=submit class=save-button hidden data-if-data-field=todo_state data-if-value=2 data-subform=reopen>投稿・未完了に戻す</button>
-                <input type=hidden data-edit-object data-name=object_id data-field=object_id data-subform=reopen>
-                <input type=hidden data-edit-object data-name=todo_state value=1 data-subform=reopen class=data-field>
-
-                <gr-action-status hidden
-                    stage-fetch=作成中...
-                    stage-editcreatedobject_fetch=保存中...
-                    stage-editobject_fetch=状態を変更中...
-                    stage-showcreatedobjectincommentlist=読込中...
-                    ok=投稿しました />
-
-              <p>
-                <gr-group>
-                  <img data-src-template=/g/{group_id}/icon class=icon alt>
-                  <gr-group-name data-field=title data-filling>グループ</>
-                </gr-group>
-                <span>
-                  通知送信先:
-                  <gr-called-editor template=gr-called-editor data-edit-created-object />
-                </span>
-            </form>
-          </details>
+            <details is=gr-comment-form data-parentobjectid>
+              <summary>コメントを書く</summary>
+            </details>
 
           </article-comments>
         </template>

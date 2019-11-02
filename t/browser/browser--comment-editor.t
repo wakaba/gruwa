@@ -38,7 +38,7 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'article-comments form button[type=submit]',
+      selector => 'article-comments details summary',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
@@ -69,7 +69,7 @@ Test {
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      document.querySelector ('article-comments form [data-name=body]').value = arguments[1];
+      document.querySelector ('article-comments form [name=body]').value = arguments[1];
       document.querySelector ('article-comments form gr-called-editor menu-main input[type=checkbox][value="'+arguments[0]+'"]').click ();
     }, [$current->o ('a3')->{account_id}, $current->generate_text (b1 => {})]);
   })->then (sub {

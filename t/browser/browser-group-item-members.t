@@ -239,6 +239,11 @@ Test {
       selector => '#invitations table tbody tr',
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '#invite qr-code img',
+      shown => 1,
+    });
+  })->then (sub {
     test {
       ok 1;
     } $current->c;

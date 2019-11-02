@@ -236,7 +236,7 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'article-comments form button[type=submit]',
+      selector => 'article-comments details summary',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
@@ -258,7 +258,7 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'article-comments form gr-action-status', # XXX
+      selector => 'article-comments form action-status',
       text => 403,
       scroll => 1, shown => 1,
     });
