@@ -438,7 +438,7 @@ gr-index-viewer:not([hidden]) {
 }
 
 .operations.pager {
-  text-align: center;
+  text-align: right;
 }
 
 .operations > * {
@@ -606,6 +606,7 @@ button:enabled {
 }
 
 .operations .edit-button,
+.list-next, .list-prev,
 .next-page-button {
   -webkit-appearance: none;
   margin-left: 1em;
@@ -616,12 +617,19 @@ button:enabled {
   background: rgba(236, 236, 255, 0.7);
 }
 
+.operations.pager .list-next,
+.operations.pager .list-prev {
+  min-width: 10em;
+}
+
 .operations .edit-button:hover:enabled,
+.list-next:hover:enabled, .list-prev:hover:enabled,
 .next-page-button:hover:enabled {
   background: rgb(236, 236, 255);
 }
 
 .operations .edit-button:disabled,
+.list-next:disabled, .list-prev:disabled,
 .next-page-button:disabled {
   color: gray;
 }

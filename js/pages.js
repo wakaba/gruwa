@@ -825,7 +825,8 @@ defineElement ({
   e.pcHandler = function (opts) {
     var indexId = this.getAttribute ('loader-indexid');
     var indexType = this.getAttribute ('loader-indextype');
-    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/o/get.json?index_id=' + encodeURIComponent (indexId) + (this.hasAttribute ('loader-withdata') ? '&with_data=1' : '&with_title=1&with_snippet=1');
+    var withData = this.hasAttribute ('loader-withdata');
+    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/o/get.json?index_id=' + encodeURIComponent (indexId) + (withData ? '&with_data=1' : '&with_title=1&with_snippet=1');
     if (opts.ref) url += '&ref=' + encodeURIComponent (opts.ref);
     var limit = this.getAttribute ('loader-limit') || opts.limit;
     if (limit) url += '&limit=' + encodeURIComponent (limit);
@@ -841,7 +842,7 @@ defineElement ({
         return b.timestamp - a.timestamp;
       }).map (_ => {
         GR.object._cache (_, {
-          hasData: true, hasTitle: true, hasSearchData: true,
+          hasData: withData, hasTitle: true, hasSearchData: !withData,
         });
         return {
           url: (indexType == 2 /* wiki */ ? '/g/'+_.group_id+'/i/'+indexId+'/wiki/'+encodeURIComponent (_.title)+'#' + _.object_id : '/g/'+_.group_id+'/o/'+_.object_id+'/'),
@@ -860,6 +861,80 @@ defineElement ({
       }
       throw e;
     });
+  };
+  document.head.appendChild (e);
+
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'groupCommentLoader');
+  e.pcHandler = function (opts) {
+    var url = (document.documentElement.getAttribute ('data-group-url') || '') + '/o/get.json?with_data=1';
+    var objectId = this.getAttribute ('loader-parentobjectid');
+    if (objectId) {
+      url += '&parent_object_id=' + encodeURIComponent (objectId);
+    } else {
+      url += '&parent_wiki_name=' + encodeURIComponent (this.getAttribute ('loader-parentwikiname'));
+      url += '&index_id=' + encodeURIComponent (this.getAttribute ('loader-indexid'));
+    }
+    if (opts.ref) url += '&ref=' + encodeURIComponent (opts.ref);
+    var limit = this.getAttribute ('loader-limit') || opts.limit;
+    if (limit) url += '&limit=' + encodeURIComponent (limit);
+    // XXX cache
+    return fetch (url, {
+      credentials: "same-origin",
+      referrerPolicy: 'same-origin',
+    }).then ((res) => {
+      if (res.status !== 200) throw res;
+      return res.json ();
+    }).then ((json) => {
+      var list = Object.values (json.objects).sort ((a, b) => {
+        return b.timestamp - a.timestamp;
+      }).map (_ => {
+        GR.object._cache (_, {
+          hasData: true, hasTitle: true,
+        });
+        return {
+          object: _,
+        };
+      });
+      var hasNext = json.next_ref && opts.ref !== json.next_ref; // backcompat
+      return {
+        data: list,
+        prev: {ref: json.prev_ref, has: json.has_prev, limit: limit},
+        next: {ref: json.next_ref, has: json.has_next || hasNext, limit: limit},
+      };
+    }).catch (e => {
+      if (e instanceof Response && e.status === 403) {
+        throw GR.Error.handle403 (e);
+      }
+      throw e;
+    });
+  };
+  document.head.appendChild (e);
+
+  var e = document.createElementNS ('data:,pc', 'templateselector');
+  e.setAttribute ('name', 'grCommentObjectTemplateSelector');
+  e.pcHandler = function (templates, obj) {
+    var object = obj.object;
+    console.log(object);
+    if (object.data.body_type == 3 /* data */) {
+      if (object.data.body_data.hatena_star) {
+        return templates.empty;
+      }
+      if (object.data.body_data.new) {
+        if (object.data.body_data.new.todo_state == 2) {
+          return templates.close;
+        } else if (object.data.body_data.new.todo_state == 1 &&
+                   object.data.body_data.old.todo_state == 2) {
+          return templates.reopen;
+        } else {
+          return templates.changed;
+        }
+      }
+      if (object.data.body_data.trackback) {
+        return templates.trackback;
+      }
+    }
+    return templates[""];
   };
   document.head.appendChild (e);
 
@@ -1720,39 +1795,7 @@ function fillFields (contextEl, rootEl, el, object, opts) {
     } else if (field.localName === 'gr-index-list') {
       field.value = value;
     } else if (field.localName === 'iframe') {
-      field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
-      field.setAttribute ('srcdoc', createBodyHTML ('', {}));
-      var mc = new MessageChannel;
-      field.onload = function () {
-        this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
-        mc.port2.onmessage = function (ev) {
-          if (ev.data.type === 'height') {
-            field.style.height = ev.data.value + 'px';
-          } else if (ev.data.type === 'changed') {
-            var v = new Event ('editablecontrolchange', {bubbles: true});
-            v.data = ev.data;
-            field.dispatchEvent (v);
-          } else if (ev.data.type === 'getObjectWithData') {
-            GR.object.get (ev.data.value, {withData: true}).then (function (object) {
-              ev.ports[0].postMessage (object);
-            });
-          } else if (ev.data.type === 'linkSelected') {
-            GR.tooltip.showURL (ev.data.url, {
-              top: field.offsetTop + ev.data.top + ev.data.height,
-              left: field.offsetLeft + ev.data.left,
-            });
-          } else if (ev.data.type === 'linkClicked') {
-            GR.navigate.go (ev.data.url, {
-              ping: ev.data.ping,
-            });
-          }
-        };
-        field.onload = null;
-      };
-      mc.port2.postMessage ({type: "setCurrentValue",
-                             valueSourceType: (object.data ? object.data.body_source_type : null),
-                             importedSites: opts.importedSites,
-                             value: value});
+      initIframeViewer (field, object, opts.importedSites);
     } else if (field.localName === 'todo-state') {
       if (value) {
         field.setAttribute ('value', value);
@@ -1797,6 +1840,64 @@ function fillFields (contextEl, rootEl, el, object, opts) {
     });
   }
 } // fillFields
+
+function initIframeViewer (field, object, importedSites) {
+  field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
+  field.setAttribute ('srcdoc', createBodyHTML ('', {}));
+      var mc = new MessageChannel;
+      field.onload = function () {
+        this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
+        mc.port2.onmessage = function (ev) {
+          if (ev.data.type === 'height') {
+            field.style.height = ev.data.value + 'px';
+          } else if (ev.data.type === 'changed') {
+            var v = new Event ('editablecontrolchange', {bubbles: true});
+            v.data = ev.data;
+            field.dispatchEvent (v);
+          } else if (ev.data.type === 'getObjectWithData') {
+            GR.object.get (ev.data.value, {withData: true}).then (function (object) {
+              ev.ports[0].postMessage (object);
+            });
+          } else if (ev.data.type === 'linkSelected') {
+            GR.tooltip.showURL (ev.data.url, {
+              top: field.offsetTop + ev.data.top + ev.data.height,
+              left: field.offsetLeft + ev.data.left,
+            });
+          } else if (ev.data.type === 'linkClicked') {
+            GR.navigate.go (ev.data.url, {
+              ping: ev.data.ping,
+            });
+          }
+        };
+        field.onload = null;
+      };
+  mc.port2.postMessage ({type: "setCurrentValue",
+                         valueSourceType: (object.data ? object.data.body_source_type : null),
+                         importedSites: importedSites,
+                         value: object.data.body});
+} // initIframeViewer
+
+defineElement ({
+  name: 'iframe',
+  is: 'gr-old-iframe-viewer',
+  fill: 'idlattribute',
+  props: {
+    pcInit: function () {
+      this.grValue = this.value;
+      Object.defineProperty (this, 'value', {
+        set: function (v) {
+          this.grValue = v;
+          Promise.resolve ().then (() => this.grRender ());
+        },
+      });
+      Promise.resolve ().then (() => this.grRender ());
+    }, // pcInit
+    grRender: function () {
+      if (!this.grValue) return;
+      initIframeViewer (this, this.grValue, {/*XXX*/});
+    }, // grRender
+  },
+}); // <iframe is=gr-old-iframe-viewer>
 
 function fillFormControls (form, object, opts) {
   var wait = [];
@@ -2279,9 +2380,7 @@ function upgradeList (el) {
             if (f.localName === 'article-comments') {
               if (!item.grACFilled) {
                 item.grACFilled = true;
-                fillFields (el, item, f, object, {
-                  importedSites: opts.importedSites,
-                });
+                $fill (f, {object: object});
               }
               f.querySelectorAll ('details[is=gr-comment-form]').forEach (_ => {
                 _.setAttribute ('data-parentobjectid', object.object_id);
@@ -2866,8 +2965,12 @@ function saveObject (article, form, object, opts) {
   e.pcHandler = function (fd) {
     var todoState = fd.get ('todo_state');
     fd.delete ('todo_state');
-    return gFetch ('o/create.json', {post: true}).then (json => {
-      return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
+    return Promise.resolve ().then (() => {
+      if (fd.get ('body') !== '') {
+        return gFetch ('o/create.json', {post: true}).then (json => {
+          return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
+        });
+      }
     }).then (() => {
       if (todoState) {
         var fd2 = new FormData;
@@ -2901,9 +3004,9 @@ function saveObject (article, form, object, opts) {
       e = e.parentNode;
     }
     if (!e) return;
-    e.querySelectorAll ('gr-list-container[key=objects]').forEach (_ => {
+    e.querySelectorAll ('list-container[loader=groupCommentLoader]').forEach (_ => {
       // XXX loadPrev ()
-      _.reload ();
+      _.load ({});
     });
   }; // reloadCommentList
   document.head.appendChild (e);
@@ -3653,6 +3756,11 @@ defineElement ({
       this.grOpened = true;
       this.removeEventListener ('toggle', this.grOpenHandler);
       delete this.grOpenHandler;
+      this.addEventListener ('toggle', () => {
+        if (this.hasAttribute ('open')) {
+          this.querySelectorAll ('textarea[name=body]').forEach (_ => _.focus ());
+        }
+      });
 
       return $getTemplateSet ('gr-comment-form').then (ts => {
         var e = ts.createFromTemplate ('div', {
@@ -3664,8 +3772,6 @@ defineElement ({
           this.grObjectUpdated (this.grObject);
           delete this.grObject;
         }
-
-        this.querySelectorAll ('textarea[name=body]').forEach (_ => _.focus ());
       });
     }, // grOpen
     grObjectUpdated: function (obj) {
@@ -4151,6 +4257,20 @@ function upgradeObjectRef (e) {
     fillFields (e, e, e, object, {});
   });
 } // upgradeObjectRef
+
+defineElement ({
+  name: 'gr-object-ref',
+  fill: 'contentattribute',
+  props: {
+    pcInit: function () {
+      var e = document.createElement ('object-ref');
+      e.setAttribute ('value', this.getAttribute ('value'));
+      e.setAttribute ('template', '#object-ref-template');
+      upgradeObjectRef (e);
+      this.appendChild (e);
+    }, // pcInit
+  },
+}); // <gr-object-ref>
 
 GR.tooltip = {};
 

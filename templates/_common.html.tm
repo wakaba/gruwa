@@ -984,60 +984,13 @@ Web ブラウザーで開いてください。
           </footer>
 
           <article-comments>
-
-            <gr-list-container class=comment-list
-                data-src-template=o/get.json?parent_object_id={object_id}&limit=5&with_data=1
-                key=objects sortkey=timestamp,created prepend
-                template-selector=object>
-              <template>
-                <article itemscope itemtype=http://schema.org/Comment>
-                  <header>
-                    <gr-object-author template=gr-object-author data-field=data />
-
-                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
-                      <time data-field=timestamp data-format=ambtime />
-                      (<time data-field=updated data-format=ambtime />)
-                    </a>
-                  </header>
-                  <main><iframe data-data-field=body /></main>
-                </article>
-              </template>
-              <template data-name=close class=change-action>
-                <p><!-- XXX が -->閉じました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=reopen class=change-action>
-                <p><!-- XXX が -->開き直しました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=changed class=change-action>
-                <p><!-- XXX が -->
-                変更しました。
-                <!--
-                <index-list data-field=data.body_data.new.index_ids />
-                を追加しました。
-
-                <index-list data-field=data.body_data.old.index_ids />
-                を削除しました。
-
-                <index-list data-field=data.body_data.new.assigned_account_ids />
-                に割り当てました。
-
-                <index-list data-field=data.body_data.old.assigned_account_ids />
-                への割当を削除しました。
-                -->
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=trackback class=trackback>
-                <time data-field=created data-format=ambtime />にこの記事が参照されました。
-                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
-              </template>
+            <list-container loader=groupCommentLoader data-loader-parentobjectid-field=object.object_id loader-limit=5 data-filled="loader-parentobjectid" template=gr-comment-object reverse>
               <p class="operations pager">
-                <button type=button class=next-page-button hidden>もっと昔</button>
+                <button type=button class=list-next data-list-scroll=preserve hidden>もっと昔のコメント</button>
               </p>
-              <gr-action-status hidden stage-load=読込中... />
-              <list-main/>
-            </gr-list-container>
+              <action-status hidden stage-loader=読込中... />
+              <list-main></list-main>
+            </list-container>
 
             <details is=gr-comment-form data-parentobjectid>
               <summary>コメントを書く</summary>
@@ -1235,7 +1188,7 @@ Web ブラウザーで開いてください。
         <gr-account self>
           <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon data-alt-field=name data-title-field=name data-filled=alt>
         </gr-account>
-        <textarea name=body placeholder=コメント本文></textarea>
+        <textarea name=body placeholder=コメント本文 autofocus></textarea>
         <input type=hidden name=body_type value=2><!-- plaintext -->
         <p class=operations>
           <span class=submit-buttons>
@@ -1334,37 +1287,63 @@ Web ブラウザーで開いてください。
           </footer>
 
           <article-comments>
+            <list-container loader=groupCommentLoader data-loader-parentobjectid-field=object.object_id loader-limit=30 data-filled="loader-parentobjectid" template=gr-comment-object reverse>
+              <p class="operations pager">
+                <button type=button class=list-next data-list-scroll=preserve hidden>もっと昔のコメント</button>
+              </p>
+              <action-status hidden stage-loader=読込中... />
+              <list-main></list-main>
+            </list-container>
 
-            <gr-list-container class=comment-list
-                data-src-template=o/get.json?parent_object_id={object_id}&limit=30&with_data=1
-                key=objects sortkey=timestamp,created prepend
-                template-selector=object>
-              <template>
-                <article itemscope itemtype=http://schema.org/Comment>
-                  <header>
-                    <gr-object-author template=gr-object-author data-field=data />
+            <details is=gr-comment-form data-parentobjectid>
+              <summary>コメントを書く</summary>
+            </details>
+          </article-comments>
+        </template>
 
-                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
-                      <time data-field=timestamp data-format=ambtime />
-                      (<time data-field=updated data-format=ambtime />)
-                    </a>
-                  </header>
-                  <main><iframe data-data-field=body /></main>
-                </article>
-              </template>
-              <template data-name=close class=change-action>
-                <p><!-- XXX が -->閉じました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=reopen class=change-action>
-                <p><!-- XXX が -->開き直しました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=changed class=change-action>
-                <p><!-- XXX が -->
-                変更しました。
-                <!--
-                <index-list data-field=data.body_data.new.index_ids />
+        <list-main></list-main>
+        <gr-action-status hidden stage-load=読込中... />
+      </gr-list-container>
+    </section>
+  </template>
+</template-set>
+
+<template-set name=gr-comment-object templateselector=grCommentObjectTemplateSelector>
+  <template>
+    <article itemscope itemtype=http://schema.org/Comment>
+      <gr-object-author template=gr-object-author data-field=object.data />
+      <gr-comment-main>
+        <iframe is=gr-old-iframe-viewer data-field=object />
+      </gr-comment-main>
+      <gr-comment-info>
+        <a href data-href-template="/g/{object.group_id}/o/{object.object_id}/" class=timestamp>
+          <time data-field=object.timestamp data-format=ambtime />
+          (<time data-field=object.updated data-format=ambtime />)
+        </a>
+      </gr-comment-info>
+    </article>
+  </template>
+  <template data-name=empty />
+  <template data-name=close>
+    <gr-action-log>
+      <p><gr-object-author template=gr-object-author data-field=object.data />
+      閉じました。
+      <time data-field=object.created data-format=ambtime />
+    </gr-action-log>
+  </template>
+  <template data-name=reopen>
+    <gr-action-log>
+      <p><gr-object-author template=gr-object-author data-field=object.data />
+      開き直しました。
+      <time data-field=object.created data-format=ambtime />
+    </gr-action-log>
+  </template>
+  <template data-name=changed>
+    <gr-action-log>
+      <p><gr-object-author template=gr-object-author data-field=object.data />
+      記事情報を変更しました。
+      <!--
+          <index-list data-field=data.body_data.new.index_ids />
                 を追加しました。
 
                 <index-list data-field=data.body_data.old.index_ids />
@@ -1376,30 +1355,14 @@ Web ブラウザーで開いてください。
                 <index-list data-field=data.body_data.old.assigned_account_ids />
                 への割当を削除しました。
                 -->
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=trackback class=trackback>
-                <time data-field=created data-format=ambtime />にこの記事が参照されました。
-                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
-              </template>
-              <p class="operations pager">
-                <button type=button class=next-page-button hidden>もっと昔</button>
-              </p>
-              <gr-action-status hidden stage-load=読込中... />
-              <list-main/>
-            </gr-list-container>
-
-            <details is=gr-comment-form data-parentobjectid>
-              <summary>コメントを書く</summary>
-            </details>
-            
-          </article-comments>
-        </template>
-
-        <list-main></list-main>
-        <gr-action-status hidden stage-load=読込中... />
-      </gr-list-container>
-    </section>
+      <time data-field=object.created data-format=ambtime />
+    </gr-action-log>
+  </template>
+  <template data-name=trackback class=trackback>
+    <gr-action-log>
+      <p><time data-field=object.created data-format=ambtime />に参照されました。
+      <gr-object-ref data-field=object.data.body_data.trackback.object_id />
+    </gr-action-log>
   </template>
 </template-set>
 
@@ -1530,60 +1493,13 @@ Web ブラウザーで開いてください。
           </footer>
 
           <article-comments>
-
-            <gr-list-container class=comment-list
-                data-src-template=o/get.json?parent_object_id={object_id}&limit=30&with_data=1
-                key=objects sortkey=timestamp,created prepend
-                template-selector=object>
-              <template>
-                <article itemscope itemtype=http://schema.org/Comment>
-                  <header>
-                    <gr-object-author template=gr-object-author data-field=data />
-
-                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
-                      <time data-field=timestamp data-format=ambtime />
-                      (<time data-field=updated data-format=ambtime />)
-                    </a>
-                  </header>
-                  <main><iframe data-data-field=body /></main>
-                </article>
-              </template>
-              <template data-name=close class=change-action>
-                <p><!-- XXX が -->閉じました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=reopen class=change-action>
-                <p><!-- XXX が -->開き直しました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=changed class=change-action>
-                <p><!-- XXX が -->
-                変更しました。
-                <!--
-                <index-list data-field=data.body_data.new.index_ids />
-                を追加しました。
-
-                <index-list data-field=data.body_data.old.index_ids />
-                を削除しました。
-
-                <index-list data-field=data.body_data.new.assigned_account_ids />
-                に割り当てました。
-
-                <index-list data-field=data.body_data.old.assigned_account_ids />
-                への割当を削除しました。
-                -->
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=trackback class=trackback>
-                <time data-field=created data-format=ambtime />にこの記事が参照されました。
-                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
-              </template>
+            <list-container loader=groupCommentLoader data-loader-parentobjectid-field=object.object_id loader-limit=30 data-filled="loader-parentobjectid" template=gr-comment-object reverse>
               <p class="operations pager">
-                <button type=button class=next-page-button hidden>もっと昔</button>
+                <button type=button class=list-next data-list-scroll=preserve hidden>もっと昔のコメント</button>
               </p>
-              <gr-action-status hidden stage-load=読込中... />
-              <list-main/>
-            </gr-list-container>
+              <action-status hidden stage-loader=読込中... />
+              <list-main></list-main>
+            </list-container>
 
             <details is=gr-comment-form data-parentobjectid>
               <summary>コメントを書く</summary>
@@ -1606,26 +1522,17 @@ Web ブラウザーで開いてください。
         <gr-action-status hidden stage-load=読込中... />
       </gr-list-container>
 
-      <article-comments>
-
-        <gr-list-container class=comment-list
-            data-src-template=o/get.json?index_id={index.index_id}&parent_wiki_name={wiki.name}&limit=30&with_data=1
-            key=objects sortkey=timestamp,created prepend
-            template-selector=object>
-          <template />
-          <template data-name=trackback class=trackback>
-            <time data-field=created data-format=ambtime />にこのWikiページが参照されました。
-            <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
-          </template>
+      <article-comments class=section>
+        <list-container loader=groupCommentLoader data-loader-indexid-field=index.index_id data-loader-parentwikiname-field=wiki.name loader-limit=30 data-filled="loader-indexid loader-parentwikiname" template=gr-comment-object reverse>
           <p class="operations pager">
-            <button type=button class=next-page-button hidden>もっと昔</button>
+            <button type=button class=list-next data-list-scroll=preserve hidden>もっと昔のコメント</button>
           </p>
-          <gr-action-status hidden stage-load=読込中... />
-          <list-main/>
-        </gr-list-container>
+          <action-status hidden stage-loader=読込中... />
+          <list-main></list-main>
+        </list-container>
       </article-comments>
 
-      <footer>
+      <footer class=section>
         <p><a data-href-template=/g/{group.group_id}/search?q={url:wiki.name}>「<bdi data-field=wiki.name />」を含む記事を検索する</a></p>
       </footer>
     </section>
@@ -1769,60 +1676,13 @@ Web ブラウザーで開いてください。
           </footer>
 
           <article-comments>
-
-            <gr-list-container class=comment-list
-                data-src-template=o/get.json?parent_object_id={object_id}&limit=30&with_data=1
-                key=objects sortkey=timestamp,created prepend
-                template-selector=object>
-              <template>
-                <article itemscope itemtype=http://schema.org/Comment>
-                  <header>
-                    <gr-object-author template=gr-object-author data-field=data />
-
-                    <a href data-href-template="{GROUP}/o/{object_id}/" class=timestamp>
-                      <time data-field=timestamp data-format=ambtime />
-                      (<time data-field=updated data-format=ambtime />)
-                    </a>
-                  </header>
-                  <main><iframe data-data-field=body /></main>
-                </article>
-              </template>
-              <template data-name=close class=change-action>
-                <p><!-- XXX が -->閉じました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=reopen class=change-action>
-                <p><!-- XXX が -->開き直しました。
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=changed class=change-action>
-                <p><!-- XXX が -->
-                変更しました。
-                <!--
-                <index-list data-field=data.body_data.new.index_ids />
-                を追加しました。
-
-                <index-list data-field=data.body_data.old.index_ids />
-                を削除しました。
-
-                <index-list data-field=data.body_data.new.assigned_account_ids />
-                に割り当てました。
-
-                <index-list data-field=data.body_data.old.assigned_account_ids />
-                への割当を削除しました。
-                -->
-                (<time data-field=created data-format=ambtime />)
-              </template>
-              <template data-name=trackback class=trackback>
-                <time data-field=created data-format=ambtime />にこの記事が参照されました。
-                <object-ref hidden data-field=data.body_data.trackback.object_id template=#object-ref-template />
-              </template>
+            <list-container loader=groupCommentLoader data-loader-parentobjectid-field=object.object_id loader-limit=30 data-filled="loader-parentobjectid" template=gr-comment-object reverse>
               <p class="operations pager">
-                <button type=button class=next-page-button hidden>もっと昔</button>
+                <button type=button class=list-next data-list-scroll=preserve hidden>もっと昔のコメント</button>
               </p>
-              <gr-action-status hidden stage-load=読込中... />
-              <list-main/>
-            </gr-list-container>
+              <action-status hidden stage-loader=読込中... />
+              <list-main></list-main>
+            </list-container>
 
             <details is=gr-comment-form data-parentobjectid>
               <summary>コメントを書く</summary>
