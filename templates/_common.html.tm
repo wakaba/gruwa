@@ -727,6 +727,16 @@ Web ブラウザーで開いてください。
 
             <p class=operations>
               <button type=button is=copy-text-content data-selector=gr-invitation-text>コピー</button>
+
+            <p>QRコードから招待状を開くこともできます。
+
+              <figure class=qrcode>
+                <qr-code data-data-field=invitation_url data-filled=data />
+              </figure>
+
+            <p class=operations>
+              <button type=button is=gr-download-img data-selector="#invite qr-code img" data-filename=qrcode.png>ダウンロード</button>
+
           </div>
           
       </form>

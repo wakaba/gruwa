@@ -3167,6 +3167,25 @@ defineElement ({
   },
 }); // <gr-uploader>
 
+defineElement ({
+  name: 'button',
+  is: 'gr-download-img',
+  props: {
+    pcInit: function () {
+      this.onclick = () => this.grDownload ();
+    }, // pcInit
+    grDownload: function () {
+      var el = document.querySelector (this.getAttribute ('data-selector'));
+      var a = document.createElement ('a');
+      a.href = el.src;
+      a.download = this.getAttribute ('data-filename') || '';
+      document.body.appendChild (a);
+      a.click ();
+      a.remove ();
+    }, // grDownload
+  },
+}); // <button is=gr-download-img>
+
 function applyFilters (objects, filtersText) {
   if (filtersText) {
     var filters = JSON.parse (filtersText);

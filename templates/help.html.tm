@@ -92,6 +92,12 @@
         1枚の<a href=#invitation>招待状</a>で参加できるのは1人だけです。
         <a href=#invitation>招待状</a>には有効期限が設定されています。
 
+        <p><a href=#invitation>招待状</a>を発行すると、
+        <a href=#invitation>招待状</a>を開くための URL
+        が表示されます。この URL を渡して、
+        Web ブラウザーで開いてもらってください。
+        QR コードも表示されるので、こちらから招待状を開いてもらうこともできます。
+        
         <p><a href=#invitation>招待状</a>発行時に
         「既定の日記」を指定すると、
         指定した<a href=#blogs>日記</a>が<a href=#default-blog-index>既定の日記</a>となった状態で参加させることができます。

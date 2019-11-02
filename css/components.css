@@ -125,6 +125,14 @@ image-editor > image-layer > canvas {
   vertical-align: bottom;
 }
 
+qr-code:not([hidden]) {
+  display: inline-block;
+}
+
+qr-code img {
+  vertical-align: bottom;
+}
+
 map-area:not([hidden]) {
   display: block;
   width: 100%;

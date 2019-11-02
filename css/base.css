@@ -928,6 +928,14 @@ td .icon {
   height: 1.5em;
 }
 
+figure.qrcode {
+  text-align: center;
+}
+
+qr-code {
+
+}
+
 gr-account-list > gr-account + gr-account {
   margin-left: .5em;
 }
