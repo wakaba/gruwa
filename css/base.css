@@ -396,6 +396,11 @@ p {
   margin-bottom: 0;
 }
 
+gr-plaintext-body:not([hidden]) {
+  display: block;
+  white-space: pre-wrap;
+}
+
 form {
   margin: 0 .5em .5em .5em;
   border: 1px dotted;

@@ -250,8 +250,74 @@ Test {
       my $obj = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
       is $obj->{data}->{todo_state}, 2;
     } $current->c;
+    return $current->b_wait (1 => {
+      selector => 'article-comments',
+      text => $current->o ('t4'),
+    });
   });
 } n => 2, name => ['post a new comment'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a3 => account => {}],
+    [g1 => group => {
+      members => ['a1', 'a3'],
+    }],
+    [i1 => index => {
+      account => 'a1',
+      group => 'g1',
+      index_type => 3, # todo
+      todo_state => 1, # open
+    }],
+    [o1 => object => {
+      group => 'g1', account => 'a1',
+      index => 'i1',
+    }],
+    [o2 => object => {
+      parent_object => 'o1',
+      group => 'g1', account => 'a3',
+      body_type => 2, # plaintext
+      body => q{H<e>llo,https://foo.bar/ba?a&n#x"http://a.b.},
+    }],
+  )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, group => 'g1', account => 'a3');
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments article gr-plaintext-body',
+      text => 'https://foo.bar/',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return [
+        GR.compat.noAutoLink,
+        document.querySelector ('article-comments article gr-plaintext-body').innerHTML,
+      ];
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      my ($no_autolink, $html) = @{$res->json->{value}};
+      if ($no_autolink) {
+        is $html, q{H&lt;e&gt;llo,https://foo.bar/ba?a&amp;n#x"http://a.b.};
+      } else {
+        is $html, q{H&lt;e&gt;llo,<a href="https://foo.bar/ba?a&amp;n#x" class="url-link">https://foo.bar/ba?a&amp;n#x</a>"<a href="http://a.b" class="url-link">http://a.b</a>.};
+      }
+    } $current->c;
+  });
+} n => 1, name => ['plaintext HTML'], browser => 1;
 
 RUN;
 

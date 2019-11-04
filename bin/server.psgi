@@ -80,6 +80,10 @@ return sub {
         return StaticFiles->main ($app, $path);
       }
 
+      if ($path->[0] eq 'html') {
+        return StaticFiles->html ($app, $path);
+      }
+
       my $db = Dongry::Database->new (%$DBSources);
       $app->{db} = $db;
       my $acall = accounts $app;

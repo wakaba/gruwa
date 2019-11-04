@@ -3,6 +3,11 @@ use strict;
 use warnings;
 use Path::Tiny;
 use Promised::File;
+use Web::DOM::Document;
+use Temma::Parser;
+use Temma::Processor;
+
+use Results;
 
 my $RootPath = path (__FILE__)->parent->parent;
 
@@ -35,6 +40,57 @@ sub static ($$$) {
     return $app->http->close_response_body;
   });
 } # static
+
+my $TemplatePath = path (__FILE__)->parent->parent->child ('templates');
+
+sub temma_htt ($$) {
+  my ($app, $name) = @_;
+  my $path = $TemplatePath->child ('html', $name . '.tm');
+  my $file = Promised::File->new_from_path ($path);
+  my $r = $app->bare_param ('r');
+  my $http = $app->http;
+  return $file->stat->then (sub {
+    if (not defined $r or
+        $r eq $app->rev) {
+      $http->set_response_last_modified ($_[0]->mtime);
+    } else {
+      $http->add_response_header ('cache-control', 'no-cache');
+    }
+    return $file->read_byte_string;
+  }, sub {
+    return $app->throw_error (404, reason_phrase => 'File not found');
+  })->then (sub {
+    return Promised::File->new_from_path ($path)->read_char_string;
+  })->then (sub {
+    my $fh = Results::Temma::Printer->new_from_http ($http);
+    my $doc = new Web::DOM::Document;
+    my $parser = Temma::Parser->new;
+    $parser->parse_char_string ($_[0] => $doc);
+    my $processor = Temma::Processor->new;
+    $processor->oninclude (sub {
+      my $x = $_[0];
+      my $path = path ($x->{path})->absolute ($TemplatePath);
+      my $parser = $x->{get_parser}->();
+      $parser->onerror (sub {
+        $x->{onerror}->(@_, path => $path);
+      });
+      return Promised::File->new_from_path ($path)->read_char_string->then (sub {
+        my $doc = Web::DOM::Document->new;
+        $parser->parse_char_string ($_[0] => $doc);
+        return $doc;
+      });
+    });
+    $http->set_response_header ('Content-Type' => 'text/plain; charset=utf-8');
+    return Promise->new (sub {
+      my $ok = $_[0];
+      $processor->process_document ($doc => $fh, ondone => sub {
+        undef $fh;
+        $http->close_response_body;
+        $ok->();
+      }, args => {});
+    });
+  });
+} # temma_htt
 
 sub main ($$$) {
   my ($class, $app, $path) = @_;
@@ -78,6 +134,17 @@ sub main ($$$) {
     }
   } # /robots.txt
 
+  return $app->throw_error (404);
+} # main
+
+sub html ($$$) {
+  my ($class, $app, $path) = @_;
+
+  if (@$path == 2 and $path->[1] =~ /\A[A-Za-z0-9-]+\.htt\z/) {
+    # /html/{file}.htt
+    return temma_htt ($app, $path->[1]);
+  }
+  
   return $app->throw_error (404);
 } # main
 
