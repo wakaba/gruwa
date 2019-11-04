@@ -14,6 +14,8 @@ var defineElement = function (def) {
 
 window.GR = {};
 
+GR.compat = {};
+
 // XXX
 $with.register ('GR', () => window.GR);
 
@@ -951,35 +953,41 @@ defineElement ({
   var EnclosedURL = "[Hh][Tt][Tt][Pp][Ss]?://[\u0021\u0023-\u003B\u003D\u003F-\u007E"+nonascii+"]+";
   var scheme = MaxScheme; // MinScheme if lax
 
-  var SplitPattern = new RegExp ("((?<![A-Za-z0-9])"+scheme+Colon+Pattern+"|<(?:URL:|)"+EnclosedURL+">)");
-  var MatchPattern1 = new RegExp ("^"+scheme+Colon+Pattern+"$");
-  var HTTPSPrefixPattern = new RegExp ("^" + AllHTTPSScheme+Colon);
-  var HTTPPrefixPattern = new RegExp ("^" + AllHTTPScheme+Colon);
-  var MatchPattern2 = /^<(?:URL:|)([Hh][Tt][Tt][Pp][Ss]?:\/\/.+)>$/;
-  function splitByURL (s) {
-    return s.split (SplitPattern).map (_ => {
-      if (MatchPattern1.test (_)) {
-        var x = _.replace (HTTPSPrefixPattern, "https://")
-                 .replace (HTTPPrefixPattern, "http://");
-        return [_, x];
-      } else {
-        var m = _.match (MatchPattern2);
-        if (m) return [_, m[1]];
-
-        if (_.length) {
-          return [_];
+  var splitByURL;
+  try {
+    var SplitPattern = new RegExp ("((?<![A-Za-z0-9])"+scheme+Colon+Pattern+"|<(?:URL:|)"+EnclosedURL+">)");
+    var MatchPattern1 = new RegExp ("^"+scheme+Colon+Pattern+"$");
+    var HTTPSPrefixPattern = new RegExp ("^" + AllHTTPSScheme+Colon);
+    var HTTPPrefixPattern = new RegExp ("^" + AllHTTPScheme+Colon);
+    var MatchPattern2 = /^<(?:URL:|)([Hh][Tt][Tt][Pp][Ss]?:\/\/.+)>$/;
+    splitByURL = function (s) {
+      return s.split (SplitPattern).map (_ => {
+        if (MatchPattern1.test (_)) {
+          var x = _.replace (HTTPSPrefixPattern, "https://")
+                   .replace (HTTPPrefixPattern, "http://");
+          return [_, x];
         } else {
-          return null;
+          var m = _.match (MatchPattern2);
+          if (m) return [_, m[1]];
+
+          if (_.length) {
+            return [_];
+          } else {
+            return null;
+          }
         }
-      }
-    }).filter (_ => _);
-  } // splitByURL
+      }).filter (_ => _);
+    }; // splitByURL
+  } catch (e) {
+    // Firefox and Safari does not support (?<=) :-<
+    GR.compat.noAutoLink = true;
+  }
 
   var htescape = (s) => {
     return s.replace (/&/g, '&amp;').replace (/</g, '&lt;').replace (/"/g, '&quot;');
   };
 
-  function textToHTML (s) {
+  var textToHTML = splitByURL ? function (s) {
     return splitByURL (s).map (_ => {
       if (_.length === 2 && /^[Hh][Tt][Tt][Pp][Ss]?:\/\//.test (_[1])) {
         return '<a href="'+htescape (_[1])+'" class=url-link>'+htescape (_[0])+'</a>';
@@ -987,7 +995,7 @@ defineElement ({
         return htescape (_[0]);
       }
     }).join ('');
-  } // textToHTML
+  } : htescape; // textToHTML
 
   defineElement ({
     name: 'gr-plaintext-body',

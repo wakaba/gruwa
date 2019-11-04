@@ -301,12 +301,20 @@ Test {
     });
   })->then (sub {
     return $current->b (1)->execute (q{
-      return document.querySelector ('article-comments article gr-plaintext-body').innerHTML;
+      return [
+        GR.compat.noAutoLink,
+        document.querySelector ('article-comments article gr-plaintext-body').innerHTML,
+      ];
     });
   })->then (sub {
     my $res = $_[0];
     test {
-      is $res->json->{value}, q{H&lt;e&gt;llo,<a href="https://foo.bar/ba?a&amp;n#x" class="url-link">https://foo.bar/ba?a&amp;n#x</a>"<a href="http://a.b" class="url-link">http://a.b</a>.};
+      my ($no_autolink, $html) = @{$res->json->{value}};
+      if ($no_autolink) {
+        is $html, q{H&lt;e&gt;llo,https://foo.bar/ba?a&amp;n#x"http://a.b.};
+      } else {
+        is $html, q{H&lt;e&gt;llo,<a href="https://foo.bar/ba?a&amp;n#x" class="url-link">https://foo.bar/ba?a&amp;n#x</a>"<a href="http://a.b" class="url-link">http://a.b</a>.};
+      }
     } $current->c;
   });
 } n => 1, name => ['plaintext HTML'], browser => 1;
