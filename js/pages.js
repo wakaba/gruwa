@@ -5370,6 +5370,23 @@ defineElement ({
 
 }) ();
 
+defineElement ({
+  name: 'link',
+  is: 'gr-html-import',
+  props: {
+    pcInit: function () {
+      return fetch (this.href).then (res => {
+        return res.text ();
+      }).then (text => {
+        var div = document.createElement ('div');
+        div.hidden = true;
+        div.innerHTML = text;
+        document.body.appendChild (div);
+      });
+    }, // pcInit
+  },
+}); // <link is=gr-html-import>
+
 /*
 
 License:
