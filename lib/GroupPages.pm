@@ -221,8 +221,8 @@ sub source_urls ($) {
   return ($source_site_url, $source_url);
 } # source_urls
 
-sub edit_object ($$$$$) {
-  my ($opts, $db, $object, $edits, $app) = @_;
+sub edit_object ($$$$$;%) {
+  my ($opts, $db, $object, $edits, $app, %args) = @_;
   my $group_id = Dongry::Type->serialize ('text', $opts->{group}->{group_id});
 
   my $changes = {};
@@ -607,6 +607,7 @@ sub edit_object ($$$$$) {
             $object->{data}->{object_revision_id} = ''.$_[0]->first->{uuid};
           })->then (sub {
             return unless keys %$reactions;
+            return if $args{no_reactions_object};
             $reactions->{object_revision_id} = $object->{data}->{object_revision_id};
             return create_object ($db, 
               group_id => $group_id,
@@ -1968,7 +1969,10 @@ sub group_object ($$$$) {
         if ($app->bare_param ('edit_index_id')) {
           $edits->{index_ids} = $app->bare_param_list ('index_id');
         }
-        return edit_object ($opts, $db, $object, $edits, $app)->then (sub {
+        return edit_object (
+          $opts, $db, $object, $edits, $app,
+          no_reactions_object => $app->bare_param ('is_new_object'),
+        )->then (sub {
           return json $app, $_[0];
         })->catch (sub {
           my $e = $_[0];

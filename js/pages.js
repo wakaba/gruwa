@@ -2993,6 +2993,7 @@ function saveObject (article, form, object, opts) {
       return objectId;
     } else {
       return gFetch ('o/create.json', {post: true}).then (function (json) {
+        fd.append ('is_new_object', 1);
         return json.object_id;
       });
     }

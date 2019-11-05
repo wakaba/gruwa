@@ -259,11 +259,40 @@ Test {
   });
 } n => 7, name => 'trackback to imported url';
 
+Test {
+  my $current = shift;
+  my $old_id;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->create_object (o1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      edit_index_id => 1,
+      index_id => $current->o ('i1')->{index_id},
+      is_new_object => 1,
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    return $current->get_json (['o', 'get.json'], {
+      parent_object_id => $current->o ('o1')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{objects}}, 0;
+    } $current->c;
+  });
+} n => 1, name => 'new object';
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2016-2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -276,6 +305,6 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
 You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+License along with this program, see <https://www.gnu.org/licenses/>.
 
 =cut
