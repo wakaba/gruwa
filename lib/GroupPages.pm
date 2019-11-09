@@ -1293,6 +1293,10 @@ sub group ($$$$) {
       return $app->send_redirect ($url);
     });
   }
+
+  if ($path->[2] eq 'star') {
+    return $class->group_star ($app, $path, $opts);
+  }
   
   return $app->throw_error (404);
 } # group
@@ -2590,6 +2594,62 @@ sub invitation ($$$$) {
 
   return $app->throw_error (404);
 } # invitation
+
+sub group_star ($$$$) {
+  my ($class, $app, $path, $opts) = @_;
+  # /g/{}/star/...
+
+  if (@$path == 4 and $path->[3] eq 'list.json') {
+    # /g/{group_id}/star/list.json
+    return $app->apploach (['star', 'get.json'], {
+      starred_nobj_key => [map { 'object-' . $_ } @{$app->bare_param_list ('o')}],
+    })->then (sub {
+      my $json = $_[0];
+      my $items = {};
+      for my $key (keys %{$json->{stars}}) {
+        my $o = $key;
+        $o =~ s/^object-//;
+        $items->{$o} = [map {
+          $_->{author_account_id} = delete $_->{author_nobj_key};
+          $_->{author_account_id} =~ s/^account-//;
+          $_->{type_id} = delete $_->{item_nobj_key};
+          $_->{type_id} =~ s/^startype-//;
+          $_;
+        } @{$json->{stars}->{$key}}];
+      }
+      return json $app, {items => $items};
+    });
+  } # /g/{group_id}/star/list.json
+
+  if (@$path == 4 and $path->[3] eq 'add.json') {
+    # /g/{group_id}/star/add.json
+    $app->requires_request_method ({POST => 1});
+    $app->requires_same_origin;
+
+    my $object_id = $app->bare_param ('object_id') // '';
+    return $app->db->select ('object_revision', {
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+      object_id => Dongry::Type->serialize ('text', $object_id),
+    }, fields => ['object_id', 'author_account_id'], order => ['created', 'asc'], limit => 1)->then (sub {
+      my $v = $_[0]->first;
+      return $app->throw_error (404, reason_phrase => 'Object not found')
+          unless defined $v;
+      return $app->apploach (['star', 'add.json'], {
+        starred_nobj_key => 'object-' . $v->{object_id},
+        starred_author_nobj_key => 'account-' . $v->{author_account_id},
+        starred_index_nobj_key => 'none',
+        author_nobj_key => 'account-' . $opts->{account}->{account_id},
+        item_nobj_key => 'startype-0',
+        delta => $app->bare_param ('delta') || 0,
+      });
+    })->then (sub {
+      # XXX star reports
+      return json $app, {};
+    });
+  } # /g/{group_id}/star/add.json
+  
+  return $app->throw_error (404);
+} # group_star
 
 1;
 
