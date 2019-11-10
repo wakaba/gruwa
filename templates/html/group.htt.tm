@@ -1534,6 +1534,7 @@ Web ブラウザーで開いてください。
       </button>
       <menu-main>
         <p><button type=button class=remove-star-button>&#x2B50;を消す</button>
+        <p><a href=/help#stars target=help>ヘルプ</a>
       </menu-main>
     </popup-menu>
   </template>

@@ -4357,6 +4357,25 @@ defineElement ({
 
 (() => { // STAR ELEMENTS
 
+  GR._stars = function (objectId) {
+    if (!GR._state.getStars) {
+      GR._state.getStarsObjectIds = [];
+      GR._state.getStars = new Promise (ok => {
+        setTimeout (ok, 200);
+      }).then (() => {
+        delete GR._state.getStars;
+        var fd = new FormData;
+        GR._state.getStarsObjectIds.forEach (_ => fd.append ('o', _));
+        return gFetch ('star/list.json', {post: true, formData: fd});
+      });
+    }
+
+    GR._state.getStarsObjectIds.push (objectId);
+    return GR._state.getStars.then (json => {
+      return json.items[objectId] || [];
+    });
+  }; // GR._stars
+
   defineElement ({
     name: 'gr-stars',
     fill: 'contentattribute',
@@ -4391,39 +4410,51 @@ defineElement ({
           _.onclick = () => this.grAddStar (-1);
         });
 
-        // XXX
-        var fd = new FormData;
-        fd.append ('o', objectId);
-        return gFetch ('star/list.json', {post: true, formData: fd}).then (json => {
-          this.gr_ShowStars (json.items[objectId] || []);
+        return GR._stars (objectId).then (stars => {
+          this.gr_ShowStars (stars);
         });
       }, // grRender
       grAddStar: function (delta) {
         var objectId = this.getAttribute ('value');
         if (!objectId) return;
 
-        // XXX
-        var fd = new FormData;
-        fd.append ('object_id', objectId);
-        fd.append ('delta', delta);
+        if (!this.grStarDelta) this.grStarDelta = 0;
+        this.grStarDelta += delta;
         if (delta > 0) this.gr_ShowStars ([{count: delta}]);
-        return gFetch ('star/add.json', {post: true, formData: fd}).then (() => {
-          if (delta < 0) this.grRender ();
-        });
+        if (delta < 0) this.grNegativeDelta = true;
+
+        clearTimeout (this.grAddStarTimer);
+        this.grAddStarTimer = setTimeout (() => {
+          var d = this.grStarDelta;
+          this.grStarDelta = 0;
+          delete this.grNegativeDelta;
+          var fd = new FormData;
+          fd.append ('object_id', objectId);
+          fd.append ('delta', d);
+          return gFetch ('star/add.json', {post: true, formData: fd}).then (() => {
+            if (this.grNegativeDelta) this.grRender ();
+          });
+        }, 800);
       }, // grAddStar
       gr_ShowStars: function (stars) {
         var container = this.querySelector ('gr-star-list');
         stars.forEach (_ => {
           var tm2 = this.grTemplateSet2;
-          var e = tm2.createFromTemplate ('gr-star-item', _);
-          if (!_.author_account_id) {
-            e.querySelectorAll ('gr-account').forEach (_ => {
-              _.removeAttribute ('data-field');
-              _.removeAttribute ('value');
-              _.setAttribute ('self', '');
-            });
+          var x = [_];
+          if (!(_.count > 10)) {
+            for (var i = 1; i < _.count; i++) x.push (_);
           }
-          container.appendChild (e);
+          x.forEach (_ => {
+            var e = tm2.createFromTemplate ('gr-star-item', _);
+            if (!_.author_account_id) {
+              e.querySelectorAll ('gr-account').forEach (_ => {
+                _.removeAttribute ('data-field');
+                _.removeAttribute ('value');
+                _.setAttribute ('self', '');
+              });
+            }
+            container.appendChild (e);
+          });
         });
       }, // gr_ShowStars
     },
