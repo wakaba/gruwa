@@ -284,6 +284,7 @@ GR._updateMyInfo = function () {
       }
       return;
     }
+    delete GR._state.updateMyInfo;
     throw e;
   });
 }; // GR._updateMyInfo
@@ -786,6 +787,7 @@ GR.object._cache = function (object, info) {
   if (GR._objects[objectId]) {
     if (GR._objects[objectId].object.updated === object.updated) {
       v = GR._objects[objectId];
+      if (!v.object.data) v.object.data = {};
       // v.fetched
       for (var k in object) {
         if (k === 'data') {
@@ -1706,7 +1708,8 @@ function fillFields (contextEl, rootEl, el, object, opts) {
           field.parentNode.setAttribute ('data-value', value);
         }
       }
-    } else if (field.localName === 'gr-account') {
+    } else if (field.localName === 'gr-account' ||
+               field.localName === 'gr-stars') {
       field.setAttribute ('value', value);
     } else if (field.localName === 'gr-object-author') {
       field.value = value;
@@ -4352,6 +4355,89 @@ defineElement ({
   },
 }); // <gr-object-ref>
 
+(() => { // STAR ELEMENTS
+
+  defineElement ({
+    name: 'gr-stars',
+    fill: 'contentattribute',
+    props: {
+      pcInit: function () {
+        return Promise.all ([
+          $getTemplateSet ('gr-stars'),
+          $getTemplateSet ('gr-star-item'),
+        ]).then (([tm, tm2]) => {
+          this.grTemplateSet = tm;
+          this.grTemplateSet2 = tm2;
+
+          var mo = new MutationObserver (() => this.grRender ());
+          mo.observe (this, {attributes: true, attributeFilter: ['value']});
+          this.grRender ();
+        });
+      }, // pcInit
+      grRender: function () {
+        var objectId = this.getAttribute ('value');
+        if (!objectId) return;
+        
+        var tm = this.grTemplateSet;
+        var e = tm.createFromTemplate ('div', {object_id: objectId});
+        this.textContent = '';
+        while (e.firstChild) this.appendChild (e.firstChild);
+
+        this.querySelectorAll ('.add-star-button').forEach (_ => {
+          _.onclick = () => this.grAddStar (+1);
+        });
+
+        // XXX
+        var fd = new FormData;
+        fd.append ('o', objectId);
+        return gFetch ('star/list.json', {post: true, formData: fd}).then (json => {
+          this.gr_ShowStars (json.items[objectId] || []);
+        });
+      }, // grRender
+      grAddStar: function (delta) {
+        var objectId = this.getAttribute ('value');
+        if (!objectId) return;
+
+        // XXX
+        var fd = new FormData;
+        fd.append ('object_id', objectId);
+        fd.append ('delta', delta);
+        if (delta > 0) this.gr_ShowStars ([{count: delta}]);
+        return gFetch ('star/add.json', {post: true, formData: fd}).then (() => {
+          if (delta < 0) this.grRender ();
+        });
+      }, // grAddStar
+      gr_ShowStars: function (stars) {
+        var container = this.querySelector ('gr-star-list');
+        stars.forEach (_ => {
+          var tm2 = this.grTemplateSet2;
+          var e = tm2.createFromTemplate ('gr-star-item', _);
+          if (!_.author_account_id) {
+            e.querySelectorAll ('gr-account').forEach (_ => {
+              _.removeAttribute ('data-field');
+              _.removeAttribute ('value');
+              _.setAttribute ('self', '');
+            });
+          }
+          container.appendChild (e);
+        });
+      }, // gr_ShowStars
+    },
+  }); // <gr-stars>
+
+  var e = document.createElementNS ('data:,pc', 'templateselector');
+  e.setAttribute ('name', 'gr-star-item-selector');
+  e.pcHandler = function (templates, obj) {
+    if (obj.count > 10) {
+      return templates[""];
+    } else {
+      return templates.single;
+    }
+  }; // gr-star-item-selector
+  document.head.appendChild (e);
+
+}) ();
+
 GR.tooltip = {};
 
 GR.tooltip.show = function (opts) {
@@ -4706,6 +4792,7 @@ GR.navigate.go = function (u, args) {
       status.grStop ();
     }
   });
+  // XXX catch
 }; // go
 
 GR.navigate._show = function (pageName, pageArgs, opts) {

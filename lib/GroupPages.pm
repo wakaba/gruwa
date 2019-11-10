@@ -2643,6 +2643,11 @@ sub group_star ($$$$) {
         delta => $app->bare_param ('delta') || 0,
       })->then (sub {
         return Reports->touch_group_accounts ($app, $opts->{group}->{group_id}, [$v->{author_account_id}], time, 1); # daily report
+      })->then (sub {
+        return $app->accounts (['group', 'touch'], {
+          context_key => $app->config->{accounts}->{context} . ':group',
+          group_id => Dongry::Type->serialize ('text', $opts->{group}->{group_id}),
+        });
       });
     })->then (sub {
       return json $app, {};
