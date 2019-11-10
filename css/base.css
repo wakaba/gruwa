@@ -1526,6 +1526,21 @@ gr-stars {
   background-color: var(--hover-background-color);
 }
 
+gr-stars popup-menu:not([hidden]) {
+  display: contents;
+}
+
+gr-stars popup-menu > button:not([hidden]) {
+  display: inline-block;
+  padding: 0.8em 0 0 0;
+  vertical-align: bottom;
+  height: 1.8em;
+}
+
+gr-stars popup-menu > button:not(:hover):not(:active):not(:focus) {
+  opacity: .4;
+}
+
 gr-star-item:not([hidden]) {
   display: inline-block;
   margin: 1px;

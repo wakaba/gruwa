@@ -4387,6 +4387,10 @@ defineElement ({
           _.onclick = () => this.grAddStar (+1);
         });
 
+        this.querySelectorAll ('.remove-star-button').forEach (_ => {
+          _.onclick = () => this.grAddStar (-1);
+        });
+
         // XXX
         var fd = new FormData;
         fd.append ('o', objectId);

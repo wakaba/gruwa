@@ -1528,6 +1528,14 @@ Web ブラウザーで開いてください。
   <template>
     <button type=button class=add-star-button title="&#x2B50;をつける">&#x2B50;+</button>
     <gr-star-list></gr-star-list>
+    <popup-menu>
+      <button type=button title=メニュー>
+        <button-label>メニュー</button-label>
+      </button>
+      <menu-main>
+        <p><button type=button class=remove-star-button>&#x2B50;を消す</button>
+      </menu-main>
+    </popup-menu>
   </template>
 </template-set>
 
