@@ -9,13 +9,30 @@
     <t:for as=$gm x=$group_memberships>
       <section>
         <h1 style="font-size:100%"><a pl:href="$app->config->{origin}.'/g/'.$gm->{group_id}.'/'"><t:text value="$gm->{group_data}->{title}"></a></h1>
-
-        <p>更新がありました。</p>
         
         <t:if x="@{$gm->{indexes}}">
+          <p>更新がありました。</p>
+          
           <ul>
             <t:for as=$index x="$gm->{indexes}">
               <li><a pl:href="$app->config->{origin}.'/g/'.$gm->{group_id}.'/i/'.$index->{index_id}.'/'"><t:text value="$index->{title}"></a>
+            </t:for>
+          </ul>
+        </t:if>
+        
+        <t:if x="@{$gm->{stars}}">
+          <p>記事に&#x2B50;がつきました。
+          
+          <ul>
+            <t:for as=$star x="$gm->{stars}">
+              <li>
+                <bdi><a pl:href="$app->config->{origin}.'/g/'.$gm->{group_id}.'/o/'.$star->{object_id}.'/'"><t:text value="length $star->{title} ? $star->{title} : '■'"></a></bdi>
+
+                <t:if x="$star->{count} > 10">
+                  &#x2B50;<data><t:text value="$star->{count}"></data>
+                <t:else>
+                  <t:text value="'&#x2B50;' x $star->{count}">
+                </t:if>
             </t:for>
           </ul>
         </t:if>

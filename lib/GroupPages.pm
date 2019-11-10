@@ -2602,13 +2602,13 @@ sub group_star ($$$$) {
   if (@$path == 4 and $path->[3] eq 'list.json') {
     # /g/{group_id}/star/list.json
     return $app->apploach (['star', 'get.json'], {
-      starred_nobj_key => [map { 'object-' . $_ } @{$app->bare_param_list ('o')}],
+      starred_nobj_key => [map { 'group-'.$opts->{group}->{group_id}.'-object-' . $_ } @{$app->bare_param_list ('o')}],
     })->then (sub {
       my $json = $_[0];
       my $items = {};
       for my $key (keys %{$json->{stars}}) {
         my $o = $key;
-        $o =~ s/^object-//;
+        $o =~ s/^group-[0-9]+-object-//;
         $items->{$o} = [map {
           $_->{author_account_id} = delete $_->{author_nobj_key};
           $_->{author_account_id} =~ s/^account-//;
@@ -2635,15 +2635,16 @@ sub group_star ($$$$) {
       return $app->throw_error (404, reason_phrase => 'Object not found')
           unless defined $v;
       return $app->apploach (['star', 'add.json'], {
-        starred_nobj_key => 'object-' . $v->{object_id},
+        starred_nobj_key => 'group-'.$opts->{group}->{group_id}.'-object-' . $v->{object_id},
         starred_author_nobj_key => 'account-' . $v->{author_account_id},
-        starred_index_nobj_key => 'none',
+        starred_index_nobj_key => 'group-' . $opts->{group}->{group_id},
         author_nobj_key => 'account-' . $opts->{account}->{account_id},
         item_nobj_key => 'startype-0',
         delta => $app->bare_param ('delta') || 0,
+      })->then (sub {
+        return Reports->touch_group_accounts ($app, $opts->{group}->{group_id}, [$v->{author_account_id}], time, 1); # daily report
       });
     })->then (sub {
-      # XXX star reports
       return json $app, {};
     });
   } # /g/{group_id}/star/add.json
