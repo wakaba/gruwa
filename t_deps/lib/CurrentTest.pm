@@ -437,6 +437,18 @@ sub object ($$%) {
   });
 } # object
 
+sub add_star ($$) {
+  my ($self, $opts) = @_;
+  my $object = $self->_get_o ($opts->{object} // die "No |object|");
+  return $self->post_json (['star', 'add.json'], {
+    object_id => $object->{object_id},
+    delta => $opts->{delta} // 1,
+  },
+    account => ($opts->{account} // die "No |account|"),
+    group => ($opts->{group} // die "No |group|"),
+  );
+} # add_star
+
 sub create_invitation ($$) {
   my ($self, $name, $opts) = @_;
   if (exists $opts->{default_index}) {

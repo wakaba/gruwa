@@ -69,7 +69,7 @@ Test {
       like $msg, qr{\Qhttp://app.server.test/g/@{[$current->o ('g1')->{group_id}]}/i/@{[$current->o ('i1')->{index_id}]}/\E};
     } $current->c;
   });
-} n => 7, name => 'daily report (no index)';
+} n => 7, name => 'daily report (index)';
 
 Test {
   my $current = shift;

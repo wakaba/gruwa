@@ -915,15 +915,19 @@ Web ブラウザーで開いてください。
             </popup-menu>
           </header>
           <main><iframe data-data-field=body /></main>
-          <footer>
-            <p>
-              <gr-action-status hidden
-                  stage-edit=保存中...
-                  ok=保存しました />
+          <footer class=object-info>
+            <gr-stars data-field=object_id />
+
+            <gr-action-status hidden
+                stage-edit=保存中...
+                ok=保存しました />
+
+            <gr-object-meta>
               <gr-account-list data-data-field=assigned_account_ids title=担当者 />
               <gr-index-list data-data-field=index_ids nocurrentindex />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
+            </gr-object-meta>
           </footer>
 
           <article-comments>
@@ -1218,15 +1222,19 @@ Web ブラウザーで開いてください。
             </popup-menu>
           </header>
           <main><iframe data-data-field=body /></main>
-          <footer>
-            <p>
-              <gr-action-status hidden
-                  stage-edit=保存中...
-                  ok=保存しました />
+          <footer class=object-info>
+            <gr-stars data-field=object_id />
+            
+            <gr-action-status hidden
+                stage-edit=保存中...
+                ok=保存しました />
+
+            <gr-object-meta>
               <gr-account-list data-data-field=assigned_account_ids title=担当者 />
               <gr-index-list data-data-field=index_ids nocurrentindex />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
+            </gr-object-meta>
           </footer>
 
           <article-comments>
@@ -1255,6 +1263,7 @@ Web ブラウザーで開いてください。
   <template>
     <article itemscope itemtype=http://schema.org/Comment>
       <gr-object-author template=gr-object-author data-field=object.data />
+      <gr-stars data-field=object.object_id />
       <gr-comment-main class=oldiframeviewer>
         <iframe is=gr-old-iframe-viewer data-field=object />
         <gr-comment-info>
@@ -1269,6 +1278,7 @@ Web ブラウザーで開いてください。
   <template data-name=plaintextbody>
     <article itemscope itemtype=http://schema.org/Comment>
       <gr-object-author template=gr-object-author data-field=object.data />
+      <gr-stars data-field=object.object_id />
       <gr-comment-main class=plaintextbody>
         <gr-plaintext-body data-field=object.data.body />
         <gr-comment-info>
@@ -1438,15 +1448,19 @@ Web ブラウザーで開いてください。
             </popup-menu>
           </header>
           <main><iframe data-data-field=body /></main>
-          <footer>
-            <p>
-              <gr-action-status hidden
-                  stage-edit=保存中...
-                  ok=保存しました />
+          <footer class=object-info>
+            <gr-stars data-field=object_id />
+
+            <gr-action-status hidden
+                stage-edit=保存中...
+                ok=保存しました />
+
+            <gr-object-meta>
               <gr-account-list data-data-field=assigned_account_ids title=担当者 />
               <gr-index-list data-data-field=index_ids nocurrentindex />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
+            </gr-object-meta>
           </footer>
 
           <article-comments>
@@ -1509,6 +1523,40 @@ Web ブラウザーで開いてください。
       <body-snippet data-field=snippet />
     </a>
   </template>
+
+<template-set name=gr-stars>
+  <template>
+    <button type=button class=add-star-button title="&#x2B50;をつける">&#x2B50;+</button>
+    <gr-star-list></gr-star-list>
+    <popup-menu>
+      <button type=button title=メニュー>
+        <button-label>メニュー</button-label>
+      </button>
+      <menu-main>
+        <p><button type=button class=remove-star-button>&#x2B50;を消す</button>
+        <p><a href=/help#stars target=help>ヘルプ</a>
+      </menu-main>
+    </popup-menu>
+  </template>
+</template-set>
+
+<template-set name=gr-star-item templateselector=gr-star-item-selector>
+  <template>
+    <gr-account data-field=author_account_id>
+      <a data-href-template=/g/{group_id}/account/{account_id}/>
+        <img data-src-template=/g/{group_id}/account/{account_id}/icon data-alt-field=name data-title-field=name data-filled=alt class=icon>
+      </a>
+    </gr-account>
+    <gr-star-count data-field=count />
+  </template>
+  <template data-name=single>
+    <gr-account data-field=author_account_id>
+      <a data-href-template=/g/{group_id}/account/{account_id}/>
+        <img data-src-template=/g/{group_id}/account/{account_id}/icon data-alt-field=name data-title-field=name data-filled=alt class=icon>
+      </a>
+    </gr-account>
+  </template>
+</template-set>
 
 <template-set name=gr-tooltip-box-object>
   <template>
@@ -1621,15 +1669,19 @@ Web ブラウザーで開いてください。
             </popup-menu>
           </header>
           <main><iframe data-data-field=body /></main>
-          <footer>
-            <p>
-              <gr-action-status hidden
-                  stage-edit=保存中...
-                  ok=保存しました />
+          <footer class=object-info>
+            <gr-stars data-field=object_id />
+
+            <gr-action-status hidden
+                stage-edit=保存中...
+                ok=保存しました />
+
+            <gr-object-meta>
               <gr-account-list data-data-field=assigned_account_ids title=担当者 />
               <gr-index-list data-data-field=index_ids nocurrentindex />
               <time data-field=created data-format=ambtime />
               (<time data-field=updated data-format=ambtime /> 編集)
+            </gr-object-meta>
           </footer>
 
           <article-comments>

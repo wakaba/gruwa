@@ -194,22 +194,56 @@ sub get_email_args ($$$$%) {
       $args{group_memberships} = $groups;
       return promised_for {
         my $gm = shift;
-        return $app->db->select ('index', {
-          group_id => Dongry::Type->serialize ('text', $gm->{group_id}),
-          owner_status => 1, # open
-          user_status => 1, # open
-          index_type => {-in => [1, 2, 3]}, # blog wiki todo
-          updated => {'>', $args{start_time}}, # $args{end_time}
-        }, fields => ['index_id', 'title'], order => ['updated', 'asc'], limit => 20)->then (sub {
-          $gm->{indexes} = my $indexes = $_[0]->all;
-          for (@$indexes) {
-            $_->{title} = Dongry::Type->parse ('text', $_->{title});
-          }
-        });
+        $gm->{stars} = [];
+        return Promise->all ([
+          $app->db->select ('index', {
+            group_id => Dongry::Type->serialize ('text', $gm->{group_id}),
+            owner_status => 1, # open
+            user_status => 1, # open
+            index_type => {-in => [1, 2, 3]}, # blog wiki todo
+            updated => {'>', $args{start_time}}, # $args{end_time}
+          }, fields => ['index_id', 'title'], order => ['updated', 'asc'], limit => 20)->then (sub {
+            $gm->{indexes} = my $indexes = $_[0]->all;
+            for (@$indexes) {
+              $_->{title} = Dongry::Type->parse ('text', $_->{title});
+            }
+          }),
+          $app->apploach (['star', 'list.json'], {
+            starred_author_nobj_key => 'account-' . $account_id,
+            starred_index_nobj_key => 'group-' . $gm->{group_id},
+            ref => '+' . $args{start_time} . ',0',
+            limit => 1000,
+          })->then (sub {
+            my $json = $_[0];
+            my $stars = {};
+            for my $item (@{$json->{items}}) {
+              $item->{object_id} = delete $item->{starred_nobj_key};
+              $item->{object_id} =~ s/^group-[0-9]+-object-//;
+              #$item->{author_account_id} = delete $item->{author_nobj_key};
+              #$item->{author_account_id} =~ s/^account-//;
+              #$item->{type_id} = delete $item->{item_nobj_key};
+              #$item->{type_id} =~ s/^startype-//;
+              $stars->{$item->{object_id}} += $item->{count};
+            }
+            return unless keys %$stars;
+            return $app->db->select ('object', {
+              group_id => Dongry::Type->serialize ('text', $gm->{group_id}),
+              object_id => {-in => [keys %$stars]},
+              user_status => 1, # open
+              owner_status => 1, # open
+            }, field => ['object_id', 'title'])->then (sub {
+              for (@{$_[0]->all}) {
+                push @{$gm->{stars}}, {
+                  object_id => $_->{object_id},
+                  title => Dongry::Type->parse ('text', $_->{title}),
+                  count => $stars->{$_->{object_id}},
+                };
+              }
+            });
+          }),
+        ]);
       } $groups;
     })->then (sub {
-      #$groups = [grep { !!@{$_->{indexes}} } @$groups];
-      #return undef unless @$groups;
       return \%args;
     });
   } elsif ($report_type == 2) { # call report

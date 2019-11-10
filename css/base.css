@@ -1496,6 +1496,86 @@ gr-tooltip-box > object-ref a:not([hidden]) {
   margin-left: 0;
 }
 
+gr-object-meta {
+  font-size: 90%;
+}
+
+gr-stars:not([hidden]) {
+  display: inline-block;
+}
+
+gr-stars {
+  font-size: 90%;
+}
+
+.add-star-button {
+  -webkit-appearance: none;
+  border: none;
+  border-color: var(--accented-border-color);
+  box-sizing: border-box;
+  padding: .3em;
+  color: var(--link-color);
+  background-color: var(--link-background-color);
+  vertical-align: middle;
+}
+
+.add-star-button:hover,
+.add-star-button:active,
+.add-star-button:focus {
+  color: var(--hover-color);
+  background-color: var(--hover-background-color);
+}
+
+gr-stars popup-menu:not([hidden]) {
+  display: contents;
+}
+
+gr-stars popup-menu > button:not([hidden]) {
+  display: inline-block;
+  padding: 0;
+  vertical-align: bottom;
+  height: 1.8em;
+}
+
+gr-stars popup-menu > button:not(:hover):not(:active):not(:focus) {
+  opacity: .4;
+}
+
+gr-star-item:not([hidden]) {
+  display: inline-block;
+  margin: 1px;
+}
+
+gr-star-item gr-account:not([hidden]) {
+  display: contents;
+}
+
+gr-star-item a:not([hidden]) {
+  display: inline-block;
+}
+
+gr-star-item .icon {
+  width: 1.5em;
+  height: 1.5em;
+  margin: 0;
+  -webkit-mask-image: url(/images/star.svg);
+  -webkit-mask-size: 130%;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+}
+
+gr-star-count:not(:empty):not([hidden]) {
+  display: inline-block;
+  margin-left: -0.8em;
+  color: orange;
+  background: transparent;
+  font-size: 80%;
+  line-height: 1.0;
+  font-weight: bolder;
+  font-family: cursive;
+  vertical-align: 1em;
+}
+
 hatena-star:not([hidden]) {
   display: inline-block;
   position: relative;

@@ -340,6 +340,20 @@ article.object > main iframe {
   border-style: none;
 }
 
+article.object .object-info:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+article.object .object-info gr-stars {
+  flex-grow: 1;
+}
+
+article.object .object-info gr-action-status {
+  flex-grow: 2;
+}
+
 article.deleted {
   opacity: 0.3;
 }
@@ -564,6 +578,11 @@ article-comments article gr-object-author gr-person,
 article-comments article gr-object-author gr-account gr-account-name {
   font-weight: bolder;
   text-decoration: none;
+}
+
+article-comments article gr-stars {
+  font-size: 80%;
+  vertical-align: .3em;
 }
 
 article-comments article gr-comment-main:not([hidden]) {
