@@ -279,7 +279,7 @@ Test {
       parent_object => 'o1',
       group => 'g1', account => 'a3',
       body_type => 2, # plaintext
-      body => q{H<e>llo,https://foo.bar/ba?a&n#x"http://a.b.},
+      body => q{Hello,ttps://foo.bar/ba?an#xttp://a.b.},
     }],
   )->then (sub {
     return $current->post_json (['my', 'edit.json'], {
@@ -297,24 +297,19 @@ Test {
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'article-comments article gr-plaintext-body',
-      text => 'https://foo.bar/',
+      text => 'ttps://foo.bar/',
     });
   })->then (sub {
     return $current->b (1)->execute (q{
       return [
-        GR.compat.noAutoLink,
         document.querySelector ('article-comments article gr-plaintext-body').innerHTML,
       ];
     });
   })->then (sub {
     my $res = $_[0];
     test {
-      my ($no_autolink, $html) = @{$res->json->{value}};
-      if ($no_autolink) {
-        is $html, q{H&lt;e&gt;llo,https://foo.bar/ba?a&amp;n#x"http://a.b.};
-      } else {
-        is $html, q{H&lt;e&gt;llo,<a href="https://foo.bar/ba?a&amp;n#x" class="url-link">https://foo.bar/ba?a&amp;n#x</a>"<a href="http://a.b" class="url-link">http://a.b</a>.};
-      }
+      my ($html) = @{$res->json->{value}};
+      is $html, q{Hello,ttps://foo.bar/ba?an#xttp://a.b.};
     } $current->c;
   });
 } n => 1, name => ['plaintext HTML'], browser => 1;

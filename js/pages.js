@@ -942,82 +942,6 @@ defineElement ({
     return templates[""];
   };
   document.head.appendChild (e);
-
-  /* <https://github.com/manakai/perl-web-url/blob/master/lib/Web/URL/Parser.pod> */
-  var nonascii = "\u00A1-\u00AA\u00AC-\u00BA\u00BC-\u167F\u1681-\u1FFF\u200B-\u2027\u202A-\u202E\u2030-\u205E\u2060-\u2FFF\u3003-\uFEFF\uFF10-\uFFFF";
-  var chars = "0-9A-Za-z._:=~"+nonascii+"-";
-  var Pattern = "(?:[%"+chars+"]*\@)?(?:[0-9A-Za-z._%０-９Ａ-Ｚａ-ｚ．"+nonascii+"-]+[.．][0-9A-Za-z._%０-９Ａ-Ｚａ-ｚ．"+nonascii+"-]*[0-9A-Za-z_%０-９Ａ-Ｚａ-ｚ]|\\[[0-9:]+\\])(?::[0-9]*|)(?:[/／](?:[%/"+chars+"]|\\([%/"+chars+"]*\\))*|)(?:\\?(?:[%&;"+chars+"]|\\([%&;"+chars+"]*\\))*|)(?:\\#(?:[%&;!"+chars+"]|\\([%&l!"+chars+"]*\\))*|)(?<![.:])";
-  var AllHTTPSScheme = "[HhＨｈ]?[TtＴｔ][TtＴｔ][PpＰｐ][SsＳｓ]";
-  var AllHTTPScheme = "[HhＨｈ]?[TtＴｔ][TtＴｔ][PpＰｐ]";
-  var MinScheme = "[HhＨｈ][TtＴｔ][TtＴｔ][PpＰｐ][SsＳｓ]?";
-  var MaxScheme = "(?:[HhＨｈ][TtＴｔ][TtＴｔ][PpＰｐ][SsＳｓ]?|ttps?)";
-  var Colon = "[:：][/／][/／]";
-  var EnclosedURL = "[Hh][Tt][Tt][Pp][Ss]?://[\u0021\u0023-\u003B\u003D\u003F-\u007E"+nonascii+"]+";
-  var scheme = MaxScheme; // MinScheme if lax
-
-  var splitByURL;
-  try {
-    var SplitPattern = new RegExp ("((?<![A-Za-z0-9])"+scheme+Colon+Pattern+"|<(?:URL:|)"+EnclosedURL+">)");
-    var MatchPattern1 = new RegExp ("^"+scheme+Colon+Pattern+"$");
-    var HTTPSPrefixPattern = new RegExp ("^" + AllHTTPSScheme+Colon);
-    var HTTPPrefixPattern = new RegExp ("^" + AllHTTPScheme+Colon);
-    var MatchPattern2 = /^<(?:URL:|)([Hh][Tt][Tt][Pp][Ss]?:\/\/.+)>$/;
-    splitByURL = function (s) {
-      return s.split (SplitPattern).map (_ => {
-        if (MatchPattern1.test (_)) {
-          var x = _.replace (HTTPSPrefixPattern, "https://")
-                   .replace (HTTPPrefixPattern, "http://");
-          return [_, x];
-        } else {
-          var m = _.match (MatchPattern2);
-          if (m) return [_, m[1]];
-
-          if (_.length) {
-            return [_];
-          } else {
-            return null;
-          }
-        }
-      }).filter (_ => _);
-    }; // splitByURL
-  } catch (e) {
-    // Firefox and Safari does not support (?<=) :-<
-    GR.compat.noAutoLink = true;
-  }
-
-  var htescape = (s) => {
-    return s.replace (/&/g, '&amp;').replace (/</g, '&lt;').replace (/"/g, '&quot;');
-  };
-
-  var textToHTML = splitByURL ? function (s) {
-    return splitByURL (s).map (_ => {
-      if (_.length === 2 && /^[Hh][Tt][Tt][Pp][Ss]?:\/\//.test (_[1])) {
-        return '<a href="'+htescape (_[1])+'" class=url-link>'+htescape (_[0])+'</a>';
-      } else {
-        return htescape (_[0]);
-      }
-    }).join ('');
-  } : htescape; // textToHTML
-
-  defineElement ({
-    name: 'gr-plaintext-body',
-    fill: 'idlattribute',
-    props: {
-      pcInit: function () {
-        if (this.value) {
-          this.grSetText (this.value);
-        }
-        Object.defineProperty (this, 'value', {
-          set: function (v) {
-            this.grSetText (v);
-          },
-        });
-      }, // pcInit
-      grSetText: function (s) {
-        this.innerHTML = textToHTML (s);
-      }, // grSetText
-    },
-  });
   
 }) ()
 
@@ -2031,7 +1955,9 @@ function upgradeBodyControl (e, object, opts) {
     body_source_type: object.data.body_source_type || 0,
     hasSource: object.data.body_source != null,
   };
-  if (data.body_type == 2) { // compat
+  if (data.body_type == 2) { // plain text
+    data.body_source = data.body;
+    data.body_source_type = 4; // plain text
     data.body_type = 1;
     var div = document.createElement ('div');
     div.textContent = data.body;
@@ -2089,7 +2015,8 @@ function upgradeBodyControl (e, object, opts) {
         b.hidden = (name !== 'textarea' && name !== 'iframe' && name !== 'config');
       });
       if (opts.show) showTab ('iframe');
-    } else if (data.body_source_type == 3) { // hatena
+    } else if (data.body_source_type == 3 || // hatena
+               data.body_source_type == 4) { // plain text
       $$c (e, '.tab-buttons a').forEach (function (b) {
         var name = b.getAttribute ('data-name');
         b.hidden = (name !== 'textarea' && name !== 'preview' && name !== 'config');
@@ -2260,6 +2187,10 @@ function upgradeBodyControl (e, object, opts) {
         if (data.body_source_type == 3) { // hatena
           return Formatter.hatena (data.body_source).then (function (body) {
             data.body = '<hatena-html>' + body + '</hatena-html>';
+          });
+        } else if (data.body_source_type == 4) { // plain text
+          return Formatter.autolink (data.body_source).then (body => {
+            data.body = body;
           });
         } else {
           data.body = data.body_source;
@@ -4565,6 +4496,16 @@ Formatter.hatena = function (source) {
     return div.innerHTML;
   });
 }; // hatena
+
+Formatter.autolink = function (source) {
+  return fetch ("https://textformatter.herokuapp.com/autolink", { // XXX
+    method: "post",
+    body: source,
+  }).then (function (r) {
+    if (r.status !== 200) throw r;
+    return r.text ();
+  });
+}; // autolink
 
 (new MutationObserver (function (mutations) {
   mutations.forEach (function (m) {
