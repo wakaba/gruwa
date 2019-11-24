@@ -2112,6 +2112,25 @@ sub group_object ($$$$) {
           die $_[0] unless $_[0]->status == 200;
           return json $app, {};
         });
+      } elsif (@$path == 5 and $path->[4] eq 'notified.json') {
+        # /g/{group_id}/o/{object_id}/notified.json
+        return $db->select ('object', {
+          group_id => Dongry::Type->serialize ('text', $path->[1]),
+          thread_id => Dongry::Type->serialize ('text', $path->[3]),
+        }, fields => ['object_id'], limit => 1000)->then (sub {
+          my $v = $_[0]->all;
+          return [] unless @$v;
+          return $db->select ('object_revision', {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            object_id => {-in => [map { $_->{object_id} } @$v]},
+          }, fields => ['author_account_id'], distinct => 1)->then (sub {
+            return $_[0]->all;
+          });
+        })->then (sub {
+          return json $app, {
+            account_ids => [map { ''.$_->{author_account_id} } @{$_[0]}],
+          };
+        });
       } elsif (@$path == 5 and $path->[4] eq 'revisions.json') {
         # /g/{group_id}/o/{object_id}/revisions.json
         my $page = Pager::this_page ($app, limit => 10, max_limit => 100);
