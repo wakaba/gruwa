@@ -57,6 +57,7 @@
                       <!-- 1 SWML -->
                       <!-- 2 Markdown -->
                       <option value=3>はてな記法
+                      <option value=4>平文
                     </select>
                     (<a href=/help#syntaxes target=help>ヘルプ</a>)
                     <p><strong>注意</strong>: 

@@ -48,6 +48,7 @@ sub get_index ($$$) {
 ##   |4| file
 ## |body_source_type|  |body_source|: Source text
 ##   |0| WYSIWYG
+##   |1| SWML
 ##   |2| Markdown
 ##   |3| Hatena
 ##   |4| plain text
