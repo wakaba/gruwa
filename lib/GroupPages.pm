@@ -14,6 +14,7 @@ use Web::DateTime::Parser;
 use Web::MIME::Type;
 use Web::URL;
 use Web::URL::Encoding;
+use Web::URL::Parser;
 use Web::DOM::Document;
 use Web::Transport::BasicClient;
 
@@ -40,11 +41,16 @@ sub get_index ($$$) {
   });
 } # get_index
 
-## body_type
-##   1 html
-##   2 plain text
-##   3 data
-##   4 file
+## |body_type|
+##   |1| HTML          |body|: HTML
+##   |2| plain text    |body|: plain text
+##   |3| data          |body_data|: JSON object
+##   |4| file
+## |body_source_type|  |body_source|: Source text
+##   |0| WYSIWYG
+##   |2| Markdown
+##   |3| Hatena
+##   |4| plain text
 
 my @TokenAlpha = ('0'..'9','A'..'Z','a'..'z');
 
@@ -282,14 +288,30 @@ sub edit_object ($$$$$;%) {
     }
   }
 
-        my $search_data;
-        if ($changes->{fields}->{title} or
-            $changes->{fields}->{body} or
-            $changes->{fields}->{body_type}) {
-          my $body = '';
-          my @keyword;
-          my @url;
-          if ($object->{data}->{body_type} == 1) { # html
+  my $search_data;
+  if ($changes->{fields}->{title} or
+      $changes->{fields}->{body} or
+      $changes->{fields}->{body_type}) {
+    my $body = '';
+    my @keyword;
+    my @url;
+
+    if ($object->{data}->{body_type} == 2) { # plain text
+      my $parser = Web::URL::Parser->new;
+      my $formatted = $parser->text_to_autolinked_html ($object->{data}->{body});
+      unless ($formatted eq $object->{data}->{body}) {
+        $object->{data}->{body_source} = $object->{data}->{body};
+        $object->{data}->{body_source_type} = 4; # plain text
+        $object->{data}->{body} = $formatted;
+        $object->{data}->{body_type} = 1; # html
+        $changes->{fields}->{body_source} =
+        $changes->{fields}->{body_source_type} =
+        $changes->{fields}->{body} =
+        $changes->{fields}->{body_type} = 1;
+      }
+    }
+
+    if ($object->{data}->{body_type} == 1) { # html
             my $doc = new Web::DOM::Document;
             $doc->manakai_is_html (1);
             $doc->manakai_set_url ($app->http->url->stringify);
@@ -397,7 +419,21 @@ sub edit_object ($$$$$;%) {
               }
             }
           } # $url
-        } # title/body modified
+
+    if (not $changes->{fields}->{body_source} and
+        not $changes->{fields}->{body_source_type} and
+        ($changes->{fields}->{body} or
+         $changes->{fields}->{body_type})) {
+      if (defined $object->{data}->{body_source}) {
+        delete $object->{data}->{body_source};
+        $changes->{fields}->{body_source} = 1;
+      }
+      if (defined $object->{data}->{body_source_type}) {
+        delete $object->{data}->{body_source_type};
+        $changes->{fields}->{body_source_type} = 1;
+      }
+    }
+  } # title/body modified
 
   if (defined $edits->{assigned_account_ids}) {
     my $new = $edits->{assigned_account_ids};
