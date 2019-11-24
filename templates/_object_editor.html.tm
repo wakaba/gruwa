@@ -193,8 +193,17 @@
         <button-label>変更</button-label>
       </button>
       <menu-main>
+        <p data-called-type=if-in-thread>
+          <label title="親記事を書いた人やコメントを書いた人など">
+            <input type=checkbox checked data-called-type=category value=thread>
+            <img src=/images/person.svg class=icon alt>
+            スレッドの購読者 (<data data-called-type=thread-notified-count>?</data>)
+          </label>
+          <!-- XXX
+          (<button type=button class=expand-button data-called-type=thread-notified-expand>展開する</button>)
+          -->
+        </p>
         <gr-called-editor-menu-items/>
-        
       </menu-main>
     </popup-menu>
   </template>
@@ -202,6 +211,7 @@
 
 <template-set name=gr-called-editor-menu-item>
   <template>
+    <p>
     <label>
           <input type=checkbox data-called-type=account_id data-field=account_id>
           <gr-account data-field=account_id>
@@ -218,9 +228,14 @@
 <template-set name=gr-called-editor-selected-item>
   <template>
     <gr-account data-field=account_id>
-      <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt>
-      <gr-account-name data-field=name data-filling>アカウント</gr-account-name>
+      <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon alt data-title-field=name>
     </gr-account>
+  </template>
+</template-set>
+
+<template-set name=gr-called-editor-selected-category-thread>
+  <template>
+    <img src=/images/person.svg class=icon alt=購読者 title="スレッドの購読者">
   </template>
 </template-set>
 

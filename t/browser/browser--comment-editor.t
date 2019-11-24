@@ -99,8 +99,228 @@ Test {
     test {
       is 0+@{$result->{json}->{items}}, 0;
     } $current->c;
+    return $current->get_json (['my', 'calls.json'], {}, account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 1;
+      my $item = $result->{json}->{items}->[0];
+      is $item->{group_id}, $current->o ('g1')->{group_id};
+      is $item->{thread_id}, $current->o ('o1')->{object_id};
+      isnt $item->{object_id}, $current->o ('o1')->{object_id};
+      is $item->{from_account_id}, $current->o ('a4')->{account_id};
+      is $item->{reason}, 0b10;
+    } $current->c, name => 'parent owner';
   });
-} n => 7, name => ['comment with object call'], browser => 1;
+} n => 13, name => ['comment with object call'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [a3 => account => {}],
+    [a4 => account => {}],
+    [g1 => group => {
+      members => ['a1', 'a3', 'a4'],
+      owners => ['a2'],
+    }],
+    [o1 => object => {
+      group => 'g1',
+      account => 'a1',
+    }],
+  )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, group => 'g1', account => 'a2');
+  })->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t3 => {}),
+    }, group => 'g1', account => 'a3');
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a4',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details summary',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments details summary').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form gr-called-editor button',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments form gr-called-editor button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form gr-called-editor menu-main',
+      text => $current->o ('t2'),
+      scroll => 1,
+      name => 'a2 name (t2)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form gr-called-editor menu-main',
+      text => $current->o ('t3'),
+      scroll => 1,
+      name => 'a3 name (t3)',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments form [name=body]').value = arguments[0];
+    }, [$current->generate_text (b1 => {})]);
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments form button[type=submit]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form button[type=submit]:enabled',
+    });
+  })->then (sub {
+    return $current->get_json (['my', 'calls.json'], {}, account => 'a3');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 0;
+    } $current->c;
+    return $current->get_json (['my', 'calls.json'], {}, account => 'a2');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 0;
+    } $current->c;
+    return $current->get_json (['my', 'calls.json'], {}, account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 1;
+      my $item = $result->{json}->{items}->[0];
+      is $item->{group_id}, $current->o ('g1')->{group_id};
+      is $item->{thread_id}, $current->o ('o1')->{object_id};
+      isnt $item->{object_id}, $current->o ('o1')->{object_id};
+      is $item->{from_account_id}, $current->o ('a4')->{account_id};
+      is $item->{reason}, 0b10;
+    } $current->c, name => 'parent owner';
+  });
+} n => 8, name => ['comment with object call, default (parent author only)'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [a3 => account => {}],
+    [a4 => account => {}],
+    [g1 => group => {
+      members => ['a1', 'a3', 'a4'],
+      owners => ['a2'],
+    }],
+    [o1 => object => {
+      group => 'g1',
+      account => 'a1',
+    }],
+  )->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, group => 'g1', account => 'a2');
+  })->then (sub {
+    return $current->post_json (['my', 'edit.json'], {
+      name => $current->generate_text (t3 => {}),
+    }, group => 'g1', account => 'a3');
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a4',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments details summary',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments details summary').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form gr-called-editor button',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments form gr-called-editor button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form gr-called-editor menu-main',
+      text => $current->o ('t2'),
+      scroll => 1,
+      name => 'a2 name (t2)',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form gr-called-editor menu-main',
+      text => $current->o ('t3'),
+      scroll => 1,
+      name => 'a3 name (t3)',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments form [name=body]').value = arguments[1];
+      document.querySelector ('article-comments form gr-called-editor menu-main input[type=checkbox][value="thread"]').click ();
+      document.querySelector ('article-comments form gr-called-editor menu-main input[type=checkbox][value="'+arguments[0]+'"]').click ();
+    }, [$current->o ('a3')->{account_id}, $current->generate_text (b1 => {})]);
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article-comments form button[type=submit]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form button[type=submit]:enabled',
+    });
+  })->then (sub {
+    return $current->get_json (['my', 'calls.json'], {}, account => 'a3');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 1;
+      my $item = $result->{json}->{items}->[0];
+      is $item->{group_id}, $current->o ('g1')->{group_id};
+      is $item->{thread_id}, $current->o ('o1')->{object_id};
+      isnt $item->{object_id}, $current->o ('o1')->{object_id};
+      is $item->{from_account_id}, $current->o ('a4')->{account_id};
+      is $item->{reason}, 0b10;
+    } $current->c;
+    return $current->get_json (['my', 'calls.json'], {}, account => 'a2');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 0;
+    } $current->c;
+    return $current->get_json (['my', 'calls.json'], {}, account => 'a1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 0;
+    } $current->c, name => 'parent owner';
+  });
+} n => 8, name => ['comment with object call, parent object author not selected'], browser => 1;
 
 RUN;
 
