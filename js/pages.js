@@ -2397,6 +2397,7 @@ function upgradeList (el) {
               }
               f.querySelectorAll ('details[is=gr-comment-form]').forEach (_ => {
                 _.setAttribute ('data-parentobjectid', object.object_id);
+                _.setAttribute ('data-threadid', object.data.thread_id);
                 if (_.grObjectUpdated) {
                   _.grObjectUpdated (object);
                 } else {
@@ -3780,6 +3781,9 @@ defineElement ({
         var e = ts.createFromTemplate ('div', {
           parent_object_id: this.getAttribute ('data-parentobjectid'),
         });
+        e.querySelectorAll ('gr-called-editor').forEach (_ => {
+          _.setAttribute ('threadid', this.getAttribute ('data-threadid'));
+        });
         while (e.firstChild) this.appendChild (e.firstChild);
 
         if (this.grObject) {
@@ -3951,7 +3955,8 @@ defineElement ({
   templateSet: true,
   props: {
     pcInit: function () {
-      this.grSelected = {account_id: {}};
+      this.grSelected = {account_id: {}, category: {}};
+      this.grSelected.category.thread = this.hasAttribute ('threadid');
       this.setAttribute ('formcontrol', '');
       this.addEventListener ('pctemplatesetupdated', (ev) => {
         this.grTemplateSet = ev.pcTemplateSet;
@@ -3973,6 +3978,21 @@ defineElement ({
       var e = tm.createFromTemplate ('div', {});
       this.textContent = '';
       while (e.firstChild) this.appendChild (e.firstChild);
+
+      this.grThreadAccountIds ().then (accountIds => {
+        if (accountIds === null) {
+          this.querySelectorAll ('[data-called-type=if-in-thread]').forEach (_ => _.remove ());
+        } else {
+          this.querySelectorAll ('[data-called-type=if-in-thread]').forEach (_ => {
+            _.hidden = false;
+            _.querySelectorAll ('[data-called-type=thread-notified-count]').forEach (_ => _.textContent = accountIds.length);
+            _.querySelectorAll ('input[data-called-type]').forEach (_ => {
+              _.onchange = () => this.grToggleCalled (_.getAttribute ('data-called-type'), _.value, _.checked);
+              _.checked = this.grSelected[_.getAttribute ('data-called-type')][_.value];
+            });
+          });
+        }
+      });
 
       this.grUpdateSelectedView ();
       return new Promise (ok => {
@@ -4017,8 +4037,19 @@ defineElement ({
       }
       return this.grUpdateSelectedView ();
     }, // grToggleCalled
+    grThreadAccountIds: function () {
+      if (this.grThreadAIDs) return this.grThreadAIDs;
+      if (this.hasAttribute ('threadid')) {
+        return this.grThreadAIDs = gFetch ('o/' + this.getAttribute ('threadid') + '/notified.json', {}).then (json => {
+          return json.account_ids;
+        });
+      } else {
+        return this.grThreadAIDs = Promise.resolve (null);
+      }
+    }, // grThreadAccountIds
     grReset: function () {
-      this.grSelected = {account_id: {}};
+      this.grSelected = {account_id: {}, category: {}};
+      this.grSelected.category.thread = this.hasAttribute ('threadid');
       return this.grRender ();
     }, // grReset
     grUpdateSelectedView: function () {
@@ -4029,10 +4060,14 @@ defineElement ({
       this.querySelectorAll ('gr-called-editor-selected').forEach (c => {
         return Promise.all ([
           $getTemplateSet ('gr-called-editor-selected-item'),
+          $getTemplateSet ('gr-called-editor-selected-category-thread'),
           GR.group.activeMembers (),
-        ]).then (_ => {
-          var [tm, mems] = _;
+        ]).then (([tm, tm2, mems]) => {
           c.textContent = '';
+          if (this.grSelected.category.thread) {
+            var e = tm2.createFromTemplate ('list-item', {});
+            c.appendChild (e);
+          }
           mems.forEach (mem => {
             if (this.grSelected.account_id[mem.account_id]) {
               var e = tm.createFromTemplate ('list-item', mem);
@@ -4049,11 +4084,23 @@ defineElement ({
       });
     }, // gr_updateSelectedView
     pcModifyFormData: function (fd) {
+      var added = {};
       Object.keys (this.grSelected.account_id).forEach (aid => {
         if (this.grSelected.account_id[aid]) {
           fd.append ('called_account_id', aid);
+          added[aid] = true;
         }
       });
+      if (this.grSelected.category.thread) {
+        return this.grThreadAccountIds ().then (accountIds => {
+          if (accountIds) accountIds.forEach (aid => {
+            if (!added[aid]) {
+              fd.append ('called_account_id', aid);
+              added[aid] = true;
+            }
+          });
+        });
+      }
     }, // pcModifyFormData
   },
 }); // gr-called-editor
