@@ -281,6 +281,11 @@ Test {
       name => 'a3 name (t3)',
     });
   })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments form gr-called-editor menu-main [data-called-type=if-in-thread]',
+      shown => 1,
+    });
+  })->then (sub {
     return $current->b (1)->execute (q{
       document.querySelector ('article-comments form [name=body]').value = arguments[1];
       document.querySelector ('article-comments form gr-called-editor menu-main input[type=checkbox][value="thread"]').click ();
