@@ -59,8 +59,10 @@
       ジャンプリストに追加
     </a>
     <hr>
+    <p><a data-href-template=/g/{group.group_id}/my/config>個人設定</a>
+    <hr>
     <p><a data-href-template=/g/{group.group_id}/members>参加者</a>
-    <p><a data-href-template=/g/{group.group_id}/config>設定</a>
+    <p><a data-href-template=/g/{group.group_id}/config>グループ設定</a>
     <hr>
     <p><a data-href-template=/g/{group.group_id}/guide>グループのガイド</a>
     <p><a href=/help#groups target=help>ヘルプ</a>
@@ -618,7 +620,7 @@
         <action-status hidden stage-loader=読込中... />
       </list-container>
 
-      <p><a href=my/config>自分の参加者設定を変更</a>
+      <p><a href=my/config>自分の個人設定を変更</a>
     </section>
 
     <section id=invite>
@@ -1708,10 +1710,10 @@ Web ブラウザーで開いてください。
 </template-set>
   
 <template-set name=page-my-config>
-  <template title=グループ参加者設定 class=is-subpage>
+  <template title=グループ個人設定 class=is-subpage>
     <section>
       <header class=section>
-        <h1>グループ参加者設定</h1>
+        <h1>グループ個人設定</h1>
         <a href=/help#config target=help>ヘルプ</a>
       </header>
       <form is=save-data data-saver=groupSaver method=post data-action-template=my/edit.json id=edit-form data-next=reloadGroupInfo>
