@@ -3984,6 +3984,7 @@ defineElement ({
           this.querySelectorAll ('[data-called-type=if-in-thread]').forEach (_ => _.remove ());
         } else {
           this.querySelectorAll ('[data-called-type=if-in-thread]').forEach (_ => {
+            _.hidden = false;
             _.querySelectorAll ('[data-called-type=thread-notified-count]').forEach (_ => _.textContent = accountIds.length);
             _.querySelectorAll ('input[data-called-type]').forEach (_ => {
               _.onchange = () => this.grToggleCalled (_.getAttribute ('data-called-type'), _.value, _.checked);

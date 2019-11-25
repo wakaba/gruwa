@@ -193,7 +193,7 @@
         <button-label>変更</button-label>
       </button>
       <menu-main>
-        <p data-called-type=if-in-thread>
+        <p data-called-type=if-in-thread hidden>
           <label title="親記事を書いた人やコメントを書いた人など">
             <input type=checkbox checked data-called-type=category value=thread>
             <img src=/images/person.svg class=icon alt>
