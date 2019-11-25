@@ -880,7 +880,7 @@ Web ブラウザーで開いてください。
   </template><!-- default -->
   <template data-name=blog>
   
-    <gr-list-container key=objects grouped=1 listitemtype=object>
+    <gr-list-container key=objects grouped=1 listitemtype=object src-limit=5>
         <template class=object>
           <header>
             <div class=edit-by-dblclick>
