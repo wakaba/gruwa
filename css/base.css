@@ -1559,7 +1559,7 @@ gr-star-item .icon {
   height: 1.5em;
   margin: 0;
   -webkit-mask-image: url(/images/star.svg);
-  -webkit-mask-size: 130%;
+  -webkit-mask-size: 105%;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
 }
