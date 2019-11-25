@@ -287,6 +287,8 @@ Test {
       document.querySelector ('article-comments form gr-called-editor menu-main input[type=checkbox][value="'+arguments[0]+'"]').click ();
     }, [$current->o ('a3')->{account_id}, $current->generate_text (b1 => {})]);
   })->then (sub {
+    return $current->b_screenshot (1, 'gr-called-editor edited');
+  })->then (sub {
     return $current->b (1)->execute (q{
       document.querySelector ('article-comments form button[type=submit]').click ();
     });
