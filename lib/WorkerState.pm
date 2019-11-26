@@ -1,20 +1,27 @@
+package WorkerState;
 use strict;
 use warnings;
-use Path::Tiny;
-use Sarze;
+use Promise;
+use Promised::Flow;
 
-my $port = shift or die "No port";
+sub start ($%) {
+  my ($class, %args) = @_;
+  my ($r, $s) = promised_cv;
+  my $obj = {clients => {}, dbs => {}};
+  $args{signal}->manakai_onabort (sub {
+    return Promise->all ([
+      (map { $_->close } values %{$obj->{clients}}),
+      (map { $_->disconnect } values %{$obj->{dbs}}),
+    ])->finally ($s);
+  });
+  return [$obj, $r];
+} # start
 
-Sarze->run (
-  hostports => [['0', $port]],
-  psgi_file_name => path (__FILE__)->parent->child ('server.psgi'),
-  max_request_body_length => 100*1024*1024,
-  worker_state_class => 'WorkerState',
-)->to_cv->recv;
+1;
 
 =head1 LICENSE
 
-Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
+Copyright 2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

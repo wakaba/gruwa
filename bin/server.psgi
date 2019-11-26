@@ -16,6 +16,7 @@ use GroupPages;
 use JumpPages;
 use ImportPages;
 use Reports;
+use WorkerState;
 
 my $config_path = path ($ENV{CONFIG_FILE} // die "No |CONFIG_FILE|");
 my $Config = json_bytes2perl $config_path->slurp;
@@ -214,7 +215,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut
