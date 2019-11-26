@@ -26,7 +26,7 @@ sub config ($) {
 } # config
 
 sub db ($) {
-  return $_[0]->{db} ||= Dongry::Database->new (%{$_[0]->config->{_db_sources}});
+  return $_[0]->http->server_state->data->{dbs}->{main} ||= Dongry::Database->new (%{$_[0]->config->{_db_sources}});
 } # db
 
 sub rev ($) {
@@ -230,7 +230,6 @@ sub _send_to_addr ($$%) {
 sub close ($) {
   my $self = $_[0];
   return Promise->all ([
-    (defined $self->{db} ? $self->{db}->disconnect : undef),
     (defined $self->{accounts_client} ? $self->{accounts_client}->close : undef),
     (defined $self->{apploach_client} ? $self->{apploach_client}->close : undef),
   ]);
