@@ -31,8 +31,7 @@ $Config->{git_sha} =~ s/[\x0D\x0A]//g;
 my $dsn = $ENV{DATABASE_DSN} // die "No |DATABASE_DSN|";
 $Config->{_db_sources} = {sources => {
   master => {dsn => $dsn, anyevent => 1, writable => 1},
-  default => {dsn => $dsn, anyevent => 1},
-}};
+}, master_only => 1};
 
 sub accounts ($) {
   my $app = $_[0];
@@ -84,14 +83,8 @@ return sub {
         return StaticFiles->html ($app, $path);
       }
 
-      my $db = $app->db;
       my $acall = accounts $app;
-      return promised_cleanup {
-        return Promise->all ([
-          $db->disconnect,
-          $app->close,
-        ]);
-      } Promise->resolve->then (sub {
+      return Promise->resolve->then (sub {
 
         if (@$path == 4 and
             $path->[0] eq 'g' and
@@ -114,13 +107,13 @@ return sub {
         if (@$path >= 3 and $path->[0] eq 'g' and
             $path->[1] =~ /\A[1-9][0-9]*\z/) {
           # /g/{group_id}/...
-          return GroupPages->main ($app, $path, $db, $acall);
+          return GroupPages->main ($app, $path, $app->db, $acall);
         }
 
         if (@$path == 2 and
             $path->[0] eq 'g' and $path->[1] eq 'create.json') {
           # /g/create.json
-          return GroupPages->create ($app, $db, $acall);
+          return GroupPages->create ($app, $app->db, $acall);
         }
 
         ## Pjax (partition=dashboard)
@@ -142,13 +135,13 @@ return sub {
             my $account_data = $_[0];
             return $app->send_error (403, reason_phrase => 'No user account')
                 unless (defined $account_data->{account_id});
-            return JumpPages->main ($app, $path, $db, $account_data);
+            return JumpPages->main ($app, $path, $app->db, $account_data);
           });
         }
 
         if ($path->[0] eq 'my') {
           # /my
-          return AccountPages->mymain ($app, $path, $acall, $db);
+          return AccountPages->mymain ($app, $path, $acall, $app->db);
         }
 
         if ($path->[0] eq 'account') {
@@ -172,7 +165,7 @@ return sub {
         }
         
         if (@$path == 1) {
-          return CommonPages->main ($app, $path, $db);
+          return CommonPages->main ($app, $path, $app->db);
         }
 
         if ($path->[0] eq 'reports') {
