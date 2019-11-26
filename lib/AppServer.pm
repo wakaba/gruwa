@@ -35,7 +35,7 @@ sub rev ($) {
 
 sub accounts ($$$) {
   my ($app, $path, $params) = @_;
-  my $accounts = $app->{accounts_client} ||= Web::Transport::BasicClient->new_from_url
+  my $accounts = $app->http->server_state->data->{clients}->{accounts} ||= Web::Transport::BasicClient->new_from_url
       (Web::URL->parse_string ($app->config->{accounts}->{url}), {
         #debug => 2,
       });
@@ -62,7 +62,7 @@ sub accounts ($$$) {
 sub apploach ($$$) {
   my ($self, $path, $params) = @_;
   my $config = $self->config;
-  my $client = $self->{apploach_client} ||= do {
+  my $client = $self->http->server_state->data->{clients}->{apploach} ||= do {
     my $url = Web::URL->parse_string ($config->{apploach}->{url});
     Web::Transport::BasicClient->new_from_url ($url);
   };
@@ -228,11 +228,7 @@ sub _send_to_addr ($$%) {
 } # _send_to_addr
 
 sub close ($) {
-  my $self = $_[0];
-  return Promise->all ([
-    (defined $self->{accounts_client} ? $self->{accounts_client}->close : undef),
-    (defined $self->{apploach_client} ? $self->{apploach_client}->close : undef),
-  ]);
+  return Promise->resolve;
 } # close
 
 1;
