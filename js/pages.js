@@ -4415,7 +4415,7 @@ defineElement ({
           fd.append ('object_id', objectId);
           fd.append ('delta', d);
           return gFetch ('star/add.json', {post: true, formData: fd}).then (() => {
-            if (this.grNegativeDelta) this.grRender ();
+            if (d < 0) this.grRender ();
           });
         }, 800);
       }, // grAddStar
