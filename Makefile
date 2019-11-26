@@ -102,9 +102,11 @@ local/apploach-2.sql:
 test-main: test-http test-browser
 
 test-http:
+	$(PROVE) t/http/*.t || \
 	$(PROVE) t/http/*.t
 
 test-browser:
+	TEST_MAX_CONCUR=1 $(PROVE) t/browser/*.t || \
 	TEST_MAX_CONCUR=1 $(PROVE) t/browser/*.t
 
 test-http-circleci: test-http
