@@ -131,6 +131,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
             return Formatter.hatena (hatena).then (function (body) {
               fd.append ('body', body);
             }).then (function () {
+              fd.append ('is_new_object', 1);
               return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
             });
           });
@@ -167,6 +168,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           }
           fd.append ('source_type', 'html');
           fd.append ('revision_imported_url', page);
+          fd.append ('is_new_object', 1);
           return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
         });
       });
@@ -232,6 +234,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           return Formatter.hatena (hatena).then (function (body) {
             fd.append ('body', body);
           }).then (function () {
+            fd.append ('is_new_object', 1);
             return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
           });
         }).then (function () {
@@ -316,6 +319,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           return Formatter.hatena (hatena).then (function (body) {
             fd.append ('body', body);
           }).then (function () {
+            fd.append ('is_new_object', 1);
             return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
           });
         }).then (function () {
@@ -383,6 +387,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
       fd.append ('todo_state', 1);
     }
     fd.append ('todo_bb_state', status); // This is not BB but reused for preserving original status.
+    fd.append ('is_new_object', 1);
     return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd}).then (() => {
       return objectId;
     });
@@ -420,6 +425,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           fd.append ('author_hatena_id', c.author.url_name);
           fd.append ('revision_author_hatena_id', c.author.url_name);
           fd.append ('source_type', 'task');
+          fd.append ('is_new_object', 1);
           return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
         });
       }, comments);
@@ -622,6 +628,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
             fd.append ('timestamp', 0);
             fd.append ('body_type', 3); // data
             fd.append ('body_data', JSON.stringify ({hatena_star: stars}));
+            fd.append ('is_new_object', 1);
             return gFetch ('o/' + starObjectId + '/edit.json', {
               post: true,
               formData: fd,
@@ -656,6 +663,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
             fd.append ('author_hatena_id', comment.name);
             fd.append ('body', comment.body);
             fd.append ('parent_section_id', comment.section_id);
+            fd.append ('is_new_object', 1);
             return gFetch ('o/' + json.object_id + '/edit.json', {
               post: true,
               formData: fd,
@@ -737,6 +745,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           return;
         }
       }).then (function () {
+        fd.append ('is_new_object', 1);
         return gFetch ('o/' + info.objectId + '/edit.json', {post: true, formData: fd});
       }).then (function () {
         return starPromise;
@@ -788,6 +797,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
         }
         fd.append ('source_source_sha', sourceSha);
         fd.append ('source_type', c.source);
+        fd.append ('is_new_object', 1);
         return gFetch ('o/' + json.object_id + '/edit.json', {post: true, formData: fd});
       });
     }, comments);
@@ -857,6 +867,7 @@ Importer.run = function (sourceId, statusContainer, opts) {
           fd.append ('body', div.grSourceText);
           fd.append ('revision_imported_url', page);
           fd.append ('source_type', 'raw');
+          fd.append ('is_new_object', 1);
           return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
         }).then (() => {
           return div;
@@ -1937,6 +1948,7 @@ Importer.BitBucket.prototype.run = function (name, repo, statusContainer, opts) 
               } else { // "new" "open" "on hold"
                 fd.append ('todo_state', 1); // open
               }
+              fd.append ('is_new_object', 1);
               return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
             }).then (function () {
               return getComments;
@@ -1971,6 +1983,7 @@ Importer.BitBucket.prototype.run = function (name, repo, statusContainer, opts) 
                     fd.append ('body_data', '{}');
                   }
                   fd.append ('author_bb_username', comment.user.username);
+                  fd.append ('is_new_object', 1);
                   return gFetch ('o/' + objectId + '/edit.json', {post: true, formData: fd});
                 });
               }, list); // forEach
