@@ -4299,20 +4299,6 @@ defineElement ({
 
 }) ();
 
-function upgradeObjectRef (e) {
-  var objectId = e.getAttribute ('value');
-  if (!objectId) return;
-
-  if (e.hasAttribute ('template')) {
-    e.appendChild (document.querySelector (e.getAttribute ('template')).content.cloneNode (true));
-    e.removeAttribute ('template');
-  }
-
-  return GR.object.get (objectId, {withSearchData: true}).then (object => {
-    fillFields (e, e, e, object, {});
-  });
-} // upgradeObjectRef
-
 defineElement ({
   name: 'gr-object-ref',
   fill: 'contentattribute',
