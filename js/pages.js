@@ -1374,7 +1374,6 @@ function $$c (n, s) {
           f.localName === 'edit-container' ||
           f.localName === 'list-query' ||
           f.localName === 'list-control' ||
-          f.localName === 'object-ref' ||
           f.localName === 'body-control') {
         return false;
       }
@@ -1393,7 +1392,6 @@ function $$c2 (n, s) {
           f.localName === 'edit-container' ||
           f.localName === 'list-query' ||
           f.localName === 'list-control' ||
-          f.localName === 'object-ref' ||
           f.localName === 'body-control' ||
           f.localName === 'form') {
         return false;
@@ -1639,10 +1637,6 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       field.value = value;
     } else if (field.localName === 'unit-number') {
       field.setAttribute ('value', value);
-    } else if (field.localName === 'object-ref') {
-      field.setAttribute ('value', value);
-      field.hidden = false;
-      upgradeObjectRef (field);
 
     } else if (field.localName === 'only-if') {
       var matched = true;
@@ -4324,12 +4318,23 @@ defineElement ({
   fill: 'contentattribute',
   props: {
     pcInit: function () {
-      var e = document.createElement ('object-ref');
-      e.setAttribute ('value', this.getAttribute ('value'));
-      e.setAttribute ('template', '#object-ref-template');
-      upgradeObjectRef (e);
-      this.appendChild (e);
+      var mo = new MutationObserver (() => this.grRender ());
+      mo.observe (this, {attributes: true, attributeFilter: ['value']});
+      this.grRender ();
     }, // pcInit
+    grRender: function () {
+      var objectId = this.getAttribute ('value');
+      if (!objectId) return;
+
+      return Promise.all ([
+        GR.object.get (objectId, {withSearchData: true}),
+        $getTemplateSet ('gr-object-ref'),
+      ]).then (([object, tm]) => {
+        this.textContent = '';
+        var e = tm.createFromTemplate ('div', {object: object});
+        while (e.firstChild) this.appendChild (e.firstChild);
+      });
+    }, // grRender
   },
 }); // <gr-object-ref>
 
@@ -4577,11 +4582,6 @@ Formatter.autolink = function (source) {
       } else if (x.localName) {
         $$ (x, 'with-sidebar').forEach (upgradeWithSidebar);
       }
-      if (x.localName === 'object-ref') {
-        upgradeObjectRef (x);
-      } else if (x.localName) {
-        $$ (x, 'object-ref').forEach (upgradeObjectRef);
-      }
     });
   });
 })).observe (document.documentElement, {childList: true, subtree: true});
@@ -4589,7 +4589,6 @@ $$ (document, 'gr-list-container').forEach (upgradeList);
 $$ (document, 'form').forEach (upgradeForm);
 $$ (document, 'gr-popup-menu').forEach (upgradePopupMenu);
 $$ (document, 'with-sidebar').forEach (upgradeWithSidebar);
-$$ (document, 'object-ref').forEach (upgradeObjectRef);
 
 GR.navigate = {};
 
