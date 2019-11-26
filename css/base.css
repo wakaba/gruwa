@@ -1552,7 +1552,8 @@ gr-star-item a:not([hidden]) {
   display: inline-block;
 }
 
-gr-star-item .icon {
+gr-star-item .icon:not([hidden]) {
+  display: inline-block;
   width: 1.5em;
   height: 1.5em;
   margin: 0;
@@ -1560,6 +1561,8 @@ gr-star-item .icon {
   -webkit-mask-size: 105%;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
+  background: url(/images/star.svg) no-repeat center;
+  background-size: 110%;
 }
 
 gr-star-count:not(:empty):not([hidden]) {
