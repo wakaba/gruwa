@@ -29,7 +29,7 @@ Test {
   })->then (sub {
     return $current->b (1)->execute (q{
       return {
-        config_url: document.querySelector ('gr-menu[type=group] menu-main a[href$="/config"]').pathname,
+        config_url: document.querySelector ('gr-menu[type=group] menu-main a[href$="/config"]:not([href$="/my/config"])').pathname,
         title: document.title,
         theme_color: document.querySelector ('meta[name=theme-color]').content,
         header: document.querySelector ('header.page h1').textContent,
