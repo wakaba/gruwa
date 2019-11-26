@@ -1512,19 +1512,21 @@ Web ブラウザーで開いてください。
   </template>
 </template-set>
 
-  <template class=body-template id=object-ref-template>
-    <a href data-href-template={GROUP}/o/{object_id}/>
-      <ref-header>
-        <enum-value class=todo-state data-field=data.todo_state
+<template-set name=gr-object-ref>
+  <template>
+    <a href data-href-template=/g/{object.group_id}/o/{object.object_id}/>
+      <gr-object-ref-header>
+        <enum-value class=todo-state data-field=object.data.todo_state
             label-1=未完了 label-2=完了済
             label-undefined
         />
-        <cite data-field=data.title data-empty=■ />
-        <time data-field=created />
-      </ref-header>
-      <body-snippet data-field=snippet />
+        <cite data-field=object.data.title data-empty=■ />
+        <time data-field=object.created />
+      </gr-object-ref-header>
+      <body-snippet data-field=object.snippet />
     </a>
   </template>
+</template-set>
 
 <template-set name=gr-stars>
   <template>
@@ -1562,7 +1564,7 @@ Web ブラウザーで開いてください。
 
 <template-set name=gr-tooltip-box-object>
   <template>
-    <object-ref data-value-field=data.object_id template=#object-ref-template />
+    <gr-object-ref data-field=data.object_id />
   </template>
 </template-set>
 

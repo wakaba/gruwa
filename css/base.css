@@ -35,6 +35,11 @@ html { /* [data-thema=green] */
   --menu-color: var(--main-color);
   --menu-border-color: var(--accented-border-color);
   --menu-shadow-color: var(--main-shadow-color);
+
+  --toolbar-background-color: var(--main-background-color);
+  --toolbar-color: var(--main-color);
+  --toolbar-border-color: var(--accented-border-color);
+  --toolbar-shadow-color: var(--main-shadow-color);
   
   --enclosed-border-color: var(--accented-border-color);
 
@@ -1434,47 +1439,38 @@ iframe.embed {
   height: 2rem;
 }
 
-object-ref:not([hidden]) {
+gr-object-ref:not([hidden]) {
   display: block;
-}
-
-object-ref-content {
   white-space: normal;
 }
 
-object-ref-content a:not([hidden]),
-object-ref a:not([hidden]) {
+gr-object-ref a:not([hidden]) {
   display: block;
-  margin-left: 2em;
+  margin: 0;
   padding: .2em .5em;
   text-decoration: none;
 }
 
-gr-tooltip-box object-ref a:not([hidden]) {
-  margin-left: 0;
-}
-
-ref-header:not([hidden]) {
+gr-object-ref-header:not([hidden]) {
   display: block;
 }
 
-ref-header gr-enum-value {
+gr-object-ref-header gr-enum-value {
   line-height: 1.0;
   margin-top: 0;
   margin-bottom: 0;
 }
 
-ref-header cite {
+gr-object-ref-header cite {
   font-weight: bolder;
   font-size: 1em;
 }
 
-ref-header time {
+gr-object-ref-header time {
   font-size: 90%;
 }
 
-object-ref-content body-snippet:not([hidden]),
-object-ref body-snippet:not([hidden]) {
+gr-object-ref body-snippet:not([hidden]) {
   display: block;
   font-size: 70%;
   color: var(--small-color);
@@ -1485,11 +1481,13 @@ gr-tooltip-box:not([hidden]) {
   position: absolute;
   display: block;
   margin: 0 !important;
+  border: 1px solid;
+  border-color: var(--menu-border-color);
   max-width: 60em;
   font-size: 90%;
-  color: var(--light-1-color);
-  background-color: var(--light-1-background-color);
-  box-shadow: .3em .3em var(--light-1-shadow-color);
+  background: var(--menu-background-color);
+  color: var(--menu-color);
+  box-shadow: 1px 1px var(--menu-shadow-color);
 }
 
 gr-tooltip-box > object-ref a:not([hidden]) {
@@ -1554,7 +1552,8 @@ gr-star-item a:not([hidden]) {
   display: inline-block;
 }
 
-gr-star-item .icon {
+gr-star-item .icon:not([hidden]) {
+  display: inline-block;
   width: 1.5em;
   height: 1.5em;
   margin: 0;
@@ -1562,6 +1561,8 @@ gr-star-item .icon {
   -webkit-mask-size: 105%;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
+  background: url(/images/star.svg) no-repeat center;
+  background-size: 110%;
 }
 
 gr-star-count:not(:empty):not([hidden]) {

@@ -74,6 +74,31 @@ Test {
       is $stars->[0]->{count}, 13;
       is $stars->[1]->{count}, 1;
     } $current->c;
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('.object-info gr-stars .remove-star-button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {code => sub {
+      return $current->get_json (['star', 'list.json'], {
+        o => $current->o ('o1')->{object_id},
+      }, account => 'a1', group => 'g1')->then (sub {
+        my $result = $_[0];
+        my $stars = $result->{json}->{items}->{$current->o ('o1')->{object_id}};
+        return 0+@$stars == 1;
+      });
+    }, name => 'star removed'});
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.object-info gr-stars gr-star-item',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => '.object-info gr-stars',
+      html => $current->o ('t3'),
+      not => 1,
+      name => 'star removed',
+    });
   });
 } n => 3, name => ['object stars'], browser => 1;
 

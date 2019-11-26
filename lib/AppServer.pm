@@ -13,6 +13,7 @@ use Temma::Processor;
 use Web::URL;
 use Web::Transport::BasicClient;
 use JSON::PS;
+use Dongry::Database;
 
 sub new_from_http_and_config ($$$) {
   my $self = $_[0]->new_from_http ($_[1]);
@@ -25,7 +26,9 @@ sub config ($) {
 } # config
 
 sub db ($) {
-  return $_[0]->{db};
+  return $_[0]->http->server_state->data->{dbs}->{main} ||= do {
+    Dongry::Database->new (%{$_[0]->config->{_db_sources}});
+  };
 } # db
 
 sub rev ($) {
@@ -34,7 +37,7 @@ sub rev ($) {
 
 sub accounts ($$$) {
   my ($app, $path, $params) = @_;
-  my $accounts = $app->{accounts_client} ||= Web::Transport::BasicClient->new_from_url
+  my $accounts = $app->http->server_state->data->{clients}->{accounts} ||= Web::Transport::BasicClient->new_from_url
       (Web::URL->parse_string ($app->config->{accounts}->{url}), {
         #debug => 2,
       });
@@ -61,7 +64,7 @@ sub accounts ($$$) {
 sub apploach ($$$) {
   my ($self, $path, $params) = @_;
   my $config = $self->config;
-  my $client = $self->{apploach_client} ||= do {
+  my $client = $self->http->server_state->data->{clients}->{apploach} ||= do {
     my $url = Web::URL->parse_string ($config->{apploach}->{url});
     Web::Transport::BasicClient->new_from_url ($url);
   };
@@ -226,15 +229,6 @@ sub _send_to_addr ($$%) {
   });
 } # _send_to_addr
 
-sub close ($) {
-  my $self = $_[0];
-  return Promise->all ([
-    (defined $self->{db} ? $self->{db}->disconnect : undef),
-    (defined $self->{accounts_client} ? $self->{accounts_client}->close : undef),
-    (defined $self->{apploach_client} ? $self->{apploach_client}->close : undef),
-  ]);
-} # close
-
 1;
 
 =head1 LICENSE
@@ -251,7 +245,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut
