@@ -106,7 +106,7 @@ test-http:
 	$(PROVE) t/http/*.t
 
 test-browser:
-	TEST_MAX_CONCUR=1 $(PROVE) t/browser/*.t \
+	TEST_MAX_CONCUR=1 $(PROVE) t/browser/*.t || \
 	TEST_MAX_CONCUR=1 $(PROVE) t/browser/*.t
 
 test-http-circleci: test-http
