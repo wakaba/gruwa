@@ -13,6 +13,7 @@ use Temma::Processor;
 use Web::URL;
 use Web::Transport::BasicClient;
 use JSON::PS;
+use Dongry::Database;
 
 sub new_from_http_and_config ($$$) {
   my $self = $_[0]->new_from_http ($_[1]);
@@ -25,7 +26,7 @@ sub config ($) {
 } # config
 
 sub db ($) {
-  return $_[0]->{db};
+  return $_[0]->{db} ||= Dongry::Database->new (%{$_[0]->config->{_db_sources}});
 } # db
 
 sub rev ($) {
@@ -251,7 +252,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

@@ -6,7 +6,6 @@ use Promise;
 use Promised::Flow;
 use JSON::PS;
 use Wanage::HTTP;
-use Dongry::Database;
 
 use AppServer;
 use StaticFiles;
@@ -30,7 +29,7 @@ $Config->{git_sha} = path (__FILE__)->parent->parent->child ('rev')->slurp;
 $Config->{git_sha} =~ s/[\x0D\x0A]//g;
 
 my $dsn = $ENV{DATABASE_DSN} // die "No |DATABASE_DSN|";
-my $DBSources = {sources => {
+$Config->{_db_sources} = {sources => {
   master => {dsn => $dsn, anyevent => 1, writable => 1},
   default => {dsn => $dsn, anyevent => 1},
 }};
@@ -85,8 +84,7 @@ return sub {
         return StaticFiles->html ($app, $path);
       }
 
-      my $db = Dongry::Database->new (%$DBSources);
-      $app->{db} = $db;
+      my $db = $app->db;
       my $acall = accounts $app;
       return promised_cleanup {
         return Promise->all ([
