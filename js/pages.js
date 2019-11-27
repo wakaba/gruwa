@@ -186,6 +186,15 @@ GR.Favicon.redraw = function () {
 }; // GR.Favicon.redraw    
 
 (() => {
+  var m = location.pathname.match (/^\/g\/([0-9]+)\//);
+  if (m) {
+    document.documentElement.setAttribute ('data-group-url', '/g/' + m[1]);
+    var link = document.createElement ('link');
+    link.rel = 'icon';
+    link.href = '/g/' + m[1] + '/icon';
+    document.head.appendChild (link);
+  }
+  
   GR.idle (() => GR.Favicon.loadBaseImage ());
 
   var envName = document.documentElement.getAttribute ('data-env');

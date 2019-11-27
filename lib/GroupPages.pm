@@ -996,7 +996,8 @@ sub pjax ($$$$$) {
              $membership->{owner_status} != 1; # open
 
     return temma $app, 'group.index.html.tm', {
-      group_id => $path->[1],
+      app_env => $app->config->{env_name},
+      app_rev => $app->rev,
     };
   });
 } # pjax
