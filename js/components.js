@@ -185,7 +185,7 @@ License along with this program, see <https://www.gnu.org/licenses/>.
 
 */
 (function () {
-  var exportable = {};
+  var exportable = {$paco: {}};
 
   var $promised = exportable.$promised = {};
 
@@ -325,7 +325,7 @@ License along with this program, see <https://www.gnu.org/licenses/>.
   var upgrader = {};
   
   var upgrade = function (e) {
-    if (e.pcUpgraded) return;
+    if (e.pcUpgraded) return Promise.resolve ();
     e.pcUpgraded = true;
 
     var props = (upgradedElementProps[e.localName] || {})[e.getAttribute ('is')] || {};
@@ -333,8 +333,17 @@ License along with this program, see <https://www.gnu.org/licenses/>.
       e[k] = props[k];
     });
 
-    new Promise ((re) => re ((upgrader[e.localName] || {})[e.getAttribute ('is')].call (e))).catch ((err) => console.log ("Can't upgrade an element", e, err));
+    return new Promise ((re) => re ((upgrader[e.localName] || {})[e.getAttribute ('is')].call (e))).catch ((err) => {
+      console.log ("Can't upgrade an element", e, err);
+      throw err;
+    });
   }; // upgrade
+
+  exportable.$paco.upgrade = (e) => {
+    if (!upgrader[e.localName]) return Promise.resolve ();
+    if (!upgrader[e.localName][e.getAttribute ('is')]) return Promise.resolve ();
+    return upgrade (e);
+  }; // $paco.upgrade
 
   new MutationObserver (function (mutations) {
     mutations.forEach (function (m) {
@@ -1736,6 +1745,195 @@ License along with this program, see <https://www.gnu.org/licenses/>.
     },
   }); // <input-datetime>
   defs.filltype["input-datetime"] = 'idlattribute';
+
+  defineElement ({
+    name: 'sandboxed-viewer',
+    props: {
+      pcInit: function () {
+        this.pcMethods = {
+          pcSetDimension: (args) => {
+            //this.style.width = args.width + 'px';
+            this.style.height = args.height + 'px';
+            //console.log (args);
+          }, // pcSetDimension
+        };
+        this.pcIFrame = document.createElement ('iframe');
+        this.pcChannelOutsideKey = '' + Math.random ();
+        this.pcChannelInsideKey = '' + Math.random ();
+        this.pcIFrame.src = 'data:text/html;charset=utf-8,' + encodeURIComponent ('<!DOCTYPE HTML><script>onmessage=(ev)=>{if (ev.data&&ev.data[0]==="'+this.pcChannelOutsideKey+'"){new Function(ev.data[1])(ev.ports[0],"'+this.pcChannelInsideKey+'")}}</script>');
+        this.pcIFrame.sandbox = 'allow-scripts allow-same-origin allow-forms';
+        this.pcIFrame.onload = () => this.pcCreateChannel ();
+        this.appendChild (this.pcIFrame);
+        this.ready = new Promise ((ok, ng) => {
+          this.pcIsReady = ok;
+        });
+        if (this.hasAttribute ('seamlessheight')) {
+          this.ready.then (() => this.pcSetSeamlessHeight ());
+        }
+      }, // pcInit
+      pcCreateChannel: function () {
+        var mp = new MessageChannel;
+        this.pcIFrame.contentWindow.postMessage ([this.pcChannelOutsideKey, `
+          var port = arguments[0];
+          var insideKey = arguments[1];
+          port.postMessage (insideKey);
+          self.pcMethods = self.pcMethods || {};
+          self.pcMethods.pcPing = (args) => {
+            return args;
+          };
+          self.pcMethods.pcEval = (args) => {
+            if (args.code == null) throw new TypeError ('|code| is not specified');
+            var f = Object.getPrototypeOf (async function(){}).constructor (args.code);
+            return f ();
+          };
+          self.pcRegisterMethod = (name, code) => {
+            self.pcMethods[name] = code;
+          };
+          port.onmessage = (ev) => {
+            var returnPort = ev.ports[0];
+            return Promise.resolve ().then (() => {
+              if (self.pcMethods[ev.data[0]]) {
+                return self.pcMethods[ev.data[0]] (ev.data[1]);
+              } else {
+                throw new TypeError ('Unknown method |'+ev.data[0]+'| is invoked');
+              }
+            }).then ((r) => {
+              returnPort.postMessage ({ok: true, result: r});
+            }, (e) => {
+              if (e instanceof Error) {
+                returnPort.postMessage ({result: {
+                  name: e.name,
+                  message: e.message,
+                }, error: true});
+              } else {
+                port.postMessage ({result: e});
+              }
+            }).then (() => returnPort.close ());
+          }; // onmessage
+          self.pcInvoke = function (method, args) {
+            var returnChannel = new MessageChannel;
+            return new Promise ((ok, ng) => {
+              returnChannel.port1.onmessage = function (ev) {
+                if (ev.data.ok) {
+                  ok (ev.data.result);
+                } else if (ev.data.error) {
+                  var e = new Error (ev.data.result.message);
+                  e.name = ev.data.result.name;
+                  ng (e);
+                } else {
+                  ng (ev.data.result);
+                }
+                returnChannel.port1.close ();
+              };
+              port.postMessage ([method, args], [returnChannel.port2]);
+            });
+          }; // pcInvoke
+        `], '*', [mp.port2]);
+        mp.port1.onmessage = (ev) => {
+          if (ev.data !== this.pcChannelInsideKey) {
+            throw new Error ('Iframe sent back an invalid inside key |'+ev.data+'| (|'+this.pcChannelInsideKey+'| expected)');
+          }
+          mp.port1.onmessage = (ev) => {
+            var returnPort = ev.ports[0];
+            return Promise.resolve ().then (() => {
+              if (this.pcMethods[ev.data[0]]) {
+                return this.pcMethods[ev.data[0]] (ev.data[1]);
+              } else {
+                throw new TypeError ('Unknown method |'+ev.data[0]+'| is invoked');
+              }
+            }).then ((r) => {
+              returnPort.postMessage ({ok: true, result: r});
+            }, (e) => {
+              if (e instanceof Error) {
+                returnPort.postMessage ({result: {
+                  name: e.name,
+                  message: e.message,
+                }, error: true});
+              } else {
+                port.postMessage ({result: e});
+              }
+            }).then (() => returnPort.close ());
+          }; // onmessage
+          this.pcChannelPort = mp.port1;
+          if (this.pcIsReady) {
+            this.pcIsReady ();
+            delete this.pcIsReady;
+          }
+        }; // onmessage
+      }, // pcCreateChannel
+      pc_Invoke: function (method, args) {
+        var returnChannel = new MessageChannel;
+        return new Promise ((ok, ng) => {
+          returnChannel.port1.onmessage = function (ev) {
+            if (ev.data.ok) {
+              ok (ev.data.result);
+            } else if (ev.data.error) {
+              var e = new Error (ev.data.result.message);
+              e.name = ev.data.result.name;
+              ng (e);
+            } else {
+              ng (ev.data.result);
+            }
+            returnChannel.port1.close ();
+          };
+          this.pcChannelPort.postMessage ([method, args], [returnChannel.port2]);
+        });
+      }, // pc_Invoke
+      pcInvoke: function (method, args) {
+        return new Promise ((ok, ng) => {
+          this.pc_Invoke ('pcPing', {}).then (ok);
+          setTimeout (ng, 1000);
+        }).catch (() => {
+          // Reconnect.  Safari can disconnect active MessageChannel
+          // when e.g. a file picker dialog is shown...
+          if (!this.pcIsReady) this.ready = new Promise ((ok, ng) => {
+            this.pcIsReady = ok;
+          });
+          if (this.pcChannelPort) this.pcChannelPort.close ();
+          this.pcCreateChannel ();
+          return this.ready;
+        }).then (() => this.pc_Invoke (method, args));
+      }, // pcInvoke
+      pcRegisterMethod: function (name, code) {
+        this.pcMethods[name] = code;
+      }, // pcRegisterMethod
+      pcSetSeamlessHeight: function () {
+        return Promise.resolve ().then (() => {
+          if (!window.ResizeObserver) {
+            return this.pcInvoke ('pcEval', {code: `
+              self.pcResizeObserver = function (cb) {
+                this.cb = cb;
+              };
+              self.pcResizeObserver.prototype.observe = function (e) {
+                new MutationObserver (() => {
+                  this.cb ();
+                }).observe (e, {childList: true, subtree: true, attributes: true});
+                document.body.addEventListener ('load', () => {
+                  this.cb ();
+                }, true);
+                window.addEventListener ('resize', () => {
+                  this.cb ();
+                }, true);
+                Promise.resolve ().then (this.cb);
+              };
+            `});
+          }
+        }).then (() => {
+          return this.pcInvoke ('pcEval', {code: `
+            var ob = self.ResizeObserver || self.pcResizeObserver;
+            var observer = new ob (() => {
+              var rect = document.documentElement.getBoundingClientRect ();
+              pcInvoke ('pcSetDimension', {
+                height: rect.height,
+                width: rect.width,
+              });
+            });
+            observer.observe (document.body);
+          `});
+        });
+      }, // pcSetSeamless
+    }, // props
+  }); // <sandboxed-viewer>
   
   defineElement ({
     name: 'image-editor',

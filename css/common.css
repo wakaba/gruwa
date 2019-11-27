@@ -496,7 +496,8 @@ edit-container body-control-tab button:not(.active):active {
 }
 
 edit-container body-control iframe,
-edit-container body-control textarea {
+edit-container body-control textarea,
+edit-container body-control gr-html-viewer iframe {
   border: 1px dotted;
   border-color: var(--main-border-color);
   box-sizing: border-box;

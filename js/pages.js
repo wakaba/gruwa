@@ -1503,6 +1503,144 @@ function withFormDisabled (form, code) {
   });
 } // withFormDisabled
 
+defineElement ({
+  name: 'gr-html-viewer',
+  fill: 'idlattribute',
+  props: {
+    pcInit: function () {
+      var e = document.createElement ('sandboxed-viewer');
+      if (this.hasAttribute ('seamlessheight')) e.setAttribute ('seamlessheight', '');
+      this.appendChild (e);
+      this.grViewer = e;
+
+      return $paco.upgrade (e).then (() => e.ready).then (() => this.grInit ());
+    }, // pcInit
+    grInit: function () {
+      var initialValue = this.value;
+      if (initialValue) this.grSetObject (initialValue);
+      Object.defineProperty (this, 'value', {
+        set: function (v) {
+          this.grSetObject (v);
+        },
+      });
+
+      this.grViewer.pcRegisterMethod ('navigate', args => {
+        // XXX
+        console.log (args);
+      });
+      
+      return this.grViewer.pcInvoke ('pcEval', {code: `
+        pcRegisterMethod ('appendHead', (args) => {
+          var e = document.createElement ('div');
+          e.innerHTML = args.value;
+          while (e.firstChild) {
+            document.head.appendChild (e.firstChild);
+          }
+          if (e.hasAttribute ('data-group-url')) {
+            document.documentElement.setAttribute ('data-group-url', e.getAttribute ('data-group-url'));
+          }
+        });
+        pcRegisterMethod ('setBody', (args) => {
+          var fragment = document.createElement ('div');
+          fragment.innerHTML = args.body;
+          
+          var imported = args.imported_sites || [];
+          if (imported.length) {
+            Array.prototype.forEach.call (fragment.querySelectorAll ('a[href], link[href], img[src], iframe[src]'), function (e) {
+              ["href", "src"].forEach (function (a) {
+                var value = e[a]; // canonicalized URL
+                if (!value) return;
+                var matchedValue = value.replace (/^https?:/, '');
+                for (var i = 0; i < imported.length; i++) {
+                  var importedPrefix = imported[i].replace (/^https?:/, '');
+                  if (matchedValue.substring (0, importedPrefix.length) === importedPrefix) {
+                    e.setAttribute (a, document.documentElement.getAttribute ('data-group-url') + '/imported/' + encodeURIComponent (value) + '/go');
+                    return;
+                  }
+                }
+              });
+            });
+          } // imported.length
+          
+          document.gruwaHatenaStarMap = {};
+          fragment.querySelectorAll ('hatena-html[starmap]').forEach ((e) => {
+            var values = e.getAttribute ('starmap').split (/\s+/);
+            while (values.length) {
+              var id = values.shift ();
+              var objectId = values.shift ();
+              document.gruwaHatenaStarMap[id] = objectId;
+            }
+          });
+          /* XXX
+    $$ (fragment, 'hatena-html .section > h3.title > a[name], hatena-html .section > h3[id], hatena-html section > h1[data-hatena-timestamp]').forEach (function (a) {
+      if (a.localName === 'a') { // Hatena group's HTML
+        var h = a.parentNode;
+        upgradeHatenaTitle (h, a.name);
+      } else { // Hatena blog's HTML
+        upgradeHatenaTitle (a, a.id);
+      }
+    });
+          */
+
+          document.body.textContent = '';
+          document.body.setAttribute ('data-source-type', args.body_source_type || 0);
+          while (fragment.firstChild) {
+            document.body.appendChild (fragment.firstChild);
+          }
+        });
+
+        window.addEventListener ('click', (ev) => {
+          var n = ev.target;
+          while (n && !(n.localName === 'a' || n.localName === 'area')) {
+            n = n.parentElement;
+          }
+          if (n &&
+              (n.protocol === 'https:' || n.protocol === 'http:') &&
+              (n.target === '' || n.target === '_blank') &&
+              !n.hasAttribute ('is')) {
+            pcInvoke ('navigate', {url: n.href});
+            ev.preventDefault ();
+          }
+        }); // click
+                                                
+      `}).then (() => {
+        var div = document.createElement ('div');
+        div.setAttribute ('data-group-url', document.documentElement.getAttribute ('data-group-url'));
+
+        var base = document.createElement ('base');
+        base.href = location.href;
+        div.appendChild (base);
+
+        document.querySelectorAll ('link.body-css').forEach (e => {
+          var link = document.createElement ('link');
+          link.rel = 'stylesheet';
+          link.href = e.href;
+          div.appendChild (link);
+        });
+
+        return this.grViewer.pcInvoke ('appendHead', {value: div.innerHTML});
+      });
+    }, // grInit
+    grSetObject: function (data) {
+      return GR.group.importedSites ().then (sites => {
+        return this.grViewer.pcInvoke ('setBody', {
+          body: data.body,
+          body_source_type: data.body_source_type,
+          imported_sites: sites,
+        });
+      });
+
+      /* XXX
+        } else if (ev.data.type === 'getObjectWithData') {
+        GR.object.data (ev.data.value, {withData: true}).then (function (object) {
+          ev.ports[0].postMessage (object);
+        });
+    */
+
+    }, // grSetObject
+  },
+}); // <gr-html-viewer>
+
 function createBodyHTML (value, opts) {
   var doc = (new DOMParser).parseFromString ("", "text/html");
 
@@ -2054,7 +2192,7 @@ function upgradeBodyControl (e, object, opts) {
       $$c (f, 'menu').forEach (function (g) {
         h2 -= g.offsetHeight;
       });
-      $$c (f, 'iframe, textarea').forEach (function (g) {
+      $$c (f, 'iframe, textarea, gr-html-viewer').forEach (function (g) {
         g.style.height = h2 + 'px';
       });
     });
@@ -2193,29 +2331,8 @@ function upgradeBodyControl (e, object, opts) {
   }; // saver.textarea
 
   loader.preview = function () {
-    var field = e.querySelector ('body-control-tab[name=preview] iframe');
-    field.setAttribute ('sandbox', 'allow-scripts');
-    field.setAttribute ('srcdoc', createBodyHTML ('', {}));
-    var mc = new MessageChannel;
-    field.onload = function () {
-      this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
-      field.onload = null;
-    };
-    mc.port2.postMessage ({
-      type: "setCurrentValue",
-      valueSourceType: data.body_source_type,
-      value: data.body,
-      importedSites: opts.importedSites,
-    });
-    mc.port2.onmessage = function (ev) {
-      if (ev.data.type === 'focus') {
-        field.dispatchEvent (new Event ("focus", {bubbles: true}));
-      } else if (ev.data.type === 'getObjectWithData') {
-        GR.object.data (ev.data.value, {withData: true}).then (function (object) {
-          ev.ports[0].postMessage (object);
-        });
-      }
-    }; // onmessage
+    var field = e.querySelector ('body-control-tab[name=preview] gr-html-viewer');
+    field.value = data;
   }; // loader.preview
   saver.preview = function () {
     //
@@ -5511,7 +5628,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 */

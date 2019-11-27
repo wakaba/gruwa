@@ -406,6 +406,14 @@ gr-plaintext-body:not([hidden]) {
   white-space: pre-wrap;
 }
 
+gr-html-viewer:not([hidden]) {
+  display: block;
+}
+
+gr-html-viewer > sandboxed-viewer:not([hidden]) {
+  display: contents;
+}
+
 form {
   margin: 0 .5em .5em .5em;
   border: 1px dotted;
