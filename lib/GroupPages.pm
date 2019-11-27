@@ -2285,8 +2285,8 @@ sub group_object ($$$$) {
 sub group_object_get ($$$$$) {
   my ($class, $app, $path, $db, $acall) = @_;
   # /g/{group_id}/o/get.json
-  
-  return $acall->(['info'], {
+
+  my $check_group = $app->accounts (['info'], {
     sk_context => $app->config->{accounts}->{context},
     sk => $app->http->request_cookies->{sk},
     terms_version => $app->config->{accounts}->{terms_version},
@@ -2297,7 +2297,7 @@ sub group_object_get ($$$$$) {
     # XXX
     admin_status => 1,
     owner_status => 1,
-  })->(sub {
+  })->then (sub {
     my $account_data = $_[0];
     my $membership = $account_data->{group_membership};
     return $app->throw_error (403, reason_phrase => 'Not a group member')
@@ -2306,7 +2306,8 @@ sub group_object_get ($$$$$) {
                 $membership->{member_type} == 2) or # owner
            $membership->{user_status} != 1 or # open
            $membership->{owner_status} != 1; # open
-
+  });
+  
     my $next_ref = {};
     my $rev_id;
     return Promise->resolve->then (sub {
@@ -2448,6 +2449,7 @@ sub group_object_get ($$$$$) {
         my $sites = [map {
           Dongry::Type->serialize ('text', $_->{source_site})
         } @{$_[0]->all}];
+        return $check_group->then (sub {
         return json $app, {
           imported_sites => $sites,
           objects => {map {
@@ -2477,8 +2479,8 @@ sub group_object_get ($$$$$) {
           } @$objects},
           next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
         };
+        });
       });
-    });
   });
 } # group_object_get
 
