@@ -69,6 +69,21 @@ action-status progress:not([hidden]) {
   margin-bottom: .5em;
 }
 
+sandboxed-viewer:not([hidden]) {
+  display: inline-block;
+}
+
+sandboxed-viewer > iframe:not([hidden]) {
+  display: block;
+}
+
+sandboxed-viewer > iframe {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: none;
+}
+
 image-editor:not([hidden]) {
   display: inline-block;
   position: relative;

@@ -100,6 +100,67 @@ Test {
   });
 } n => 6, name => ['object_revision_id'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [a2 => account => {}],
+    [a3 => account => {}],
+    [a4 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [o1 => object => {
+      group => 'g1',
+      account => 'a1',
+      body => $current->generate_text (t1 => {}),
+      body_source_type => 4, # plain text
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article .edit-button',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article .edit-button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'edit-container body-control a[data-name=preview]',
+      scroll => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('edit-container body-control a[data-name=preview]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'edit-container body-control gr-html-viewer iframe',
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('edit-container body-control gr-html-viewer iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'body',
+      text => $current->o ('t1'),
+      name => 'plaintext body text',
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['preview html viewer'], browser => 1;
+
 RUN;
 
 =head1 LICENSE
@@ -116,7 +177,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut
