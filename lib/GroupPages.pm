@@ -1030,7 +1030,58 @@ sub main ($$$$$) {
       };
     });
   }
-  
+
+  if (@$path == 4 and $path->[2] eq 'o' and $path->[3] eq 'get.json') {
+    # /g/{group_id}/o/get.json
+  # /g/{group_id}/...
+  return $acall->(['info'], {
+    sk_context => $app->config->{accounts}->{context},
+    sk => $app->http->request_cookies->{sk},
+    terms_version => $app->config->{accounts}->{terms_version},
+    
+    context_key => $app->config->{accounts}->{context} . ':group',
+    group_id => $path->[1],
+    # XXX
+    admin_status => 1,
+    owner_status => 1,
+    with_group_data => ['title', 'theme', 'default_wiki_index_id',
+                        'object_id', 'icon_object_id', 'guide_object_id'],
+    with_group_member_data => ['name', 'default_index_id',
+                               'icon_object_id', 'guide_object_id'],
+  })->(sub {
+    my $account_data = $_[0];
+    unless (defined $account_data->{account_id}) {
+      if ($app->http->request_method eq 'GET' and
+          not $path->[-1] =~ /\.json\z/) {
+        my $this_url = Web::URL->parse_string ($app->http->url->stringify);
+        my $url = Web::URL->parse_string (q</account/login>, $this_url);
+        $url->set_query_params ({next => $this_url->stringify});
+        return $app->send_redirect ($url->stringify);
+      } else {
+        return $app->throw_error (403, reason_phrase => 'No user account');
+      }
+    }
+
+    my $group = $account_data->{group};
+    return $app->throw_error (404, reason_phrase => 'Group not found')
+        unless defined $group;
+
+    my $membership = $account_data->{group_membership};
+    return $app->throw_error (403, reason_phrase => 'Not a group member')
+        if not defined $membership or
+           not ($membership->{member_type} == 1 or # member
+                $membership->{member_type} == 2) or # owner
+           $membership->{user_status} != 1 or # open
+           $membership->{owner_status} != 1; # open
+
+    return $class->group_object_get ($app, $path, {
+      account => $account_data,
+      db => $db, group => $group, group_member => $membership,
+      acall => $acall,
+    });
+  });
+  }
+
   # /g/{group_id}/...
   return $acall->(['info'], {
     sk_context => $app->config->{accounts}->{context},
@@ -2172,181 +2223,7 @@ sub group_object ($$$$) {
     });
   }
 
-  if (@$path >= 4 and $path->[3] eq 'get.json') {
-    # /g/{group_id}/o/get.json
-    my $next_ref = {};
-    my $rev_id;
-    return Promise->resolve->then (sub {
-      my $index_id;
-      my $table;
-      my %cond;
-      my $ref = $app->bare_param ('ref');
-      my $timestamp;
-      my $offset;
-      my $limit = $app->bare_param ('limit') || 20;
-      if (defined $ref) {
-        ($timestamp, $offset) = split /,/, $ref, 2;
-        $next_ref->{$timestamp} = $offset || 0;
-        return $app->throw_error (400, reason_phrase => 'Bad offset')
-            if $offset > 1000;
-        $cond{timestamp} = {'<=', $timestamp} if defined $timestamp;
-      }
-      return $app->throw_error (400, reason_phrase => 'Bad limit')
-          if $limit > 100;
-      my $thread_id = $app->bare_param ('thread_id');
-      if (defined $thread_id) {
-        return {thread_id => $thread_id,
-                object_id => {'!=' => $thread_id},
-                (defined $cond{timestamp} ? (timestamp => $cond{timestamp}) : ()),
-                order => ['timestamp', 'desc', 'created', 'desc'],
-                offset => $offset,
-                limit => $limit};
-      } else {
-        my $parent_object_id = $app->bare_param ('parent_object_id');
-        if (defined $parent_object_id) {
-          return {parent_object_id => $parent_object_id,
-                  object_id => {'!=' => $parent_object_id},
-                  (defined $cond{timestamp} ? (timestamp => $cond{timestamp}) : ()),
-                  order => ['timestamp', 'desc', 'created', 'desc'],
-                  offset => $offset,
-                  limit => $limit};
-        } else {
-          $index_id = $app->bare_param ('index_id');
-          if (defined $index_id) {
-            my $pwn = $app->text_param ('parent_wiki_name');
-            if (defined $pwn) {
-              $table = 'wiki_trackback_object';
-              $cond{index_id} = $index_id;
-              $cond{wiki_name_key} = sha1_hex +Dongry::Type->serialize ('text', $pwn);
-            } else {
-              $table = 'index_object';
-              $cond{index_id} = $index_id;
-              my $wiki_name = $app->text_param ('wiki_name');
-              $cond{wiki_name_key} = sha1_hex +Dongry::Type->serialize ('text', $wiki_name)
-                  if defined $wiki_name;
-            }
-          }
-        }
-      }
-      if (defined $table) {
-        return $db->select ($table, {
-          group_id => Dongry::Type->serialize ('text', $path->[1]),
-          %cond,
-        },
-          fields => ['object_id', 'timestamp'],
-          order => ['timestamp', 'desc', 'created', 'desc'],
-          offset => $offset, limit => $limit,
-        )->then (sub {
-          return {object_id => {-in => [map {
-            $next_ref->{$_->{timestamp}}++;
-            $next_ref->{_} = $_->{timestamp};
-            $_->{object_id};
-          } @{$_[0]->all}]}};
-        });
-      } else {
-        my $list = $app->bare_param_list ('object_id');
-        $rev_id = $app->bare_param ('object_revision_id') if @$list == 1;
-        return {object_id => {-in => $list},
-                all => 1};
-      }
-    })->then (sub {
-      my $search = $_[0];
-      my $order = delete $search->{order}; # or undef
-      my $offset = delete $search->{offset}; # or undef
-      my $limit = delete $search->{limit}; # or undef
-      my $all = delete $search->{all};
-      return [] unless keys %$search;
-      return [] if defined $search->{object_id} and
-                   defined $search->{object_id}->{-in} and
-                   not @{$search->{object_id}->{-in}};
-      unless ($all) {
-        $search->{owner_status} = 1; # open
-        $search->{user_status} = 1; # open
-      }
-      return $db->select ('object', {
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-        %$search,
-      }, fields => ['object_id', 'title', 'timestamp', 'created', 'updated',
-                    ($all ? ('user_status', 'owner_status') : ()),
-                    ($app->bare_param ('with_data') ? 'data' : ()),
-                    ($app->bare_param ('with_snippet') ? $db->bare_sql_fragment (q{ substring(`search_data`, 1, 600) as `snippet` }) : ())],
-        order => $order, # or undef
-        offset => $offset, # or undef
-        limit => $limit, # or undef
-      )->then (sub {
-        my $objects = $_[0]->all;
-        if (defined $rev_id and @$objects == 1) {
-          return $db->select ('object_revision', {
-            group_id => Dongry::Type->serialize ('text', $path->[1]),
-            object_id => $objects->[0]->{object_id},
-            object_revision_id => $rev_id,
-          }, fields => ['data', 'revision_data', 'author_account_id',
-                        'created', 'user_status', 'owner_status'])->then (sub {
-            my $r = $_[0]->first;
-            return $app->throw_error (404, reason_phrase => 'Revision not found')
-                unless defined $r;
-            $objects->[0]->{updated} = $r->{created};
-            $objects->[0]->{revision_author_account_id} = ''.$r->{author_account_id};
-            if ($r->{user_status} == 1 and $r->{owner_status} == 1) { # open
-              $objects->[0]->{data} = $r->{data};
-              $objects->[0]->{revision_data}
-                  = Dongry::Type->parse ('json', $r->{revision_data});
-            } else {
-              delete $objects->[0]->{data};
-              delete $objects->[0]->{title};
-            }
-            return $objects;
-          });
-        } else {
-          if (defined $order) {
-            for (@$objects) {
-              $next_ref->{$_->{timestamp}}++;
-              $next_ref->{_} = $_->{timestamp};
-            }
-          }
-          return $objects;
-        }
-      });
-    })->then (sub {
-      my $objects = $_[0];
-      return $db->select ('imported', {
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-      }, fields => ['source_site'], distinct => 1)->then (sub {
-        my $sites = [map {
-          Dongry::Type->serialize ('text', $_->{source_site})
-        } @{$_[0]->all}];
-        return json $app, {
-          imported_sites => $sites,
-          objects => {map {
-            my $data;
-            my $title;
-            if (defined $_->{data}) {
-              $data = Dongry::Type->parse ('json', $_->{data});
-              $title = $data->{title} // '';
-            } else {
-              $title = Dongry::Type->parse ('text', $_->{title});
-            }
-            ($_->{object_id} => {
-              group_id => $path->[1],
-              object_id => ''.$_->{object_id},
-              title => $title,
-              created => $_->{created},
-              updated => $_->{updated},
-              timestamp => $_->{timestamp},
-              (defined $_->{user_status} ? (user_status => $_->{user_status},
-                                            owner_status => $_->{owner_status}) : ()),
-              (defined $_->{data} ? (data => $data) : ()),
-              (defined $_->{snippet} ? (snippet => Dongry::Type->parse ('text', $_->{snippet})) : ()),
-              (defined $_->{revision_data} ?
-                   (revision_data => $_->{revision_data},
-                    revision_author_account_id => $_->{revision_author_account_id}) : ()),
-            });
-          } @$objects},
-          next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
-        };
-      });
-    });
-  } elsif (@$path >= 4 and $path->[3] eq 'search.json') {
+  if (@$path == 4 and $path->[3] eq 'search.json') {
     # /g/{group_id}/o/search.json
     my $q = $app->text_param ('q');
     my @have;
@@ -2522,6 +2399,184 @@ sub group_object ($$$$) {
 
   return $app->throw_error (404);
 } # group_object
+
+sub group_object_get ($$$$) {
+  my ($class, $app, $path, $opts) = @_;
+  my $db = $opts->{db};
+
+    my $next_ref = {};
+    my $rev_id;
+    return Promise->resolve->then (sub {
+      my $index_id;
+      my $table;
+      my %cond;
+      my $ref = $app->bare_param ('ref');
+      my $timestamp;
+      my $offset;
+      my $limit = $app->bare_param ('limit') || 20;
+      if (defined $ref) {
+        ($timestamp, $offset) = split /,/, $ref, 2;
+        $next_ref->{$timestamp} = $offset || 0;
+        return $app->throw_error (400, reason_phrase => 'Bad offset')
+            if $offset > 1000;
+        $cond{timestamp} = {'<=', $timestamp} if defined $timestamp;
+      }
+      return $app->throw_error (400, reason_phrase => 'Bad limit')
+          if $limit > 100;
+      my $thread_id = $app->bare_param ('thread_id');
+      if (defined $thread_id) {
+        return {thread_id => $thread_id,
+                object_id => {'!=' => $thread_id},
+                (defined $cond{timestamp} ? (timestamp => $cond{timestamp}) : ()),
+                order => ['timestamp', 'desc', 'created', 'desc'],
+                offset => $offset,
+                limit => $limit};
+      } else {
+        my $parent_object_id = $app->bare_param ('parent_object_id');
+        if (defined $parent_object_id) {
+          return {parent_object_id => $parent_object_id,
+                  object_id => {'!=' => $parent_object_id},
+                  (defined $cond{timestamp} ? (timestamp => $cond{timestamp}) : ()),
+                  order => ['timestamp', 'desc', 'created', 'desc'],
+                  offset => $offset,
+                  limit => $limit};
+        } else {
+          $index_id = $app->bare_param ('index_id');
+          if (defined $index_id) {
+            my $pwn = $app->text_param ('parent_wiki_name');
+            if (defined $pwn) {
+              $table = 'wiki_trackback_object';
+              $cond{index_id} = $index_id;
+              $cond{wiki_name_key} = sha1_hex +Dongry::Type->serialize ('text', $pwn);
+            } else {
+              $table = 'index_object';
+              $cond{index_id} = $index_id;
+              my $wiki_name = $app->text_param ('wiki_name');
+              $cond{wiki_name_key} = sha1_hex +Dongry::Type->serialize ('text', $wiki_name)
+                  if defined $wiki_name;
+            }
+          }
+        }
+      }
+      if (defined $table) {
+        return $db->select ($table, {
+          group_id => Dongry::Type->serialize ('text', $path->[1]),
+          %cond,
+        },
+          fields => ['object_id', 'timestamp'],
+          order => ['timestamp', 'desc', 'created', 'desc'],
+          offset => $offset, limit => $limit,
+        )->then (sub {
+          return {object_id => {-in => [map {
+            $next_ref->{$_->{timestamp}}++;
+            $next_ref->{_} = $_->{timestamp};
+            $_->{object_id};
+          } @{$_[0]->all}]}};
+        });
+      } else {
+        my $list = $app->bare_param_list ('object_id');
+        $rev_id = $app->bare_param ('object_revision_id') if @$list == 1;
+        return {object_id => {-in => $list},
+                all => 1};
+      }
+    })->then (sub {
+      my $search = $_[0];
+      my $order = delete $search->{order}; # or undef
+      my $offset = delete $search->{offset}; # or undef
+      my $limit = delete $search->{limit}; # or undef
+      my $all = delete $search->{all};
+      return [] unless keys %$search;
+      return [] if defined $search->{object_id} and
+                   defined $search->{object_id}->{-in} and
+                   not @{$search->{object_id}->{-in}};
+      unless ($all) {
+        $search->{owner_status} = 1; # open
+        $search->{user_status} = 1; # open
+      }
+      return $db->select ('object', {
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
+        %$search,
+      }, fields => ['object_id', 'title', 'timestamp', 'created', 'updated',
+                    ($all ? ('user_status', 'owner_status') : ()),
+                    ($app->bare_param ('with_data') ? 'data' : ()),
+                    ($app->bare_param ('with_snippet') ? $db->bare_sql_fragment (q{ substring(`search_data`, 1, 600) as `snippet` }) : ())],
+        order => $order, # or undef
+        offset => $offset, # or undef
+        limit => $limit, # or undef
+      )->then (sub {
+        my $objects = $_[0]->all;
+        if (defined $rev_id and @$objects == 1) {
+          return $db->select ('object_revision', {
+            group_id => Dongry::Type->serialize ('text', $path->[1]),
+            object_id => $objects->[0]->{object_id},
+            object_revision_id => $rev_id,
+          }, fields => ['data', 'revision_data', 'author_account_id',
+                        'created', 'user_status', 'owner_status'])->then (sub {
+            my $r = $_[0]->first;
+            return $app->throw_error (404, reason_phrase => 'Revision not found')
+                unless defined $r;
+            $objects->[0]->{updated} = $r->{created};
+            $objects->[0]->{revision_author_account_id} = ''.$r->{author_account_id};
+            if ($r->{user_status} == 1 and $r->{owner_status} == 1) { # open
+              $objects->[0]->{data} = $r->{data};
+              $objects->[0]->{revision_data}
+                  = Dongry::Type->parse ('json', $r->{revision_data});
+            } else {
+              delete $objects->[0]->{data};
+              delete $objects->[0]->{title};
+            }
+            return $objects;
+          });
+        } else {
+          if (defined $order) {
+            for (@$objects) {
+              $next_ref->{$_->{timestamp}}++;
+              $next_ref->{_} = $_->{timestamp};
+            }
+          }
+          return $objects;
+        }
+      });
+    })->then (sub {
+      my $objects = $_[0];
+      return $db->select ('imported', {
+        group_id => Dongry::Type->serialize ('text', $path->[1]),
+      }, fields => ['source_site'], distinct => 1)->then (sub {
+        my $sites = [map {
+          Dongry::Type->serialize ('text', $_->{source_site})
+        } @{$_[0]->all}];
+        return json $app, {
+          imported_sites => $sites,
+          objects => {map {
+            my $data;
+            my $title;
+            if (defined $_->{data}) {
+              $data = Dongry::Type->parse ('json', $_->{data});
+              $title = $data->{title} // '';
+            } else {
+              $title = Dongry::Type->parse ('text', $_->{title});
+            }
+            ($_->{object_id} => {
+              group_id => $path->[1],
+              object_id => ''.$_->{object_id},
+              title => $title,
+              created => $_->{created},
+              updated => $_->{updated},
+              timestamp => $_->{timestamp},
+              (defined $_->{user_status} ? (user_status => $_->{user_status},
+                                            owner_status => $_->{owner_status}) : ()),
+              (defined $_->{data} ? (data => $data) : ()),
+              (defined $_->{snippet} ? (snippet => Dongry::Type->parse ('text', $_->{snippet})) : ()),
+              (defined $_->{revision_data} ?
+                   (revision_data => $_->{revision_data},
+                    revision_author_account_id => $_->{revision_author_account_id}) : ()),
+            });
+          } @$objects},
+          next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
+        };
+      });
+    });
+} # group_object_get
 
 sub invitation ($$$$) {
   my ($self, $app, $path, $acall) = @_;
