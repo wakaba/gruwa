@@ -2599,10 +2599,10 @@ function upgradeList (el) {
       as.stageStart ("load");
       return Promise.all ([
         gFetch (url, {}),
-        GR.group.importedSites (),
+        url.match (/o\/get.json/) ? GR.group.importedSites () : null,
       ]).then (([json, imported]) => {
         as.stageEnd ("load");
-        json.imported_sites = imported;
+        if (imported) json.imported_sites = imported;
         return json;
       });
     } else {
