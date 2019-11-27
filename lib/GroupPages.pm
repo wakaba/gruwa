@@ -2300,6 +2300,7 @@ sub group_object_get ($$$$$) {
   my ($class, $app, $path, $db, $acall) = @_;
   # /g/{group_id}/o/get.json
 
+  my $aborted = 0;
   my $check_group = $app->accounts (['info'], {
     sk_context => $app->config->{accounts}->{context},
     sk => $app->http->request_cookies->{sk},
@@ -2314,12 +2315,14 @@ sub group_object_get ($$$$$) {
   })->then (sub {
     my $account_data = $_[0];
     my $membership = $account_data->{group_membership};
-    return $app->throw_error (403, reason_phrase => 'Not a group member')
-        if not defined $membership or
-           not ($membership->{member_type} == 1 or # member
-                $membership->{member_type} == 2) or # owner
-           $membership->{user_status} != 1 or # open
-           $membership->{owner_status} != 1; # open
+    if (not defined $membership or
+        not ($membership->{member_type} == 1 or # member
+             $membership->{member_type} == 2) or # owner
+        $membership->{user_status} != 1 or # open
+        $membership->{owner_status} != 1) { # open
+      $aborted = 1;
+      return $app->throw_error (403, reason_phrase => 'Not a group member')
+    }
   });
   
     my $next_ref = {};
@@ -2399,6 +2402,7 @@ sub group_object_get ($$$$$) {
       }
     })->then (sub {
       my $search = $_[0];
+      return $check_group if $aborted;
       my $order = delete $search->{order}; # or undef
       my $offset = delete $search->{offset}; # or undef
       my $limit = delete $search->{limit}; # or undef
@@ -2422,6 +2426,7 @@ sub group_object_get ($$$$$) {
         offset => $offset, # or undef
         limit => $limit, # or undef
       )->then (sub {
+        return $check_group if $aborted;
         my $objects = $_[0]->all;
         if (defined $rev_id and @$objects == 1) {
           return $db->select ('object_revision', {
