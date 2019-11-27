@@ -30,10 +30,9 @@ Test {
     my $result = $_[0];
     test {
       is 0+keys %{$result->{json}->{objects}}, 0;
-      is 0+@{$result->{json}->{imported_sites}}, 0;
     } $current->c;
   });
-} n => 3, name => 'no params';
+} n => 2, name => 'no params';
 
 Test {
   my $current = shift;
@@ -867,40 +866,6 @@ Test {
 
 Test {
   my $current = shift;
-  my $site1 = 'https://' . rand . '.test/foo1/';
-  my $site2 = 'https://' . rand . '.test/foo2/';
-  my $page1 = $site1 . rand;
-  my $page2 = $site2 . rand;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->create_group (g1 => {members => ['a1']});
-  })->then (sub {
-    return $current->post_json (['o', 'create.json'], {
-      source_page => $page1,
-      source_site => $site1,
-    }, account => 'a1', group => 'g1');
-  })->then (sub {
-    $current->set_o (o1 => $_[0]->{json});
-    return $current->post_json (['o', 'create.json'], {
-      source_page => $page2,
-      source_site => $site2,
-    }, account => 'a1', group => 'g1');
-  })->then (sub {
-    $current->set_o (o2 => $_[0]->{json});
-    return $current->get_json (['o', 'get.json'], {
-    }, group => 'g1', account => 'a1');
-  })->then (sub {
-    my $result = $_[0];
-    test {
-      my $sites = $result->{json}->{imported_sites};
-      is 0+@$sites, 2;
-      ok grep { $_ eq $site1 } @$sites;
-      ok grep { $_ eq $site2 } @$sites;
-    } $current->c;
-  });
-} n => 3, name => 'imported source sites';
-
-Test {
-  my $current = shift;
   return $current->create_account (a1 => {})->then (sub {
     return $current->create_group (g1 => {members => ['a1']});
   })->then (sub {
@@ -994,7 +959,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

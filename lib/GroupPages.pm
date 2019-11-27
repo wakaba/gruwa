@@ -1145,6 +1145,20 @@ sub group ($$$$) {
     });
   }
 
+  if (@$path == 4 and $path->[2] eq 'imported' and $path->[3] eq 'sites.json') {
+    # /g/{group_id}/imported/sites.json
+    return $db->select ('imported', {
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+    }, fields => ['source_site'], distinct => 1)->then (sub {
+      my $sites = [map {
+        Dongry::Type->serialize ('text', $_->{source_site});
+      } @{$_[0]->all}];
+      return json $app, {
+        sites => $sites,
+      };
+    });
+  }
+
   if (@$path == 5 and $path->[2] eq 'imported' and
       ($path->[4] eq 'go' or $path->[4] eq 'go.json')) {
     # /g/{group_id}/imported/{page}/go
@@ -2285,8 +2299,9 @@ sub group_object ($$$$) {
 sub group_object_get ($$$$$) {
   my ($class, $app, $path, $db, $acall) = @_;
   # /g/{group_id}/o/get.json
-  
-  return $acall->(['info'], {
+
+  my $aborted = 0;
+  my $check_group = $app->accounts (['info'], {
     sk_context => $app->config->{accounts}->{context},
     sk => $app->http->request_cookies->{sk},
     terms_version => $app->config->{accounts}->{terms_version},
@@ -2297,16 +2312,19 @@ sub group_object_get ($$$$$) {
     # XXX
     admin_status => 1,
     owner_status => 1,
-  })->(sub {
+  })->then (sub {
     my $account_data = $_[0];
     my $membership = $account_data->{group_membership};
-    return $app->throw_error (403, reason_phrase => 'Not a group member')
-        if not defined $membership or
-           not ($membership->{member_type} == 1 or # member
-                $membership->{member_type} == 2) or # owner
-           $membership->{user_status} != 1 or # open
-           $membership->{owner_status} != 1; # open
-
+    if (not defined $membership or
+        not ($membership->{member_type} == 1 or # member
+             $membership->{member_type} == 2) or # owner
+        $membership->{user_status} != 1 or # open
+        $membership->{owner_status} != 1) { # open
+      $aborted = 1;
+      return $app->throw_error (403, reason_phrase => 'Not a group member')
+    }
+  });
+  
     my $next_ref = {};
     my $rev_id;
     return Promise->resolve->then (sub {
@@ -2384,6 +2402,7 @@ sub group_object_get ($$$$$) {
       }
     })->then (sub {
       my $search = $_[0];
+      return $check_group if $aborted;
       my $order = delete $search->{order}; # or undef
       my $offset = delete $search->{offset}; # or undef
       my $limit = delete $search->{limit}; # or undef
@@ -2407,6 +2426,7 @@ sub group_object_get ($$$$$) {
         offset => $offset, # or undef
         limit => $limit, # or undef
       )->then (sub {
+        return $check_group if $aborted;
         my $objects = $_[0]->all;
         if (defined $rev_id and @$objects == 1) {
           return $db->select ('object_revision', {
@@ -2442,14 +2462,8 @@ sub group_object_get ($$$$$) {
       });
     })->then (sub {
       my $objects = $_[0];
-      return $db->select ('imported', {
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-      }, fields => ['source_site'], distinct => 1)->then (sub {
-        my $sites = [map {
-          Dongry::Type->serialize ('text', $_->{source_site})
-        } @{$_[0]->all}];
+      return $check_group->then (sub {
         return json $app, {
-          imported_sites => $sites,
           objects => {map {
             my $data;
             my $title;
@@ -2477,7 +2491,6 @@ sub group_object_get ($$$$$) {
           } @$objects},
           next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
         };
-      });
     });
   });
 } # group_object_get

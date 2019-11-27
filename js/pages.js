@@ -581,6 +581,12 @@ GR.group.resolveImportedURL = function (u) {
   });
 }; // GR.group.resolveImportedURL
 
+GR.group.importedSites = function () {
+  // XXX stale after ...
+  if (GR._state.importedSites) return Promise.resolve (GR._state.importedSites);
+  return gFetch ('imported/sites.json', {}).then (json => GR._state.importedSites = json.sites);
+}; // GR.group.importedSites
+
 GR.index = {};
 
 GR.index.list = () => {
@@ -2591,8 +2597,12 @@ function upgradeList (el) {
         url += (/\?/.test (url) ? '&' : '?') + 'ref=' + encodeURIComponent (nextRef);
       }
       as.stageStart ("load");
-      return gFetch (url, {}).then (function (json) {
+      return Promise.all ([
+        gFetch (url, {}),
+        url.match (/o\/get.json/) ? GR.group.importedSites () : null,
+      ]).then (([json, imported]) => {
         as.stageEnd ("load");
+        if (imported) json.imported_sites = imported;
         return json;
       });
     } else {
