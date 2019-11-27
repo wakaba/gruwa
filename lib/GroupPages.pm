@@ -1145,6 +1145,20 @@ sub group ($$$$) {
     });
   }
 
+  if (@$path == 4 and $path->[2] eq 'imported' and $path->[3] eq 'sites.json') {
+    # /g/{group_id}/imported/sites.json
+    return $db->select ('imported', {
+      group_id => Dongry::Type->serialize ('text', $path->[1]),
+    }, fields => ['source_site'], distinct => 1)->then (sub {
+      my $sites = [map {
+        Dongry::Type->serialize ('text', $_->{source_site});
+      } @{$_[0]->all}];
+      return json $app, {
+        sites => $sites,
+      };
+    });
+  }
+
   if (@$path == 5 and $path->[2] eq 'imported' and
       ($path->[4] eq 'go' or $path->[4] eq 'go.json')) {
     # /g/{group_id}/imported/{page}/go
@@ -2443,15 +2457,8 @@ sub group_object_get ($$$$$) {
       });
     })->then (sub {
       my $objects = $_[0];
-      return $db->select ('imported', {
-        group_id => Dongry::Type->serialize ('text', $path->[1]),
-      }, fields => ['source_site'], distinct => 1)->then (sub {
-        my $sites = [map {
-          Dongry::Type->serialize ('text', $_->{source_site})
-        } @{$_[0]->all}];
-        return $check_group->then (sub {
+      return $check_group->then (sub {
         return json $app, {
-          imported_sites => $sites,
           objects => {map {
             my $data;
             my $title;
@@ -2479,8 +2486,7 @@ sub group_object_get ($$$$$) {
           } @$objects},
           next_ref => (defined $next_ref->{_} ? $next_ref->{_} . ',' . $next_ref->{$next_ref->{_}} : undef),
         };
-        });
-      });
+    });
   });
 } # group_object_get
 
