@@ -974,7 +974,6 @@ sub pjax ($$$$$) {
 
       admin_status => 1,
       owner_status => 1,
-      with_group_data => ['title', 'theme'],
     })->(sub {
       my $account_data = $_[0];
       unless (defined $account_data->{account_id}) {
@@ -996,10 +995,10 @@ sub pjax ($$$$$) {
              $membership->{user_status} != 1 or # open
              $membership->{owner_status} != 1; # open
 
-      return temma $app, 'group.index.html.tm', {
-        group => $group,
-      };
-    });
+    return temma $app, 'group.index.html.tm', {
+      group_id => $path->[1],
+    };
+  });
 } # pjax
 
 sub main ($$$$$) {
