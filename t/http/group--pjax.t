@@ -29,20 +29,17 @@ for my $path (
       return $current->are_errors (
         ['GET', ['g', $current->o ('g1')->{group_id}, @$path], {}, account => 'a1'],
         [
-          {path => ['g', int rand 10000, @$path],
-           name => 'Group not found',  status => 404},
           {path => ['g', 0 . $current->o ('g1')->{group_id}, @$path],
            name => 'Leading zero', status => 404},
-          {account => '', status => 403, name => 'Not a member'},
-          {account => undef, status => 302, name => 'No account'},
-          {account => 'a3', status => 302},
         ],
       );
     })->then (sub {
       return promised_for {
         my $account = shift;
         return $current->get_html ($path, {}, account => $account, group => 'g1');
-      } ['a1', 'a2'];
+      } ['a1', 'a2', 'a3', '', undef];
+    })->then (sub {
+      return $current->get_html (['g', 2525333, @$path], {}); # not found
     })->then (sub {
       test {
         ok 1;
@@ -70,21 +67,17 @@ for my $path (
       return $current->are_errors (
         ['GET', ['g', $current->o ('g1')->{group_id}, 'i', 425533, @$path], {}, account => 'a1'],
         [
-          {path => ['g', int rand 10000, 'i', 425533, @$path],
-           name => 'Group not found', status => 404},
           {path => ['g', 0 . $current->o ('g1')->{group_id}, 'i', 425533, @$path],
            name => 'Leading zero', status => 404},
           {path => ['g', $current->o ('g1')->{group_id}, 'i', '0425533', @$path],
            name => 'Leading zero', status => 404},
-          {account => '', status => 403, name => 'Not a member'},
-          {account => undef, status => 302, name => 'No account'},
         ],
       );
     })->then (sub {
       return promised_for {
         my $account = shift;
         return $current->get_html (['i', 425533, @$path], {}, account => $account, group => 'g1');
-      } ['a1', 'a2'];
+      } ['a1', 'a2', '', undef];
     })->then (sub {
       test {
         ok 1;
@@ -110,21 +103,17 @@ for my $path (
       return $current->are_errors (
         ['GET', ['g', $current->o ('g1')->{group_id}, 'account', 425533, @$path], {}, account => 'a1'],
         [
-          {path => ['g', int rand 10000, 'account', 425533, @$path],
-           name => 'Group not found', status => 404},
           {path => ['g', 0 . $current->o ('g1')->{group_id}, 'account', 425533, @$path],
            name => 'Leading zero', status => 404},
           {path => ['g', $current->o ('g1')->{group_id}, 'account', '0425533', @$path],
            name => 'Leading zero', status => 404},
-          {account => '', status => 403, name => 'Not a member'},
-          {account => undef, status => 302, name => 'No account'},
         ],
       );
     })->then (sub {
       return promised_for {
         my $account = shift;
         return $current->get_html (['account', 425533, @$path], {}, account => $account, group => 'g1');
-      } ['a1', 'a2'];
+      } ['a1', 'a2', '', undef];
     })->then (sub {
       test {
         ok 1;
@@ -151,21 +140,17 @@ for my $path (
       return $current->are_errors (
         ['GET', ['g', $current->o ('g1')->{group_id}, 'o', 425533, @$path], {}, account => 'a1'],
         [
-          {path => ['g', int rand 10000, 'o', 425533, @$path],
-           name => 'Group not found', status => 404},
           {path => ['g', 0 . $current->o ('g1')->{group_id}, 'o', 425533, @$path],
            name => 'Leading zero', status => 404},
           {path => ['g', $current->o ('g1')->{group_id}, 'o', '0425533', @$path],
            name => 'Leading zero', status => 404},
-          {account => '', status => 403, name => 'Not a member'},
-          {account => undef, status => 302, name => 'No account'},
         ],
       );
     })->then (sub {
       return promised_for {
         my $account = shift;
         return $current->get_html (['o', 425533, @$path], {}, account => $account, group => 'g1');
-      } ['a1', 'a2'];
+      } ['a1', 'a2', '', undef];
     })->then (sub {
       test {
         ok 1;
@@ -213,7 +198,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

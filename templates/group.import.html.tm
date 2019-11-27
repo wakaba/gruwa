@@ -1,4 +1,4 @@
-<html t:params="$group $app" pl:data-group-url="'/g/'.$group->{group_id}"
+<html t:params="$group $app"
     pl:data-theme="$group->{data}->{theme}"
     pl:data-bb-clientid="$app->config->{bitbucket}->{public}->{client_id}">
 <!--

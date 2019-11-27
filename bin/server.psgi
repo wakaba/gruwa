@@ -83,6 +83,50 @@ return sub {
         return StaticFiles->html ($app, $path);
       }
 
+      if (@$path >= 3 and $path->[0] eq 'g' and
+          $path->[1] =~ /\A[1-9][0-9]*\z/) {
+        if ( ## Pjax (partition=group)
+            (@$path == 3 and {
+              '' => 1,         # /g/{group_id}/
+              'files' => 1,   # /g/{group_id}/files
+              'guide' => 1,   # /g/{group_id}/guide
+              'search' => 1,   # /g/{group_id}/search
+              'config' => 1,   # /g/{group_id}/config
+              'members' => 1,  # /g/{group_id}/members
+            }->{$path->[2]}) or
+            (@$path == 4 and $path->[2] eq 'my' and {
+              'config' => 1,   # /g/{group_id}/my/config
+            }->{$path->[3]}) or
+            (@$path == 5 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
+              '' => 1,         # /g/{group_id}/i/{index_id}/
+              'config' => 1,   # /g/{group_id}/i/{index_id}/config
+            }->{$path->[4]}) or
+            (@$path == 5 and $path->[2] eq 'o' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
+              '' => 1,         # /g/{group_id}/o/{object_id}/
+              'revisions' => 1,# /g/{group_id}/o/{object_id}/revisions
+            }->{$path->[4]}) or
+            # /g/{group_id}/wiki/{wiki_name}
+            (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or
+            # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
+            (@$path == 6 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'wiki' and length $path->[5]) or
+            (@$path == 5 and $path->[2] eq 'account' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
+              '' => 1,         # /g/{group_id}/account/{index_id}/
+            }->{$path->[4]})
+        ) {
+          return StaticFiles->group_pjax ($app);
+        }
+      }
+
+      ## Pjax (partition=dashboard)
+      if (($path->[0] eq 'dashboard' and (
+        (@$path == 1) or                        # /dashboard
+        (@$path == 2 and $path->[1] eq 'groups') or # /dashboard/groups
+        (@$path == 2 and $path->[1] eq 'receive') or # /dashboard/receive
+        (@$path == 2 and $path->[1] eq 'calls') # /dashboard/calls
+      )) or (@$path == 1 and $path->[0] eq 'jump')) { # /jump
+        return StaticFiles->dashboard ($app);
+      }
+
       my $acall = accounts $app;
       return Promise->resolve->then (sub {
 
@@ -111,35 +155,6 @@ return sub {
           if (@$path == 4 and $path->[2] eq 'o' and $path->[3] eq 'get.json') {
             # /g/{group_id}/o/get.json
             return GroupPages->group_object_get ($app, $path, $app->db, $acall);
-          } elsif ( ## Pjax (partition=group)
-            (@$path == 3 and {
-              '' => 1,         # /g/{group_id}/
-              'files' => 1,   # /g/{group_id}/files
-              'guide' => 1,   # /g/{group_id}/guide
-              'search' => 1,   # /g/{group_id}/search
-              'config' => 1,   # /g/{group_id}/config
-              'members' => 1,  # /g/{group_id}/members
-            }->{$path->[2]}) or
-            (@$path == 4 and $path->[2] eq 'my' and {
-              'config' => 1,   # /g/{group_id}/my/config
-            }->{$path->[3]}) or
-            (@$path == 5 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
-              '' => 1,         # /g/{group_id}/i/{index_id}/
-              'config' => 1,   # /g/{group_id}/i/{index_id}/config
-            }->{$path->[4]}) or
-            (@$path == 5 and $path->[2] eq 'o' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
-              '' => 1,         # /g/{group_id}/o/{object_id}/
-              'revisions' => 1,# /g/{group_id}/o/{object_id}/revisions
-            }->{$path->[4]}) or
-            # /g/{group_id}/wiki/{wiki_name}
-            (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or
-            # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
-            (@$path == 6 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'wiki' and length $path->[5]) or
-            (@$path == 5 and $path->[2] eq 'account' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
-              '' => 1,         # /g/{group_id}/account/{index_id}/
-            }->{$path->[4]})
-          ) {
-            return GroupPages->pjax ($app, $path, $acall);
           } else {
             return GroupPages->main ($app, $path, $app->db, $acall);
           }
@@ -149,16 +164,6 @@ return sub {
             $path->[0] eq 'g' and $path->[1] eq 'create.json') {
           # /g/create.json
           return GroupPages->create ($app, $app->db, $acall);
-        }
-
-        ## Pjax (partition=dashboard)
-        if (($path->[0] eq 'dashboard' and (
-          (@$path == 1) or                        # /dashboard
-          (@$path == 2 and $path->[1] eq 'groups') or # /dashboard/groups
-          (@$path == 2 and $path->[1] eq 'receive') or # /dashboard/receive
-          (@$path == 2 and $path->[1] eq 'calls') # /dashboard/calls
-        )) or (@$path == 1 and $path->[0] eq 'jump')) { # /jump
-          return AccountPages->dashboard ($app, $acall);
         }
 
         if ($path->[0] eq 'jump') {

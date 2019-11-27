@@ -186,6 +186,15 @@ GR.Favicon.redraw = function () {
 }; // GR.Favicon.redraw    
 
 (() => {
+  var m = location.pathname.match (/^\/g\/([0-9]+)\//);
+  if (m) {
+    document.documentElement.setAttribute ('data-group-url', '/g/' + m[1]);
+    var link = document.createElement ('link');
+    link.rel = 'icon';
+    link.href = '/g/' + m[1] + '/icon';
+    document.head.appendChild (link);
+  }
+  
   GR.idle (() => GR.Favicon.loadBaseImage ());
 
   var envName = document.documentElement.getAttribute ('data-env');
@@ -267,9 +276,7 @@ GR._updateMyInfo = function () {
       new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
 
       if (GR._state.navigatePartition === 'dashboard') {
-        var d = document.createElement ('gr-account-dialog');
-        d.setAttribute ('changed', '');
-        document.body.appendChild (d);
+        location.reload ();
       }
     }
     GR.account.scheduleCheck ();
@@ -277,6 +284,7 @@ GR._updateMyInfo = function () {
     if (e instanceof Response && e.status === 403) {
       GR.account.showDialog ();
 
+      if (!GR._state.account) GR._state.account = {};
       if (!GR._state.account.stale) {
         GR._state.account.stale = true;
         if (window.BroadcastChannel)
@@ -384,6 +392,7 @@ GR.group = {};
 
 GR.group.info = function () {
   return GR._myinfo ().then (_ => {
+    if (!GR._state.group) throw new GR.Error ('InvalidAccountError');
     return GR._state.group;
   });
 }; // GR.group.info
@@ -1048,11 +1057,7 @@ defineElement ({
   name: 'gr-account-dialog',
   props: {
     pcInit: function () {
-      if (this.hasAttribute ('changed')) {
-        this.grShowChanged ();
-      } else {
-        this.grShow ();
-      }
+      this.grShow ();
     }, // pcInit
     grShow: function () {
       var backdrop = document.createElement ('gr-backdrop');
@@ -1068,6 +1073,7 @@ defineElement ({
           GR.account.check ({force: true, source: 'logindone'});
           if (window.BroadcastChannel)
           new BroadcastChannel ('grAccount').postMessage ({grAccountUpdated: true});
+          if (!GR._state.group && GR._state.navigatePartition === 'group') location.reload ();
         }
       };
       window.addEventListener ('message', listener);
@@ -1077,19 +1083,6 @@ defineElement ({
         this.grClose = () => {};
       };
     }, // grShow
-    grShowChanged: function () {
-      this.grClose = () => {
-        this.remove ();
-        this.grClose = () => {};
-      };
-      return $getTemplateSet ('gr-account-changed').then (ts => {
-        var backdrop = document.createElement ('gr-backdrop');
-        var container = ts.createFromTemplate ('article', {});
-        container.className = 'dialog';
-        backdrop.appendChild (container);
-        this.appendChild (backdrop);
-      });
-    }, // grShowChanged
     grClose: function () {},
   },
 }); // <gr-account-dialog>
@@ -4809,7 +4802,8 @@ GR.navigate._show = function (pageName, pageArgs, opts) {
   return $getTemplateSet ('page-' + pageName).then (ts => {
     var params = {};
     var wait = [];
-    var setGI = GR.group.info ().then (_ => params.group = _);
+    var isGroup = GR._state.navigatePartition === 'group';
+    var setGI = isGroup ? GR.group.info ().then (_ => params.group = _) : null;
     wait.push (setGI);
     if (pageName === 'search') {
       params.search = {q: pageArgs.q || ''};

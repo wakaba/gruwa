@@ -42,17 +42,29 @@ sub static ($$$) {
 } # static
 
 my $TemplatePath = path (__FILE__)->parent->parent->child ('templates');
+my $HTMLCache = {};
 
-sub temma_htt ($$) {
-  my ($app, $name) = @_;
-  my $path = $TemplatePath->child ('html', $name . '.tm');
-  my $file = Promised::File->new_from_path ($path);
+sub temma_html ($$$$$$) {
+  my (undef, $app, $mime, $name, $params, $key) = @_;
   my $r = $app->bare_param ('r');
   my $http = $app->http;
+  if (defined $HTMLCache->{$name, $key}) {
+    if (not defined $r or $r eq $app->rev) {
+      $http->set_response_last_modified ($HTMLCache->{$name, $key}->[0]);
+    } else {
+      $http->add_response_header ('cache-control', 'no-cache');
+    }
+    $http->set_response_header ('Content-Type' => $mime.'; charset=utf-8');
+    $http->send_response_body_as_ref ($HTMLCache->{$name, $key}->[1]);
+    $http->close_response_body;
+    return;
+  }
+  my $path = $TemplatePath->child ($name);
+  my $file = Promised::File->new_from_path ($path);
+  my $mtime;
   return $file->stat->then (sub {
-    if (not defined $r or
-        $r eq $app->rev) {
-      $http->set_response_last_modified ($_[0]->mtime);
+    if (not defined $r or $r eq $app->rev) {
+      $http->set_response_last_modified ($mtime = $_[0]->mtime);
     } else {
       $http->add_response_header ('cache-control', 'no-cache');
     }
@@ -62,7 +74,8 @@ sub temma_htt ($$) {
   })->then (sub {
     return Promised::File->new_from_path ($path)->read_char_string;
   })->then (sub {
-    my $fh = Results::Temma::Printer->new_from_http ($http);
+    my $copy = '';
+    my $fh = Results::Temma::Printer->new_from_http ($http, \$copy);
     my $doc = new Web::DOM::Document;
     my $parser = Temma::Parser->new;
     $parser->parse_char_string ($_[0] => $doc);
@@ -80,17 +93,18 @@ sub temma_htt ($$) {
         return $doc;
       });
     });
-    $http->set_response_header ('Content-Type' => 'text/plain; charset=utf-8');
+    $http->set_response_header ('Content-Type' => $mime.'; charset=utf-8');
     return Promise->new (sub {
       my $ok = $_[0];
       $processor->process_document ($doc => $fh, ondone => sub {
-        undef $fh;
         $http->close_response_body;
+        $HTMLCache->{$name, $key} = [$mtime, \$copy];
+        undef $fh;
         $ok->();
-      }, args => {});
+      }, args => $params);
     });
   });
-} # temma_htt
+} # temma_html
 
 sub main ($$$) {
   my ($class, $app, $path) = @_;
@@ -142,11 +156,32 @@ sub html ($$$) {
 
   if (@$path == 2 and $path->[1] =~ /\A[A-Za-z0-9-]+\.htt\z/) {
     # /html/{file}.htt
-    return temma_htt ($app, $path->[1]);
+    return $class->temma_html ($app, 'text/plain', $path->[1] . '.tm', {}, '');
   }
   
   return $app->throw_error (404);
-} # main
+} # html
+
+sub dashboard ($$) {
+  my ($class, $app) = @_;
+  ## Pjax (partition=dashboard)
+  # /dashboard
+  # /dashboard/...
+  # /jump
+  return $class->temma_html ($app, 'text/html', 'dashboard.html.tm', {
+    app_env => $app->config->{env_name},
+    app_rev => $app->rev,
+    push_key => $app->config->{push_server_public_key},
+  }, $app->rev);
+} # dashboard
+
+sub group_pjax ($$) {
+  my ($class, $app) = @_;
+  return $class->temma_html ($app, 'text/html', 'group.index.html.tm', {
+    app_env => $app->config->{env_name},
+    app_rev => $app->rev,
+  }, $app->rev);
+} # group_pjax
 
 1;
 
@@ -164,7 +199,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

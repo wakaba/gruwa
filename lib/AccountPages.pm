@@ -461,28 +461,6 @@ sub mygroups ($$$) {
   });
 } # mygroups
 
-sub dashboard ($$$) {
-  my ($class, $app, $acall) = @_;
-  ## Pjax (partition=dashboard)
-  # /dashboard
-  # /dashboard/...
-  # /jump
-  return $acall->(['info'], {
-    sk_context => $app->config->{accounts}->{context},
-    sk => $app->http->request_cookies->{sk},
-    terms_version => $app->config->{accounts}->{terms_version},
-  })->(sub {
-    my $account_data = $_[0];
-    unless (defined $account_data->{account_id}) {
-      my $this_url = Web::URL->parse_string ($app->http->url->stringify);
-      my $url = Web::URL->parse_string (q</account/login>, $this_url);
-      $url->set_query_params ({next => $this_url->stringify});
-      return $app->send_redirect ($url->stringify);
-    }
-    return temma $app, 'dashboard.html.tm', {account => $account_data};
-  });
-} # dashboard
-
 1;
 
 =head1 LICENSE
@@ -499,7 +477,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

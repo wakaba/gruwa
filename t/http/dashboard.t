@@ -9,54 +9,26 @@ for my $path (
   ['dashboard', 'groups'],
   ['dashboard', 'receive'],
   ['dashboard', 'calls'],
+  ['jump'],
 ) {
 
   Test {
     my $current = shift;
-    return $current->client->request (
-      path => $path,
-    )->then (sub {
-      my $res = $_[0];
-      test {
-        is $res->status, 302;
-        my $next_url = $current->resolve (q</account/login>);
-        $next_url->set_query_params ({next => $current->resolve (join '/', '', @$path)->stringify});
-        is $res->header ('Location'), $next_url->stringify;
-      } $current->c;
-    });
-  } n => 2, name => [@$path, 'no account'];
-
-  Test {
-    my $current = shift;
     return $current->create (
-      [a1 => account => {terms_version => 1}],
+      [a1 => account => {}],
+      [a2 => account => {terms_version => 1}],
     )->then (sub {
-      return $current->client->request (
-        path => $path,
-        cookies => $current->o ('a1')->{cookies},
-      );
+      return promised_for {
+        my $account = shift;
+        return $current->get_html ($path, {
+        }, account => $account);
+      } ['a1', 'a2', undef];
     })->then (sub {
-      my $res = $_[0];
       test {
-        is $res->status, 302;
-        my $next_url = $current->resolve (q</account/login>);
-        $next_url->set_query_params ({next => $current->resolve (join '/', '', @$path)->stringify});
-        is $res->header ('Location'), $next_url->stringify;
+        ok 1;
       } $current->c;
     });
-  } n => 2, name => [@$path, 'bad terms_version'];
-
-Test {
-  my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->get_html ($path, {}, account => 'a1');
-  })->then (sub {
-    my $result = $_[0];
-    test {
-      ok 1;
-    } $current->c;
-  });
-} n => 1, name => $path;
+  } n => 1, name => [@$path];
 } # $path
 
 Test {
@@ -89,7 +61,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

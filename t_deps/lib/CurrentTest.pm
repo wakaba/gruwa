@@ -85,7 +85,7 @@ sub get_json ($$;$%) {
   ];
   my $cookies = {%{$args{cookies} or {}}};
   return $self->_account ($args{account})->then (sub {
-    $cookies->{sk} = $_[0]->{cookies}->{sk}; # or undef
+    $cookies->{sk} //= $_[0]->{cookies}->{sk}; # or undef
     return $self->client->request (
       path => $path,
       params => $params,
@@ -503,10 +503,14 @@ sub create_account ($$$) {
         return $self->post_redirect (['account', 'agree'], {
           agree => 1,
         }, cookies => $account->{cookies});
+      })->then (sub {
+        return $self->get_json (['my', 'info.json'], {
+        }, cookies => $account->{cookies});
+      })->then (sub {
+        $account->{account_id} = $_[0]->{json}->{account_id};
       });
       # $opts->{name}
       # $opts->{terms_version}
-      # $account->{account_id}
     } else { # not xs
       $opts->{name} //= $self->generate_text (rand, {});
       return $self->accounts_client->request (

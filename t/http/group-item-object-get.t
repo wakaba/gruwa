@@ -20,7 +20,7 @@ Test {
         {account => '', status => 403},
         {account => 'a3', status => 403},
         {account => undef, status => 403},
-        {path => ['g', '532523', 'o', 'get.json'], status => 404},
+        {path => ['g', '532523', 'o', 'get.json'], group => undef, status => 403},
       ],
     );
   })->then (sub {

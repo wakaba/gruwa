@@ -164,9 +164,11 @@ Test {
   return $current->create (
     [a1 => account => {}],
     [ax1 => account => {xs => 1}],
+    [g1 => group => {members => ['a1'], title => $current->generate_text (t1 => {})}],
+    [g2 => group => {members => ['ax1'], title => $current->generate_text (t2 => {})}],
   )->then (sub {
     return $current->create_browser (1 => {
-      url => ['dashboard'],
+      url => ['dashboard', 'groups'],
       account => 'a1',
     });
   })->then (sub {
@@ -181,6 +183,7 @@ Test {
     return $current->b_wait (1 => {
       selector => 'gr-backdrop > .dialog',
       shown => 1, scroll => 1,
+      name => 'cookie staled account dialog',
     });
   })->then (sub {
     return $current->b (1)->switch_to_frame_by_selector ('gr-backdrop > .dialog');
@@ -207,8 +210,15 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'gr-account-dialog[changed] > gr-backdrop > .dialog',
-      html => 'javascript:location.reload',
+      selector => 'page-main',
+      text => $current->o ('t2'),
+      name => 'new account group name',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'page-main',
+      text => $current->o ('t1'), not => 1,
+      name => 'old account group name',
     });
   })->then (sub {
     test {
@@ -320,6 +330,130 @@ Test {
   });
 } n => 1, name => ['group pjax 403'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [ax1 => account => {xs => 1}],
+    [g1 => group => {members => ['a1', 'ax1'], title => $current->generate_text (t1 => {})}],
+  )->then (sub {
+    return $current->post_json (['g', $current->o ('g1')->{group_id}, 'my', 'edit.json'], {
+      name => $current->generate_text (t2 => {}),
+    }, account => 'ax1');
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, ''],
+      account => undef,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-backdrop > .dialog',
+      shown => 1, scroll => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html',
+      text => $current->o ('t1'), not => 1,
+      name => 'group name not shown',
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('gr-backdrop > .dialog');
+  })->then (sub {
+    return $current->b_set_xs_name (1 => 'ax1');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'form button[type=submit]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      setTimeout (() => {
+        document.querySelector ('form button[type=submit]').click ();
+      }, 100);
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b_wait (1 => {
+      selector => 'gr-account-dialog:not([changed]) > gr-backdrop > .dialog',
+      not => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html',
+      text => $current->o ('t1'),
+      name => 'group name shown',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-nav-panel gr-account[self] gr-account-name',
+      text => $current->o ('t2'),
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['group page - first login'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [ax1 => account => {xs => 1}],
+    [g1 => group => {members => ['ax1'], title => $current->generate_text (t1 => {})}],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['dashboard', 'groups'],
+      account => undef,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-backdrop > .dialog',
+      shown => 1, scroll => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html',
+      text => $current->o ('t1'), not => 1,
+      name => 'group name not shown',
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('gr-backdrop > .dialog');
+  })->then (sub {
+    return $current->b_set_xs_name (1 => 'ax1');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'form button[type=submit]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      setTimeout (() => {
+        document.querySelector ('form button[type=submit]').click ();
+      }, 100);
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b_wait (1 => {
+      selector => 'gr-account-dialog:not([changed]) > gr-backdrop > .dialog',
+      not => 1,
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html',
+      text => $current->o ('t1'),
+      name => 'group name shown',
+    });
+  })->then (sub {
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['dashboard page - first login'], browser => 1;
+
 RUN;
 
 =head1 LICENSE
@@ -336,7 +470,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

@@ -214,6 +214,7 @@ Test {
       is $res->status, 200;
       is $res->header ('content-type'), 'text/plain; charset=utf-8';
       like $res->body_bytes, qr<</html>>;
+      $current->set_o (b1 => $res->body_bytes);
       ok $res->header ('last-modified');
       $current->set_o (rev1 => $res->header ('last-modified'));
       is $res->header ('cache-control'), undef;
@@ -227,6 +228,7 @@ Test {
       is $res->status, 200;
       ok ! $res->header ('last-modified');
       is $res->header ('cache-control'), 'no-cache';
+      is $res->body_bytes, $current->o ('b1');
     } $current->c, name => 'Unknown revision';
     return $current->client->request (path => ['html', 'group.htt'], params => {
       r => $current->app_rev,
@@ -237,9 +239,83 @@ Test {
       is $res->status, 200;
       is $res->header ('last-modified'), $current->o ('rev1');
       is $res->header ('cache-control'), undef;
+      is $res->body_bytes, $current->o ('b1');
     } $current->c, name => 'Current revision';
   });
-} n => 11, name => '/html/group.htt';
+} n => 13, name => '/html/group.htt';
+
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['dashboard'])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'text/html; charset=utf-8';
+      like $res->body_bytes, qr<</html>>;
+      $current->set_o (b1 => $res->body_bytes);
+      ok $res->header ('last-modified');
+      $current->set_o (rev1 => $res->header ('last-modified'));
+      is $res->header ('cache-control'), undef;
+    } $current->c;
+    return $current->client->request (path => ['dashboard'], params => {
+      r => rand,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      ok ! $res->header ('last-modified');
+      is $res->header ('cache-control'), 'no-cache';
+      is $res->body_bytes, $current->o ('b1');
+    } $current->c, name => 'Unknown revision';
+    return $current->client->request (path => ['dashboard'], params => {
+      r => $current->app_rev,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('last-modified'), $current->o ('rev1');
+      is $res->header ('cache-control'), undef;
+      is $res->body_bytes, $current->o ('b1');
+    } $current->c, name => 'Current revision';
+  });
+} n => 13, name => 'pjax /dashboard';
+
+Test {
+  my $current = shift;
+  return $current->client->request (path => ['g', '424', ''])->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'text/html; charset=utf-8';
+      like $res->body_bytes, qr<</html>>;
+      ok $res->header ('last-modified');
+      $current->set_o (rev1 => $res->header ('last-modified'));
+      is $res->header ('cache-control'), undef;
+    } $current->c;
+    return $current->client->request (path => ['g', '424', ''], params => {
+      r => rand,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      ok ! $res->header ('last-modified');
+      is $res->header ('cache-control'), 'no-cache';
+    } $current->c, name => 'Unknown revision';
+    return $current->client->request (path => ['g', '424', ''], params => {
+      r => $current->app_rev,
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('last-modified'), $current->o ('rev1');
+      is $res->header ('cache-control'), undef;
+    } $current->c, name => 'Current revision';
+  });
+} n => 11, name => 'pjax /g/{}/';
 
 Test {
   my $current = shift;
