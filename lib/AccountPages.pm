@@ -461,19 +461,6 @@ sub mygroups ($$$) {
   });
 } # mygroups
 
-sub dashboard ($$$) {
-  my ($class, $app, $acall) = @_;
-  ## Pjax (partition=dashboard)
-  # /dashboard
-  # /dashboard/...
-  # /jump
-  return temma $app, 'dashboard.html.tm', {
-    app_env => $app->config->{env_name},
-    app_rev => $app->rev,
-    push_key => $app->config->{push_server_public_key},
-  };
-} # dashboard
-
 1;
 
 =head1 LICENSE

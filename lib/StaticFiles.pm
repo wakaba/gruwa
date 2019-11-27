@@ -146,7 +146,28 @@ sub html ($$$) {
   }
   
   return $app->throw_error (404);
-} # main
+} # html
+
+sub dashboard ($$) {
+  my ($class, $app) = @_;
+  ## Pjax (partition=dashboard)
+  # /dashboard
+  # /dashboard/...
+  # /jump
+  return temma $app, 'dashboard.html.tm', {
+    app_env => $app->config->{env_name},
+    app_rev => $app->rev,
+    push_key => $app->config->{push_server_public_key},
+  };
+} # dashboard
+
+sub group_pjax ($$) {
+  my ($class, $app) = @_;
+  return temma $app, 'group.index.html.tm', {
+    app_env => $app->config->{env_name},
+    app_rev => $app->rev,
+  };
+} # group_pjax
 
 1;
 
@@ -164,7 +185,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

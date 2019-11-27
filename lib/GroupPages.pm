@@ -961,14 +961,6 @@ sub create ($$$$) {
   });
 } # create
 
-sub pjax ($$$$$) {
-  my ($class, $app, $path, $acall) = @_;
-  return temma $app, 'group.index.html.tm', {
-    app_env => $app->config->{env_name},
-    app_rev => $app->rev,
-  };
-} # pjax
-
 sub main ($$$$$) {
   my ($class, $app, $path, $db, $acall) = @_;
 
