@@ -1,4 +1,4 @@
-<html t:params="$app">
+<html>
   <body>
 
     <gr-nav-button>
