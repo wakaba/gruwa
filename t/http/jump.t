@@ -4,32 +4,7 @@ use Path::Tiny;
 use lib glob path (__FILE__)->parent->parent->parent->child ('t_deps/lib');
 use Tests;
 
-Test {
-  my $current = shift;
-  return $current->client->request (
-    path => ['jump'],
-  )->then (sub {
-    my $res = $_[0];
-    test {
-      is $res->status, 302;
-      my $next_url = $current->resolve (q</account/login>);
-      $next_url->set_query_params ({next => $current->resolve (q</jump>)->stringify});
-      is $res->header ('Location'), $next_url->stringify;
-    } $current->c;
-  });
-} n => 2, name => '/jump no account';
-
-Test {
-  my $current = shift;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->get_html (['jump'], {}, account => 'a1');
-  })->then (sub {
-    my $result = $_[0];
-    test {
-      ok 1;
-    } $current->c;
-  });
-} n => 1, name => '/jump';
+## See |dashboard.t|.
 
 Test {
   my $current = shift;
@@ -61,7 +36,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

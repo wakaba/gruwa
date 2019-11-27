@@ -19,7 +19,7 @@ Test {
     return $current->are_errors (
       ['GET', ['g', $current->o ('g1')->{group_id}, 'import'], {}, account => 'a1'],
       [
-        {path => ['g', int rand 10000, 'members'], status => 404},
+        {path => ['g', int rand 10000, 'import'], status => 404},
         {account => '', status => 403},
         {account => undef, status => 302},
         {account => 'a3', status => 302},
@@ -57,7 +57,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

@@ -9,6 +9,7 @@ for my $path (
   ['dashboard', 'groups'],
   ['dashboard', 'receive'],
   ['dashboard', 'calls'],
+  ['jump'],
 ) {
 
   Test {
