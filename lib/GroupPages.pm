@@ -963,43 +963,10 @@ sub create ($$$$) {
 
 sub pjax ($$$$$) {
   my ($class, $app, $path, $acall) = @_;
-
-  return $acall->(['info'], {
-      sk_context => $app->config->{accounts}->{context},
-      sk => $app->http->request_cookies->{sk},
-      terms_version => $app->config->{accounts}->{terms_version},
-      
-      context_key => $app->config->{accounts}->{context} . ':group',
-      group_id => $path->[1],
-
-      admin_status => 1,
-      owner_status => 1,
-    })->(sub {
-      my $account_data = $_[0];
-      unless (defined $account_data->{account_id}) {
-        my $this_url = Web::URL->parse_string ($app->http->url->stringify);
-        my $url = Web::URL->parse_string (q</account/login>, $this_url);
-        $url->set_query_params ({next => $this_url->stringify});
-        return $app->send_redirect ($url->stringify);
-      }
-
-      my $group = $account_data->{group};
-      return $app->throw_error (404, reason_phrase => 'Group not found')
-          unless defined $group;
-
-      my $membership = $account_data->{group_membership};
-      return $app->throw_error (403, reason_phrase => 'Not a group member')
-          if not defined $membership or
-             not ($membership->{member_type} == 1 or # member
-                  $membership->{member_type} == 2) or # owner
-             $membership->{user_status} != 1 or # open
-             $membership->{owner_status} != 1; # open
-
-    return temma $app, 'group.index.html.tm', {
-      app_env => $app->config->{env_name},
-      app_rev => $app->rev,
-    };
-  });
+  return temma $app, 'group.index.html.tm', {
+    app_env => $app->config->{env_name},
+    app_rev => $app->rev,
+  };
 } # pjax
 
 sub main ($$$$$) {
@@ -2754,7 +2721,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

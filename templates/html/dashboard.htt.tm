@@ -54,22 +54,6 @@
   </template>
 </template-set>
 
-<template-set name=gr-account-changed>
-  <template>
-    <header class=page>
-      <h1>Gruwa</h1>
-    </header>
-
-    <section>
-      <h1>アカウント</h1>
-      
-      <p>アカウントが変更されました。
-      <p class=operations>
-        <a href=javascript:location.reload() class=login-button>再読込</a>
-    </section>
-  </template>
-</template-set>
-
 <template-set name=page-dashboard>
   <template title=ダッシュボード>
 
