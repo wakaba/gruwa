@@ -961,39 +961,10 @@ sub create ($$$$) {
   });
 } # create
 
-sub main ($$$$$) {
-  my ($class, $app, $path, $db, $acall) = @_;
+sub pjax ($$$$$) {
+  my ($class, $app, $path, $acall) = @_;
 
-  ## Pjax (partition=group)
-  if (
-    (@$path == 3 and {
-      '' => 1,         # /g/{group_id}/
-      'files' => 1,   # /g/{group_id}/files
-      'guide' => 1,   # /g/{group_id}/guide
-      'search' => 1,   # /g/{group_id}/search
-      'config' => 1,   # /g/{group_id}/config
-      'members' => 1,  # /g/{group_id}/members
-    }->{$path->[2]}) or
-    (@$path == 4 and $path->[2] eq 'my' and {
-      'config' => 1,   # /g/{group_id}/my/config
-    }->{$path->[3]}) or
-    (@$path == 5 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
-      '' => 1,         # /g/{group_id}/i/{index_id}/
-      'config' => 1,   # /g/{group_id}/i/{index_id}/config
-    }->{$path->[4]}) or
-    (@$path == 5 and $path->[2] eq 'o' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
-      '' => 1,         # /g/{group_id}/o/{object_id}/
-      'revisions' => 1,# /g/{group_id}/o/{object_id}/revisions
-    }->{$path->[4]}) or
-    # /g/{group_id}/wiki/{wiki_name}
-    (@$path == 4 and $path->[2] eq 'wiki' and length $path->[3]) or
-    # /g/{group_id}/i/{index_id}/wiki/{wiki_name}
-    (@$path == 6 and $path->[2] eq 'i' and $path->[3] =~ /\A[1-9][0-9]*\z/ and $path->[4] eq 'wiki' and length $path->[5]) or
-    (@$path == 5 and $path->[2] eq 'account' and $path->[3] =~ /\A[1-9][0-9]*\z/ and {
-      '' => 1,         # /g/{group_id}/account/{index_id}/
-    }->{$path->[4]})
-  ) {
-    return $acall->(['info'], {
+  return $acall->(['info'], {
       sk_context => $app->config->{accounts}->{context},
       sk => $app->http->request_cookies->{sk},
       terms_version => $app->config->{accounts}->{terms_version},
@@ -1029,58 +1000,10 @@ sub main ($$$$$) {
         group => $group,
       };
     });
-  }
+} # pjax
 
-  if (@$path == 4 and $path->[2] eq 'o' and $path->[3] eq 'get.json') {
-    # /g/{group_id}/o/get.json
-  # /g/{group_id}/...
-  return $acall->(['info'], {
-    sk_context => $app->config->{accounts}->{context},
-    sk => $app->http->request_cookies->{sk},
-    terms_version => $app->config->{accounts}->{terms_version},
-    
-    context_key => $app->config->{accounts}->{context} . ':group',
-    group_id => $path->[1],
-    # XXX
-    admin_status => 1,
-    owner_status => 1,
-    with_group_data => ['title', 'theme', 'default_wiki_index_id',
-                        'object_id', 'icon_object_id', 'guide_object_id'],
-    with_group_member_data => ['name', 'default_index_id',
-                               'icon_object_id', 'guide_object_id'],
-  })->(sub {
-    my $account_data = $_[0];
-    unless (defined $account_data->{account_id}) {
-      if ($app->http->request_method eq 'GET' and
-          not $path->[-1] =~ /\.json\z/) {
-        my $this_url = Web::URL->parse_string ($app->http->url->stringify);
-        my $url = Web::URL->parse_string (q</account/login>, $this_url);
-        $url->set_query_params ({next => $this_url->stringify});
-        return $app->send_redirect ($url->stringify);
-      } else {
-        return $app->throw_error (403, reason_phrase => 'No user account');
-      }
-    }
-
-    my $group = $account_data->{group};
-    return $app->throw_error (404, reason_phrase => 'Group not found')
-        unless defined $group;
-
-    my $membership = $account_data->{group_membership};
-    return $app->throw_error (403, reason_phrase => 'Not a group member')
-        if not defined $membership or
-           not ($membership->{member_type} == 1 or # member
-                $membership->{member_type} == 2) or # owner
-           $membership->{user_status} != 1 or # open
-           $membership->{owner_status} != 1; # open
-
-    return $class->group_object_get ($app, $path, {
-      account => $account_data,
-      db => $db, group => $group, group_member => $membership,
-      acall => $acall,
-    });
-  });
-  }
+sub main ($$$$$) {
+  my ($class, $app, $path, $db, $acall) = @_;
 
   # /g/{group_id}/...
   return $acall->(['info'], {
@@ -2400,9 +2323,55 @@ sub group_object ($$$$) {
   return $app->throw_error (404);
 } # group_object
 
-sub group_object_get ($$$$) {
-  my ($class, $app, $path, $opts) = @_;
-  my $db = $opts->{db};
+sub group_object_get ($$$$$) {
+  my ($class, $app, $path, $db, $acall) = @_;
+  # /g/{group_id}/o/get.json
+  
+  return $acall->(['info'], {
+    sk_context => $app->config->{accounts}->{context},
+    sk => $app->http->request_cookies->{sk},
+    terms_version => $app->config->{accounts}->{terms_version},
+    
+    context_key => $app->config->{accounts}->{context} . ':group',
+    group_id => $path->[1],
+    # XXX
+    admin_status => 1,
+    owner_status => 1,
+    with_group_data => ['title', 'theme', 'default_wiki_index_id',
+                        'object_id', 'icon_object_id', 'guide_object_id'],
+    with_group_member_data => ['name', 'default_index_id',
+                               'icon_object_id', 'guide_object_id'],
+  })->(sub {
+    my $account_data = $_[0];
+    unless (defined $account_data->{account_id}) {
+      if ($app->http->request_method eq 'GET' and
+          not $path->[-1] =~ /\.json\z/) {
+        my $this_url = Web::URL->parse_string ($app->http->url->stringify);
+        my $url = Web::URL->parse_string (q</account/login>, $this_url);
+        $url->set_query_params ({next => $this_url->stringify});
+        return $app->send_redirect ($url->stringify);
+      } else {
+        return $app->throw_error (403, reason_phrase => 'No user account');
+      }
+    }
+
+    my $group = $account_data->{group};
+    return $app->throw_error (404, reason_phrase => 'Group not found')
+        unless defined $group;
+
+    my $membership = $account_data->{group_membership};
+    return $app->throw_error (403, reason_phrase => 'Not a group member')
+        if not defined $membership or
+           not ($membership->{member_type} == 1 or # member
+                $membership->{member_type} == 2) or # owner
+           $membership->{user_status} != 1 or # open
+           $membership->{owner_status} != 1; # open
+
+    my $opts = {
+      account => $account_data,
+      db => $db, group => $group, group_member => $membership,
+      acall => $acall,
+    };
 
     my $next_ref = {};
     my $rev_id;
@@ -2576,6 +2545,7 @@ sub group_object_get ($$$$) {
         };
       });
     });
+  });
 } # group_object_get
 
 sub invitation ($$$$) {
