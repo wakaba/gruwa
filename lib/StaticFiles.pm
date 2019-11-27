@@ -43,9 +43,9 @@ sub static ($$$) {
 
 my $TemplatePath = path (__FILE__)->parent->parent->child ('templates');
 
-sub temma_htt ($$) {
-  my ($app, $name) = @_;
-  my $path = $TemplatePath->child ('html', $name . '.tm');
+sub temma_html ($$$$$$) {
+  my (undef, $app, $mime, $name, $params, $key) = @_;
+  my $path = $TemplatePath->child ($name);
   my $file = Promised::File->new_from_path ($path);
   my $r = $app->bare_param ('r');
   my $http = $app->http;
@@ -80,17 +80,17 @@ sub temma_htt ($$) {
         return $doc;
       });
     });
-    $http->set_response_header ('Content-Type' => 'text/plain; charset=utf-8');
+    $http->set_response_header ('Content-Type' => $mime.'; charset=utf-8');
     return Promise->new (sub {
       my $ok = $_[0];
       $processor->process_document ($doc => $fh, ondone => sub {
         undef $fh;
         $http->close_response_body;
         $ok->();
-      }, args => {});
+      }, args => $params);
     });
   });
-} # temma_htt
+} # temma_html
 
 sub main ($$$) {
   my ($class, $app, $path) = @_;
@@ -142,7 +142,7 @@ sub html ($$$) {
 
   if (@$path == 2 and $path->[1] =~ /\A[A-Za-z0-9-]+\.htt\z/) {
     # /html/{file}.htt
-    return temma_htt ($app, $path->[1]);
+    return $class->temma_html ($app, 'text/plain', $path->[1] . '.tm', {}, '');
   }
   
   return $app->throw_error (404);
@@ -154,19 +154,19 @@ sub dashboard ($$) {
   # /dashboard
   # /dashboard/...
   # /jump
-  return temma $app, 'dashboard.html.tm', {
+  return $class->temma_html ($app, 'text/html', 'dashboard.html.tm', {
     app_env => $app->config->{env_name},
     app_rev => $app->rev,
     push_key => $app->config->{push_server_public_key},
-  };
+  }, $app->rev);
 } # dashboard
 
 sub group_pjax ($$) {
   my ($class, $app) = @_;
-  return temma $app, 'group.index.html.tm', {
+  return $class->temma_html ($app, 'text/html', 'group.index.html.tm', {
     app_env => $app->config->{env_name},
     app_rev => $app->rev,
-  };
+  }, $app->rev);
 } # group_pjax
 
 1;
