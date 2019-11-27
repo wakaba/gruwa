@@ -42,17 +42,29 @@ sub static ($$$) {
 } # static
 
 my $TemplatePath = path (__FILE__)->parent->parent->child ('templates');
+my $HTMLCache = {};
 
 sub temma_html ($$$$$$) {
   my (undef, $app, $mime, $name, $params, $key) = @_;
-  my $path = $TemplatePath->child ($name);
-  my $file = Promised::File->new_from_path ($path);
   my $r = $app->bare_param ('r');
   my $http = $app->http;
+  if (defined $HTMLCache->{$name, $key}) {
+    if (not defined $r or $r eq $app->rev) {
+      $http->set_response_last_modified ($HTMLCache->{$name, $key}->[0]);
+    } else {
+      $http->add_response_header ('cache-control', 'no-cache');
+    }
+    $http->set_response_header ('Content-Type' => $mime.'; charset=utf-8');
+    $http->send_response_body_as_ref ($HTMLCache->{$name, $key}->[1]);
+    $http->close_response_body;
+    return;
+  }
+  my $path = $TemplatePath->child ($name);
+  my $file = Promised::File->new_from_path ($path);
+  my $mtime;
   return $file->stat->then (sub {
-    if (not defined $r or
-        $r eq $app->rev) {
-      $http->set_response_last_modified ($_[0]->mtime);
+    if (not defined $r or $r eq $app->rev) {
+      $http->set_response_last_modified ($mtime = $_[0]->mtime);
     } else {
       $http->add_response_header ('cache-control', 'no-cache');
     }
@@ -62,7 +74,8 @@ sub temma_html ($$$$$$) {
   })->then (sub {
     return Promised::File->new_from_path ($path)->read_char_string;
   })->then (sub {
-    my $fh = Results::Temma::Printer->new_from_http ($http);
+    my $copy = '';
+    my $fh = Results::Temma::Printer->new_from_http ($http, \$copy);
     my $doc = new Web::DOM::Document;
     my $parser = Temma::Parser->new;
     $parser->parse_char_string ($_[0] => $doc);
@@ -84,8 +97,9 @@ sub temma_html ($$$$$$) {
     return Promise->new (sub {
       my $ok = $_[0];
       $processor->process_document ($doc => $fh, ondone => sub {
-        undef $fh;
         $http->close_response_body;
+        $HTMLCache->{$name, $key} = [$mtime, \$copy];
+        undef $fh;
         $ok->();
       }, args => $params);
     });

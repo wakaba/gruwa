@@ -30,7 +30,8 @@ sub temma ($$$) {
   my $http = $app->http;
   my $path = $TemplatePath->child ($template_path);
   return Promised::File->new_from_path ($path)->read_char_string->then (sub {
-    my $fh = Results::Temma::Printer->new_from_http ($http);
+    my $copy = '';
+    my $fh = Results::Temma::Printer->new_from_http ($http, \$copy);
     my $doc = new Web::DOM::Document;
     my $parser = Temma::Parser->new;
     $parser->parse_char_string ($_[0] => $doc);
@@ -61,29 +62,35 @@ sub temma ($$$) {
 } # temma
 
 package Results::Temma::Printer;
+use Web::Encoding;
 
-sub new_from_http ($$) {
-  return bless {http => $_[1], value => ''}, $_[0];
+sub new_from_http ($$$) {
+  return bless {http => $_[1], value => '', copyref => $_[2]}, $_[0];
 } # new_from_http
 
 sub print ($$) {
   $_[0]->{value} .= $_[1];
   if (length $_[0]->{value} > 1024*10 or length $_[1] == 0) {
-    $_[0]->{http}->send_response_body_as_text ($_[0]->{value});
+    my $v = encode_web_utf8 $_[0]->{value};
     $_[0]->{value} = '';
+    $_[0]->{http}->send_response_body_as_ref (\$v);
+    ${$_[0]->{copyref}} .= $v;
   }
 } # print
 
 sub DESTROY {
-  $_[0]->{http}->send_response_body_as_text ($_[0]->{value})
-      if length $_[0]->{value};
+  if (length $_[0]->{value}) {
+    my $v = encode_web_utf8 $_[0]->{value};
+    $_[0]->{http}->send_response_body_as_ref (\$v);
+    ${$_[0]->{copyref}} .= $v;
+  }
 } # DESTROY
 
 1;
 
 =head1 LICENSE
 
-Copyright 2016 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -95,7 +102,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut
