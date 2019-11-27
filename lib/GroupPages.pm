@@ -2293,31 +2293,12 @@ sub group_object_get ($$$$$) {
     
     context_key => $app->config->{accounts}->{context} . ':group',
     group_id => $path->[1],
+
     # XXX
     admin_status => 1,
     owner_status => 1,
-    with_group_data => ['title', 'theme', 'default_wiki_index_id',
-                        'object_id', 'icon_object_id', 'guide_object_id'],
-    with_group_member_data => ['name', 'default_index_id',
-                               'icon_object_id', 'guide_object_id'],
   })->(sub {
     my $account_data = $_[0];
-    unless (defined $account_data->{account_id}) {
-      if ($app->http->request_method eq 'GET' and
-          not $path->[-1] =~ /\.json\z/) {
-        my $this_url = Web::URL->parse_string ($app->http->url->stringify);
-        my $url = Web::URL->parse_string (q</account/login>, $this_url);
-        $url->set_query_params ({next => $this_url->stringify});
-        return $app->send_redirect ($url->stringify);
-      } else {
-        return $app->throw_error (403, reason_phrase => 'No user account');
-      }
-    }
-
-    my $group = $account_data->{group};
-    return $app->throw_error (404, reason_phrase => 'Group not found')
-        unless defined $group;
-
     my $membership = $account_data->{group_membership};
     return $app->throw_error (403, reason_phrase => 'Not a group member')
         if not defined $membership or
@@ -2325,12 +2306,6 @@ sub group_object_get ($$$$$) {
                 $membership->{member_type} == 2) or # owner
            $membership->{user_status} != 1 or # open
            $membership->{owner_status} != 1; # open
-
-    my $opts = {
-      account => $account_data,
-      db => $db, group => $group, group_member => $membership,
-      acall => $acall,
-    };
 
     my $next_ref = {};
     my $rev_id;
