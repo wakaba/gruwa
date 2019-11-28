@@ -8,9 +8,6 @@ Test {
   my $current = shift;
   return $current->create (
     [a1 => account => {}],
-    [a2 => account => {}],
-    [a3 => account => {}],
-    [a4 => account => {}],
     [g1 => group => {
       members => ['a1'],
     }],
@@ -109,6 +106,85 @@ Test {
     } $current->c;
   });
 } n => 1, name => ['object html viewer'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [o1 => object => {
+      group => 'g1', account => 'a1',
+      source_site => 'http://importedtest.g.hatena.ne.jp',
+      source_page => 'http://importedtest.g.hatena.ne.jp/testuser/20191123/1574496155',
+    }],
+    [o2 => object => {
+      group => 'g1', account => 'a1',
+      parent_object => 'o1',
+      body_type => 3, # data
+      body_data => {
+        hatena_star => [
+          ["userName1",0,3,""],
+          ["userName2",0,2,""],
+        ],
+      },
+    }],
+  )->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      body_type => 1, # html
+      body => q{<hatena-html starmap="1574496155 }.$current->o ('o2')->{object_id}.q{"><div class="section"><h3 class="title"><a href="http://importedtest.g.hatena.ne.jp/testuser/20191123/1574496155" name="1574496155">Hello, World!</a></h3></hatena-html>},
+    }, group => 'g1', account => 'a1');
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article.object gr-html-viewer iframe',
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('article.object gr-html-viewer iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'h3 a',
+      name => 'link in body text',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('h3 a').href;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, q{http://app.server.test/g/}.$current->o ('g1')->{group_id}.q{/imported/http%3A%2F%2Fimportedtest.g.hatena.ne.jp%2Ftestuser%2F20191123%2F1574496155/go};
+    } $current->c;
+    return $current->b_screenshot (1, 'view');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      name => 'shadow',
+      code => sub {
+        return $current->b (1)->execute (q{
+          var e = document.querySelector ('h3');
+          if (!e) return [false, 'no h3'];
+          if (!e.shadowRoot) return [false, 'no shadow'];
+          var a = e.shadowRoot.querySelector ('a');
+          if (!a) return [false, 'no a'];
+          return [true, ''];
+        })->then (sub {
+          my $v = $_[0]->json->{value};
+          #warn $v->[1];
+          return $v->[0];
+        });
+      },
+    });
+  });
+} n => 1, name => ['imported hatena html'], browser => 1;
 
 RUN;
 

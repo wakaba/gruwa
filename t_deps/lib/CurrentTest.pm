@@ -407,6 +407,9 @@ sub create_object ($$$) {
                     body body_type body_source body_source_type)) {
       $param{$key} = $opts->{$key} if defined $opts->{$key};
     }
+    if (defined $opts->{body_data}) {
+      $param{body_data} = perl2json_chars $opts->{body_data};
+    }
     if (defined $opts->{parent_object}) {
       $param{parent_object_id} = $self->_get_o ($opts->{parent_object})->{object_id};
     }
