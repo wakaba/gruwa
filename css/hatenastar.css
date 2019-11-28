@@ -1,0 +1,59 @@
+hatena-star:not([hidden]) {
+  display: inline-block;
+  position: relative;
+  line-height: 1.0;
+  font-size: 90%;
+}
+
+hatena-star a:not([hidden]) {
+  display: inline-block;
+  margin: 1px;
+  text-decoration: none;
+  color: inherit;
+  background: transparent;
+}
+
+hatena-star a.star-type-0 { color: #fecd69 }
+hatena-star a.star-type-1 { color: #4de733 }
+hatena-star a.star-type-2 { color: #fe5e65 }
+hatena-star a.star-type-3 { color: #00b0f9 }
+hatena-star a.star-type-4 { color: #cd34e3 }
+
+hatena-star hatena-star-count {
+  margin-left: -.3em;
+  vertical-align: 1em;
+  font-size: 50%;
+}
+
+hatena-star hatena-star-count.star-count-1 {
+  visibility: hidden;
+}
+
+hatena-star img.hatena-user-icon {
+  position: absolute;
+  width: .7em;
+  height: .7em;
+  top: .7em;
+  margin-left: -.5em;
+  opacity: 0.8;
+}
+
+/*
+
+Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
+
+*/

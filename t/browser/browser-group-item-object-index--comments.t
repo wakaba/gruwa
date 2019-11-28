@@ -432,6 +432,68 @@ Test {
   });
 } n => 1, name => ['HTML and links'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [o2 => object => {
+      group => 'g1', account => 'a1',
+    }],
+    [o1 => object => {
+      group => 'g1', account => 'a1',
+      parent_object => 'o2',
+      body_type => 1, # html
+      body => q{<input type=checkbox name=a><input type=checkbox name=b>},
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o2')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments article gr-html-viewer iframe',
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('article-comments article gr-html-viewer iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'input[type=checkbox]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelectorAll ('input[type=checkbox]')[1].click ();
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b_wait (1 => {
+      selector => 'article-comments article gr-article-status action-status[status=ok]',
+    });
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $o1 = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $o1->{data}->{body_type}, 1;
+      like $o1->{data}->{body}, qr{^<input[^<>d]+><input[^<>d]*checked[^<>d]*>$};
+    } $current->c;
+  });
+} n => 2, name => ['checkbox'], browser => 1;
+
 RUN;
 
 =head1 LICENSE

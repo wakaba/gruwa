@@ -917,10 +917,15 @@ Web ブラウザーで開いてください。
               </menu-main>
             </popup-menu>
           </header>
-          <main><iframe data-data-field=body /></main>
+          <gr-article-main class=fullbody>
+            <gr-html-viewer seamlessheight checkboxeditable data-objectid-field=object_id data-filled=objectid data-field=data />
+          </gr-article-main>
           <footer class=object-info>
             <gr-stars data-field=object_id />
 
+            <gr-article-status>
+              <action-status stage-saver=保存中... ok=保存しました />
+            </gr-article-status>
             <gr-action-status hidden
                 stage-edit=保存中...
                 ok=保存しました />
@@ -1224,10 +1229,15 @@ Web ブラウザーで開いてください。
               </menu-main>
             </popup-menu>
           </header>
-          <main><iframe data-data-field=body /></main>
+          <gr-article-main class=fullbody>
+            <gr-html-viewer seamlessheight checkboxeditable data-objectid-field=object_id data-filled=objectid data-field=data />
+          </gr-article-main>
           <footer class=object-info>
             <gr-stars data-field=object_id />
-            
+
+            <gr-article-status>
+              <action-status stage-saver=保存中... ok=保存しました />
+            </gr-article-status>
             <gr-action-status hidden
                 stage-edit=保存中...
                 ok=保存しました />
@@ -1267,9 +1277,12 @@ Web ブラウザーで開いてください。
     <article itemscope itemtype=http://schema.org/Comment>
       <gr-object-author template=gr-object-author data-field=object.data />
       <gr-stars data-field=object.object_id />
-      <gr-comment-main class=oldiframeviewer>
-        <gr-html-viewer seamlessheight data-field=object.data />
+      <gr-comment-main class=fullbody>
+        <gr-html-viewer seamlessheight checkboxeditable data-objectid-field=object.object_id data-filled=objectid data-field=object.data />
         <gr-comment-info>
+          <gr-article-status>
+            <action-status stage-saver=保存中... ok=保存しました />
+          </gr-article-status>
           <a href data-href-template="/g/{object.group_id}/o/{object.object_id}/" class=timestamp>
             <time data-field=object.timestamp data-format=ambtime />
             (<time data-field=object.updated data-format=ambtime />)
@@ -1450,10 +1463,15 @@ Web ブラウザーで開いてください。
               </menu-main>
             </popup-menu>
           </header>
-          <main><iframe data-data-field=body /></main>
+          <gr-article-main class=fullbody>
+            <gr-html-viewer seamlessheight checkboxeditable data-objectid-field=object_id data-filled=objectid data-field=data />
+          </gr-article-main>
           <footer class=object-info>
             <gr-stars data-field=object_id />
 
+            <gr-article-status>
+              <action-status stage-saver=保存中... ok=保存しました />
+            </gr-article-status>
             <gr-action-status hidden
                 stage-edit=保存中...
                 ok=保存しました />
@@ -1673,10 +1691,15 @@ Web ブラウザーで開いてください。
               </menu-main>
             </popup-menu>
           </header>
-          <main><iframe data-data-field=body /></main>
+          <gr-article-main class=fullbody>
+            <gr-html-viewer seamlessheight checkboxeditable data-objectid-field=object_id data-filled=objectid data-field=data />
+          </gr-article-main>
           <footer class=object-info>
             <gr-stars data-field=object_id />
 
+            <gr-article-status>
+              <action-status stage-saver=保存中... ok=保存しました />
+            </gr-article-status>
             <gr-action-status hidden
                 stage-edit=保存中...
                 ok=保存しました />

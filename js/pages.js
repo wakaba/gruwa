@@ -769,7 +769,7 @@ defineElement ({
 GR.object = {};
 
 GR.object.get = function (objectId, opts) {
-  if (!opts.revisionId) {
+  if (!opts.revisionId && !opts.reload) {
     var v = GR._objects[objectId];
     if (v) {
       var needFetch = false;
@@ -1546,7 +1546,17 @@ defineElement ({
           GR.navigate.go (args.url, {});
         }
       });
-      // XXX checkboxChange
+      this.grViewer.pcRegisterMethod ('getStarData', args => {
+        var results = {};
+        var wait = [];
+        args.objectIds.forEach (objectId => {
+          wait.push (GR.object.get (objectId, {withData: true}).then (object => {
+            results[objectId] = (object.data.body_data || {}).hatena_star; // or undefined
+          }));
+        });
+
+        return Promise.all (wait).then (_ => results);
+      });
       
       var installMinimum = this.grViewer.pcInvoke ('pcEval', {code: `
         pcRegisterMethod ('appendHead', (args) => {
@@ -1555,14 +1565,13 @@ defineElement ({
           while (e.firstChild) {
             document.head.appendChild (e.firstChild);
           }
-          if (e.hasAttribute ('data-group-url')) {
-            document.documentElement.setAttribute ('data-group-url', e.getAttribute ('data-group-url'));
-          }
         });
         pcRegisterMethod ('setBody', (args) => {
           var fragment = document.createElement ('div');
           fragment.innerHTML = args.body;
-          
+
+          document.documentElement.setAttribute ('data-group-url', args.group_url);
+
           var imported = args.imported_sites || [];
           if (imported.length) {
             Array.prototype.forEach.call (fragment.querySelectorAll ('a[href], link[href], img[src], iframe[src]'), function (e) {
@@ -1580,26 +1589,88 @@ defineElement ({
               });
             });
           } // imported.length
+
+          var setStarShadow = (e, data) => {
+            var sr = e.attachShadow ({mode: 'open'});
+
+            var link = document.createElement ('link');
+            link.rel = 'stylesheet';
+            link.href = '/css/hatenastar.css';
+            sr.appendChild (link);
+
+            sr.appendChild (document.createElement ('slot'));
+            var f = document.createElement ('hatena-star');
+            if (document.body.isContentEditable) {
+              f.style.pointerEvents = 'none';
+              f.onclick = function () { return false };
+            }
+
+            data.sort (function (a, b) {
+              return b[1] - a[1] || b[2] - a[2];
+            }).forEach (star => {
+              var a = document.createElement ('a');
+              a.href = 'https://profile.hatena.ne.jp/'+star[0]+'/';
+              a.setAttribute ('referrerpolicy', 'no-referrer');
+              a.title = star[0];
+              if (star[3].length) a.title += ' ' + star[3];
+              a.className = 'star-type-' + star[1];
+              a.innerHTML = '<span>★</span><img class=hatena-user-icon><hatena-star-count></hatena-star-count>';
+              var img = a.childNodes[1];
+              img.alt = star[0];
+              img.referrerpolicy = 'no-referrer';
+              img.src = 'https://cdn1.www.st-hatena.com/users/'+star[0].substring (0, 2)+'/'+star[0]+'/profile.gif';
+              var sc = a.lastChild;
+              sc.className = 'star-count-' + star[2];
+              sc.textContent = star[2];
+              a.onclick = () => {
+                pcInvoke ('navigate', {url: a.href});
+                return false;
+              };
+              f.appendChild (a);
+            });
+
+            sr.appendChild (f);
+          }; // setStarShadow
           
-          document.gruwaHatenaStarMap = {};
           fragment.querySelectorAll ('hatena-html[starmap]').forEach ((e) => {
-            var values = e.getAttribute ('starmap').split (/\s+/);
+            var hatenaStarMap = {};
+            var values = e.getAttribute ('starmap').split (/\\s+/);
             while (values.length) {
               var id = values.shift ();
               var objectId = values.shift ();
-              document.gruwaHatenaStarMap[id] = objectId;
+              hatenaStarMap[id] = objectId;
+            }
+
+            var starElements = new Map;
+            e.querySelectorAll ('.section > h3.title > a[name], .section > h3[id], section > h1[data-hatena-timestamp]').forEach (_ => {
+              if (_.localName === 'a') { // Hatena Group formatter
+                var h = _.parentNode;
+                var objectId = hatenaStarMap[_.name];
+                if (objectId) {
+                  //h.setAttribute ('data-debug-starelement', objectId);
+                  starElements.set (h, objectId);
+                }
+              } else { // Formatter.hatena
+                var objectId = hatenaStarMap[_.id];
+                if (objectId) {
+                  //_.setAttribute ('data-debug-starelement', objectId);
+                  starElements.set (_, objectId);
+                }
+              }
+            });
+
+            if (starElements.size) {
+              return pcInvoke ('getStarData', {
+                objectIds: Array.from (starElements.values ()),
+              }).then (starData => {
+                Array.from (starElements.keys ()).forEach (e => {
+                  var objectId = starElements.get (e);
+                  var data = starData[objectId] || [];
+                  if (data.length) setStarShadow (e, data);
+                });
+              });
             }
           });
-          /* XXX
-    $$ (fragment, 'hatena-html .section > h3.title > a[name], hatena-html .section > h3[id], hatena-html section > h1[data-hatena-timestamp]').forEach (function (a) {
-      if (a.localName === 'a') { // Hatena group's HTML
-        var h = a.parentNode;
-        upgradeHatenaTitle (h, a.name);
-      } else { // Hatena blog's HTML
-        upgradeHatenaTitle (a, a.id);
-      }
-    });
-          */
 
           document.body.textContent = '';
           document.body.setAttribute ('data-source-type', args.body_source_type || 0);
@@ -1625,7 +1696,6 @@ defineElement ({
 
       installMinimum.then (() => {
         var div = document.createElement ('div');
-        div.setAttribute ('data-group-url', document.documentElement.getAttribute ('data-group-url'));
 
         var base = document.createElement ('base');
         base.href = location.href;
@@ -1678,28 +1748,101 @@ defineElement ({
           });
         });
       });
+
+      if (this.hasAttribute ('checkboxeditable')) { // XXX and not editable
+        installMinimum.then (() => {
+          this.grViewer.pcRegisterMethod ('checkboxChanged', args => {
+            clearTimeout (this.grSaveTimer);
+            this.grSaveTimer = setTimeout (() => this.grSave (), 10000);
+          });
+          this.grViewer.pcInvoke ('pcEval', {code: `
+            window.addEventListener ('change', ev => {
+              var e = ev.target;
+              if (e.type === 'checkbox' &&
+                  e.localName === 'input') {
+                if (e.checked !== e.defaultChecked) {
+                  e.defaultChecked = e.checked;
+
+                  var f = e.parentNode;
+                  while (f) {
+                    if (f.localName === 'li') break;
+                    f = f.parentNode;
+                  }
+                  if (f) {
+                    if (e.checked) {
+                      f.setAttribute ('data-checked', '');
+                    } else {
+                      f.removeAttribute ('data-checked');
+                    }
+                  }
+                  pcInvoke ('checkboxChanged', {});
+                }
+              }
+            });
+          `}); // onchange
+        });
+      } // checkboxeditable
       
       return installMinimum;
     }, // grInit
+    grSave: function () {
+      if (!this.grEditableData) return;
+
+      var c = this.parentNode;
+      while (c) {
+        if (c.localName === 'article') break;
+        c = c.parentNode;
+      }
+      if (c) c = c.querySelector ('gr-article-status');
+      var as;
+      if (c) as = c.pcActionStatus ();
+      if (as) as.start ({stages: ['saver']});
+      if (as) as.stageStart ('saver');
+      var objectId = this.getAttribute ('objectid');
+      return this.grViewer.pcInvoke ('pcEval', {code: "return document.body.innerHTML"}).then (body => {
+        var data = this.grEditableData;
+        data.body = body;
+        data.body_source_type = 0; // WYSIWYG
+        delete data.body_source;
+        var fd = new FormData;
+        fd.append ('body', data.body);
+        fd.append ('body_type', data.body_type);
+        return gFetch ('o/'+objectId+'/edit.json', {post: true, formData: fd});
+      }).then (() => {
+        if (as) as.end ({ok: true});
+        GR.object.get (objectId, {reload: true, withData: true}); // XXX background
+      }, e => {
+        if (as) as.end ({error: e});
+        else throw e;
+      });
+    }, // grSave
     grSetObject: function (data) {
+      if (this.hasAttribute ('checkboxeditable') &&
+          data.body_type == 1 /* html */ &&
+          (data.body_source_type || 0) == 0 /* WYSIWYG */) {
+        this.grEditableData = data;
+      } else {
+        delete this.grEditableData;
+      }
       return GR.group.importedSites ().then (sites => {
         return this.grViewer.pcInvoke ('setBody', {
           body: data.body,
           body_source_type: data.body_source_type,
           imported_sites: sites,
+          group_url: document.documentElement.getAttribute ('data-group-url'),
         });
       });
-
-      /* XXX
-        } else if (ev.data.type === 'getObjectWithData') {
-        GR.object.data (ev.data.value, {withData: true}).then (function (object) {
-          ev.ports[0].postMessage (object);
-        });
-    */
-
     }, // grSetObject
   },
 }); // <gr-html-viewer>
+
+defineElement ({
+  name: 'gr-article-status',
+  pcActionStatus: true,
+  props: {
+    pcInit: function () { },
+  },
+}); // <gr-article-status>
 
 function createBodyHTML (value, opts) {
   var doc = (new DOMParser).parseFromString ("", "text/html");
@@ -1845,6 +1988,9 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       }
       field.hidden = ! matched;
 
+    } else if (field.localName === 'gr-html-viewer') {
+      field.value = value;
+      field.setAttribute ('objectid', object.object_id);
     } else {
       field.textContent = value || field.getAttribute ('data-empty');
     }
@@ -2285,7 +2431,7 @@ function upgradeBodyControl (e, object, opts) {
         var result = prompt (args.prompt, args.default);
         ev.ports[0].postMessage ({result: result});
       } else if (ev.data.type === 'getObjectWithData') {
-        GR.object.data (ev.data.value, {withData: true}).then (function (object) {
+        GR.object.get (ev.data.value, {withData: true}).then (function (object) {
           ev.ports[0].postMessage (object);
         });
       }
