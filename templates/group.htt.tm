@@ -917,7 +917,9 @@ Web ブラウザーで開いてください。
               </menu-main>
             </popup-menu>
           </header>
-          <main><iframe data-data-field=body /></main>
+          <gr-article-main class=fullbody>
+            <gr-html-viewer seamlessheight data-field=data />
+          </gr-article-main>
           <footer class=object-info>
             <gr-stars data-field=object_id />
 
@@ -1224,7 +1226,9 @@ Web ブラウザーで開いてください。
               </menu-main>
             </popup-menu>
           </header>
-          <main><iframe data-data-field=body /></main>
+          <gr-article-main class=fullbody>
+            <gr-html-viewer seamlessheight data-field=data />
+          </gr-article-main>
           <footer class=object-info>
             <gr-stars data-field=object_id />
             
@@ -1267,7 +1271,7 @@ Web ブラウザーで開いてください。
     <article itemscope itemtype=http://schema.org/Comment>
       <gr-object-author template=gr-object-author data-field=object.data />
       <gr-stars data-field=object.object_id />
-      <gr-comment-main class=oldiframeviewer>
+      <gr-comment-main class=fullbody>
         <gr-html-viewer seamlessheight data-field=object.data />
         <gr-comment-info>
           <a href data-href-template="/g/{object.group_id}/o/{object.object_id}/" class=timestamp>
@@ -1450,7 +1454,9 @@ Web ブラウザーで開いてください。
               </menu-main>
             </popup-menu>
           </header>
-          <main><iframe data-data-field=body /></main>
+          <gr-article-main class=fullbody>
+            <gr-html-viewer seamlessheight data-field=data />
+          </gr-article-main>
           <footer class=object-info>
             <gr-stars data-field=object_id />
 
@@ -1673,7 +1679,9 @@ Web ブラウザーで開いてください。
               </menu-main>
             </popup-menu>
           </header>
-          <main><iframe data-data-field=body /></main>
+          <gr-article-main class=fullbody>
+            <gr-html-viewer seamlessheight data-field=data />
+          </gr-article-main>
           <footer class=object-info>
             <gr-stars data-field=object_id />
 

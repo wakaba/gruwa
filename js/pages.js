@@ -1845,6 +1845,8 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       }
       field.hidden = ! matched;
 
+    } else if (field.localName === 'gr-html-viewer') {
+      field.value = value;
     } else {
       field.textContent = value || field.getAttribute ('data-empty');
     }
