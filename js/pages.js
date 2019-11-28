@@ -769,7 +769,7 @@ defineElement ({
 GR.object = {};
 
 GR.object.get = function (objectId, opts) {
-  if (!opts.revisionId) {
+  if (!opts.revisionId && !opts.reload) {
     var v = GR._objects[objectId];
     if (v) {
       var needFetch = false;
@@ -1546,7 +1546,6 @@ defineElement ({
           GR.navigate.go (args.url, {});
         }
       });
-      // XXX checkboxChange
       this.grViewer.pcRegisterMethod ('getStarData', args => {
         var results = {};
         var wait = [];
@@ -1749,10 +1748,82 @@ defineElement ({
           });
         });
       });
+
+      if (this.hasAttribute ('checkboxeditable')) { // XXX and not editable
+        installMinimum.then (() => {
+          this.grViewer.pcRegisterMethod ('checkboxChanged', args => {
+            clearTimeout (this.grSaveTimer);
+            this.grSaveTimer = setTimeout (() => this.grSave (), 10000);
+          });
+          this.grViewer.pcInvoke ('pcEval', {code: `
+            window.addEventListener ('change', ev => {
+              var e = ev.target;
+              if (e.type === 'checkbox' &&
+                  e.localName === 'input') {
+                if (e.checked !== e.defaultChecked) {
+                  e.defaultChecked = e.checked;
+
+                  var f = e.parentNode;
+                  while (f) {
+                    if (f.localName === 'li') break;
+                    f = f.parentNode;
+                  }
+                  if (f) {
+                    if (e.checked) {
+                      f.setAttribute ('data-checked', '');
+                    } else {
+                      f.removeAttribute ('data-checked');
+                    }
+                  }
+                  pcInvoke ('checkboxChanged', {});
+                }
+              }
+            });
+          `}); // onchange
+        });
+      } // checkboxeditable
       
       return installMinimum;
     }, // grInit
+    grSave: function () {
+      if (!this.grEditableData) return;
+
+      var c = this.parentNode;
+      while (c) {
+        if (c.localName === 'article') break;
+        c = c.parentNode;
+      }
+      if (c) c = c.querySelector ('gr-article-status');
+      var as;
+      if (c) as = c.pcActionStatus ();
+      if (as) as.start ({stages: ['saver']});
+      if (as) as.stageStart ('saver');
+      var objectId = this.getAttribute ('objectid');
+      return this.grViewer.pcInvoke ('pcEval', {code: "return document.body.innerHTML"}).then (body => {
+        var data = this.grEditableData;
+        data.body = body;
+        data.body_source_type = 0; // WYSIWYG
+        delete data.body_source;
+        var fd = new FormData;
+        fd.append ('body', data.body);
+        fd.append ('body_type', data.body_type);
+        return gFetch ('o/'+objectId+'/edit.json', {post: true, formData: fd});
+      }).then (() => {
+        if (as) as.end ({ok: true});
+        GR.object.get (objectId, {reload: true, withData: true}); // XXX background
+      }, e => {
+        if (as) as.end ({error: e});
+        else throw e;
+      });
+    }, // grSave
     grSetObject: function (data) {
+      if (this.hasAttribute ('checkboxeditable') &&
+          data.body_type == 1 /* html */ &&
+          (data.body_source_type || 0) == 0 /* WYSIWYG */) {
+        this.grEditableData = data;
+      } else {
+        delete this.grEditableData;
+      }
       return GR.group.importedSites ().then (sites => {
         return this.grViewer.pcInvoke ('setBody', {
           body: data.body,
@@ -1764,6 +1835,14 @@ defineElement ({
     }, // grSetObject
   },
 }); // <gr-html-viewer>
+
+defineElement ({
+  name: 'gr-article-status',
+  pcActionStatus: true,
+  props: {
+    pcInit: function () { },
+  },
+}); // <gr-article-status>
 
 function createBodyHTML (value, opts) {
   var doc = (new DOMParser).parseFromString ("", "text/html");
@@ -1911,6 +1990,7 @@ function fillFields (contextEl, rootEl, el, object, opts) {
 
     } else if (field.localName === 'gr-html-viewer') {
       field.value = value;
+      field.setAttribute ('objectid', object.object_id);
     } else {
       field.textContent = value || field.getAttribute ('data-empty');
     }
