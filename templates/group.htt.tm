@@ -4,6 +4,7 @@
   <template>
     <gr-mn-main>
       メールアドレスが登録されていません。
+      登録すると通知をメールでお届けします。
       <a href=/dashboard/receive#emails class=main-button>登録する</a>
     </gr-mn-main>
     <button type=button class=cancel-button title="今後このメッセージを表示しない">×</button>
@@ -1267,7 +1268,7 @@ Web ブラウザーで開いてください。
       <gr-object-author template=gr-object-author data-field=object.data />
       <gr-stars data-field=object.object_id />
       <gr-comment-main class=oldiframeviewer>
-        <iframe is=gr-old-iframe-viewer data-field=object />
+        <gr-html-viewer seamlessheight data-field=object.data />
         <gr-comment-info>
           <a href data-href-template="/g/{object.group_id}/o/{object.object_id}/" class=timestamp>
             <time data-field=object.timestamp data-format=ambtime />

@@ -1523,6 +1523,10 @@ defineElement ({
     pcInit: function () {
       var e = document.createElement ('sandboxed-viewer');
       if (this.hasAttribute ('seamlessheight')) e.setAttribute ('seamlessheight', '');
+      this.grMode = this.getAttribute ('mode') || 'viewer';
+      if (this.grMode === 'viewer') {
+        e.setAttribute ('allowsandbox', 'allow-popups');
+      }
       this.appendChild (e);
       this.grViewer = e;
 
@@ -1538,9 +1542,11 @@ defineElement ({
       });
 
       this.grViewer.pcRegisterMethod ('navigate', args => {
-        // XXX
-        console.log (args);
+        if (this.grMode === 'viewer') {
+          GR.navigate.go (args.url, {});
+        }
       });
+      // XXX checkboxChange
       
       var installMinimum = this.grViewer.pcInvoke ('pcEval', {code: `
         pcRegisterMethod ('appendHead', (args) => {

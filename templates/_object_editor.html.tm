@@ -44,7 +44,7 @@
             <textarea />
           </body-control-tab>
           <body-control-tab name=preview hidden>
-            <gr-html-viewer />
+            <gr-html-viewer mode=preview />
           </body-control-tab>
           <body-control-tab name=config hidden>
             <table class=config>

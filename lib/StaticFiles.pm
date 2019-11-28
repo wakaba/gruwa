@@ -49,7 +49,8 @@ sub temma_html ($$$$$$) {
   my $r = $app->bare_param ('r');
   my $http = $app->http;
   if (defined $HTMLCache->{$name, $key}) {
-    if (not defined $r or $r eq $app->rev) {
+    if ((not defined $r and not $app->config->{is_local}) or
+        $r eq $app->rev) {
       $http->set_response_last_modified ($HTMLCache->{$name, $key}->[0]);
     } else {
       $http->add_response_header ('cache-control', 'no-cache');

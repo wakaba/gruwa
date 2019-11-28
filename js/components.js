@@ -1761,7 +1761,8 @@ License along with this program, see <https://www.gnu.org/licenses/>.
         this.pcChannelOutsideKey = '' + Math.random ();
         this.pcChannelInsideKey = '' + Math.random ();
         this.pcIFrame.src = 'data:text/html;charset=utf-8,' + encodeURIComponent ('<!DOCTYPE HTML><script>onmessage=(ev)=>{if (ev.data&&ev.data[0]==="'+this.pcChannelOutsideKey+'"){new Function(ev.data[1])(ev.ports[0],"'+this.pcChannelInsideKey+'")}}</script>');
-        this.pcIFrame.sandbox = 'allow-scripts allow-same-origin allow-forms';
+        this.pcIFrame.sandbox = 'allow-scripts allow-same-origin allow-forms ' + (this.getAttribute ('allowsandbox') || '');
+        this.pcIFrame.allow = this.getAttribute ('allow') || '';
         this.pcIFrame.onload = () => this.pcCreateChannel ();
         this.appendChild (this.pcIFrame);
         this.ready = new Promise ((ok, ng) => {

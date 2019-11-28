@@ -314,6 +314,124 @@ Test {
   });
 } n => 1, name => ['plaintext HTML'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [i1 => index => {
+      account => 'a1',
+      group => 'g1',
+      index_type => 3, # todo
+      todo_state => 1, # open
+    }],
+    [o3 => object => {
+      group => 'g1', account => 'a1',
+      title => $current->generate_text (t2 => {}),
+    }],
+    [o2 => object => {
+      group => 'g1', account => 'a1',
+      index => 'i1',
+    }],
+  )->then (sub {
+    return $current->create (
+      [o1 => object => {
+        parent_object => 'o2',
+        group => 'g1', account => 'a1',
+        body_type => 1, # html
+        body => q{<p style="min-height: 20em">} . $current->generate_text (t1 => {}) . qq{<a href="../@{[$current->o ('o3')->{object_id}]}/">link</a> <a href=https://www.example.com/>link2</a>},
+      }],
+    );
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o2')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article-comments article gr-html-viewer iframe',
+      shown => 1, scroll => 1,
+    });
+  })->then (sub {
+    return $current->b_screenshot (1, 'before switch');
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('article-comments article gr-html-viewer iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'body',
+      text => $current->o ('t1'),
+      name => 'body text',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'body a',
+      name => 'link in body text',
+    });
+  })->then (sub {
+    return $current->b_screenshot (1, 'before move');
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('body a');
+    });
+  })->then (sub {
+    return $current->b_pointer_move (1, {
+      element => $_[0]->json->{value},
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b_wait (1 => {
+      selector => 'gr-tooltip-box',
+      text => $current->o ('t2'),
+      name => 'referenced object title in tooltip',
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('article-comments article gr-html-viewer iframe');
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var link = document.querySelector ('body a:nth-of-type(2)');
+      link.click ();
+
+      document.body.style.margin = 0;
+      document.body.style.padding = 0;
+      var e = document.createElement ('div');
+      e.style.top = 0;
+      e.style.left = 0;
+      e.style.height = 1020 + 'px';
+      e.style.width = 100 + "px";
+      document.body.textContent = '';
+      document.body.appendChild (e);
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-navigate-dialog',
+      text => 'www.example.com',
+      name => 'external link dialog',
+    });
+  })->then (sub {
+    return $current->b_screenshot (1, 'after dialog');
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('article-comments article gr-html-viewer iframe').offsetHeight;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, 1020, 'seamlessheight';
+    } $current->c;
+  });
+} n => 1, name => ['HTML and links'], browser => 1;
+
 RUN;
 
 =head1 LICENSE
@@ -330,7 +448,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut
