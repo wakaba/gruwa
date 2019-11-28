@@ -110,13 +110,21 @@ Test {
     [g1 => group => {
       members => ['a1'],
     }],
-    [o1 => object => {
-      group => 'g1',
-      account => 'a1',
-      body => $current->generate_text (t1 => {}),
-      body_source_type => 4, # plain text
+    [o2 => object => {
+      group => 'g1', account => 'a1',
+      title => $current->generate_text (t2 => {}),
     }],
   )->then (sub {
+    return $current->create (
+      [o1 => object => {
+        group => 'g1',
+        account => 'a1',
+        body_type => 1,
+        body_source => $current->generate_text (t1 => {}) . qq{<a href="../@{[$current->o ('o2')->{object_id}]}/">link</a>},
+        body_source_type => 3, # hatena
+      }],
+    );
+  })->then (sub {
     return $current->create_browser (1 => {
       url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
       account => 'a1',
@@ -140,6 +148,12 @@ Test {
     });
   })->then (sub {
     return $current->b (1)->execute (q{
+      document.querySelector ('edit-container body-control textarea').value += Math.random ();
+    });
+  })->then (sub {
+    return $current->b_screenshot (1, 'before preview click');
+  })->then (sub {
+    return $current->b (1)->execute (q{
       document.querySelector ('edit-container body-control a[data-name=preview]').click ();
     });
   })->then (sub {
@@ -152,7 +166,31 @@ Test {
     return $current->b_wait (1 => {
       selector => 'body',
       text => $current->o ('t1'),
-      name => 'plaintext body text',
+      name => 'body text',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'body a',
+      name => 'link in body text',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('body a');
+    });
+  })->then (sub {
+    return $current->b_pointer_move (1, {
+      element => $_[0]->json->{value},
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-tooltip-box',
+      text => $current->o ('t2'),
+      name => 'referenced object title in tooltip',
     });
   })->then (sub {
     test {

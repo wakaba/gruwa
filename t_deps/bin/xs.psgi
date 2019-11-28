@@ -110,6 +110,22 @@ return sub {
       $http->send_response_body_as_ref (\perl2json_bytes ($Mails->{$addr} || []));
       return $http->close_response_body;
     }
+
+    if ($path eq '/formatter/hatena') {
+      my $formatted = '<hatena>' . ${$http->request_body_as_ref} . '</hatena>';
+      $http->set_status (200);
+      $http->set_response_header ('content-type', 'text/plain;charset=utf-8');
+      $http->set_response_header ('access-control-allow-origin', '*');
+      $http->send_response_body_as_ref (\$formatted);
+      return $http->close_response_body;
+    } elsif ($path eq '/formatter/autolink') {
+      my $formatted = '<autolink>' . ${$http->request_body_as_ref} . '</autolink>';
+      $http->set_status (200);
+      $http->set_response_header ('content-type', 'text/plain;charset=utf-8');
+      $http->set_response_header ('access-control-allow-origin', '*');
+      $http->send_response_body_as_ref (\$formatted);
+      return $http->close_response_body;
+    }
     
     return $app->send_error (404);
   });

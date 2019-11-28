@@ -1,5 +1,6 @@
-<html t:params="$app_env $app_rev"
+<html t:params="$app_env $app_rev $formatter_url_prefix"
     pl:data-env="$app_env"
+    pl:data-formatter-url=$formatter_url_prefix
     data-theme=green>
 <head>
   <title>Gruwa</title>
@@ -10,7 +11,7 @@
 <script pl:src="'/js/components.js?r='.$app_rev" class=body-js async data-export="$fill $promised $getTemplateSet $paco" data-time-selector="time:not(.asis)" />
 <script pl:src="'/js/framework.js?r='.$app_rev" class=body-js />
 <script pl:src="'/js/pages.js?r='.$app_rev" async />
-<link rel=preload as=fetch pl:href="'/html/group.htt?r='.$app_rev" is=gr-html-import>
+<link rel=preload as=fetch pl:href="'/html/group.htt?r='.$app_rev" is=gr-html-import crossorigin>
 <link rel=preload as=style pl:href="'/css/body.css?r='.$app_rev" class=body-css>
 <link rel=preload as=script pl:href="'/js/body.js?r='.$app_rev" class=body-js>
 

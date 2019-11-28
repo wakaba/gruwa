@@ -189,9 +189,22 @@ GR.Favicon.redraw = function () {
   var m = location.pathname.match (/^\/g\/([0-9]+)\//);
   if (m) {
     document.documentElement.setAttribute ('data-group-url', '/g/' + m[1]);
+
+    var link = document.createElement ('link');
+    link.rel = 'prefetch';
+    link.as = 'fetch';
+    link.href = '/g/' + m[1] + '/my/info.json';
+    document.head.appendChild (link);
+
     var link = document.createElement ('link');
     link.rel = 'icon';
     link.href = '/g/' + m[1] + '/icon';
+    document.head.appendChild (link);
+  } else {
+    var link = document.createElement ('link');
+    link.rel = 'prefetch';
+    link.as = 'fetch';
+    link.href = '/my/info.json';
     document.head.appendChild (link);
   }
   
@@ -1529,7 +1542,7 @@ defineElement ({
         console.log (args);
       });
       
-      return this.grViewer.pcInvoke ('pcEval', {code: `
+      var installMinimum = this.grViewer.pcInvoke ('pcEval', {code: `
         pcRegisterMethod ('appendHead', (args) => {
           var e = document.createElement ('div');
           e.innerHTML = args.value;
@@ -1602,8 +1615,9 @@ defineElement ({
             ev.preventDefault ();
           }
         }); // click
-                                                
-      `}).then (() => {
+      `}); // installMinimum
+
+      installMinimum.then (() => {
         var div = document.createElement ('div');
         div.setAttribute ('data-group-url', document.documentElement.getAttribute ('data-group-url'));
 
@@ -1620,6 +1634,46 @@ defineElement ({
 
         return this.grViewer.pcInvoke ('appendHead', {value: div.innerHTML});
       });
+
+      // XXX if not editable
+      installMinimum.then (() => {
+        this.grViewer.pcInvoke ('pcEval', {code: `
+          var over = false;
+          window.addEventListener ('mouseover', ev => {
+            var parent = ev.target;
+            while (parent) {
+              if (parent.localName === 'a' ||
+                  parent.localName === 'area') {
+                break;
+              } else {
+                parent = parent.parentNode;
+              }
+            }
+            if (parent &&
+                (parent.localName === 'a' || parent.localName === 'area')) {
+              pcInvoke ('linkSelected', {
+                url: parent.href,
+                top: parent.offsetTop, left: parent.offsetLeft,
+                width: parent.offsetWidth, height: parent.offsetHeight,
+              });
+              over = true;
+            } else {
+              if (over) {
+                pcInvoke ('linkSelected', {});
+                over = false;
+              }
+            }
+          });
+        `});
+        this.grViewer.pcRegisterMethod ('linkSelected', args => {
+          GR.tooltip.showURL (args.url, {
+            top: this.offsetTop + args.top + args.height,
+            left: this.offsetLeft + args.left,
+          });
+        });
+      });
+      
+      return installMinimum;
     }, // grInit
     grSetObject: function (data) {
       return GR.group.importedSites ().then (sites => {
@@ -2125,6 +2179,7 @@ function upgradeBodyControl (e, object, opts) {
     });
     var as = getActionStatus (opts.form);
     as.start ({stages: ["saver", "loader"]});
+    
     changeMode (name, as).then (function () {
       as.end ({ok: true});
     }, function (error) {
@@ -4624,7 +4679,7 @@ Formatter.html = function (source) {
 }; // html
 
 Formatter.hatena = function (source) {
-  return fetch ("https://textformatter.herokuapp.com/hatena", { // XXX
+  return fetch (document.documentElement.getAttribute ('data-formatter-url') + "/hatena", {
     method: "post",
     body: source,
   }).then (function (r) {
@@ -4656,7 +4711,7 @@ Formatter.hatena = function (source) {
 }; // hatena
 
 Formatter.autolink = function (source) {
-  return fetch ("https://textformatter.herokuapp.com/autolink", { // XXX
+  return fetch (document.documentElement.getAttribute ('data-formatter-url') + "/autolink", {
     method: "post",
     body: source,
   }).then (function (r) {

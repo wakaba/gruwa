@@ -179,6 +179,7 @@ sub group_pjax ($$) {
   my ($class, $app) = @_;
   return $class->temma_html ($app, 'text/html', 'group.index.html.tm', {
     app_env => $app->config->{env_name},
+    formatter_url_prefix => $app->config->{formatter}->{url},
     app_rev => $app->rev,
   }, $app->rev);
 } # group_pjax
