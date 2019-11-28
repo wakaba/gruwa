@@ -35,5 +35,8 @@
   },
   "bitbucket": {
     "public": {"client_id": "..."}
+  },
+  "formatter": {
+    "url": "http://xs.server.test/formatter"
   }
 }

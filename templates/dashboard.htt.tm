@@ -4,6 +4,7 @@
   <template>
     <gr-mn-main>
       メールアドレスが登録されていません。
+      登録すると通知をメールでお届けします。
       <a href=/dashboard/receive#emails class=main-button>登録する</a>
     </gr-mn-main>
     <button type=button class=cancel-button title="今後このメッセージを表示しない">×</button>

@@ -411,7 +411,7 @@ gr-html-viewer:not([hidden]) {
 }
 
 gr-html-viewer > sandboxed-viewer:not([hidden]) {
-  display: contents;
+  display: block;
 }
 
 form {

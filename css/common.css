@@ -606,8 +606,8 @@ article-comments article gr-comment-main.plaintextbody {
   width: fit-content;
 }
 
-article-comments article gr-comment-main > iframe {
-  vertical-align: bottom;
+article-comments article gr-comment-main iframe {
+  width: 100%;
 }
 
 article-comments article gr-comment-info:not([hidden]) {

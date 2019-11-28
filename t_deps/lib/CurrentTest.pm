@@ -402,8 +402,9 @@ sub create_object ($$$) {
         $param{edit_index_id} = 1;
       }
     }
-    for my $key (qw(timestamp body_type user_status owner_status
-                    title body todo_state author_name author_hatena_id)) {
+    for my $key (qw(timestamp user_status owner_status
+                    title todo_state author_name author_hatena_id
+                    body body_type body_source body_source_type)) {
       $param{$key} = $opts->{$key} if defined $opts->{$key};
     }
     if (defined $opts->{parent_object}) {
