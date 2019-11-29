@@ -34,11 +34,14 @@
           <button type=button data-action=link data-command=url title="Web サイトにリンク">://</button
           ><button type=button data-action=link data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
 
-              <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button
+              <button type=button data-action=insertCheckbox title=チェック項目>☑</button
               ><button type=button data-action=panel data-value=image-list title=画像>&#x1F5BC;</button
               ><button type=button data-action=panel data-value=file-list title=ファイル>&#x1F4C4;</button>
             </menu>
-            <gr-html-viewer mode=editor />
+            <gr-html-viewer mode=editor
+                prompt-link-url=リンク先のURLを指定してください。
+                prompt-link-wiki-name=リンク先のWiki名を指定してください。
+            />
           </body-control-tab>
           <body-control-tab name=textarea hidden>
             <textarea />
@@ -249,9 +252,6 @@
         data-wiki-name-prompt=リンク先のWiki名を指定してください。
         title=リンク先を編集>編集</button>
   </template>
-  <template id=edit-texts class=body-edit-template
-      data-link-url-prompt=リンク先のURLを指定してください。
-      data-link-wiki-name-prompt=リンク先のWiki名を指定してください。 />
 
   <gr-list-container type=$with id=index-list src=i/list.json key=index_list itemkey=index_id />
   <gr-list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />

@@ -10,8 +10,8 @@
   <meta name=theme-color content="green">
   <link rel=stylesheet pl:href="'/css/common.css?r='.$app_rev">
   <link rel=icon href=/favicon.ico>
-  <script pl:src="'/js/components.js?r='.$app_rev" class=body-js async data-export="$fill $promised $getTemplateSet $paco" data-time-selector="time:not(.asis)" />
-  <script pl:src="'/js/framework.js?r='.$app_rev" class=body-js />
+  <script pl:src="'/js/components.js?r='.$app_rev" async data-export="$fill $promised $getTemplateSet $paco" data-time-selector="time:not(.asis)" />
+  <script pl:src="'/js/framework.js?r='.$app_rev" />
   <script pl:src="'/js/pages.js?r='.$app_rev" async />
   <link rel=preload as=fetch pl:href="'/html/dashboard.htt?r='.$app_rev" is=gr-html-import crossorigin>
 

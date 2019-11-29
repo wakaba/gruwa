@@ -1933,6 +1933,9 @@ License along with this program, see <https://www.gnu.org/licenses/>.
           `});
         });
       }, // pcSetSeamless
+      focus: function () {
+        if (this.pcIFrame) this.pcIFrame.focus ();
+      }, // focus
     }, // props
   }); // <sandboxed-viewer>
   

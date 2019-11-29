@@ -625,11 +625,6 @@ article-comments article gr-comment-info a:not(:hover):not(:focus):not(:active) 
   text-decoration: none;
 }
 
-iframe[is=gr-old-iframe-viewer] {
-  border-style: none;
-  width: 100%;
-}
-
 gr-action-log:not([hidden]) {
   display: block;
   margin: 1rem 5rem;

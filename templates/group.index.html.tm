@@ -8,12 +8,11 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name=theme-color content="green">
 <link rel=stylesheet pl:href="'/css/common.css?r='.$app_rev">
-<script pl:src="'/js/components.js?r='.$app_rev" class=body-js async data-export="$fill $promised $getTemplateSet $paco" data-time-selector="time:not(.asis)" />
-<script pl:src="'/js/framework.js?r='.$app_rev" class=body-js />
+<script pl:src="'/js/components.js?r='.$app_rev" async data-export="$fill $promised $getTemplateSet $paco" data-time-selector="time:not(.asis)" />
+<script pl:src="'/js/framework.js?r='.$app_rev" />
 <script pl:src="'/js/pages.js?r='.$app_rev" async />
 <link rel=preload as=fetch pl:href="'/html/group.htt?r='.$app_rev" is=gr-html-import crossorigin>
 <link rel=preload as=style pl:href="'/css/body.css?r='.$app_rev" class=body-css>
-<link rel=preload as=script pl:href="'/js/body.js?r='.$app_rev" class=body-js>
 
 <body>
   <header class=page>
