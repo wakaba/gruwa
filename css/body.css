@@ -100,22 +100,6 @@ hatena-html h6 {
   text-align: var(--header6-align);
 }
 
-menu.context {
-  position: absolute;
-  margin: 0;
-  border: none;
-  border-color: var(--light-1-border-color);
-  padding: .5em;
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-  box-shadow: 2px 2px var(--light-1-shadow-color);
-  white-space: normal;
-}
-
-menu.context button {
-  
-}
-
 ul, ol {
   margin: 0 1em;
   padding: 0 0 0 1.5em;

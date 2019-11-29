@@ -1513,6 +1513,25 @@ gr-tooltip-box > object-ref a:not([hidden]) {
   margin-left: 0;
 }
 
+gr-toolbar:not([hidden]) {
+  position: absolute;
+  display: block;
+  margin: 0 !important;
+  border: 1px solid;
+  border-color: var(--menu-border-color);
+  padding: .5em;
+  max-width: 60em;
+  font-size: 90%;
+  background: var(--menu-background-color);
+  color: var(--menu-color);
+  box-shadow: 1px 1px var(--menu-shadow-color);
+  white-space: normal;
+}
+
+gr-toolbar a:not([hidden]) {
+  display: inline-block;
+}
+
 gr-object-meta {
   font-size: 90%;
 }

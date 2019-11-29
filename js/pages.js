@@ -1536,7 +1536,7 @@ defineElement ({
       var e = document.createElement ('sandboxed-viewer');
       if (this.hasAttribute ('seamlessheight')) e.setAttribute ('seamlessheight', '');
       this.grMode = this.getAttribute ('mode') || 'viewer';
-      if (this.grMode === 'viewer') {
+      if (this.grMode === 'viewer' || this.grMode === 'editor') {
         e.setAttribute ('allowsandbox', 'allow-popups');
       }
       this.appendChild (e);
@@ -1713,11 +1713,22 @@ defineElement ({
           if (n &&
               (n.protocol === 'https:' || n.protocol === 'http:') &&
               (n.target === '' || n.target === '_blank') &&
-              !n.hasAttribute ('is')) {
+              !n.hasAttribute ('is') &&
+              !n.hasAttribute ('data-gr-editor')) {
             pcInvoke ('navigate', {url: n.href});
             ev.preventDefault ();
           }
         }); // click
+
+        window.addEventListener ('message', ev => {
+          if (ev.data === 'reloadStylesheets') { // for debug tools
+            document.querySelectorAll ('link[rel~=stylesheet]').forEach (el => {
+              var url = new URL (el.href);
+              url.search = "?r=local-" + Math.random ();
+              el.href = url;
+            });
+          }
+        });
       `}); // installMinimum
 
       installMinimum.then (() => {
@@ -1910,57 +1921,36 @@ defineElement ({
               }
             }; // onpaste
 
-/*   
-  } else if (ev.data === 'reloadStylesheets') { // for debug tools
-    document.querySelectorAll ('link[rel~=stylesheet]').forEach (el => {
-      var url = new URL (el.href);
-      url.search = "?r=local-" + Math.random ();
-      el.href = url;
-    });
+            
+            var selChangedTimer;
+            document.onselectionchange = function () {
+              clearTimeout (selChangedTimer);
+              selChangedTimer = setTimeout (selectChanged, 500);
+            };
+            function selectChanged () {
+              clearTimeout (selChangedTimer);
 
-onmouseover = function (ev) {
-  if (!ev.target.isContentEditable) return;
-  var e = ev.target;
-  while (e) {
-    if (e.localName === 'a') {
-      showContextToolbar ({context: e, template: 'link-edit-template'});
-      break;
-    }
-    e = e.parentNode;
-  }
-}; // mouseover
-
-onmouseout = function (ev) {
-  if (!ev.target.isContentEditable) { // within UI
-    if (ev.relatedTarget && ev.relatedTarget.isContentEditable) {
-      if (ev.relatedTarget.localName !== 'a') {
-        showContextToolbar ({void: true});
-      }
-    }
-  } else {
-    if (ev.target.localName === 'a' &&
-        !(ev.relatedTarget && !ev.relatedTarget.isContentEditable)) {
-      showContextToolbar ({void: true});
-    }
-  }
-};
-*/
-
-var selChangedTimer;
-document.onselectionchange = function () {
-  clearTimeout (selChangedTimer);
-  selChangedTimer = setTimeout (selectChanged, 500);
-};
-
-function selectChanged () {
-  clearTimeout (selChangedTimer);
-  var data = {};
-  ["bold", "italic", "underline", "strikethrough",
-   "superscript", "subscript"].forEach (function (key) {
-    data[key] = document.queryCommandState (key);
-   });
-  // XXX sendToParent ({type: "currentState", value: data});
-} // selectChanged
+              var sel = getSelection ();
+              var n = sel.anchorNode;
+              while (n && n.localName !== 'a' && n.localName !== 'gr-toolbar') {
+                n = n.parentNode;
+              }
+              if (n) {
+                if (n.localName === 'a' && !n.hasAttribute ('data-gr-editor')) {
+                  showLinkToolbar (n);
+                }
+              } else {
+                hideContextualToolbar ();
+              }
+              
+              var data = {};
+              ["bold", "italic", "underline", "strikethrough",
+               "superscript", "subscript"].forEach (function (key) {
+                 data[key] = document.queryCommandState (key);
+               });
+              
+              // XXX sendToParent ({type: "currentState", value: data});
+            } // selectChanged
 
 var BlockElements = {
   div: true, p: true,
@@ -2317,65 +2307,95 @@ function replaceSelectionBy (node, hasSelected) {
   if (!hasSelected) sel.collapseToEnd ();
 } // replaceSelectionBy
 
-var contextToolbar;
-function showContextToolbar (args) {
-  if (contextToolbar) contextToolbar.remove ();
-  contextToolbar = null;
+            function getTemplate (name) {
+              var t = document.querySelector ('#template-' + name);
+              if (!t) {
+                return pcInvoke ('getTemplate', {name: name}).then (_ => {
+                  var t = document.createElement ('template');
+                  t.innerHTML = _;
+                  t.id = 'template-' + name;
+                  document.head.appendChild (t);
+                  return t;
+                });
+              } else {
+                return Promise.resolve (t);
+              }
+            } // getTemplate
+                
+            var contextualToolbar;
+            function hideContextualToolbar (a) {
+              if (contextualToolbar) {
+                contextualToolbar.remove ();
+                contextualToolbar = null;
+              }
+            }
+            function showLinkToolbar (a) {
+              if (contextualToolbar &&
+                  contextualToolbar.grAnchor === a) {
+                return;
+              }
 
-  if (args.void) return;
+              if (contextualToolbar) contextualToolbar.remove ();
 
-  var template = document.querySelector ('#' + args.template);
-
-  contextToolbar = document.createElement ('menu');
-  contextToolbar.className = 'context';
-  contextToolbar.setAttribute ('contenteditable', 'false');
-  contextToolbar.style.top = args.context.offsetTop + args.context.offsetHeight + 'px';
-  contextToolbar.style.left = args.context.offsetLeft + 'px';
-  contextToolbar.appendChild (template.content.cloneNode (true));
-
-  var updated = function () {
-    var isWikiName = args.context.hasAttribute ('data-wiki-name');
-    Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-field=host]'), function (e) {
-      e.hidden = isWikiName;
-      e.textContent = args.context.host;
-    });
-    Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-title-field=href]'), function (e) {
-      e.title = args.context.href;
-    });
-    Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-href-field=href]'), function (e) {
-      e.href = args.context.href;
-    });
-    Array.prototype.forEach.call (contextToolbar.querySelectorAll ('[data-field=wikiName]'), function (e) {
-      e.textContent = args.context.getAttribute ('data-wiki-name');
-      e.hidden = !isWikiName;
-    });
-  }; // updated
-  updated ();
-  Array.prototype.forEach.call (contextToolbar.querySelectorAll ('.edit-button'), function (e) {
-    e.onclick = function () {
-      var isWikiName = args.context.hasAttribute ('data-wiki-name');
-      sendPrompt ({prompt: e.getAttribute (isWikiName ? 'data-wiki-name-prompt' : 'data-url-prompt'),
-                   default: isWikiName ? args.context.getAttribute ('data-wiki-name') : args.context.href}).then (function (_) {
-        if (_.result != null) {
-          if (isWikiName) {
-            args.context.setAttribute ('data-wiki-name', _.result);
-            initAElement (args.context);
-          } else {
-            args.context.href = _.result;
-          }
-          updated ();
-        }
-      });
-    };
-  });
-
-  document.body.appendChild (contextToolbar);
-} // showContextToolbar
+              return getTemplate ('link-toolbar').then (t => {
+                var tb = contextualToolbar = document.createElement ('gr-toolbar');
+                tb.grAnchor = a;
+                tb.setAttribute ('data-gr-editor', '');
+                tb.setAttribute ('contenteditable', 'false');
+                tb.style.top = a.offsetTop + a.offsetHeight + 'px';
+                tb.style.left = a.offsetLeft + 'px';
+                tb.appendChild (t.content.cloneNode (true));
+              
+                var destType = a.hasAttribute ('data-wiki-name') ? 'wiki-name' : 'url';
+                var updated = function () {
+                  tb.querySelectorAll ('[data-field=host]').forEach (e => {
+                    e.hidden = ! (destType === 'url');
+                    e.textContent = a.host;
+                  });
+                  tb.querySelectorAll ('[data-title-field=href]').forEach (e => {
+                    e.title = a.href;
+                  });
+                  tb.querySelectorAll ('[data-href-field=href]').forEach (e => {
+                    e.href = a.href;
+                  });
+                  tb.querySelectorAll ('[data-field=wikiName]').forEach (e => {
+                    e.textContent = a.getAttribute ('data-wiki-name');
+                    e.hidden = ! (destType === 'wiki-name');
+                  });
+                }; // updated
+                
+                tb.querySelectorAll ('.edit-button').forEach (e => {
+                  e.onclick = function () {
+                    pcInvoke ('prompt', {
+                      label: e.getAttribute ('data-'+destType+'-prompt'),
+                      default: (destType === 'wiki-name' ? a.getAttribute ('data-wiki-name') : a.href),
+                    }).then (_ => {
+                      if (_ === null) return;
+                      setLinkAttrs (a, destType, _);
+                      updated ();
+                    });
+                  };
+                });
+                updated ();
+                
+                document.body.appendChild (contextualToolbar);
+              });
+            } // showLinkToolbar
                                              
           `}); // pcEval
 
           this.grViewer.pcRegisterMethod ('focused', () => {
             this.dispatchEvent (new UIEvent ('focus', {bubbles: true}));
+          });
+
+          this.grViewer.pcRegisterMethod ('prompt', args => {
+            return prompt (args.label, args.default);
+          });
+
+          this.grViewer.pcRegisterMethod ('getTemplate', args => {
+            var t = document.querySelector ('#editor-' + args.name + '-template');
+            if (!t) throw new Error ('Editor template |'+args.name+'| not found');
+            return t.innerHTML;
           });
         });
       }
@@ -2412,7 +2432,7 @@ function showContextToolbar (args) {
       });
     }, // grCreateLink
     grGetHTML: function () {
-      return this.grViewer.pcInvoke ('pcEval', {code: "return document.body.innerHTML"});
+      return this.grViewer.pcInvoke ('pcEval', {code: "var e = document.body.cloneNode (true); e.querySelectorAll ('[data-gr-editor]').forEach (_ => _.remove ()); return e.innerHTML"});
     }, // grGetHTML
     grSave: function () {
       if (!this.grEditableData) return;

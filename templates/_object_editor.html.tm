@@ -242,16 +242,17 @@
   </template>
 </template-set>
 
-  <template id=link-edit-template class=body-edit-template>
-    <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener">
-      <code data-field=host data-title-field=href hidden></code>
-      <span data-field=wikiName hidden />
-    </a>
-    <button type=button class=edit-button
-        data-url-prompt=リンク先のURLを指定してください。
-        data-wiki-name-prompt=リンク先のWiki名を指定してください。
-        title=リンク先を編集>編集</button>
-  </template>
+<template id=editor-link-toolbar-template>
+  <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener" data-gr-editor>
+    <code data-field=host data-title-field=href hidden></code>
+    <span data-field=wikiName hidden />
+  </a>
+  <button type=button class=edit-button
+      data-url-prompt=リンク先のURLを指定してください。
+      data-wiki-name-prompt=リンク先のWiki名を指定してください。
+      title=リンク先を編集
+  >編集</button>
+</template>
 
   <gr-list-container type=$with id=index-list src=i/list.json key=index_list itemkey=index_id />
   <gr-list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />
