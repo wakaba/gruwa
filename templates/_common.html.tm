@@ -7,7 +7,7 @@
       </button>
     </gr-nav-button>
     
-    <gr-nav-panel tabindex=0>
+    <gr-nav-panel>
       <details open>
         <summary>
           <gr-account self>
@@ -16,11 +16,12 @@
           </gr-account>
         </summary>
         <p><a href=/dashboard>ダッシュボード</a></p>
-        <list-container src=/jump/list.json key=items class=jump-list filter=jumpListFilter>
+        <list-container loader=jumpListLoader loader-delayed>
           <template>
             <p><a href data-href-template={url} data-ping-template=/jump/ping.json?url={url:absoluteURL} data-field=label data-empty=■ data-filled=ping></a>
           </template>
           <list-main/>
+          <list-is-empty><p>(ジャンプリストが空です)</list-is-empty>
         </list-container>
       </details>
       <details open>

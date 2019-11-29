@@ -4595,6 +4595,36 @@ function upgradePopupMenu (e) {
   };
 } // upgradePopupMenu
 
+GR.jumpList = {};
+
+GR.jumpList.get = function () {
+  if (GR._state.getJumpList) return GR._state.getJumpList;
+  
+  return GR._state.getJumpList = fetch ('/jump/list.json', {
+    credentials: 'same-origin',
+    referrerPolicy: 'same-origin',
+  }).then ((res) => {
+    if (res.status !== 200) throw res;
+    return res.json ();
+  }).then (json => {
+    json.items.forEach (_ => {
+      _.absoluteURL = new URL (_.url, location.href);
+    });
+    return json.items;
+  }).catch (e => {
+    if (e instanceof Response && e.status === 403) {
+      throw GR.Error.handle403 (e);
+    }
+    throw e;
+  });
+}; // GR.jumpList.get
+
+GR.jumpList.reload = function () {
+  delete GR._state.getJumpList;
+  document.querySelectorAll ('gr-nav-panel[active] list-container[loader=jumpListLoader]:not([loader-delayed])').forEach (_ => _.load ({}));
+  document.querySelectorAll ('gr-nav-panel:not([active]) list-container[loader=jumpListLoader]:not([loader-delayed])').forEach (_ => _.setAttribute ('loader-delayed', ''));
+}; // GR.jumpList.reload
+
 defineElement ({
   name: 'a',
   is: 'gr-jump-add',
@@ -4606,21 +4636,26 @@ defineElement ({
       var fd = new FormData;
       if (this.title) fd.append ('label', this.title);
       fd.append ('url', this.href);
-      return gFetch ('/jump/add.json', {post: true, formData: fd}).then (function () {
-        document.querySelectorAll ('.jump-list').forEach (_ => _.load ({}));
+      this.setAttribute ('data-saving', '');
+      return gFetch ('/jump/add.json', {post: true, formData: fd}).then (() => {
+        GR.jumpList.reload ();
+      }).finally (() => {
+        this.removeAttribute ('data-saving');
       });
     }, // grClick
   },
 });
 
 (() => {
-  var e = document.createElementNS ('data:,pc', 'filter');
-  e.setAttribute ('name', 'jumpListFilter');
-  e.pcHandler = function (data) {
-    data.data.forEach (_ => {
-      _.absoluteURL = new URL (_.url, location.href);
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'jumpListLoader');
+  e.pcHandler = function (opts) {
+    if (this.hasAttribute ('loader-delayed')) return {data: []};
+    return GR.jumpList.get ().then (items => {
+      return {
+        data: items,
+      };
     });
-    return data;
   };
   document.head.appendChild (e);
 
@@ -5461,7 +5496,7 @@ defineElement ({
               _.removeAttribute ('active');
             }
           });
-          document.querySelector ('gr-nav-panel').focus ();
+          document.querySelectorAll ('gr-nav-panel[active]').forEach (_ => _.grOpened ());
         };
       });
     }, // pcInit
@@ -5479,6 +5514,13 @@ defineElement ({
         }
       };
     }, // pcInit
+    grOpened: function () {
+      this.querySelectorAll ('list-container[loader-delayed]').forEach (_ => {
+        _.removeAttribute ('loader-delayed');
+        _.load ({});
+      });
+      this.querySelector ('summary, a, button, input').focus ();
+    }, // grOpened
     grClose: function () {
       document.querySelectorAll ('gr-nav-button button').forEach (_ => _.click ());
     }, // grClose

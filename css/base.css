@@ -1088,9 +1088,9 @@ gr-popup-menu > button:not([hidden]):focus {
 gr-nav-button:not([hidden]) {
   position: fixed;
   display: block;
-  top: .5em;
-  right: .5em;
-  margin: 0 ! important; /* XXX */
+  top: 0;
+  right: 0;
+  margin: 0;
   z-index: 1000001;
 }
 
@@ -1193,6 +1193,17 @@ gr-nav-panel p {
 
 gr-nav-panel form {
   margin: 2px;
+}
+
+gr-nav-panel list-is-empty:not([hidden]) {
+  margin: 0;
+}
+
+gr-nav-panel list-is-empty p {
+  padding: .4rem;
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+  font-size: 80%;
 }
 
 gr-nav-panel summary:not([hidden]),
