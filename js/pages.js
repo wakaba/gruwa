@@ -197,18 +197,30 @@ GR.Favicon.redraw = function () {
     document.head.appendChild (link);
 
     var link = document.createElement ('link');
-    link.rel = 'icon';
-    link.href = '/g/' + m[1] + '/icon';
+    link.rel = 'prefetch';
+    link.as = 'fetch';
+    link.href = '/g/' + m[1] + '/i/list.json';
     document.head.appendChild (link);
+  
+    GR.idle (() => {
+      var link = document.createElement ('link');
+      link.rel = 'icon';
+      link.href = '/g/' + m[1] + '/icon';
+      document.head.appendChild (link);
+      
+      GR.Favicon.loadBaseImage ();
+    });
   } else {
     var link = document.createElement ('link');
     link.rel = 'prefetch';
     link.as = 'fetch';
     link.href = '/my/info.json';
     document.head.appendChild (link);
-  }
   
-  GR.idle (() => GR.Favicon.loadBaseImage ());
+    GR.idle (() => {
+      GR.Favicon.loadBaseImage ();
+    });
+  }
 
   var envName = document.documentElement.getAttribute ('data-env');
   if (envName) {
