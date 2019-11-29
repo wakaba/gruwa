@@ -1583,6 +1583,13 @@ defineElement ({
           fragment.innerHTML = args.body;
 
           document.documentElement.setAttribute ('data-group-url', args.group_url);
+          document.documentElement.classList.toggle ('editor', args.editable);
+          if (args.editable) {
+            document.body.setAttribute ('contenteditable', '');
+            document.body.setAttribute ('autofocus', '');
+          } else {
+            document.body.removeAttribute ('contenteditable');
+          }
 
           var imported = args.imported_sites || [];
           if (imported.length) {
@@ -1723,7 +1730,7 @@ defineElement ({
         return this.grViewer.pcInvoke ('appendHead', {value: div.innerHTML});
       });
 
-      // XXX if not editable
+      if (this.grMode !== 'editor')
       installMinimum.then (() => {
         this.grViewer.pcInvoke ('pcEval', {code: `
           var over = false;
@@ -1761,7 +1768,8 @@ defineElement ({
         });
       });
 
-      if (this.hasAttribute ('checkboxeditable')) { // XXX and not editable
+      if (this.grMode !== 'editor' &&
+          this.hasAttribute ('checkboxeditable')) {
         installMinimum.then (() => {
           this.grViewer.pcRegisterMethod ('checkboxChanged', args => {
             clearTimeout (this.grSaveTimer);
@@ -1797,6 +1805,9 @@ defineElement ({
       
       return installMinimum;
     }, // grInit
+    grGetHTML: function () {
+      return this.grViewer.pcInvoke ('pcEval', {code: "return document.body.innerHTML"});
+    }, // grGetHTML
     grSave: function () {
       if (!this.grEditableData) return;
 
@@ -1811,7 +1822,7 @@ defineElement ({
       if (as) as.start ({stages: ['saver']});
       if (as) as.stageStart ('saver');
       var objectId = this.getAttribute ('objectid');
-      return this.grViewer.pcInvoke ('pcEval', {code: "return document.body.innerHTML"}).then (body => {
+      return this.grGetHTML ().then (body => {
         var data = this.grEditableData;
         data.body = body;
         data.body_source_type = 0; // WYSIWYG
@@ -1842,6 +1853,7 @@ defineElement ({
           body_source_type: data.body_source_type,
           imported_sites: sites,
           group_url: document.documentElement.getAttribute ('data-group-url'),
+          editable: this.grMode === 'editor',
         });
       });
     }, // grSetObject
@@ -2417,21 +2429,12 @@ function upgradeBodyControl (e, object, opts) {
     });
   };
 
-  var iframe = e.querySelector ('body-control-tab[name=iframe] iframe');
-  iframe.setAttribute ('sandbox', 'allow-scripts allow-popups');
-  iframe.setAttribute ('srcdoc', createBodyHTML ('', {edit: true, focusBody: opts.focusBody}));
-  var valueWaitings = [];
+  /*
   var mc = new MessageChannel;
   iframe.onload = function () {
-    this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
     mc.port2.onmessage = function (ev) {
       if (ev.data.type === 'focus') {
         iframe.dispatchEvent (new Event ("focus", {bubbles: true}));
-      } else if (ev.data.type === 'currentValue') {
-        valueWaitings.forEach (function (f) {
-          f (ev.data.value);
-        });
-        valueWaitings = [];
       } else if (ev.data.type === 'currentState') {
         $$ (e, 'button[data-action=execCommand]').forEach (function (b) {
           var value = ev.data.value[b.getAttribute ('data-command')];
@@ -2442,20 +2445,8 @@ function upgradeBodyControl (e, object, opts) {
         var args = ev.data.value;
         var result = prompt (args.prompt, args.default);
         ev.ports[0].postMessage ({result: result});
-      } else if (ev.data.type === 'getObjectWithData') {
-        GR.object.get (ev.data.value, {withData: true}).then (function (object) {
-          ev.ports[0].postMessage (object);
-        });
       }
     }; // onmessage
-    e.onload = null;
-  }; // onload
-    e.sendCommand = function (data) {
-      mc.port2.postMessage (data);
-    };
-    e.sendExecCommand = function (name, value) {
-      mc.port2.postMessage ({type: "execCommand", command: name, value: value});
-    };
     e.setBlock = function (value) {
       mc.port2.postMessage ({type: "setBlock", value: value});
     };
@@ -2473,19 +2464,14 @@ function upgradeBodyControl (e, object, opts) {
       var ev = new UIEvent ('focus', {});
       e.dispatchEvent (ev);
     };
+  */
   saver.iframe = function () {
-    mc.port2.postMessage ({type: "getCurrentValue"});
-    return new Promise (function (ok) { valueWaitings.push (ok) }).then (function (_) {
-      data.body = _;
-    });
+    var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
+    return field.grGetHTML ().then (body => data.body = body);
   }; // saver.iframe
   loader.iframe = function () {
-    mc.port2.postMessage ({
-      type: "setCurrentValue",
-      value: data.body,
-      valueSourceType: data.body_source_type,
-      importedSites: opts.importedSites,
-    });
+    var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
+    field.value = data;
   }; // loader.iframe
 
   $$c (e, 'button[data-action=execCommand]').forEach (function (b) {

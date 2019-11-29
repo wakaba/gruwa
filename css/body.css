@@ -6,9 +6,18 @@ html {
   line-height: 1.8;
 }
 
+html.editor {
+  height: 100%;
+}
+
 body {
   padding: .5em;
+  box-sizing: border-box;
   white-space: pre-wrap;
+}
+
+html.editor > body {
+  min-height: 100%;
 }
 
 body[data-source-type="3"] {

@@ -38,7 +38,7 @@
               ><button type=button data-action=panel data-value=image-list title=画像>&#x1F5BC;</button
               ><button type=button data-action=panel data-value=file-list title=ファイル>&#x1F4C4;</button>
             </menu>
-            <iframe />
+            <gr-html-viewer mode=editor />
           </body-control-tab>
           <body-control-tab name=textarea hidden>
             <textarea />
