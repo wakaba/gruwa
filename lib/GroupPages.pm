@@ -871,13 +871,13 @@ sub edit_object ($$$$$;%) {
             });
           }
   })->then (sub {
+    (promised_for {
+      my $account_id = shift;
+      return $app->apploach (['notification', 'send', 'push.json'], {
+        'nevent_subscriber_nobj_key' => 'account-' . $account_id,
+      });
+    } [keys %$called_account_ids]); # no wait
     return Promise->all ([
-      (promised_for {
-        my $account_id = shift;
-        return $app->apploach (['notification', 'send', 'push.json'], {
-          'nevent_subscriber_nobj_key' => 'account-' . $account_id,
-        });
-      } [keys %$called_account_ids]),
       Reports->touch_group_accounts ($app, $group_id, [keys %$called_account_ids], $time, 2), # call report
     ]);
   })->then (sub {
