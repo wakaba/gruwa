@@ -291,21 +291,6 @@ article.object:not(.editing).new {
   border-style: none;
 }
 
-article.object.editing > *:not(edit-container) {
-  display: none !important;
-}
-
-article.object.editing > edit-container {
-
-}
-
-article.object.editing > edit-container header {
-}
-
-article.object.editing > edit-container header > p {
-  padding: 0;
-}
-
 article.object > header:not([hidden]) {
   display: flex;
   align-items: center;
@@ -334,17 +319,13 @@ article.object > header h1 a {
 article.object > header popup-menu {
 }
 
-
-article.object > main {
-  min-height: 10em;
-  padding-left: .5em;
-  padding-right: .5em;
+article.object gr-article-main:not([hidden]) {
+  display: block;
 }
 
-article.object > main iframe {
-  display: block;
-  width: 100%;
-  border-style: none;
+article.object.editing gr-article-main {
+  opacity: 0.3;
+  pointer-events: none;
 }
 
 article.object .object-info:not([hidden]) {
@@ -370,26 +351,130 @@ article.deleted form {
   pointer-events: none;
 }
 
-with-sidebar:not([hidden]) {
-  display: table;
-  width: 100%;
+sub-window {
+  position: fixed;
+  top: 1.5em;
+  bottom: 2em;
+  width: 55em;
+  left: calc((100% - 55em) / 2);
+  margin-left: auto;
+  margin-right: auto;
+  overflow: auto;
+  border: 1px solid;
+  border-color: var(--window-border-color);
+  color: var(--window-color);
+  background-color: var(--window-background-color);
+  padding: .5em;
+  box-shadow: 1px 1px var(--window-shadow-color);
+  z-index: 900002;
 }
 
-with-sidebar::after {
+@media (max-width: 59em) {
+  sub-window {
+    left: 2em;
+    right: 2em;
+    width: calc(100% - 4em);
+  }
+}
+
+sub-window-minimized {
+  border: 1px solid;
+  border-color: var(--window-border-color);
+  color: var(--window-color);
+  background-color: var(--window-background-color);
+  padding: .5em;
+  box-shadow: 1px 1px var(--window-shadow-color);
+  width: 10em;
+  height: min-content;
+  margin: 0 0 .5em .5em;
+  padding: .2em;
+  font-size: 80%;
+  z-index: 900001;
+}
+
+sub-window-minimized gr-sub-window-menu:not([hidden]) {
+  display: flex;
+  align-items: center;
+}
+
+gr-sub-window-label:not([hidden]) {
+  display: flex;
+  line-height: 1.0;
+  max-height: 1em;
+}
+
+gr-sub-window-label {
+  flex-grow: 1;
+}
+
+gr-sub-window-label cite:not([hidden]) {
+  display: inline-block;
+}
+
+gr-sub-window-label cite {
+  margin-left: .5em;
+  width: 2em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+gr-sub-window-buttons:not([hidden]) {
   display: block;
-  content: "";
-  clear: both;
+}
+
+sub-window gr-sub-window-buttons {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+sub-window-minimized-container:not([hidden]) {
+  display: flex;
+  align-items: flex-end;
+}
+
+button[data-sub-window-action] {
+  -webkit-appearance: none;
+  border: none;
+  padding: .5em;
+  min-width: 1em;
+  min-height: 1em;
+  line-height: 1.0;
+  color: var(--link-color);
+  background-color: var(--link-background-color);
+}
+
+button[data-sub-window-action]:hover,
+button[data-sub-window-action]:active,
+button[data-sub-window-action]:focus {
+  color: var(--hover-color);
+  background-color: var(--hover-background-color);
+}
+
+sub-window button[data-sub-window-action] {
+  font-size: 110%;
+}
+
+edit-container:not([hidden]) {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+with-sidebar:not([hidden]) {
+  display: flex;
+  width: 100%;
+  height: 100%;
 }
 
 with-sidebar > :not([hidden]):not(aside) {
-  display: table-cell;
-  vertical-align: top;
+  flex-grow: 1;
 }
 
 with-sidebar > aside:not([hidden]) {
-  display: table-cell;
   width: 22em;
-  vertical-align: top;
 }
 
 with-sidebar > aside > .panel:not([hidden]) {
@@ -401,6 +486,11 @@ with-sidebar > aside > .panel:not([hidden]) {
   padding: .3rem;
   height: 100vh;
   overflow: auto;
+}
+
+edit-container > * > form:not([hidden]) {
+  display: flex;
+  flex-direction: column;
 }
 
 edit-container > * > form {
@@ -416,15 +506,17 @@ edit-container header {
 
 edit-container main {
   padding: 0;
+  flex-grow: 1;
 }
 
 edit-container body-control:not([hidden]) {
-  display: table;
+  display: flex;
   width: 100%;
+  height: 100%;
 }
 
 edit-container body-control .tab-buttons:not([hidden]) {
-  display: table-cell;
+  display: block;
   margin: 0;
   border-style: none solid none none;
   border-color: var(--main-border-color);
@@ -465,8 +557,10 @@ edit-container body-control [class].tab-buttons a.active {
 }
 
 edit-container body-control-tab:not([hidden]) {
-  display: block;
+  display: flex;
   margin-left: 0.2em;
+  flex-grow: 1;
+  flex-direction: column;
 }
 
 edit-container body-control-tab menu {
@@ -495,11 +589,19 @@ edit-container body-control-tab button:not(.active):active {
   color: var(--toolbar-hover-color);
 }
 
+edit-container body-control-tab > textarea,
+edit-container body-control-tab > gr-html-viewer {
+  flex-grow: 1;
+  height: 100%;
+}
+
+edit-container body-control-tab > gr-html-viewer > sandboxed-viewer {
+  height: 100%;
+}
+
 edit-container body-control iframe,
 edit-container body-control textarea,
 edit-container body-control gr-html-viewer iframe {
-  border: 1px dotted;
-  border-color: var(--main-border-color);
   box-sizing: border-box;
   width: 100%;
 }
@@ -509,12 +611,32 @@ edit-container body-control textarea {
   line-height: 1.8;
 }
 
-edit-container footer {
-  float: right;
+edit-container footer:not([hidden]) {
+  display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
-article.object > footer p,
-edit-container > form > footer p {
+edit-container footer {
+  font-size: 90%;
+  line-height: 1.0;
+}
+
+edit-container footer .operations {
+  display: block;
+  margin: 0;
+  text-align: right;
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+  flex-grow: 1;
+}
+
+edit-container footer details[open] {
+  flex-grow: 2;
+}
+
+article.object > footer p {
   display: block;
   margin: 0;
   font-size: 90%;

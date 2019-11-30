@@ -37,6 +37,26 @@ tab-set > section:not(.active) {
   display: none;
 }
 
+sub-window:not([hidden]) {
+  display: block;
+}
+
+sub-window-minimized:not([hidden]) {
+  display: block;
+  pointer-events: auto;
+}
+
+sub-window-minimized-container:not([hidden]) {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 50%;
+  overflow: auto;
+  pointer-events: none;
+}
+
 action-status:not([hidden]) {
   display: block;
   font-size: 90%;

@@ -2937,43 +2937,12 @@ function upgradeBodyControl (e, object, opts) {
     },
   });
 
-  e.setHeight = function (h) {
-    $$c (e, 'body-control-tab').forEach (function (f) {
-      var h2 = h;
-      $$c (f, 'menu').forEach (function (g) {
-        h2 -= g.offsetHeight;
-      });
-      $$c (f, 'iframe, textarea, gr-html-viewer').forEach (function (g) {
-        g.style.height = h2 + 'px';
-      });
-    });
-  };
-
-  /*
-  var mc = new MessageChannel;
-  iframe.onload = function () {
-    mc.port2.onmessage = function (ev) {
+  /* XXX
       } else if (ev.data.type === 'currentState') {
         $$ (e, 'button[data-action=execCommand]').forEach (function (b) {
           var value = ev.data.value[b.getAttribute ('data-command')];
           if (value === undefined) return;
           b.classList.toggle ('active', value);
-        });
-      } else if (ev.data.type === 'prompt') {
-        var args = ev.data.value;
-        var result = prompt (args.prompt, args.default);
-        ev.ports[0].postMessage ({result: result});
-      }
-    }; // onmessage
-    e.setBlock = function (value) {
-      mc.port2.postMessage ({type: "setBlock", value: value});
-    };
-    e.insertSection = function () {
-      mc.port2.postMessage ({type: "insertSection"});
-    };
-    e.sendAction = function (type, command, value) {
-      mc.port2.postMessage ({type: type, command: command, value: value});
-    };
   */
   e.focus = function () {
     e.querySelector ('body-control-tab[name=iframe] gr-html-viewer').focus ();
@@ -3205,7 +3174,6 @@ function upgradeList (el) {
         item.setAttribute ('data-object', object.object_id);
         item.startEdit = function () {
           editObject (item, object, {
-            open: true,
             importedSites: opts.importedSites,
           });
         }; // startEdit
@@ -3242,24 +3210,6 @@ function upgradeList (el) {
         item.addEventListener ('objectdataupdate', function (ev) {
           if (ev.grNewTodoState) object.data.todo_state = ev.grNewTodoState;
           this.updateView ();
-        });
-        item.addEventListener ('editablecontrolchange', function (ev) {
-          var as = getActionStatus (item);
-          as.start ({stages: ["formdata", "create", "edit", "update"]});
-          var open = false; // XXX true if edit-container is modified but not saved
-          editObject (item, object, {
-            open: open,
-            importedSites: opts.importedSites,
-          }).then (function () {
-            $$ /* not $$c*/ (item, 'edit-container body-control').forEach (function (e) {
-              e.sendChange (ev.data);
-            });
-            return item.save ({actionStatus: as});
-          }).then (function () {
-            as.end ({ok: true});
-          }, function (error) {
-            as.end ({error: error});
-          });
         });
 
         item.updateView ();
@@ -3508,7 +3458,7 @@ function upgradeList (el) {
         data.index_ids[el.getAttribute ('src-index_id')] = 1;
         var wikiName = el.getAttribute ('src-wiki_name');
         if (wikiName) data.title = wikiName;
-        editObject (article, {data: data}, {open: true, focusTitle: button.hasAttribute ('data-focus-title')});
+        editObject (article, {data: data}, {focusTitle: button.hasAttribute ('data-focus-title')});
       };
     });
   });
@@ -3600,16 +3550,37 @@ function upgradeList (el) {
 } // upgradeList
 
 function editObject (article, object, opts) {
-  var wait = [];
-  var template = document.querySelector ('#edit-form-template');
+  if (article.grEditorWindow) {
+    article.grEditorWindow.grStartEditMode ();
+    return;
+  }
 
-  var container = article.querySelector ('edit-container');
-  if (!container) {
-    container = document.createElement ('edit-container');
-    container.hidden = true;
-    container.appendChild (template.content.cloneNode (true));
-    article.appendChild (container);
-    var form = container.querySelector ('form');
+  return $getTemplateSet ('editor-sub-window-content').then (tm => {
+    article.grEditorWindow = tm.createFromTemplate ('sub-window', {});
+
+    var ec = article.grEditorWindow.querySelector ('edit-container');
+    var template = document.querySelector ('#edit-form-template');
+    ec.appendChild (template.content.cloneNode (true));
+
+    var startEditMode = article.grEditorWindow.grStartEditMode = () => {
+      article.classList.add ('editing');
+      ec.querySelectorAll ('input[name=title]').forEach (_ => _.focus ());
+      article.grEditorWindow.mode = 'default';
+      article.grEditorWindow.hidden = false;
+    }; // startEditMode
+    var endEditMode = (opts) => {
+      article.classList.remove ('editing');
+      if (opts.discard) {
+        article.grEditorWindow.remove ();
+        delete article.grEditorWindow;
+      } else {
+        article.grEditorWindow.hidden = true;
+      }
+    }; // endEditMode
+  
+    var wait = [];
+
+    var form = ec.querySelector ('form');
 
     article.save = function (opts) {
       return withFormDisabled (form, function () {
@@ -3617,18 +3588,18 @@ function editObject (article, object, opts) {
       });
     }; // save
 
-    $$c (form, 'body-control, header input').forEach (function (control) {
-      control.onfocus = function () {
-        container.scrollIntoView ();
-      };
-    });
-
     wait.push (fillFormControls (form, object, {
       focusTitle: opts.focusTitle,
       importedSites: opts.importedSites,
     }));
 
-    container.addEventListener ('gruwaeditcommand', function (ev) {
+    ec.addEventListener ('change', ev => {
+      if (ev.target.name === 'title') {
+        article.grEditorWindow.querySelectorAll ('gr-sub-window-label').forEach (_ => $fill (_, {title: ev.target.value}));
+      }
+    });
+
+    ec.addEventListener ('gruwaeditcommand', function (ev) {
       var field = form.getBodyControl ().querySelector ('gr-html-viewer');
       field.grViewer.pcInvoke ('editorCommand', ev.data);
       field.focus ();
@@ -3637,10 +3608,7 @@ function editObject (article, object, opts) {
   // XXX autosave
 
   $$c (form, '.cancel-button').forEach (function (button) {
-    button.onclick = function () {
-      container.hidden = true;
-      article.classList.remove ('editing');
-    };
+    button.onclick = () => endEditMode ({discard: false});
   });
 
   form.onsubmit = function () {
@@ -3651,8 +3619,7 @@ function editObject (article, object, opts) {
       if (object.object_id) {
         article.updateView ();
         //as.stageEnd ("update");
-        container.hidden = true;
-        article.classList.remove ('editing');
+        endEditMode ({discard: false});
         as.end ({ok: true});
       } else { // new object
         var list = document.querySelector ('gr-list-container[src-index_id]');
@@ -3672,8 +3639,7 @@ function editObject (article, object, opts) {
           as.end ({ok: false, error: error});
           // XXX open the permalink page?
         }).then (function () {
-          container.remove ();
-          article.classList.remove ('editing');
+          endEditMode ({discard: true}); // XXX reuse
         });
       }
     }).catch (function (error) {
@@ -3681,31 +3647,11 @@ function editObject (article, object, opts) {
     });;
   }; // onsubmit
 
-    var resize = function () {
-      var h1 = 0;
-      $$c (container, 'form header, form footer').forEach (function (e) {
-        h1 += e.offsetHeight;
-      });
-      var h = document.documentElement.clientHeight - h1;
-      container.querySelector ('form body-control').setHeight (h);
-    }; // resize
-    addEventListener ('resize', resize);
-    wait.push (Promise.resolve ().then (resize));
-  } // !container
+    document.body.appendChild (article.grEditorWindow);
+    startEditMode ();
 
-  if (opts.open) {
-    container.hidden = false;
-    article.classList.add ('editing');
-    if (opts.focusTitle) {
-      var title = container.querySelector ('input[name=title]');
-      if (title) title.focus ();
-    } else {
-      var body = container.querySelector ('body-control');
-      if (body) body.focus ();
-    }
-  }
-
-  return Promise.all (wait);
+    return Promise.all (wait);
+  });
 } // editObject
 
 function saveObject (article, form, object, opts) {

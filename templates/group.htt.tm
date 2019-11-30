@@ -1792,6 +1792,25 @@ Web ブラウザーで開いてください。
   </template>
 </template-set>
 
+<template-set name=editor-sub-window-content>
+  <template>
+    <sub-window-minimized>
+      <gr-sub-window-menu>
+        <gr-sub-window-label>編集中 <cite data-empty=■ data-field=title data-title-field=title></cite></gr-sub-window-label>
+        <gr-sub-window-buttons>
+          <button type=button data-sub-window-action=unminimize title=画面全体に表示>↑</button>
+        </gr-sub-window-buttons>
+      </gr-sub-window-menu>
+    </sub-window-minimized>
+    <gr-sub-window-menu>
+      <gr-sub-window-buttons>
+        <button type=button data-sub-window-action=minimize title=最小化>↓</button>
+      </gr-sub-window-buttons>
+    </gr-sub-window-menu>
+    <edit-container></edit-container>
+  </template>
+</template-set>
+
 <!--
 
 Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
@@ -1806,7 +1825,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 -->

@@ -31,6 +31,11 @@ html { /* [data-thema=green] */
   --accented-border-color: currentcolor;
   --accented-background-color: transparent;
 
+  --window-background-color: var(--main-background-color);
+  --window-color: var(--main-color);
+  --window-border-color: var(--accented-border-color);
+  --window-shadow-color: var(--main-shadow-color);
+
   --menu-background-color: var(--main-background-color);
   --menu-color: var(--main-color);
   --menu-border-color: var(--accented-border-color);
@@ -414,6 +419,11 @@ gr-html-viewer > sandboxed-viewer:not([hidden]) {
   display: block;
 }
 
+gr-html-viewer[mode=editor] {
+  border: dotted 1px;
+  border-color: var(--accented-border-color);
+}
+
 form {
   margin: 0 .5em .5em .5em;
   border: 1px dotted;
@@ -497,10 +507,11 @@ gr-called-editor:not([hidden]) {
   display: inline-block;
   border: dotted 1px;
   border-color: var(--accented-border-color);
-  padding: .3em;
+  padding: .1em .3em;
   color: var(--main-color);
   background-color: var(--main-background-color);
   min-width: 10em;
+  text-align: left;
 }
 
 gr-select-icon popup-menu > button:not([hidden]) {

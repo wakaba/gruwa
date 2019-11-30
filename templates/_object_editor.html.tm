@@ -80,7 +80,18 @@
             stage-create=作成中...
             stage-edit=保存中...
             stage-update=更新中... />
-    </footer>
+        </p>
+        
+        <gr-group>
+          <img data-src-template=/g/{group_id}/icon class=icon alt>
+          <gr-group-name data-field=title data-filling>グループ</>
+        </gr-group>
+
+        <span>
+          通知送信先:
+          <gr-called-editor template=gr-called-editor />
+        </span>
+        
     <details>
       <summary>詳細設定</>
       <table class=config>
@@ -171,18 +182,9 @@
                 </gr-popup-menu>
         </table>
       </list-control>
-    </details>
+        </details>
+      </footer>
 
-      <p>
-        <gr-group>
-          <img data-src-template=/g/{group_id}/icon class=icon alt>
-          <gr-group-name data-field=title data-filling>グループ</>
-        </gr-group>
-
-        <span>
-          通知送信先:
-          <gr-called-editor template=gr-called-editor />
-        </span>
     </form>
     <aside hidden/>
   </with-sidebar>

@@ -33,12 +33,12 @@
         </summary>
         <gr-group>
           <p><a data-href-template=/g/{group_id}/>トップ</a>
-          <p><a data-href-template=/g/{group_id}/my/config>個人設定</a>
           <p class=if-has-default-index><a data-href-template=/g/{group_id}/i/{member.default_index_id}/>自分の日記</a>
           <form is=gr-search method=get action=search>
             <input type=search name=q required placeholder=グループ内検索>
             <button type=submit class=search-button>検索</button>
           </form>
+          <p><a data-href-template=/g/{group_id}/my/config>個人設定</a>
         </gr-group>
       </details>
       <details>
