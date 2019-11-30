@@ -18,8 +18,8 @@
 <meta name=theme-color content="green">
 <link rel=stylesheet pl:href="'/css/common.css?r='.$app->rev">
 <link rel=icon href=/favicon.ico>
-<script pl:src="'/js/components.js?r='.$app->rev" class=body-js async data-export="$fill $promised $getTemplateSet $paco" data-time-selector="time:not(.asis)" />
-<script pl:src="'/js/framework.js?r='.$app->rev" class=body-js />
+<script pl:src="'/js/components.js?r='.$app->rev" async data-export="$fill $promised $getTemplateSet $paco" data-time-selector="time:not(.asis)" />
+<script pl:src="'/js/framework.js?r='.$app->rev" />
 <script pl:src="'/js/pages.js?r='.$app->rev" async />
 
 <!--

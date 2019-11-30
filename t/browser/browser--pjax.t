@@ -301,6 +301,14 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'gr-nav-button button',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('gr-nav-button button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'gr-nav-panel',
       text => $current->o ('t1'),
       name => 'label added',
@@ -391,7 +399,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

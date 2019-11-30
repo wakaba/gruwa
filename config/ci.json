@@ -44,7 +44,7 @@
       "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done",
       "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid",
 
-      "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-browser-circleci",
+      "TEST_WD_BROWSER=firefox SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-browser-circleci",
 
       "true"
     ]

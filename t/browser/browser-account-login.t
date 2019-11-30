@@ -359,11 +359,11 @@ Test {
   })->then (sub {
     return $current->b (1)->switch_to_frame_by_selector ('gr-backdrop > .dialog');
   })->then (sub {
-    return $current->b_set_xs_name (1 => 'ax1');
-  })->then (sub {
     return $current->b_wait (1 => {
       selector => 'form button[type=submit]',
     });
+  })->then (sub {
+    return $current->b_set_xs_name (1 => 'ax1');
   })->then (sub {
     return $current->b (1)->execute (q{
       setTimeout (() => {
@@ -421,11 +421,11 @@ Test {
   })->then (sub {
     return $current->b (1)->switch_to_frame_by_selector ('gr-backdrop > .dialog');
   })->then (sub {
-    return $current->b_set_xs_name (1 => 'ax1');
-  })->then (sub {
     return $current->b_wait (1 => {
       selector => 'form button[type=submit]',
     });
+  })->then (sub {
+    return $current->b_set_xs_name (1 => 'ax1');
   })->then (sub {
     return $current->b (1)->execute (q{
       setTimeout (() => {

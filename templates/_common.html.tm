@@ -7,7 +7,7 @@
       </button>
     </gr-nav-button>
     
-    <gr-nav-panel tabindex=0>
+    <gr-nav-panel>
       <details open>
         <summary>
           <gr-account self>
@@ -16,11 +16,12 @@
           </gr-account>
         </summary>
         <p><a href=/dashboard>ダッシュボード</a></p>
-        <list-container src=/jump/list.json key=items class=jump-list filter=jumpListFilter>
+        <list-container loader=jumpListLoader loader-delayed>
           <template>
             <p><a href data-href-template={url} data-ping-template=/jump/ping.json?url={url:absoluteURL} data-field=label data-empty=■ data-filled=ping></a>
           </template>
           <list-main/>
+          <list-is-empty><p>(ジャンプリストが空です)</list-is-empty>
         </list-container>
       </details>
       <details open>
@@ -32,12 +33,12 @@
         </summary>
         <gr-group>
           <p><a data-href-template=/g/{group_id}/>トップ</a>
-          <p><a data-href-template=/g/{group_id}/my/config>個人設定</a>
           <p class=if-has-default-index><a data-href-template=/g/{group_id}/i/{member.default_index_id}/>自分の日記</a>
           <form is=gr-search method=get action=search>
             <input type=search name=q required placeholder=グループ内検索>
             <button type=submit class=search-button>検索</button>
           </form>
+          <p><a data-href-template=/g/{group_id}/my/config>個人設定</a>
         </gr-group>
       </details>
       <details>

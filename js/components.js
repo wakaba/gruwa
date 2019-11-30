@@ -1083,6 +1083,58 @@ License along with this program, see <https://www.gnu.org/licenses/>.
       }, // tsShowTab
     },
   }); // tab-set
+
+  defineElement ({
+    name: 'sub-window',
+    props: {
+      pcInit: function () {
+        Object.defineProperty (this, 'mode', {
+          get: () => this.pcMode,
+          set: (newValue) => this.pcSetMode (newValue),
+        });
+        
+        this.querySelectorAll ('button[data-sub-window-action]').forEach (_ => {
+          _.onclick = () => this.pcRunAction (_.getAttribute ('data-sub-window-action'));
+        });
+        
+        this.pcMinimized = this.querySelector ('sub-window-minimized') || document.createElement ('sub-window-minimized');
+        this.pcMinimized.remove ();
+
+        this.pcSetMode ('default');
+      }, // pcInit
+      pcRunAction: function (action) {
+        if (action === 'minimize') {
+          return this.pcSetMode ('minimized');
+        } else if (action === 'unminimize') {
+          return this.pcSetMode ('default');
+        } else {
+          throw new Error ('Unknown sub-window action type |'+action+'|');
+        }
+      }, // pcRunAction
+      pcMinimizedContainer: function () {
+        var c = document.querySelector ('sub-window-minimized-container');
+        if (!c) {
+          c = document.createElement ('sub-window-minimized-container');
+          document.body.appendChild (c);
+        }
+        return c;
+      }, // pcMinimizedContainer
+      pcSetMode: function (newMode) {
+        if (this.pcMode === newMode) return;
+        this.pcMode = newMode;
+        this.hidden = newMode === 'minimized';
+        if (newMode === 'minimized') {
+          this.pcMinimizedContainer ().appendChild (this.pcMinimized);
+        } else {
+          this.pcMinimized.remove ();
+        }
+        return Promise.resolve ().then (() => {
+          if (!this.pcSetDimension) return;
+          return this.pcSetDimension (); // or throw
+        });
+      }, // pcSetMode
+    },
+  }); // <sub-window>
   
   defs.loader.src = function (opts) {
     if (!this.hasAttribute ('src')) return {};
@@ -1933,6 +1985,9 @@ License along with this program, see <https://www.gnu.org/licenses/>.
           `});
         });
       }, // pcSetSeamless
+      focus: function () {
+        if (this.pcIFrame) this.pcIFrame.focus ();
+      }, // focus
     }, // props
   }); // <sandboxed-viewer>
   

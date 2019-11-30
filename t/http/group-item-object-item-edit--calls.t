@@ -212,6 +212,15 @@ Test {
       called_account_id => $current->o ('a2')->{account_id},
     }, group => 'g1', account => 'a1');
   })->then (sub {
+    return promised_wait_until {
+      my $url = Web::URL->parse_string ($current->o ('e1'));
+      return $current->client_for ($url)->request (url => $url)->then (sub {
+        my $res = $_[0];
+        die $res unless $res->status == 200;
+        (json_bytes2perl $res->body_bytes)->{count} == 1;
+      });
+    } timeout => 32;
+  })->then (sub {
     my $url = Web::URL->parse_string ($current->o ('e1'));
     return $current->client_for ($url)->request (url => $url);
   })->then (sub {

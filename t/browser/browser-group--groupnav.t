@@ -359,6 +359,79 @@ Test {
   });
 } n => 1, name => ['imported same group object link, clicked'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {
+    }],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [i1 => index => {
+      account => 'a1',
+      group => 'g1',
+    }],
+    [o1 => object => {
+      account => 'a1',
+      group => 'g1',
+      index => 'i1',
+      title => $current->generate_text (t1 => {}),
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'i', $current->o ('i1')->{index_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-nav-button',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('gr-nav-button button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-nav-panel list-container[loader=jumpListLoader]:not([loader-delayed]) list-is-empty',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('gr-nav-button button').click ();
+    }); # hide nav panel
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article.object a[is=gr-jump-add]',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article.object a[is=gr-jump-add]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article.object a[is=gr-jump-add]:not([data-saving])',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('gr-nav-button button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-nav-panel list-container[loader=jumpListLoader]',
+      text => $current->o ('t1'),
+    }); # jump list updated
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      ok 1;
+    } $current->c;
+  });
+} n => 1, name => ['jump list updates'], browser => 1;
+
 RUN;
 
 =head1 LICENSE
@@ -375,7 +448,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <https://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

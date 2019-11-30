@@ -197,18 +197,30 @@ GR.Favicon.redraw = function () {
     document.head.appendChild (link);
 
     var link = document.createElement ('link');
-    link.rel = 'icon';
-    link.href = '/g/' + m[1] + '/icon';
+    link.rel = 'prefetch';
+    link.as = 'fetch';
+    link.href = '/g/' + m[1] + '/i/list.json';
     document.head.appendChild (link);
+  
+    GR.idle (() => {
+      var link = document.createElement ('link');
+      link.rel = 'icon';
+      link.href = '/g/' + m[1] + '/icon';
+      document.head.appendChild (link);
+      
+      GR.Favicon.loadBaseImage ();
+    });
   } else {
     var link = document.createElement ('link');
     link.rel = 'prefetch';
     link.as = 'fetch';
     link.href = '/my/info.json';
     document.head.appendChild (link);
-  }
   
-  GR.idle (() => GR.Favicon.loadBaseImage ());
+    GR.idle (() => {
+      GR.Favicon.loadBaseImage ();
+    });
+  }
 
   var envName = document.documentElement.getAttribute ('data-env');
   if (envName) {
@@ -1524,7 +1536,7 @@ defineElement ({
       var e = document.createElement ('sandboxed-viewer');
       if (this.hasAttribute ('seamlessheight')) e.setAttribute ('seamlessheight', '');
       this.grMode = this.getAttribute ('mode') || 'viewer';
-      if (this.grMode === 'viewer') {
+      if (this.grMode === 'viewer' || this.grMode === 'editor') {
         e.setAttribute ('allowsandbox', 'allow-popups');
       }
       this.appendChild (e);
@@ -1571,6 +1583,20 @@ defineElement ({
           fragment.innerHTML = args.body;
 
           document.documentElement.setAttribute ('data-group-url', args.group_url);
+          document.documentElement.setAttribute ('data-theme', args.theme);
+          document.documentElement.classList.toggle ('editor', args.editable);
+          if (args.editable) {
+            document.body.setAttribute ('contenteditable', '');
+            document.body.setAttribute ('autofocus', '');
+
+            var s = getSelection ();
+            s.removeAllRanges ();
+            var r = document.createRange ();
+            r.setStart (document.body, 0);
+            s.addRange (r);
+          } else {
+            document.body.removeAttribute ('contenteditable');
+          }
 
           var imported = args.imported_sites || [];
           if (imported.length) {
@@ -1687,11 +1713,22 @@ defineElement ({
           if (n &&
               (n.protocol === 'https:' || n.protocol === 'http:') &&
               (n.target === '' || n.target === '_blank') &&
-              !n.hasAttribute ('is')) {
+              !n.hasAttribute ('is') &&
+              !n.hasAttribute ('data-gr-editor')) {
             pcInvoke ('navigate', {url: n.href});
             ev.preventDefault ();
           }
         }); // click
+
+        window.addEventListener ('message', ev => {
+          if (ev.data === 'reloadStylesheets') { // for debug tools
+            document.querySelectorAll ('link[rel~=stylesheet]').forEach (el => {
+              var url = new URL (el.href);
+              url.search = "?r=local-" + Math.random ();
+              el.href = url;
+            });
+          }
+        });
       `}); // installMinimum
 
       installMinimum.then (() => {
@@ -1711,7 +1748,7 @@ defineElement ({
         return this.grViewer.pcInvoke ('appendHead', {value: div.innerHTML});
       });
 
-      // XXX if not editable
+      if (this.grMode !== 'editor')
       installMinimum.then (() => {
         this.grViewer.pcInvoke ('pcEval', {code: `
           var over = false;
@@ -1749,7 +1786,8 @@ defineElement ({
         });
       });
 
-      if (this.hasAttribute ('checkboxeditable')) { // XXX and not editable
+      if (this.grMode !== 'editor' &&
+          this.hasAttribute ('checkboxeditable')) {
         installMinimum.then (() => {
           this.grViewer.pcRegisterMethod ('checkboxChanged', args => {
             clearTimeout (this.grSaveTimer);
@@ -1782,9 +1820,620 @@ defineElement ({
           `}); // onchange
         });
       } // checkboxeditable
+
+      if (this.grMode === 'editor') {
+        installMinimum.then (() => {
+          this.grViewer.pcInvoke ('pcEval', {code: `
+            window.addEventListener ('focus', ev => {
+              pcInvoke ('focused', {});
+            });
+            
+            window.addEventListener ('change', ev => {
+              var e = ev.target;
+              if (e.type === 'checkbox' &&
+                  e.localName === 'input') {
+                if (e.checked !== e.defaultChecked) {
+                  e.defaultChecked = e.checked;
+
+                  var f = e.parentNode;
+                  while (f) {
+                    if (f.localName === 'li') break;
+                    f = f.parentNode;
+                  }
+                  if (f) {
+                    if (e.checked) {
+                      f.setAttribute ('data-checked', '');
+                    } else {
+                      f.removeAttribute ('data-checked');
+                    }
+                  }
+                  //no pcInvoke ('checkboxChanged', {});
+                }
+              }
+            });
+
+            pcRegisterMethod ('hasSelection', args => {
+              return ! getSelection ().isCollapsed;
+            });
+
+            pcRegisterMethod ('editorCommand', args => {
+              if (args.action === 'execCommand') {
+                document.execCommand (args.command, args.value);
+                selectChanged ();
+              } else if (args.action === 'setBlock') {
+                setBlock (args.value);
+              } else if (args.action === 'insertSection') {                
+                insertSection ();
+              } else if (args.action === 'indent') {
+                indent ();
+              } else if (args.action === 'outdent') {
+                outdent ();
+              } else if (args.action === 'insertCheckbox') {
+                document.execCommand ('inserthtml', false, '<input type=checkbox>');
+              } else if (args.action === 'setLink') {
+                if (args.dest === undefined) {
+                  args.dest = '';
+                  var sel = getSelection ();
+                  for (var i = 0; i < sel.rangeCount; i++) {
+                    args.dest += sel.getRangeAt (i).toString ();
+                  }
+                }
+                var randomValue = 'data:,' + Math.random ();
+                document.execCommand ('createlink', false, randomValue);
+                document.querySelectorAll ('a[href="'+randomValue+'"]').forEach (_ => {
+                  setLinkAttrs (_, args.destType, args.dest);
+                });
+              } else if (args.action === 'insertLink') {
+                insertLink (args.destType, args.dest);
+              } else if (args.action === 'insertImage') {
+                insertImage (args.value);
+              } else if (args.action === 'insertFile') {
+                insertFile (args.value);
+              } else {
+                throw new TypeError ('Unknown editorCommand action: |'+args.action+'|');
+              }
+            }); // editorCommand
+
+            function setLinkAttrs (a, destType, dest) {
+              if (destType === 'wiki-name') {
+                a.href = document.documentElement.getAttribute ('data-group-url') + '/wiki/' + encodeURIComponent (dest);
+                a.setAttribute ('data-wiki-name', dest);
+              } else {
+                a.href = dest;
+                a.removeAttribute ('data-wiki-name');
+              }
+            } // setLinkAttrs
+
+            function insertLink (destType, dest) {
+              var a = document.createElement ('a');
+              a.textContent = dest;
+              setLinkAttrs (a, destType, dest);
+              document.execCommand ('inserthtml', false, a.outerHTML);
+            } // insertLink
+
+            document.onpaste = function (ev) {
+              var text = ev.clipboardData.getData ('text/plain');
+              if (text && /^\\s*(?:[Hh][Tt][Tt][Pp][Ss]?|[Ff][Tt][Pp]):\\/\\/\\S+\\s*$/.test (text)) {
+                text = text.replace (/^\\s+/, '').replace (/\\s+$/, '');
+                ev.clipboardData.items.clear ();
+                insertLink ('url', text);
+                return false;
+              }
+            }; // onpaste
+
+            
+            var selChangedTimer;
+            document.onselectionchange = function () {
+              clearTimeout (selChangedTimer);
+              selChangedTimer = setTimeout (selectChanged, 500);
+            };
+            function selectChanged () {
+              clearTimeout (selChangedTimer);
+
+              var sel = getSelection ();
+              var n = sel.anchorNode;
+              while (n && n.localName !== 'a' && n.localName !== 'gr-toolbar') {
+                n = n.parentNode;
+              }
+              if (n) {
+                if (n.localName === 'a' && !n.hasAttribute ('data-gr-editor')) {
+                  showLinkToolbar (n);
+                }
+              } else {
+                hideContextualToolbar ();
+              }
+              
+              var data = {};
+              ["bold", "italic", "underline", "strikethrough",
+               "superscript", "subscript"].forEach (function (key) {
+                 data[key] = document.queryCommandState (key);
+               });
+              
+              // XXX sendToParent ({type: "currentState", value: data});
+            } // selectChanged
+
+var BlockElements = {
+  div: true, p: true,
+  li: true,
+  ul: true, ol: true,
+};
+var ContainerElements = {
+  section: true, article: true, figure: true, blockquote: true,
+  h1: true, main: true,
+  html: true, head: true, body: true,
+};
+var AdjacentMergeableElements = {
+  ul: true, ol: true,
+};
+var InlineContentOnlyElements = {
+  h1: true, section: true,
+};
+
+var TypeToLocalName = {
+  ul: "li", ol: "li",
+};
+var TypeToParentLocalName = {
+  ul: "ul", ol: "ol",
+  h1: "section",
+};
+
+function copyAttrs (newNode, node) {
+  for (var i = 0; i < node.attributes.length; i++) {
+    var attr = node.attributes[i];
+    newNode.setAttriute (attr.name, attr.value);
+  }
+} // copyAttrs
+
+function getNearestBlock () {
+  var isBlock = false;
+  var node = getSelection ().anchorNode;
+  TRUE: while (true) {
+    if (BlockElements[node.localName]) {
+      isBlock = true;
+      break;
+    } else if (!node.parentNode) {
+      break;
+    } else if (ContainerElements[node.parentNode.localName]) {
+      break;
+    } else {
+      var list = node.parentNode.children;
+      for (var i = 0; i < list.length; i++) {
+        if (BlockElements[list[i].localName]) {
+          break TRUE;
+        }
+      }
+      node = node.parentNode;
+    }
+  }
+  return {node: node, isBlock: isBlock};
+} // getNearestBlock
+
+function splitParentAt (node) {
+  var before = node.parentNode;
+  var after = document.createElement (before.localName);
+  while (node.nextSibling) {
+    after.appendChild (node.nextSibling);
+  }
+  before.parentNode.insertBefore (after, before.nextSibling);
+  before.parentNode.insertBefore (node, after);
+
+  if (!before.hasChildNodes ()) {
+    copyAttrs (after, before);
+    before.remove ();
+  }
+  if (!after.hasChildNodes ()) after.remove ();
+  return {before: before, after: after};
+} // splitParentAt
+
+function mergeWithSiblings (node) {
+  if (AdjacentMergeableElements[node.localName]) {
+    if (node.nextSibling &&
+        node.nextSibling.localName === node.localName) {
+      while (node.nextSibling.firstChild) {
+        node.appendChild (node.nextSibling.firstChild);
+      }
+      node.nextSibling.remove ();
+    }
+    if (node.previousSibling &&
+        node.previousSibling.localName === node.localName) {
+      while (node.firstChild) {
+        node.previousSibling.appendChild (node.firstChild);
+      }
+      node.remove ();
+    }
+  }
+} // mergeWithSiblings
+
+function wrapNodesBy (node, type) {
+  var para = [node];
+  var current = node.nextSibling;
+  while (true) {
+    if (current && !(BlockElements[current.localName] ||
+                     ContainerElements[current.localName])) {
+      para.push (current);
+      current = current.nextSibling;
+    } else {
+      break;
+    }
+  }
+  current = node.previousSibling;
+  while (true) {
+    if (current && !(BlockElements[current.localName] ||
+                     ContainerElements[current.localName])) {
+      para.unshift (current);
+      current = current.previousSibling;
+    } else {
+      break;
+    }
+  }
+  var newNode = document.createElement (type);
+  node.parentNode.insertBefore (newNode, node);
+  para.forEach (function (n) {
+    newNode.appendChild (n);
+  });
+  return newNode;
+} // wrapNodesBy
+
+function setBlock (type) {
+  var x = getNearestBlock ();
+  var node = x.node;
+  var isBlock = x.isBlock;
+
+  // Unlikely, and nothing we can do.
+  if (!node.parentNode) return;
+
+  if (InlineContentOnlyElements[node.localName]) return;
+
+  // Wrapping
+  if (ContainerElements[node.localName]) {
+    var newNode = document.createElement ('div');
+    while (node.firstChild) {
+      newNode.appendChild (node.firstChild);
+    }
+    node.appendChild (newNode);
+    node = newNode;
+    isBlock = true;
+  } else if (!isBlock) {
+    node = wrapNodesBy (node, 'div');
+  }
+
+  // Rewrite the block's local name
+  var localName = TypeToLocalName[type] || type;
+  if (localName !== node.localName) {
+    var newNode = document.createElement (localName);
+    node.parentNode.insertBefore (newNode, node);
+    while (node.firstChild) newNode.appendChild (node.firstChild);
+    copyAttrs (newNode, node);
+    node.remove ();
+    node = newNode;
+  }
+
+  var toBeSelected = node;
+
+  // Insert parent node, if necessary
+  var needReparent = true;
+  var parentLocalName = TypeToParentLocalName[type];
+  if (parentLocalName) {
+    if (!AdjacentMergeableElements[parentLocalName] ||
+        node.parentNode.localName !== parentLocalName) {
+      var parent = document.createElement (parentLocalName);
+      node.parentNode.insertBefore (parent, node);
+      parent.appendChild (node);
+      node = parent;
+    } else {
+      needReparent = false;
+    }
+  }
+
+  // Break parent block, if any
+  if (needReparent &&
+      node.parentNode &&
+      BlockElements[node.parentNode.localName] &&
+      node.parentNode.parentNode) {
+    splitParentAt (node);
+  }
+
+  mergeWithSiblings (node);
+
+  getSelection ().selectAllChildren (toBeSelected);
+} // setBlock
+
+function insertSection () {
+  var node = getSelection ().anchorNode;
+  while (true) {
+    if (!node.parentNode) {
+      break;
+    } else if (ContainerElements[node.parentNode.localName]) {
+      break;
+    } else {
+      node = node.parentNode;
+    }
+  }
+  if (InlineContentOnlyElements[node.localName]) return;
+
+  var section = document.createElement ('section');
+  section.setAttribute ('contenteditable', 'false');
+  var h1 = document.createElement ('h1');
+  h1.setAttribute ('contenteditable', '');
+  section.appendChild (h1);
+  var main = document.createElement ('main');
+  main.setAttribute ('contenteditable', '');
+  section.appendChild (main);
+  node.parentNode.insertBefore (section, node.nextSibling);
+  h1.focus ();
+} // insertSection
+
+function indent () {
+  var x = getNearestBlock ();
+
+  if (x.node.localName !== 'li' &&
+      x.node.parentNode &&
+      x.node.parentNode.localName === 'li') {
+    x.node = wrapNodesBy (x.node, 'li');
+  }
+
+  if (!x.node.parentNode) return;
+
+  if (x.node.localName === 'li') {
+    if (x.node.previousSibling &&
+        x.node.previousSibling.localName === 'li') {
+      var listType = x.node.parentNode.localName === 'ol' ? 'ol' : 'ul';
+      if ((x.node.previousSibling.lastChild || {}).localName === listType) {
+        x.node.previousSibling.lastChild.appendChild (x.node);
+      } else {
+        var list = document.createElement (listType);
+        x.node.previousSibling.appendChild (list);
+        list.appendChild (x.node);
+      }
+    } else if (x.node.parentNode &&
+               (x.node.parentNode.localName === 'ul' ||
+                x.node.parentNode.localName === 'ol')) {
+      var list = document.createElement (x.node.parentNode.localName);
+      var li = document.createElement ('li');
+      li.appendChild (list);
+      x.node.parentNode.insertBefore (li, x.node);
+      list.appendChild (x.node);
+    } else if (x.node.nextSibling &&
+               (x.node.nextSibling.localName === 'ul' ||
+                x.node.nextSibling.localName === 'ol') &&
+               x.node.parentNode.localName === 'li' &&
+               x.node.parentNode.parentNode &&
+               x.node.parentNode.parentNode.localName === x.node.nextSibling.localName) {
+      x.node.nextSibling.insertBefore (x.node, x.node.nextSibling.firstChild);
+    } else {
+      if (x.node.parentNode.localName === 'li' &&
+          x.node.parentNode.parentNode &&
+          x.node.parentNode.parentNode.localName === 'ol') {
+        var list = document.createElement ('ol');
+      } else {
+        var list = document.createElement ('ul');
+      }
+      x.node.parentNode.insertBefore (list, x.node);
+      list.appendChild (x.node);
+    }
+
+    var item = x.node.parentNode.parentNode;
+    var prevItem = item.previousSibling;
+    if (item &&
+        prevItem &&
+        !x.node.parentNode.previousSibling &&
+        item.localName === 'li' &&
+        prevItem.localName === 'li') {
+      while (item.firstChild) {
+        prevItem.appendChild (item.firstChild);
+        mergeWithSiblings (prevItem.lastChild);
+      }
+      item.remove ();
+    }
+
+    var item = x.node;
+    var nextItem = item.nextSibling;
+    if (nextItem &&
+        nextItem.localName === 'li' &&
+        nextItem.firstChild &&
+        (nextItem.firstChild.localName === 'ul' ||
+         nextItem.firstChild.localName === 'ol')) {
+      while (nextItem.firstChild) {
+        item.appendChild (nextItem.firstChild);
+        mergeWithSiblings (item.lastChild);
+      }
+      nextItem.remove ();
+    }
+  }
+
+  getSelection ().selectAllChildren (x.node);
+} // indent
+
+function outdent () {
+  var x = getNearestBlock ();
+
+  if (x.node.localName !== 'li' &&
+      x.node.parentNode &&
+      x.node.parentNode.localName === 'li' &&
+      x.node.parentNode.parentNode &&
+      (x.node.parentNode.parentNode.localName === 'ul' ||
+       x.node.parentNode.parentNode.localName === 'ol')) {
+    x.node = wrapNodesBy (x.node, 'li');
+    splitParentAt (x.node);
+  }
+
+  if (!x.node.parentNode) return;
+
+  if (x.node.localName === 'li') {
+    var parentType = x.node.parentNode.localName;
+    if (parentType === 'ul' || parentType === 'ol') {
+      if (x.node.parentNode.parentNode &&
+          x.node.parentNode.parentNode.localName === 'li') {
+        splitParentAt (x.node);
+        var z = splitParentAt (x.node);
+        while (z.after.firstChild) {
+          x.node.appendChild (z.after.firstChild);
+        }
+        z.after.remove ();
+        if (x.node.parentNode && x.node.parentNode.localName !== parentType) {
+          var list = document.createElement (parentType);
+          x.node.parentNode.insertBefore (list, x.node);
+          list.appendChild (x.node);
+          if (list.parentNode.parentNode) splitParentAt (list);
+        }
+      }      
+    }
+  }
+
+  getSelection ().selectAllChildren (x.node);
+} // outdent
+
+function insertImage (url) {
+  var a = document.createElement ('a');
+  a.href = url;
+  var img = document.createElement ('img');
+  img.src = url + 'image';
+  a.appendChild (img);
+  replaceSelectionBy (a, false);
+} // insertImage
+
+function insertFile (url) {
+  var iframe = document.createElement ('iframe');
+  iframe.className = 'embed';
+  iframe.src = url + 'embed';
+  replaceSelectionBy (iframe, false);
+} // insertFile
+
+function replaceSelectionBy (node, hasSelected) {
+  var sel = getSelection ();
+  sel.getRangeAt (0).deleteContents ();
+  sel.getRangeAt (0).insertNode (node);
+  sel.selectAllChildren (node);
+  if (!hasSelected) sel.collapseToEnd ();
+} // replaceSelectionBy
+
+            function getTemplate (name) {
+              var t = document.querySelector ('#template-' + name);
+              if (!t) {
+                return pcInvoke ('getTemplate', {name: name}).then (_ => {
+                  var t = document.createElement ('template');
+                  t.innerHTML = _;
+                  t.id = 'template-' + name;
+                  document.head.appendChild (t);
+                  return t;
+                });
+              } else {
+                return Promise.resolve (t);
+              }
+            } // getTemplate
+                
+            var contextualToolbar;
+            function hideContextualToolbar (a) {
+              if (contextualToolbar) {
+                contextualToolbar.remove ();
+                contextualToolbar = null;
+              }
+            }
+            function showLinkToolbar (a) {
+              if (contextualToolbar &&
+                  contextualToolbar.grAnchor === a) {
+                return;
+              }
+
+              if (contextualToolbar) contextualToolbar.remove ();
+
+              return getTemplate ('link-toolbar').then (t => {
+                var tb = contextualToolbar = document.createElement ('gr-toolbar');
+                tb.grAnchor = a;
+                tb.setAttribute ('data-gr-editor', '');
+                tb.setAttribute ('contenteditable', 'false');
+                tb.style.top = a.offsetTop + a.offsetHeight + 'px';
+                tb.style.left = a.offsetLeft + 'px';
+                tb.appendChild (t.content.cloneNode (true));
+              
+                var destType = a.hasAttribute ('data-wiki-name') ? 'wiki-name' : 'url';
+                var updated = function () {
+                  tb.querySelectorAll ('[data-field=host]').forEach (e => {
+                    e.hidden = ! (destType === 'url');
+                    e.textContent = a.host;
+                  });
+                  tb.querySelectorAll ('[data-title-field=href]').forEach (e => {
+                    e.title = a.href;
+                  });
+                  tb.querySelectorAll ('[data-href-field=href]').forEach (e => {
+                    e.href = a.href;
+                  });
+                  tb.querySelectorAll ('[data-field=wikiName]').forEach (e => {
+                    e.textContent = a.getAttribute ('data-wiki-name');
+                    e.hidden = ! (destType === 'wiki-name');
+                  });
+                }; // updated
+                
+                tb.querySelectorAll ('.edit-button').forEach (e => {
+                  e.onclick = function () {
+                    pcInvoke ('prompt', {
+                      label: e.getAttribute ('data-'+destType+'-prompt'),
+                      default: (destType === 'wiki-name' ? a.getAttribute ('data-wiki-name') : a.href),
+                    }).then (_ => {
+                      if (_ === null) return;
+                      setLinkAttrs (a, destType, _);
+                      updated ();
+                    });
+                  };
+                });
+                updated ();
+                
+                document.body.appendChild (contextualToolbar);
+              });
+            } // showLinkToolbar
+                                             
+          `}); // pcEval
+
+          this.grViewer.pcRegisterMethod ('focused', () => {
+            this.dispatchEvent (new UIEvent ('focus', {bubbles: true}));
+          });
+
+          this.grViewer.pcRegisterMethod ('prompt', args => {
+            return prompt (args.label, args.default);
+          });
+
+          this.grViewer.pcRegisterMethod ('getTemplate', args => {
+            var t = document.querySelector ('#editor-' + args.name + '-template');
+            if (!t) throw new Error ('Editor template |'+args.name+'| not found');
+            return t.innerHTML;
+          });
+        });
+      }
       
       return installMinimum;
     }, // grInit
+    grCreateLink: function (destType) {
+      var showPrompt = () => {
+        var result = prompt (this.getAttribute ('prompt-link-' + destType), '');
+        if (result === "") return null;
+        return result;
+      }; // showPrompt
+      return this.grViewer.pcInvoke ('hasSelection').then (has => {
+        if (has) {
+          var result = undefined;
+          if (destType !== 'wiki-name') result = showPrompt ();
+          if (result === null) return;
+          return this.grViewer.pcInvoke ('editorCommand', {
+            action: 'setLink',
+            destType: destType,
+            dest: result, // or undefined
+          });
+        } else {
+          var result = showPrompt ();
+          if (result === null) return;
+          return this.grViewer.pcInvoke ('editorCommand', {
+            action: 'insertLink',
+            destType: destType,
+            dest: result,
+          });
+        }
+      }).then (() => {
+        this.focus ();
+      });
+    }, // grCreateLink
+    grGetHTML: function () {
+      return this.grViewer.pcInvoke ('pcEval', {code: "var e = document.body.cloneNode (true); e.querySelectorAll ('[data-gr-editor]').forEach (_ => _.remove ()); return e.innerHTML"});
+    }, // grGetHTML
     grSave: function () {
       if (!this.grEditableData) return;
 
@@ -1799,7 +2448,7 @@ defineElement ({
       if (as) as.start ({stages: ['saver']});
       if (as) as.stageStart ('saver');
       var objectId = this.getAttribute ('objectid');
-      return this.grViewer.pcInvoke ('pcEval', {code: "return document.body.innerHTML"}).then (body => {
+      return this.grGetHTML ().then (body => {
         var data = this.grEditableData;
         data.body = body;
         data.body_source_type = 0; // WYSIWYG
@@ -1830,9 +2479,14 @@ defineElement ({
           body_source_type: data.body_source_type,
           imported_sites: sites,
           group_url: document.documentElement.getAttribute ('data-group-url'),
+          theme: document.documentElement.getAttribute ('data-theme'),
+          editable: this.grMode === 'editor',
         });
       });
     }, // grSetObject
+    focus: function () {
+      this.grViewer.focus ();
+    }, // focus
   },
 }); // <gr-html-viewer>
 
@@ -1843,56 +2497,6 @@ defineElement ({
     pcInit: function () { },
   },
 }); // <gr-article-status>
-
-function createBodyHTML (value, opts) {
-  var doc = (new DOMParser).parseFromString ("", "text/html");
-
-  doc.documentElement.setAttribute ('data-group-url', document.documentElement.getAttribute ('data-group-url'));
-
-  doc.head.innerHTML = '<base target=_top>';
-  $$ (document.head, 'link.body-css').forEach (function (e) {
-    var link = document.createElement ('link');
-    link.rel = 'stylesheet';
-    link.href = e.href;
-    doc.head.appendChild (link);
-  });
-  $$ (document.head, 'link.body-js, script.body-js').forEach (function (e) {
-    var script = document.createElement ('script');
-    script.async = e.async;
-    script.src = e.href || e.src;
-    doc.head.appendChild (script);
-  });
-
-  if (opts.edit) {
-    $$ (document, 'template.body-edit-template').forEach (function (e) {
-      doc.head.appendChild (e.cloneNode (true));
-    });
-  }
-  $$ (document, 'template.body-template').forEach (function (e) {
-    doc.head.appendChild (e.cloneNode (true));
-  });
-
-  doc.documentElement.setAttribute ('data-theme', document.documentElement.getAttribute ('data-theme'));
-
-  if (opts.edit) {
-    doc.body.setAttribute ('contenteditable', '');
-    if (opts.focusBody) {
-      doc.body.setAttribute ('onload', 'document.body.focus ()');
-    }
-  }
-  doc.body.innerHTML = value || '';
-
-  if (opts.edit) {
-    $$ (doc.body, 'section').forEach (function (e) {
-      e.setAttribute ('contenteditable', 'false');
-    });
-    $$ (doc.body, 'section > h1, section > main').forEach (function (e) {
-      e.setAttribute ('contenteditable', 'true');
-    });
-  }
-
-  return doc.documentElement.outerHTML;
-} // createBodyHTML
 
 var FieldCommands = {};
 
@@ -2137,8 +2741,6 @@ function fillFields (contextEl, rootEl, el, object, opts) {
       field.value = value;
     } else if (field.localName === 'gr-index-list') {
       field.value = value;
-    } else if (field.localName === 'iframe') {
-      initIframeViewer (field, object, opts.importedSites);
     } else if (field.localName === 'todo-state') {
       if (value) {
         field.setAttribute ('value', value);
@@ -2183,64 +2785,6 @@ function fillFields (contextEl, rootEl, el, object, opts) {
     });
   }
 } // fillFields
-
-function initIframeViewer (field, object, importedSites) {
-  field.setAttribute ('sandbox', 'allow-scripts allow-top-navigation');
-  field.setAttribute ('srcdoc', createBodyHTML ('', {}));
-      var mc = new MessageChannel;
-      field.onload = function () {
-        this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
-        mc.port2.onmessage = function (ev) {
-          if (ev.data.type === 'height') {
-            field.style.height = ev.data.value + 'px';
-          } else if (ev.data.type === 'changed') {
-            var v = new Event ('editablecontrolchange', {bubbles: true});
-            v.data = ev.data;
-            field.dispatchEvent (v);
-          } else if (ev.data.type === 'getObjectWithData') {
-            GR.object.get (ev.data.value, {withData: true}).then (function (object) {
-              ev.ports[0].postMessage (object);
-            });
-          } else if (ev.data.type === 'linkSelected') {
-            GR.tooltip.showURL (ev.data.url, {
-              top: field.offsetTop + ev.data.top + ev.data.height,
-              left: field.offsetLeft + ev.data.left,
-            });
-          } else if (ev.data.type === 'linkClicked') {
-            GR.navigate.go (ev.data.url, {
-              ping: ev.data.ping,
-            });
-          }
-        };
-        field.onload = null;
-      };
-  mc.port2.postMessage ({type: "setCurrentValue",
-                         valueSourceType: (object.data ? object.data.body_source_type : null),
-                         importedSites: importedSites,
-                         value: object.data.body});
-} // initIframeViewer
-
-defineElement ({
-  name: 'iframe',
-  is: 'gr-old-iframe-viewer',
-  fill: 'idlattribute',
-  props: {
-    pcInit: function () {
-      this.grValue = this.value;
-      Object.defineProperty (this, 'value', {
-        set: function (v) {
-          this.grValue = v;
-          Promise.resolve ().then (() => this.grRender ());
-        },
-      });
-      Promise.resolve ().then (() => this.grRender ());
-    }, // pcInit
-    grRender: function () {
-      if (!this.grValue) return;
-      initIframeViewer (this, this.grValue, {/*XXX*/});
-    }, // grRender
-  },
-}); // <iframe is=gr-old-iframe-viewer>
 
 function fillFormControls (form, object, opts) {
   var wait = [];
@@ -2393,111 +2937,40 @@ function upgradeBodyControl (e, object, opts) {
     },
   });
 
-  e.setHeight = function (h) {
-    $$c (e, 'body-control-tab').forEach (function (f) {
-      var h2 = h;
-      $$c (f, 'menu').forEach (function (g) {
-        h2 -= g.offsetHeight;
-      });
-      $$c (f, 'iframe, textarea, gr-html-viewer').forEach (function (g) {
-        g.style.height = h2 + 'px';
-      });
-    });
-  };
-
-  var iframe = e.querySelector ('body-control-tab[name=iframe] iframe');
-  iframe.setAttribute ('sandbox', 'allow-scripts allow-popups');
-  iframe.setAttribute ('srcdoc', createBodyHTML ('', {edit: true, focusBody: opts.focusBody}));
-  var valueWaitings = [];
-  var mc = new MessageChannel;
-  iframe.onload = function () {
-    this.contentWindow.postMessage ({type: "getHeight"}, '*', [mc.port1]);
-    mc.port2.onmessage = function (ev) {
-      if (ev.data.type === 'focus') {
-        iframe.dispatchEvent (new Event ("focus", {bubbles: true}));
-      } else if (ev.data.type === 'currentValue') {
-        valueWaitings.forEach (function (f) {
-          f (ev.data.value);
-        });
-        valueWaitings = [];
+  /* XXX
       } else if (ev.data.type === 'currentState') {
         $$ (e, 'button[data-action=execCommand]').forEach (function (b) {
           var value = ev.data.value[b.getAttribute ('data-command')];
           if (value === undefined) return;
           b.classList.toggle ('active', value);
-        });
-      } else if (ev.data.type === 'prompt') {
-        var args = ev.data.value;
-        var result = prompt (args.prompt, args.default);
-        ev.ports[0].postMessage ({result: result});
-      } else if (ev.data.type === 'getObjectWithData') {
-        GR.object.get (ev.data.value, {withData: true}).then (function (object) {
-          ev.ports[0].postMessage (object);
-        });
-      }
-    }; // onmessage
-    e.onload = null;
-  }; // onload
-    e.sendCommand = function (data) {
-      mc.port2.postMessage (data);
-    };
-    e.sendExecCommand = function (name, value) {
-      mc.port2.postMessage ({type: "execCommand", command: name, value: value});
-    };
-    e.setBlock = function (value) {
-      mc.port2.postMessage ({type: "setBlock", value: value});
-    };
-    e.insertSection = function () {
-      mc.port2.postMessage ({type: "insertSection"});
-    };
-    e.sendAction = function (type, command, value) {
-      mc.port2.postMessage ({type: type, command: command, value: value});
-    };
-    e.sendChange = function (data) {
-      mc.port2.postMessage ({type: "change", value: data});
-    };
+  */
   e.focus = function () {
-      iframe.focus ();
-      var ev = new UIEvent ('focus', {});
-      e.dispatchEvent (ev);
-    };
+    e.querySelector ('body-control-tab[name=iframe] gr-html-viewer').focus ();
+  };
   saver.iframe = function () {
-    mc.port2.postMessage ({type: "getCurrentValue"});
-    return new Promise (function (ok) { valueWaitings.push (ok) }).then (function (_) {
-      data.body = _;
-    });
+    var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
+    return field.grGetHTML ().then (body => data.body = body);
   }; // saver.iframe
   loader.iframe = function () {
-    mc.port2.postMessage ({
-      type: "setCurrentValue",
-      value: data.body,
-      valueSourceType: data.body_source_type,
-      importedSites: opts.importedSites,
-    });
+    var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
+    field.value = data;
   }; // loader.iframe
 
-  $$c (e, 'button[data-action=execCommand]').forEach (function (b) {
+  $$c (e, 'button[data-action=execCommand], button[data-action=setBlock], button[data-action=insertSection], button[data-action=indent], button[data-action=outdent], button[data-action=insertCheckbox]').forEach (function (b) {
     b.onclick = function () {
-      e.sendExecCommand (this.getAttribute ('data-command'), this.getAttribute ('data-value'));
+      var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
+      field.grViewer.pcInvoke ('editorCommand', {
+        action: b.getAttribute ('data-action'),
+        command: b.getAttribute ('data-command'),
+        value: b.getAttribute ('data-value'),
+      });
       e.focus ();
     };
   });
-  $$c (e, 'button[data-action=setBlock]').forEach (function (b) {
+  $$c (e, 'button[data-action=link]').forEach (function (b) {
     b.onclick = function () {
-      e.setBlock (this.getAttribute ('data-value'));
-      e.focus ();
-    };
-  });
-  $$c (e, 'button[data-action=insertSection]').forEach (function (b) {
-    b.onclick = function () {
-      e.insertSection ();
-      e.focus ();
-    };
-  });
-  $$c (e, 'button[data-action=indent], button[data-action=outdent], button[data-action=insertControl], button[data-action=link]').forEach (function (b) {
-    b.onclick = function () {
-      e.sendAction (b.getAttribute ('data-action'), b.getAttribute ('data-command'), b.getAttribute ('data-value'));
-      e.focus ();
+      var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
+      return field.grCreateLink (b.getAttribute ('data-command'));
     };
   });
   $$c (e, 'button[data-action=panel]').forEach (function (b) {
@@ -2701,7 +3174,6 @@ function upgradeList (el) {
         item.setAttribute ('data-object', object.object_id);
         item.startEdit = function () {
           editObject (item, object, {
-            open: true,
             importedSites: opts.importedSites,
           });
         }; // startEdit
@@ -2738,24 +3210,6 @@ function upgradeList (el) {
         item.addEventListener ('objectdataupdate', function (ev) {
           if (ev.grNewTodoState) object.data.todo_state = ev.grNewTodoState;
           this.updateView ();
-        });
-        item.addEventListener ('editablecontrolchange', function (ev) {
-          var as = getActionStatus (item);
-          as.start ({stages: ["formdata", "create", "edit", "update"]});
-          var open = false; // XXX true if edit-container is modified but not saved
-          editObject (item, object, {
-            open: open,
-            importedSites: opts.importedSites,
-          }).then (function () {
-            $$ /* not $$c*/ (item, 'edit-container body-control').forEach (function (e) {
-              e.sendChange (ev.data);
-            });
-            return item.save ({actionStatus: as});
-          }).then (function () {
-            as.end ({ok: true});
-          }, function (error) {
-            as.end ({error: error});
-          });
         });
 
         item.updateView ();
@@ -3004,7 +3458,7 @@ function upgradeList (el) {
         data.index_ids[el.getAttribute ('src-index_id')] = 1;
         var wikiName = el.getAttribute ('src-wiki_name');
         if (wikiName) data.title = wikiName;
-        editObject (article, {data: data}, {open: true, focusTitle: button.hasAttribute ('data-focus-title')});
+        editObject (article, {data: data}, {focusTitle: button.hasAttribute ('data-focus-title')});
       };
     });
   });
@@ -3096,16 +3550,37 @@ function upgradeList (el) {
 } // upgradeList
 
 function editObject (article, object, opts) {
-  var wait = [];
-  var template = document.querySelector ('#edit-form-template');
+  if (article.grEditorWindow) {
+    article.grEditorWindow.grStartEditMode ();
+    return;
+  }
 
-  var container = article.querySelector ('edit-container');
-  if (!container) {
-    container = document.createElement ('edit-container');
-    container.hidden = true;
-    container.appendChild (template.content.cloneNode (true));
-    article.appendChild (container);
-    var form = container.querySelector ('form');
+  return $getTemplateSet ('editor-sub-window-content').then (tm => {
+    article.grEditorWindow = tm.createFromTemplate ('sub-window', {});
+
+    var ec = article.grEditorWindow.querySelector ('edit-container');
+    var template = document.querySelector ('#edit-form-template');
+    ec.appendChild (template.content.cloneNode (true));
+
+    var startEditMode = article.grEditorWindow.grStartEditMode = () => {
+      article.classList.add ('editing');
+      ec.querySelectorAll ('input[name=title]').forEach (_ => _.focus ());
+      article.grEditorWindow.mode = 'default';
+      article.grEditorWindow.hidden = false;
+    }; // startEditMode
+    var endEditMode = (opts) => {
+      article.classList.remove ('editing');
+      if (opts.discard) {
+        article.grEditorWindow.remove ();
+        delete article.grEditorWindow;
+      } else {
+        article.grEditorWindow.hidden = true;
+      }
+    }; // endEditMode
+  
+    var wait = [];
+
+    var form = ec.querySelector ('form');
 
     article.save = function (opts) {
       return withFormDisabled (form, function () {
@@ -3113,28 +3588,27 @@ function editObject (article, object, opts) {
       });
     }; // save
 
-    $$c (form, 'body-control, header input').forEach (function (control) {
-      control.onfocus = function () {
-        container.scrollIntoView ();
-      };
-    });
-
     wait.push (fillFormControls (form, object, {
       focusTitle: opts.focusTitle,
       importedSites: opts.importedSites,
     }));
 
-    container.addEventListener ('gruwaeditcommand', function (ev) {
-      form.getBodyControl ().sendCommand (ev.data);
+    ec.addEventListener ('change', ev => {
+      if (ev.target.name === 'title') {
+        article.grEditorWindow.querySelectorAll ('gr-sub-window-label').forEach (_ => $fill (_, {title: ev.target.value}));
+      }
+    });
+
+    ec.addEventListener ('gruwaeditcommand', function (ev) {
+      var field = form.getBodyControl ().querySelector ('gr-html-viewer');
+      field.grViewer.pcInvoke ('editorCommand', ev.data);
+      field.focus ();
     });
 
   // XXX autosave
 
   $$c (form, '.cancel-button').forEach (function (button) {
-    button.onclick = function () {
-      container.hidden = true;
-      article.classList.remove ('editing');
-    };
+    button.onclick = () => endEditMode ({discard: false});
   });
 
   form.onsubmit = function () {
@@ -3145,8 +3619,7 @@ function editObject (article, object, opts) {
       if (object.object_id) {
         article.updateView ();
         //as.stageEnd ("update");
-        container.hidden = true;
-        article.classList.remove ('editing');
+        endEditMode ({discard: false});
         as.end ({ok: true});
       } else { // new object
         var list = document.querySelector ('gr-list-container[src-index_id]');
@@ -3166,8 +3639,7 @@ function editObject (article, object, opts) {
           as.end ({ok: false, error: error});
           // XXX open the permalink page?
         }).then (function () {
-          container.remove ();
-          article.classList.remove ('editing');
+          endEditMode ({discard: true}); // XXX reuse
         });
       }
     }).catch (function (error) {
@@ -3175,31 +3647,11 @@ function editObject (article, object, opts) {
     });;
   }; // onsubmit
 
-    var resize = function () {
-      var h1 = 0;
-      $$c (container, 'form header, form footer').forEach (function (e) {
-        h1 += e.offsetHeight;
-      });
-      var h = document.documentElement.clientHeight - h1;
-      container.querySelector ('form body-control').setHeight (h);
-    }; // resize
-    addEventListener ('resize', resize);
-    wait.push (Promise.resolve ().then (resize));
-  } // !container
+    document.body.appendChild (article.grEditorWindow);
+    startEditMode ();
 
-  if (opts.open) {
-    container.hidden = false;
-    article.classList.add ('editing');
-    if (opts.focusTitle) {
-      var title = container.querySelector ('input[name=title]');
-      if (title) title.focus ();
-    } else {
-      var body = container.querySelector ('body-control');
-      if (body) body.focus ();
-    }
-  }
-
-  return Promise.all (wait);
+    return Promise.all (wait);
+  });
 } // editObject
 
 function saveObject (article, form, object, opts) {
@@ -3455,7 +3907,7 @@ function togglePanel (name, container) {
     if (cmd) {
       section.addEventListener ('grSelectObject', (ev0) => {
         var ev = new Event ('gruwaeditcommand', {bubbles: true});
-        ev.data = {type: cmd, value: ev0.grObjectURL};
+        ev.data = {action: cmd, value: ev0.grObjectURL};
         section.dispatchEvent (ev);
       });
     }
@@ -4595,6 +5047,36 @@ function upgradePopupMenu (e) {
   };
 } // upgradePopupMenu
 
+GR.jumpList = {};
+
+GR.jumpList.get = function () {
+  if (GR._state.getJumpList) return GR._state.getJumpList;
+  
+  return GR._state.getJumpList = fetch ('/jump/list.json', {
+    credentials: 'same-origin',
+    referrerPolicy: 'same-origin',
+  }).then ((res) => {
+    if (res.status !== 200) throw res;
+    return res.json ();
+  }).then (json => {
+    json.items.forEach (_ => {
+      _.absoluteURL = new URL (_.url, location.href);
+    });
+    return json.items;
+  }).catch (e => {
+    if (e instanceof Response && e.status === 403) {
+      throw GR.Error.handle403 (e);
+    }
+    throw e;
+  });
+}; // GR.jumpList.get
+
+GR.jumpList.reload = function () {
+  delete GR._state.getJumpList;
+  document.querySelectorAll ('gr-nav-panel[active] list-container[loader=jumpListLoader]:not([loader-delayed])').forEach (_ => _.load ({}));
+  document.querySelectorAll ('gr-nav-panel:not([active]) list-container[loader=jumpListLoader]:not([loader-delayed])').forEach (_ => _.setAttribute ('loader-delayed', ''));
+}; // GR.jumpList.reload
+
 defineElement ({
   name: 'a',
   is: 'gr-jump-add',
@@ -4606,21 +5088,26 @@ defineElement ({
       var fd = new FormData;
       if (this.title) fd.append ('label', this.title);
       fd.append ('url', this.href);
-      return gFetch ('/jump/add.json', {post: true, formData: fd}).then (function () {
-        document.querySelectorAll ('.jump-list').forEach (_ => _.load ({}));
+      this.setAttribute ('data-saving', '');
+      return gFetch ('/jump/add.json', {post: true, formData: fd}).then (() => {
+        GR.jumpList.reload ();
+      }).finally (() => {
+        this.removeAttribute ('data-saving');
       });
     }, // grClick
   },
 });
 
 (() => {
-  var e = document.createElementNS ('data:,pc', 'filter');
-  e.setAttribute ('name', 'jumpListFilter');
-  e.pcHandler = function (data) {
-    data.data.forEach (_ => {
-      _.absoluteURL = new URL (_.url, location.href);
+  var e = document.createElementNS ('data:,pc', 'loader');
+  e.setAttribute ('name', 'jumpListLoader');
+  e.pcHandler = function (opts) {
+    if (this.hasAttribute ('loader-delayed')) return {data: []};
+    return GR.jumpList.get ().then (items => {
+      return {
+        data: items,
+      };
     });
-    return data;
   };
   document.head.appendChild (e);
 
@@ -5461,7 +5948,7 @@ defineElement ({
               _.removeAttribute ('active');
             }
           });
-          document.querySelector ('gr-nav-panel').focus ();
+          document.querySelectorAll ('gr-nav-panel[active]').forEach (_ => _.grOpened ());
         };
       });
     }, // pcInit
@@ -5479,6 +5966,13 @@ defineElement ({
         }
       };
     }, // pcInit
+    grOpened: function () {
+      this.querySelectorAll ('list-container[loader-delayed]').forEach (_ => {
+        _.removeAttribute ('loader-delayed');
+        _.load ({});
+      });
+      this.querySelector ('summary, a, button, input').focus ();
+    }, // grOpened
     grClose: function () {
       document.querySelectorAll ('gr-nav-button button').forEach (_ => _.click ());
     }, // grClose

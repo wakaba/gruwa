@@ -104,9 +104,6 @@ Test {
   my $current = shift;
   return $current->create (
     [a1 => account => {}],
-    [a2 => account => {}],
-    [a3 => account => {}],
-    [a4 => account => {}],
     [g1 => group => {
       members => ['a1'],
     }],
@@ -158,10 +155,10 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'edit-container body-control gr-html-viewer iframe',
+      selector => 'edit-container body-control body-control-tab[name=preview] gr-html-viewer iframe',
     });
   })->then (sub {
-    return $current->b (1)->switch_to_frame_by_selector ('edit-container body-control gr-html-viewer iframe');
+    return $current->b (1)->switch_to_frame_by_selector ('edit-container body-control body-control-tab[name=preview] gr-html-viewer iframe');
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'body',
@@ -198,6 +195,100 @@ Test {
     } $current->c;
   });
 } n => 1, name => ['preview html viewer'], browser => 1;
+
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [o1 => object => {
+      group => 'g1', account => 'a1',
+      body_type => 1, # html
+      body => q{},
+    }],
+  )->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article .edit-button',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article .edit-button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'edit-container body-control gr-html-viewer iframe',
+      scroll => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('edit-container body-control gr-html-viewer iframe');
+    });
+  })->then (sub {
+    return $current->b (1)->click ($_[0]->json->{value});
+  })->then (sub {
+    return $current->b (1)->http_post (['keys'], {
+      value => [split //, $current->generate_key (t1 => {})],
+    })->then (sub {
+      my $res = $_[0];
+      die $res if $res->is_error;
+    });
+  })->then (sub {
+    return $current->b_screenshot (1, 'before textarea click');
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('edit-container body-control a[data-name=textarea]').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'edit-container body-control textarea',
+      shown => 1,
+    });
+  })->then (sub {
+    return $current->b_screenshot (1, 'textarea ');
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      return document.querySelector ('edit-container body-control textarea').value;
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}, $current->o ('t1');
+    } $current->c;
+    return $current->b (1)->execute (q{
+      return document.querySelector ('edit-container .save-button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'edit-container .save-button:enabled',
+    });
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $obj->{data}->{body_type}, 1; # html
+      is $obj->{data}->{body}, $current->o ('t1');
+      is $obj->{data}->{body_source_type}, undef;
+      is $obj->{data}->{body_source}, undef;
+    } $current->c;
+  });
+} n => 5, name => ['WYSIWYG HTML editor'], browser => 1
+    unless $ENV{TEST_WD_BROWSER} =~ /firefox/; # XXX //keys is Chrome only
 
 RUN;
 

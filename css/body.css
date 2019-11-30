@@ -6,9 +6,18 @@ html {
   line-height: 1.8;
 }
 
+html.editor {
+  height: 100%;
+}
+
 body {
   padding: .5em;
+  box-sizing: border-box;
   white-space: pre-wrap;
+}
+
+html.editor > body {
+  min-height: 100%;
 }
 
 body[data-source-type="3"] {
@@ -89,22 +98,6 @@ hatena-html h6 {
   min-height: var(--header6-min-height);
   box-sizing: border-box;
   text-align: var(--header6-align);
-}
-
-menu.context {
-  position: absolute;
-  margin: 0;
-  border: none;
-  border-color: var(--light-1-border-color);
-  padding: .5em;
-  background-color: var(--light-1-background-color);
-  color: var(--light-1-color);
-  box-shadow: 2px 2px var(--light-1-shadow-color);
-  white-space: normal;
-}
-
-menu.context button {
-  
 }
 
 ul, ol {

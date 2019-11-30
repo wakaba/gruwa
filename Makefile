@@ -107,7 +107,7 @@ test-http:
 
 test-browser:
 	TEST_MAX_CONCUR=1 $(PROVE) t/browser/*.t || \
-	TEST_MAX_CONCUR=1 $(PROVE) t/browser/*.t
+	WEBUA_DEBUG=2 TEST_MAX_CONCUR=1 $(PROVE) --verbose t/browser/*.t
 
 test-http-circleci: test-http
 test-browser-circleci: test-browser

@@ -31,6 +31,11 @@ html { /* [data-thema=green] */
   --accented-border-color: currentcolor;
   --accented-background-color: transparent;
 
+  --window-background-color: var(--main-background-color);
+  --window-color: var(--main-color);
+  --window-border-color: var(--accented-border-color);
+  --window-shadow-color: var(--main-shadow-color);
+
   --menu-background-color: var(--main-background-color);
   --menu-color: var(--main-color);
   --menu-border-color: var(--accented-border-color);
@@ -414,6 +419,11 @@ gr-html-viewer > sandboxed-viewer:not([hidden]) {
   display: block;
 }
 
+gr-html-viewer[mode=editor] {
+  border: dotted 1px;
+  border-color: var(--accented-border-color);
+}
+
 form {
   margin: 0 .5em .5em .5em;
   border: 1px dotted;
@@ -497,10 +507,11 @@ gr-called-editor:not([hidden]) {
   display: inline-block;
   border: dotted 1px;
   border-color: var(--accented-border-color);
-  padding: .3em;
+  padding: .1em .3em;
   color: var(--main-color);
   background-color: var(--main-background-color);
   min-width: 10em;
+  text-align: left;
 }
 
 gr-select-icon popup-menu > button:not([hidden]) {
@@ -1088,9 +1099,9 @@ gr-popup-menu > button:not([hidden]):focus {
 gr-nav-button:not([hidden]) {
   position: fixed;
   display: block;
-  top: .5em;
-  right: .5em;
-  margin: 0 ! important; /* XXX */
+  top: 0;
+  right: 0;
+  margin: 0;
   z-index: 1000001;
 }
 
@@ -1193,6 +1204,17 @@ gr-nav-panel p {
 
 gr-nav-panel form {
   margin: 2px;
+}
+
+gr-nav-panel list-is-empty:not([hidden]) {
+  margin: 0;
+}
+
+gr-nav-panel list-is-empty p {
+  padding: .4rem;
+  color: var(--small-color);
+  background-color: var(--small-background-color);
+  font-size: 80%;
 }
 
 gr-nav-panel summary:not([hidden]),
@@ -1500,6 +1522,25 @@ gr-tooltip-box:not([hidden]) {
 
 gr-tooltip-box > object-ref a:not([hidden]) {
   margin-left: 0;
+}
+
+gr-toolbar:not([hidden]) {
+  position: absolute;
+  display: block;
+  margin: 0 !important;
+  border: 1px solid;
+  border-color: var(--menu-border-color);
+  padding: .5em;
+  max-width: 60em;
+  font-size: 90%;
+  background: var(--menu-background-color);
+  color: var(--menu-color);
+  box-shadow: 1px 1px var(--menu-shadow-color);
+  white-space: normal;
+}
+
+gr-toolbar a:not([hidden]) {
+  display: inline-block;
 }
 
 gr-object-meta {

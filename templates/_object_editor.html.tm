@@ -34,11 +34,14 @@
           <button type=button data-action=link data-command=url title="Web サイトにリンク">://</button
           ><button type=button data-action=link data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
 
-              <button type=button data-action=insertControl data-value=checkbox title=チェック項目>☑</button
+              <button type=button data-action=insertCheckbox title=チェック項目>☑</button
               ><button type=button data-action=panel data-value=image-list title=画像>&#x1F5BC;</button
               ><button type=button data-action=panel data-value=file-list title=ファイル>&#x1F4C4;</button>
             </menu>
-            <iframe />
+            <gr-html-viewer mode=editor
+                prompt-link-url=リンク先のURLを指定してください。
+                prompt-link-wiki-name=リンク先のWiki名を指定してください。
+            />
           </body-control-tab>
           <body-control-tab name=textarea hidden>
             <textarea />
@@ -77,7 +80,18 @@
             stage-create=作成中...
             stage-edit=保存中...
             stage-update=更新中... />
-    </footer>
+        </p>
+        
+        <gr-group>
+          <img data-src-template=/g/{group_id}/icon class=icon alt>
+          <gr-group-name data-field=title data-filling>グループ</>
+        </gr-group>
+
+        <span>
+          通知送信先:
+          <gr-called-editor template=gr-called-editor />
+        </span>
+        
     <details>
       <summary>詳細設定</>
       <table class=config>
@@ -168,18 +182,9 @@
                 </gr-popup-menu>
         </table>
       </list-control>
-    </details>
+        </details>
+      </footer>
 
-      <p>
-        <gr-group>
-          <img data-src-template=/g/{group_id}/icon class=icon alt>
-          <gr-group-name data-field=title data-filling>グループ</>
-        </gr-group>
-
-        <span>
-          通知送信先:
-          <gr-called-editor template=gr-called-editor />
-        </span>
     </form>
     <aside hidden/>
   </with-sidebar>
@@ -239,19 +244,17 @@
   </template>
 </template-set>
 
-  <template id=link-edit-template class=body-edit-template>
-    <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener">
-      <code data-field=host data-title-field=href hidden></code>
-      <span data-field=wikiName hidden />
-    </a>
-    <button type=button class=edit-button
-        data-url-prompt=リンク先のURLを指定してください。
-        data-wiki-name-prompt=リンク先のWiki名を指定してください。
-        title=リンク先を編集>編集</button>
-  </template>
-  <template id=edit-texts class=body-edit-template
-      data-link-url-prompt=リンク先のURLを指定してください。
-      data-link-wiki-name-prompt=リンク先のWiki名を指定してください。 />
+<template id=editor-link-toolbar-template>
+  <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener" data-gr-editor>
+    <code data-field=host data-title-field=href hidden></code>
+    <span data-field=wikiName hidden />
+  </a>
+  <button type=button class=edit-button
+      data-url-prompt=リンク先のURLを指定してください。
+      data-wiki-name-prompt=リンク先のWiki名を指定してください。
+      title=リンク先を編集
+  >編集</button>
+</template>
 
   <gr-list-container type=$with id=index-list src=i/list.json key=index_list itemkey=index_id />
   <gr-list-container type=$with id=member-list src=members/list.json key=members itemkey=account_id accounts />
