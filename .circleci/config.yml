@@ -125,7 +125,7 @@
             },
             {
                "run" : {
-                  "command" : "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-browser-circleci"
+                  "command" : "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env TEST_WD_BROWSER=firefox make test-browser-circleci"
                }
             },
             {
