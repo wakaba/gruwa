@@ -287,7 +287,8 @@ Test {
       is $obj->{data}->{body_source}, undef;
     } $current->c;
   });
-} n => 5, name => ['WYSIWYG HTML editor'], browser => 1;
+} n => 5, name => ['WYSIWYG HTML editor'], browser => 1
+    unless $ENV{TEST_WD_BROWSER} =~ /firefox/; # XXX //keys is Chrome only
 
 RUN;
 
