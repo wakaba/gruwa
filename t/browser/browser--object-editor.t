@@ -155,10 +155,10 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
-      selector => 'edit-container body-control gr-html-viewer iframe',
+      selector => 'edit-container body-control body-control-tab[name=preview] gr-html-viewer iframe',
     });
   })->then (sub {
-    return $current->b (1)->switch_to_frame_by_selector ('edit-container body-control gr-html-viewer iframe');
+    return $current->b (1)->switch_to_frame_by_selector ('edit-container body-control body-control-tab[name=preview] gr-html-viewer iframe');
   })->then (sub {
     return $current->b_wait (1 => {
       selector => 'body',
