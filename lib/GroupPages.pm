@@ -1247,6 +1247,7 @@ sub group ($$$$) {
       account => $opts->{account},
       group => $opts->{group},
       group_member => $opts->{group_member},
+      formatter_url_prefix => $app->config->{formatter}->{url},
     };
   }
 
