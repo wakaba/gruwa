@@ -1,5 +1,6 @@
-<html t:params="$group $app"
+<html t:params="$group $app $formatter_url_prefix"
     pl:data-theme="$group->{data}->{theme}"
+    pl:data-formatter-url=$formatter_url_prefix
     pl:data-bb-clientid="$app->config->{bitbucket}->{public}->{client_id}">
 <!--
 
