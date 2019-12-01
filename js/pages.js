@@ -1582,6 +1582,10 @@ defineElement ({
           var fragment = document.createElement ('div');
           fragment.innerHTML = args.body;
 
+          var base = document.querySelector ('base') || document.createElement ('base');
+          base.href = args.base_url;
+          document.head.appendChild (base);
+
           document.documentElement.setAttribute ('data-group-url', args.group_url);
           document.documentElement.setAttribute ('data-theme', args.theme);
           document.documentElement.classList.toggle ('editor', args.editable);
@@ -1733,10 +1737,6 @@ defineElement ({
 
       installMinimum.then (() => {
         var div = document.createElement ('div');
-
-        var base = document.createElement ('base');
-        base.href = location.href;
-        div.appendChild (base);
 
         document.querySelectorAll ('link.body-css').forEach (e => {
           var link = document.createElement ('link');
@@ -2478,6 +2478,7 @@ function replaceSelectionBy (node, hasSelected) {
           body: data.body,
           body_source_type: data.body_source_type,
           imported_sites: sites,
+          base_url: location.href,
           group_url: document.documentElement.getAttribute ('data-group-url'),
           theme: document.documentElement.getAttribute ('data-theme'),
           editable: this.grMode === 'editor',
