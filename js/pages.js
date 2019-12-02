@@ -617,7 +617,7 @@ GR.index = {};
 GR.index.list = () => {
   if (GR._state.getIndexList) {
     if (performance.now () - GR._timestamp.indexList > 3*60*60*1000) {
-      GR.idle (() => GR.index._updateList ());
+      GR.idle (() => GR.index._updateList ({}));
     }
     return GR._state.getIndexList;
   }
@@ -1718,6 +1718,7 @@ defineElement ({
               (n.protocol === 'https:' || n.protocol === 'http:') &&
               (n.target === '' || n.target === '_blank') &&
               !n.hasAttribute ('is') &&
+              !n.hasAttribute ('download') &&
               !n.hasAttribute ('data-gr-editor')) {
             pcInvoke ('navigate', {url: n.href});
             ev.preventDefault ();
@@ -1888,7 +1889,7 @@ defineElement ({
               } else if (args.action === 'insertImage') {
                 insertImage (args.value);
               } else if (args.action === 'insertFile') {
-                insertFile (args.value);
+                insertFile (args);
               } else {
                 throw new TypeError ('Unknown editorCommand action: |'+args.action+'|');
               }
@@ -2292,12 +2293,21 @@ function insertImage (url) {
   replaceSelectionBy (a, false);
 } // insertImage
 
-function insertFile (url) {
-  var iframe = document.createElement ('iframe');
-  iframe.className = 'embed';
-  iframe.src = url + 'embed';
-  replaceSelectionBy (iframe, false);
-} // insertFile
+            function insertFile (args) {
+              /* OLD:
+                var iframe = document.createElement ('iframe');
+                iframe.className = 'embed';
+                iframe.src = url + 'embed';
+              */
+              
+              var a = document.createElement ('a');
+              a.className = 'file';
+              a.download = '';
+              a.href = args.value + 'file';
+              a.innerHTML = '<code></code>';
+              a.firstChild.textContent = args.file_name || args.value;
+              document.execCommand ('inserthtml', false, a.outerHTML);
+            } // insertFile
 
 function replaceSelectionBy (node, hasSelected) {
   var sel = getSelection ();
@@ -3602,8 +3612,20 @@ function editObject (article, object, opts) {
 
     ec.addEventListener ('gruwaeditcommand', function (ev) {
       var field = form.getBodyControl ().querySelector ('gr-html-viewer');
-      field.grViewer.pcInvoke ('editorCommand', ev.data);
-      field.focus ();
+      if (ev.data.action === 'insertFile') {
+        var m = ev.data.value.match (/\/o\/([0-9]+)\//);
+        return GR.object.get (m[1], {withData: true}).then (object => {
+          field.grViewer.pcInvoke ('editorCommand', {
+            action: 'insertFile',
+            value: ev.data.value,
+            file_name: object.data.file_name,
+          });
+          field.focus ();
+        });
+      } else {
+        field.grViewer.pcInvoke ('editorCommand', ev.data);
+        field.focus ();
+      }
     });
 
   // XXX autosave
@@ -5402,7 +5424,8 @@ GR.navigate._init = function (partition) {
     if (n &&
         (n.protocol === 'https:' || n.protocol === 'http:') &&
         n.target === '' &&
-        !n.hasAttribute ('is')) {
+        !n.hasAttribute ('is') &&
+        !n.hasAttribute ('download')) {
       GR.navigate.go (n.href, {ping: n.ping});
       ev.preventDefault ();
     }
