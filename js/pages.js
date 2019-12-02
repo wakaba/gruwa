@@ -139,7 +139,7 @@ defineElement ({
   },
 });
 
-GR._state = {currentPage: {}, uToImported: {}};
+GR._state = {currentPage: {}, uToImported: {}, imagePrefetched: {}};
 GR._objects = {};
 GR._timestamp = {};
 
@@ -2484,6 +2484,20 @@ function replaceSelectionBy (node, hasSelected) {
         delete this.grEditableData;
       }
       return GR.group.importedSites ().then (sites => {
+        // XXX image preloading (to avoid cookie SameSite issue)
+        var html = (new DOMParser).parseFromString ("", "text/html").body;
+        html.innerHTML = data.body;
+        html.querySelectorAll ('img[src]').forEach (img => {
+          var url = img.src;
+          if (GR._state.imagePrefetched[url]) return;
+          GR._state.imagePrefetched[url] = true;
+          var link = document.createElement ('link');
+          link.rel = 'prefetch';
+          link.as = 'image';
+          link.href = url;
+          document.head.appendChild (link);
+        });
+        
         return this.grViewer.pcInvoke ('setBody', {
           body: data.body,
           body_source_type: data.body_source_type,
