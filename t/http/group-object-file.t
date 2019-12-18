@@ -27,15 +27,24 @@ Test {
       'content-type' => 'application/octet-stream',
     }, body => $body);
   })->then (sub {
-    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
-      is $result->{res}->header ('content-type'), 'application/octet-stream';
-      is $result->{res}->header ('content-disposition'), 'attachment; filename=""';
-      is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
-      is $result->{res}->header ('x-content-type-options'), 'nosniff';
-      is $result->{res}->body_bytes, $body;
+      like $result->{res}->header ('location'), qr{^http://storage.server.test/.+\?.+$};
+      is $result->{res}->header ('cache-control'), 'private,max-age=600';
+    } $current->c;
+    my $url = Web::URL->parse_string ($result->{res}->header ('location'));
+    return $current->client_for ($url)->request (
+      url => $url,
+    );
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'application/octet-stream';
+      is $res->header ('content-disposition'), 'attachment; filename=""';
+      is $res->body_bytes, $body;
     } $current->c;
     return $current->object ($current->o ('o1'), account => 'a1');
   })->then (sub {
@@ -67,14 +76,14 @@ Test {
       is $obj->{data}->{file_name}, "ho\x{2244}ge.png";
       is $obj->{data}->{file_closed}, 1;
     } $current->c;
-    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1', redirected => 1);
   })->then (sub {
     my $result = $_[0];
     test {
       is $result->{res}->header ('content-type'), 'text/plain;hoge=fuga';
       is $result->{res}->header ('content-disposition'),
           q{attachment; filename=ho%E2%89%84ge.png; filename*=utf-8''ho%E2%89%84ge.png};
-      is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
+      #is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
       is $result->{res}->body_bytes, $body;
     } $current->c;
     return $current->are_errors (
@@ -88,14 +97,14 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1', redirected => 1);
   })->then (sub {
     my $result = $_[0];
     test {
       is $result->{res}->header ('content-type'), 'text/plain;hoge=fuga';
       is $result->{res}->header ('content-disposition'),
           q{attachment; filename=ho%E2%89%84ge.png; filename*=utf-8''ho%E2%89%84ge.png};
-      is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
+      #is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
       is $result->{res}->body_bytes, $body;
     } $current->c, name => 'unchanged';
     return $current->are_errors (
@@ -105,7 +114,7 @@ Test {
       ],
     );
   });
-} n => 28, name => 'file upload';
+} n => 27, name => 'file upload';
 
 Test {
   my $current = shift;
@@ -127,13 +136,18 @@ Test {
     my $result = $_[0];
     $current->set_o (o1 => $result->{json});
   })->then (sub {
-    return $current->are_errors (
-      ['GET', ['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1'],
-      [
-        {status => 404},
-      ],
+    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    my $url = Web::URL->parse_string ($result->{res}->header ('location'));
+    return $current->client_for ($url)->request (
+      url => $url,
     );
   })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 404;
+    } $current->c;
     return $current->post_json (['o', $current->o ('o1')->{object_id}, 'upload.json'], {
       token => $current->o ('o1')->{upload_token},
     }, account => 'a1', group => 'g1', headers => {
@@ -164,7 +178,7 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1', redirected => 1);
   })->then (sub {
     my $result = $_[0];
     test {
@@ -216,16 +230,16 @@ Test {
       timestamp => 5253111442,
     }, account => 'a1', group => 'g1');
   })->then (sub {
-    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1', redirected => 1);
   })->then (sub {
     my $result = $_[0];
     test {
-      is $result->{res}->header ('last-modified'),
-          'Mon, 18 Jun 2136 21:37:22 GMT';
+      #is $result->{res}->header ('last-modified'),
+      #    'Mon, 18 Jun 2136 21:37:22 GMT';
       is $result->{res}->header ('content-type'), 'text/plain';
     } $current->c;
   });
-} n => 3, name => 'file last modified timestamp';
+} n => 2, name => 'file last modified timestamp';
 
 Test {
   my $current = shift;
@@ -259,24 +273,35 @@ Test {
       timestamp => 25253151333,
     }, account => 'a1', group => 'g1');
   })->then (sub {
-    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'image'], {}, account => 'a1', group => 'g1');
+    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'image'], {}, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
-      is $result->{res}->header ('content-type'), 'image/png';
-      is $result->{res}->header ('content-disposition'), undef;
-      is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
-      is $result->{res}->header ('last-modified'), 'Sun, 29 Mar 2770 20:15:33 GMT';
-      is $result->{res}->body_bytes, $body;
+      like $result->{res}->header ('location'), qr{^http://storage.server.test/.+\?.+$};
+      is $result->{res}->header ('cache-control'), 'private,max-age=600';
+    } $current->c;
+    my $url = Web::URL->parse_string ($result->{res}->header ('location'));
+    return $current->client_for ($url)->request (
+      url => $url,
+    );
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'image/png';
+      is $res->header ('content-disposition'), undef;
+      #is $res->header ('Content-Security-Policy'), 'sandbox';
+      #is $res->header ('last-modified'), 'Sun, 29 Mar 2770 20:15:33 GMT';
+      is $res->body_bytes, $body;
     } $current->c;
   });
-} n => 6, name => 'image file upload';
+} n => 7, name => 'image file upload';
 
 RUN;
 
 =head1 LICENSE
 
-Copyright 2017 Wakaba <wakaba@suikawiki.org>.
+Copyright 2017-2019 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
@@ -288,7 +313,8 @@ WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 Affero General Public License for more details.
 
-You does not have received a copy of the GNU Affero General Public
-License along with this program, see <http://www.gnu.org/licenses/>.
+You should have received a copy of the GNU Affero General Public
+License along with this program.  If not, see
+<https://www.gnu.org/licenses/>.
 
 =cut

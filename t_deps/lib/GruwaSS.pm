@@ -82,6 +82,7 @@ sub run ($%) {
           #$config->{s3_form_url} = $storage_data->{form_client_url}->stringify;
           #$config->{s3_file_url_prefix} = $storage_data->{file_root_client_url}->stringify;
           $config->{storage}->{url} = $self->client_url ('storage');
+          $config->{storage}->{client_url_prefix} =~ s{\@\@PORT\@\@}{ $self->local_url ('storage')->port }ge;
 
           $data->{envs} = my $envs = {};
           if ($use_docker) {

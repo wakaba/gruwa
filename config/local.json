@@ -28,6 +28,8 @@
   },
   "storage": {
     "url": "https://invalid",
+    "client_url_prefix": "https://storage.server.invalid:@@PORT@@",
+    "client_signed_hostport": null,
     "aws4": ["access key", "secret key", "us-east-1", "s3"],
     "bucket": "gruwa-local"
   },

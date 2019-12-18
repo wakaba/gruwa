@@ -132,9 +132,23 @@ sub get_file ($$;$%) {
     );
   })->then (sub {
     my $res = $_[0];
-    die $res unless $res->status == 200;
-    return {status => $res->status,
-            res => $res};
+    if ($args{redirected}) {
+      die $res unless $res->status == 302;
+      my $url = Web::URL->parse_string ($res->header ('location'));
+      die $res unless $url and $url->is_http_s;
+      return $self->client_for ($url)->request (
+        url => $url,
+      )->then (sub {
+        my $res = $_[0];
+        die $res unless $res->status == 200;
+        return {status => $res->status,
+                res => $res};
+      });
+    } else {
+      die $res unless $res->status == 200;
+      return {status => $res->status,
+              res => $res};
+    }
   });
 } # get_file
 
