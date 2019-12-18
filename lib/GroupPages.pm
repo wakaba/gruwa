@@ -17,6 +17,8 @@ use Web::URL::Encoding;
 use Web::URL::Parser;
 use Web::DOM::Document;
 use Web::Transport::BasicClient;
+use Web::Transport::AWS;
+use Web::DateTime::Clock;
 
 use Pager;
 use Results;
@@ -1880,6 +1882,29 @@ sub group_index ($$$$) {
   return $app->throw_error (404);
 } # group_index
 
+sub signed_storage_url ($$$) {
+  my ($app, $url, $max_age) = @_;
+
+  my $prefix = $app->config->{storage}->{client_url_prefix};
+  return undef unless defined $url and $url =~ m{\A\Q$prefix\E};
+
+  $url = Web::URL->parse_string ($url);
+  return undef unless defined $url and $url->is_http_s;
+
+  my $signed = Web::Transport::AWS->aws4_signed_url
+      (clock => Web::DateTime::Clock->realtime_clock,
+       max_age => $max_age,
+       access_key_id => $app->config->{storage}->{aws4}->[0],
+       secret_access_key => $app->config->{storage}->{aws4}->[1],
+       #security_token =>
+       region => $app->config->{storage}->{aws4}->[2],
+       service => 's3',
+       method => 'GET',
+       signed_hostport => $app->config->{storage}->{client_signed_hostport}, # or undef
+       url => $url);
+  return $signed->stringify;
+} # signed_storage_url
+
 sub group_object ($$$$) {
   my ($class, $app, $path, $opts) = @_;
   my $db = $opts->{db};
@@ -1982,37 +2007,64 @@ sub group_object ($$$$) {
         my $bucket = $app->config->{storage}->{bucket};
         my $url = Web::URL->parse_string ($app->config->{storage}->{url});
         my $client = Web::Transport::BasicClient->new_from_url ($url);
-        # XXX body streaming
-        return $client->request (
-          method => 'GET',
-          path => [$bucket, $path->[3]],
-          aws4 => $aws4,
-        )->then (sub {
-          if ($_[0]->status == 200) {
-            my $mime = $object->{data}->{mime_type} // 'application/octet-stream';
-            if ($path->[4] eq 'image' and not $mime =~ m{^image/}) {
-              return $app->throw_error (404, reason_phrase => 'Not an image');
-            }
-            $app->http->set_response_header ('content-type', $mime);
-            unless ($path->[4] eq 'image') {
-              $app->http->set_response_disposition
-                  (disposition => 'attachment',
-                   filename => $object->{data}->{file_name} // '');
-            }
-            $app->http->set_response_header
-                ('content-security-policy', 'sandbox');
-            $app->http->set_response_header
-                ('x-content-type-options', 'nosniff');
-            $app->http->set_response_last_modified
-                ($object->{data}->{timestamp} || 0);
-            $app->http->send_response_body_as_ref (\($_[0]->body_bytes));
-            $app->http->close_response_body;
-          } elsif ($_[0]->status == 404) {
-            return $app->throw_error (404, reason_phrase => 'No file content');
-          } else {
-            die $_[0];
+
+        {
+          my $file_url = $app->config->{storage}->{client_url_prefix} . '/' . $bucket . '/' . $path->[3] . '?';
+
+          my $mime = $object->{data}->{mime_type} // 'application/octet-stream';
+          if ($path->[4] eq 'image' and not $mime =~ m{^image/}) {
+            return $app->throw_error (404, reason_phrase => 'Not an image');
           }
-        });
+          $file_url .= 'response-content-type=' . percent_encode_c $mime;
+          unless ($path->[4] eq 'image') {
+            # XXXX
+            my $header = 'attachment';
+            my $filename = $object->{data}->{file_name} // '';
+            if ($filename =~ /[^\x20-\x7E]/ or $filename =~ /[,;\"\\]/) {
+              $filename = percent_encode_c $filename;
+              $header .= '; filename=' . $filename          ## IE
+                      .  "; filename*=utf-8''" . $filename; ## RFC 6266
+            } else {
+              $header .= '; filename="' . $filename . '"';
+            }
+            $file_url .= '&response-content-disposition=' . percent_encode_c $header;
+          }
+          
+          my $signed_url = signed_storage_url ($app, $file_url, 60*10) || die "Bad storage file URL |$file_url|";
+          $app->http->add_response_header ('cache-control', 'private,max-age=' . (60*10));
+          return $app->throw_redirect ($signed_url);
+        }
+        
+        #return $client->request (
+        #  method => 'GET',
+        #  path => [$bucket, $path->[3]],
+        #  aws4 => $aws4,
+        #)->then (sub {
+        #  if ($_[0]->status == 200) {
+        #    my $mime = $object->{data}->{mime_type} // 'application/octet-stream';
+        #    if ($path->[4] eq 'image' and not $mime =~ m{^image/}) {
+        #      return $app->throw_error (404, reason_phrase => 'Not an image');
+        #    }
+        #    $app->http->set_response_header ('content-type', $mime);
+        #    unless ($path->[4] eq 'image') {
+        #      $app->http->set_response_disposition
+        #          (disposition => 'attachment',
+        #           filename => $object->{data}->{file_name} // '');
+        #    }
+        #    $app->http->set_response_header
+        #        ('content-security-policy', 'sandbox');
+        #    $app->http->set_response_header
+        #        ('x-content-type-options', 'nosniff');
+        #    $app->http->set_response_last_modified
+        #        ($object->{data}->{timestamp} || 0);
+        #    $app->http->send_response_body_as_ref (\($_[0]->body_bytes));
+        #    $app->http->close_response_body;
+        #  } elsif ($_[0]->status == 404) {
+        #    return $app->throw_error (404, reason_phrase => 'No file content');
+        #  } else {
+        #    die $_[0];
+        #  }
+        #});
       } elsif (@$path == 5 and $path->[4] eq 'upload.json') {
         # /g/{group_id}/o/{object_id}/upload.json
         $app->requires_request_method ({POST => 1});
