@@ -1243,16 +1243,11 @@ sub b_drag ($$$) {
 
 sub b_screenshot ($$$) {
   my ($self, $name, $hint) = @_;
+  if ($ENV{CIRCLECI} and $ENV{TEST_WD_BROWSER} =~ /firefox/) {
+    return; # firefox is broken...
+  }
   return $self->b ($name)->screenshot->then (sub {
     return $self->save_artifact ($_[0], [$name, 'screenshot', ref $hint eq 'ARRAY' ? @$hint : $hint], 'png');
-  }, sub {
-    my $e = $_[0];
-    if ($e =~ /Data conversion failed because significant data/) {
-      ## Firefox is broken:-<
-      warn $e;
-      return;
-    }
-    die $e;
   });
 } # b_screenshot
 
