@@ -1589,18 +1589,20 @@ defineElement ({
           document.documentElement.setAttribute ('data-group-url', args.group_url);
           document.documentElement.setAttribute ('data-theme', args.theme);
           document.documentElement.classList.toggle ('editor', args.editable);
+          var grb = document.querySelector ('gr-body') || document.createElement ('gr-body');
           if (args.editable) {
-            document.body.setAttribute ('contenteditable', '');
-            document.body.setAttribute ('autofocus', '');
+            grb.setAttribute ('contenteditable', '');
+            grb.setAttribute ('autofocus', '');
 
             var s = getSelection ();
             s.removeAllRanges ();
             var r = document.createRange ();
-            r.setStart (document.body, 0);
+            r.setStart (grb, 0);
             s.addRange (r);
           } else {
-            document.body.removeAttribute ('contenteditable');
+            grb.removeAttribute ('contenteditable');
           }
+          document.body.appendChild (grb);
 
           var imported = args.imported_sites || [];
           if (imported.length) {
@@ -1630,7 +1632,7 @@ defineElement ({
 
             sr.appendChild (document.createElement ('slot'));
             var f = document.createElement ('hatena-star');
-            if (document.body.isContentEditable) {
+            if (document.querySelector ('gr-body').isContentEditable) {
               f.style.pointerEvents = 'none';
               f.onclick = function () { return false };
             }
@@ -1702,12 +1704,12 @@ defineElement ({
             }
           });
 
-          document.body.textContent = '';
-          document.body.setAttribute ('data-source-type', args.body_source_type || 0);
+          grb.textContent = '';
+          grb.setAttribute ('data-source-type', args.body_source_type || 0);
           while (fragment.firstChild) {
-            document.body.appendChild (fragment.firstChild);
+            grb.appendChild (fragment.firstChild);
           }
-        });
+        }); // setBody
 
         window.addEventListener ('click', (ev) => {
           var n = ev.target;
@@ -2442,7 +2444,7 @@ function replaceSelectionBy (node, hasSelected) {
       });
     }, // grCreateLink
     grGetHTML: function () {
-      return this.grViewer.pcInvoke ('pcEval', {code: "var e = document.body.cloneNode (true); e.querySelectorAll ('[data-gr-editor]').forEach (_ => _.remove ()); return e.innerHTML"});
+      return this.grViewer.pcInvoke ('pcEval', {code: "var e = document.querySelector ('gr-body').cloneNode (true); e.querySelectorAll ('[data-gr-editor]').forEach (_ => _.remove ()); return e.innerHTML"});
     }, // grGetHTML
     grSave: function () {
       if (!this.grEditableData) return;
