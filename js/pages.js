@@ -4765,7 +4765,7 @@ defineElement ({
   templateSet: true,
   props: {
     pcInit: function () {
-      this.grSelected = {account_id: {}, category: {}};
+      this.grSelected = {account_id: {}, category: {}, excluded: {self: true}};
       this.grSelected.category.thread = this.hasAttribute ('threadid');
       this.setAttribute ('formcontrol', '');
       this.addEventListener ('pctemplatesetupdated', (ev) => {
@@ -4858,7 +4858,7 @@ defineElement ({
       }
     }, // grThreadAccountIds
     grReset: function () {
-      this.grSelected = {account_id: {}, category: {}};
+      this.grSelected = {account_id: {}, category: {}, excluded: {self: true}};
       this.grSelected.category.thread = this.hasAttribute ('threadid');
       return this.grRender ();
     }, // grReset
@@ -4893,24 +4893,23 @@ defineElement ({
         });
       });
     }, // gr_updateSelectedView
-    pcModifyFormData: function (fd) {
-      var added = {};
+    pcModifyFormData: async function (fd) {
+      var accountIds = new Set;
       Object.keys (this.grSelected.account_id).forEach (aid => {
-        if (this.grSelected.account_id[aid]) {
-          fd.append ('called_account_id', aid);
-          added[aid] = true;
-        }
+        if (this.grSelected.account_id[aid]) accountIds.add (aid);
       });
       if (this.grSelected.category.thread) {
-        return this.grThreadAccountIds ().then (accountIds => {
-          if (accountIds) accountIds.forEach (aid => {
-            if (!added[aid]) {
-              fd.append ('called_account_id', aid);
-              added[aid] = true;
-            }
-          });
+        await this.grThreadAccountIds ().then (aids => {
+          if (aids) aids.forEach (aid => accountIds.add (aid));
         });
       }
+      if (this.grSelected.excluded.self) {
+        await GR.account.info ().then (account => {
+          if (account.account_id) accountIds.delete (account.account_id);
+        });
+      }
+
+      Array.from (accountIds).forEach (aid => fd.append ('called_account_id', aid));
     }, // pcModifyFormData
   },
 }); // gr-called-editor

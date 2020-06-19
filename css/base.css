@@ -502,9 +502,17 @@ input[type=date] {
 }
 
 select:not([hidden]),
-gr-select-icon:not([hidden]),
-gr-called-editor:not([hidden]) {
+gr-select-icon:not([hidden]) {
   display: inline-block;
+}
+
+gr-called-editor:not([hidden]) {
+  display: inline-flex;
+}
+
+select,
+gr-select-icon,
+gr-called-editor {
   border: dotted 1px;
   border-color: var(--accented-border-color);
   padding: .1em .3em;
@@ -512,6 +520,7 @@ gr-called-editor:not([hidden]) {
   background-color: var(--main-background-color);
   min-width: 10em;
   text-align: left;
+  align-items: center;
 }
 
 gr-select-icon popup-menu > button:not([hidden]) {
@@ -529,6 +538,37 @@ gr-select-icon popup-menu > button figure:not([hidden]) {
 gr-select-icon popup-menu > button .icon {
   width: 6em;
   height: 6em;
+}
+
+gr-called-editor > gr-called-editor-selected {
+  flex: 1;
+}
+
+gr-called-editor menu-main {
+  font-size: .9rem;
+}
+
+gr-called-editor gr-legend:not([hidden]) {
+  display: flex;
+}
+
+gr-called-editor gr-legend {
+  align-items: center;
+  background: var(--dark-background-color);
+  color: var(--dark-color);
+}
+
+gr-called-editor gr-legend > strong {
+  padding: .3em;
+  flex: 1;
+}
+
+gr-called-editor gr-legend > a:link,
+gr-called-editor gr-legend > a:visited {
+  padding: .3em;
+  font-size: 80%;
+  color: inherit;
+  background: transparent;
 }
 
 list-control {
@@ -945,6 +985,10 @@ gr-person {
 
 gr-person code {
   font-size: 100%;
+}
+
+.icon:not([hidden]) {
+  display: inline-block;
 }
 
 .icon {

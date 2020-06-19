@@ -198,6 +198,10 @@
         <button-label>変更</button-label>
       </button>
       <menu-main>
+        <gr-legend>
+          <strong>通知送信先</strong>
+          <a href=/help#called-editor target=help>ヘルプ</a>
+        </gr-legend>
         <p data-called-type=if-in-thread hidden>
           <label title="親記事を書いた人やコメントを書いた人など">
             <input type=checkbox checked data-called-type=category value=thread>
@@ -209,6 +213,12 @@
           -->
         </p>
         <gr-called-editor-menu-items/>
+        <p>
+          <label>
+            <input type=checkbox checked data-called-type=excluded value=self>
+            自分を除外する
+          </label>
+        </p>
       </menu-main>
     </popup-menu>
   </template>
@@ -268,3 +278,23 @@
   <gr-select-index type=file empty=ファイルフォルダーがありません。 title=ファイルフォルダー />
   <gr-index-viewer type=file selectselector=gr-select-index selectancestor=section />
 </template>
+
+
+<!--
+
+Copyright 2016-2020 Wakaba <wakaba@suikawiki.org>.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Affero General Public License for more details.
+
+You does not have received a copy of the GNU Affero General Public
+License along with this program, see <https://www.gnu.org/licenses/>.
+
+-->

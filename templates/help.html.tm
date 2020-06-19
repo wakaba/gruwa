@@ -384,7 +384,8 @@
       <p><a href=#blogs>日記</a>や <a href=#wikis>Wiki</a> や 
       <a href=#todos>TODO リスト</a>の各項目のことを<dfn>記事</dfn>といいます。
 
-      <hr>
+      <section id=object-edit>
+        <h1>記事の編集</h1>
 
       <p>記事のメニューから「編集」を選ぶと、記事の題名や本文を変更できます。
 
@@ -402,12 +403,75 @@
       ただし、 Gruwa では一部の記法の扱いが異なっています。
       はてなキーワードへのリンクは、<a href=#default-wiki-index>グループの
       Wiki</a> へのリンクと解釈します。
+      
+      <hr>
+
+        <p>保存時に関係者に<a href=#object-call>記事通知</a>を送信できます。
+        「<a href=#called-editor>通知送信先</a>」欄から送信先を細かく設定できます。
+
+        <p><dfn id=called-editor>通知送信先</dfn>には、
+        次の選択肢が表示されます。
+
+          <dl>
+            <div>
+              <dt>「スレッドの購読者」
+              <dd><dfn id=threads>スレッド</dfn>とは、
+              <a href=#objects>記事</a>やそれに対する<a href=#comments>コメント</a>をいいます。
+              「スレッドの購読者」を選ぶと、
+              <a href=#threads>スレッド</a>に投稿した人全員に<a href=#object-call>記事通知</a>が送信されます。
+            </div>
+            <div>
+              <dt><a href=#groups>グループ</a>の各<a href=#group-members>参加者</a>
+              <dd><a href=#groups>グループ</a>の各<a href=#group-members>参加者</a>が表示され、
+              それぞれ<a href=#object-call>記事通知</a>を送信するか選べます。
+            </div>
+            <div>
+              <dt>「自分を除外する」
+              <dd>「自分を除外する」を選ぶと、
+              自分には<a href=#object-call>記事通知</a>を送信しません。
+            </div>
+          </dl>
+
+          <ul class=notes>
+            <li>複数の条件に該当する人にも、
+            1回だけ<a href=#object-call>記事通知</a>が送信されます。
+          </ul>
+          
+      <p>記事ごとに「所属」を選ぶことができます。記事は複数の日記や
+      Wiki などに所属させることができます。例えば、
+      個人の開発日記とプロジェクト進行まとめ日記の両方に所属させたり、
+      TODO 項目をプロジェクトで分類するためにプロジェクト日記に所属させたりできます。
 
       <hr>
+
+      <p><a href=#objects>記事</a>の<a href=#menu>メニュー</a>から
+      「削除」を選ぶと、<a href=#objects>記事</a>の内容を消去できます。
+
+        <ul class=notes>
+          <li><a href=#objects>記事</a>への<a href=#comments>コメント</a>や履歴は削除後も残ります。
+        </ul>
+
+      <p><a href=#objects>記事</a>の<a href=#menu>メニュー</a>から
+      「編集履歴」を選ぶと、<a href=#objects>記事</a>の変更日時、
+      変更者、変更内容が表示されます。
+      変更前の状態を表示することもできます。
+        
+      </section>
+
+      <section id=object-reactions>
+        <h1>記事への反応</h1>
 
       <p>各記事には<dfn id=object-comments>コメント欄</dfn>があり、
       記事についての議論や追加情報などの<dfn id=comments>コメント</dfn>を書くことができます。
 
+        <p><a href=#comments>コメント</a>を投稿するには、
+        記事の「コメントを書く」を選んで、
+        コメント投稿フォームを開いてください。
+
+        <p><a href=#comments>コメント</a>を投稿すると、
+        関係者に<a href=#object-call>記事通知</a>が送信されます。
+        コメント投稿フォームの「<a href=#called-editor>通知送信先</a>」欄から送信先を細かく設定できます。
+        
       <p>同じグループ内の他の記事からリンク機能などで記事を参照すると、
       その記事への逆リンク (<dfn id=trackbacks>トラックバック</dfn>)
       が作成され、コメント欄に表示されます。
@@ -427,27 +491,8 @@
       
       <p>自分が作成した<a href=#objects>記事</a>に<a href=#stars><ruby>&#x2B50;<rt>スター</ruby></a>がつくと、
       <a href=#reports>活動レポート</a>でお知らせします。
-      
-      <hr>
 
-      <p>記事ごとに「所属」を選ぶことができます。記事は複数の日記や
-      Wiki などに所属させることができます。例えば、
-      個人の開発日記とプロジェクト進行まとめ日記の両方に所属させたり、
-      TODO 項目をプロジェクトで分類するためにプロジェクト日記に所属させたりできます。
-
-      <hr>
-
-      <p><a href=#objects>記事</a>の<a href=#menu>メニュー</a>から
-      「削除」を選ぶと、<a href=#objects>記事</a>の内容を消去できます。
-
-        <ul class=notes>
-          <li><a href=#objects>記事</a>への<a href=#comments>コメント</a>や履歴は削除後も残ります。
-        </ul>
-
-      <p><a href=#objects>記事</a>の<a href=#menu>メニュー</a>から
-      「編集履歴」を選ぶと、<a href=#objects>記事</a>の変更日時、
-      変更者、変更内容が表示されます。
-      変更前の状態を表示することもできます。
+      </section>
     </section>
 
     <section id=search>
@@ -1031,7 +1076,7 @@
 
 <!--
 
-Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2020 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

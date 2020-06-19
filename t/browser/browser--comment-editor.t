@@ -326,14 +326,20 @@ Test {
     test {
       is 0+@{$result->{json}->{items}}, 0;
     } $current->c, name => 'parent owner';
+    return $current->get_json (['my', 'calls.json'], {}, account => 'a4');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+@{$result->{json}->{items}}, 0;
+    } $current->c, name => 'comment author';
   });
-} n => 8, name => ['comment with object call, parent object author not selected'], browser => 1;
+} n => 9, name => ['comment with object call, parent object author not selected'], browser => 1;
 
 RUN;
 
 =head1 LICENSE
 
-Copyright 2019 Wakaba <wakaba@suikawiki.org>.
+Copyright 2019-2020 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
