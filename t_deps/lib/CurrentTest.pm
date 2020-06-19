@@ -1245,6 +1245,14 @@ sub b_screenshot ($$$) {
   my ($self, $name, $hint) = @_;
   return $self->b ($name)->screenshot->then (sub {
     return $self->save_artifact ($_[0], [$name, 'screenshot', ref $hint eq 'ARRAY' ? @$hint : $hint], 'png');
+  }, sub {
+    my $e = $_[0];
+    if ($e =~ /Data conversion failed because significant data/) {
+      ## Firefox is broken:-<
+      warn $e;
+      return;
+    }
+    die $e;
   });
 } # b_screenshot
 
