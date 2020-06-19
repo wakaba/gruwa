@@ -1714,6 +1714,14 @@ defineElement ({
             ed.appendChild (grb);
             var tc = document.createElement ('gr-toolbar-container');
             ed.appendChild (tc);
+
+            getTemplate ('default-toolbar').then (t => {
+              var tb = document.createElement ('gr-toolbar');
+              tb.appendChild (t.content.cloneNode (true));
+              tb.querySelectorAll ('button[data-action]').forEach (b => b.onclick = () => runToolbarCommand (b));
+              tc.appendChild (tb);
+            });
+            
             document.body.appendChild (ed);
           }
         }); // setBody
@@ -1743,6 +1751,21 @@ defineElement ({
             });
           }
         });
+
+        window.getTemplate = function (name) {
+          var t = document.querySelector ('#template-' + name);
+          if (!t) {
+            return pcInvoke ('getTemplate', {name: name}).then (_ => {
+              var t = document.createElement ('template');
+              t.innerHTML = _;
+              t.id = 'template-' + name;
+              document.head.appendChild (t);
+              return t;
+            });
+          } else {
+            return Promise.resolve (t);
+          }
+        }; // getTemplate
       `}); // installMinimum
 
       installMinimum.then (() => {
@@ -1866,20 +1889,30 @@ defineElement ({
               return ! getSelection ().isCollapsed;
             });
 
-            pcRegisterMethod ('editorCommand', args => {
+            function editorCommand (args) {
               if (args.action === 'execCommand') {
                 document.execCommand (args.command, args.value);
                 selectChanged ();
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'setBlock') {
                 setBlock (args.value);
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'insertSection') {                
                 insertSection ();
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'indent') {
                 indent ();
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'outdent') {
                 outdent ();
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'insertCheckbox') {
                 document.execCommand ('inserthtml', false, '<input type=checkbox>');
+                document.querySelector ('gr-body').focus ();
+              } else if (args.action === 'grCreateLink') {
+                return pcInvoke ('grCreateLink', {
+                  type: args.command,
+                });
               } else if (args.action === 'setLink') {
                 if (args.dest === undefined) {
                   args.dest = '';
@@ -1893,17 +1926,33 @@ defineElement ({
                 document.querySelectorAll ('a[href="'+randomValue+'"]').forEach (_ => {
                   setLinkAttrs (_, args.destType, args.dest);
                 });
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'insertLink') {
                 insertLink (args.destType, args.dest);
+                document.querySelector ('gr-body').focus ();
+              } else if (args.action === 'gruwatogglepanel') {
+                return pcInvoke ('gruwatogglepanel', {
+                  type: args.command,
+                });
               } else if (args.action === 'insertImage') {
                 insertImage (args.value);
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'insertFile') {
                 insertFile (args);
+                document.querySelector ('gr-body').focus ();
               } else {
                 throw new TypeError ('Unknown editorCommand action: |'+args.action+'|');
               }
-            }); // editorCommand
+            } // editorCommand
+                             
+            window.runToolbarCommand = function (button) {
+              editorCommand ({action: button.getAttribute ('data-action'),
+                              command: button.getAttribute ('data-command'),
+                              value: button.getAttribute ('data-value')});
+            }; // runToolbarCommand
 
+            pcRegisterMethod ('editorCommand', editorCommand);
+            
             function setLinkAttrs (a, destType, dest) {
               if (destType === 'wiki-name') {
                 a.href = document.documentElement.getAttribute ('data-group-url') + '/wiki/' + encodeURIComponent (dest);
@@ -2325,21 +2374,6 @@ function replaceSelectionBy (node, hasSelected) {
   sel.selectAllChildren (node);
   if (!hasSelected) sel.collapseToEnd ();
 } // replaceSelectionBy
-
-            function getTemplate (name) {
-              var t = document.querySelector ('#template-' + name);
-              if (!t) {
-                return pcInvoke ('getTemplate', {name: name}).then (_ => {
-                  var t = document.createElement ('template');
-                  t.innerHTML = _;
-                  t.id = 'template-' + name;
-                  document.head.appendChild (t);
-                  return t;
-                });
-              } else {
-                return Promise.resolve (t);
-              }
-            } // getTemplate
                 
             var contextualToolbar;
             function hideContextualToolbar (a) {
@@ -2409,6 +2443,16 @@ function replaceSelectionBy (node, hasSelected) {
 
           this.grViewer.pcRegisterMethod ('prompt', args => {
             return prompt (args.label, args.default);
+          });
+
+          this.grViewer.pcRegisterMethod ('grCreateLink', args => {
+            return this.grCreateLink (args.type);
+          });
+
+          this.grViewer.pcRegisterMethod ('gruwatogglepanel', args => {
+            var ev = new Event ('gruwatogglepanel', {bubbles: true});
+            ev.panelName = args.type;
+            this.dispatchEvent (ev);
           });
 
           this.grViewer.pcRegisterMethod ('getTemplate', args => {
@@ -2989,31 +3033,6 @@ function upgradeBodyControl (e, object, opts) {
     var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
     field.value = data;
   }; // loader.iframe
-
-  $$c (e, 'button[data-action=execCommand], button[data-action=setBlock], button[data-action=insertSection], button[data-action=indent], button[data-action=outdent], button[data-action=insertCheckbox]').forEach (function (b) {
-    b.onclick = function () {
-      var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
-      field.grViewer.pcInvoke ('editorCommand', {
-        action: b.getAttribute ('data-action'),
-        command: b.getAttribute ('data-command'),
-        value: b.getAttribute ('data-value'),
-      });
-      e.focus ();
-    };
-  });
-  $$c (e, 'button[data-action=link]').forEach (function (b) {
-    b.onclick = function () {
-      var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
-      return field.grCreateLink (b.getAttribute ('data-command'));
-    };
-  });
-  $$c (e, 'button[data-action=panel]').forEach (function (b) {
-    b.onclick = function () {
-      var ev = new Event ('gruwatogglepanel', {bubbles: true});
-      ev.panelName = this.getAttribute ('data-value');
-      e.dispatchEvent (ev);
-    };
-  });
 
   var textarea = e.querySelector ('body-control-tab[name=textarea] textarea');
   loader.textarea = function () {
