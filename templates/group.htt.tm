@@ -1143,7 +1143,7 @@ Web ブラウザーで開いてください。
         <gr-account self>
           <img data-src-template=/g/{group_id}/account/{account_id}/icon class=icon data-alt-field=name data-title-field=name data-filled=alt>
         </gr-account>
-        <textarea name=body placeholder=コメント本文 autofocus></textarea>
+        <textarea name=body placeholder=コメント本文></textarea>
         <input type=hidden name=body_type value=2><!-- plaintext -->
         <p class=operations>
           <span class=submit-buttons>

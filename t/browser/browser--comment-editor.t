@@ -46,6 +46,11 @@ Test {
     });
   })->then (sub {
     return $current->b_wait (1 => {
+      selector => 'article-comments form textarea[name=body]:focus',
+      name => 'comment text is focused',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
       selector => 'article-comments form gr-called-editor button',
       shown => 1,
     });

@@ -4600,6 +4600,12 @@ defineElement ({
           this.grObjectUpdated (this.grObject);
           delete this.grObject;
         }
+        
+        setTimeout (() => {
+          if (this.hasAttribute ('open')) {
+            this.querySelectorAll ('textarea[name=body]').forEach (_ => _.focus ());
+          }
+        }, 10);
       });
     }, // grOpen
     grObjectUpdated: function (obj) {
