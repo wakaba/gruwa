@@ -298,7 +298,8 @@ Test {
     } $current->c;
   });
 } n => 5, name => ['WYSIWYG HTML editor'], browser => 1
-    unless $ENV{TEST_WD_BROWSER} =~ /firefox/; # XXX //keys is Chrome only
+    unless $ENV{CIRCLECI}; # //keys is somewhat broken...
+    #unless $ENV{TEST_WD_BROWSER} =~ /firefox/; # XXX //keys is Chrome only
 
 RUN;
 
