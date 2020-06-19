@@ -3211,7 +3211,7 @@ function upgradeList (el) {
               }
               f.querySelectorAll ('details[is=gr-comment-form]').forEach (_ => {
                 _.setAttribute ('data-parentobjectid', object.object_id);
-                _.setAttribute ('data-threadid', object.data.thread_id);
+                _.setAttribute ('data-threadid', object.data.thread_id || object.object_id); // very early objects do not have thread_id
                 if (_.grObjectUpdated) {
                   _.grObjectUpdated (object);
                 } else {
