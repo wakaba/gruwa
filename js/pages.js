@@ -1711,9 +1711,9 @@ defineElement ({
 
           if (!grb.parentNode) {
             var ed = document.createElement ('gr-body-container');
-            ed.appendChild (grb);
             var tc = document.createElement ('gr-toolbar-container');
             ed.appendChild (tc);
+            ed.appendChild (grb);
 
             getTemplate ('default-toolbar').then (t => {
               var tb = document.createElement ('gr-toolbar');
@@ -1724,6 +1724,8 @@ defineElement ({
             
             document.body.appendChild (ed);
           }
+
+          grb.focus ();
         }); // setBody
 
         window.addEventListener ('click', (ev) => {

@@ -21,7 +21,7 @@ gr-body-container:not([hidden]) {
 }
 
 gr-body-container {
-  flex-direction: column;
+  flex-direction: column-reverse;
 }
 
 html.editor gr-body-container {
