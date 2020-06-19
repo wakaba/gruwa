@@ -16,8 +16,25 @@ body {
   white-space: pre-wrap;
 }
 
+gr-body-container:not([hidden]) {
+  display: flex;
+}
+
+gr-body-container {
+  flex-direction: column;
+}
+
+html.editor gr-body-container {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
 gr-body:not([hidden]) {
   display: block;
+  flex: 1;
 }
 
 gr-body {
@@ -25,16 +42,15 @@ gr-body {
 }
 
 html.editor gr-body {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
   overflow: auto;
 }
 
 body[data-source-type="3"] gr-body {
   white-space: normal;
+}
+
+gr-toolbar-container:not([hidden]) {
+  display: block;
 }
 
 section > h1:not([hidden]),

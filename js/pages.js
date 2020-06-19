@@ -1602,7 +1602,6 @@ defineElement ({
           } else {
             grb.removeAttribute ('contenteditable');
           }
-          document.body.appendChild (grb);
 
           var imported = args.imported_sites || [];
           if (imported.length) {
@@ -1708,6 +1707,14 @@ defineElement ({
           grb.setAttribute ('data-source-type', args.body_source_type || 0);
           while (fragment.firstChild) {
             grb.appendChild (fragment.firstChild);
+          }
+
+          if (!grb.parentNode) {
+            var ed = document.createElement ('gr-body-container');
+            ed.appendChild (grb);
+            var tc = document.createElement ('gr-toolbar-container');
+            ed.appendChild (tc);
+            document.body.appendChild (ed);
           }
         }); // setBody
 
@@ -2354,8 +2361,8 @@ function replaceSelectionBy (node, hasSelected) {
                 tb.grAnchor = a;
                 tb.setAttribute ('data-gr-editor', '');
                 tb.setAttribute ('contenteditable', 'false');
-                tb.style.top = a.offsetTop + a.offsetHeight + 'px';
-                tb.style.left = a.offsetLeft + 'px';
+                //tb.style.top = a.offsetTop + a.offsetHeight + 'px';
+                //tb.style.left = a.offsetLeft + 'px';
                 tb.appendChild (t.content.cloneNode (true));
               
                 var destType = a.hasAttribute ('data-wiki-name') ? 'wiki-name' : 'url';
@@ -2390,7 +2397,7 @@ function replaceSelectionBy (node, hasSelected) {
                 });
                 updated ();
                 
-                document.body.appendChild (contextualToolbar);
+                document.querySelector ('gr-toolbar-container').appendChild (contextualToolbar);
               });
             } // showLinkToolbar
                                              

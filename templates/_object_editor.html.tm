@@ -255,6 +255,7 @@
 </template-set>
 
 <template id=editor-link-toolbar-template>
+  <strong>リンク先</strong>:
   <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener" data-gr-editor>
     <code data-field=host data-title-field=href hidden></code>
     <span data-field=wikiName hidden />
