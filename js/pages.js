@@ -1536,7 +1536,9 @@ defineElement ({
       var e = document.createElement ('sandboxed-viewer');
       if (this.hasAttribute ('seamlessheight')) e.setAttribute ('seamlessheight', '');
       this.grMode = this.getAttribute ('mode') || 'viewer';
-      if (this.grMode === 'viewer' || this.grMode === 'editor') {
+      if (this.grMode === 'viewer') {
+        e.setAttribute ('allowsandbox', 'allow-popups allow-downloads');
+      } else if (this.grMode === 'editor') {
         e.setAttribute ('allowsandbox', 'allow-popups');
       }
       this.appendChild (e);
@@ -1623,6 +1625,7 @@ defineElement ({
 
           var base = document.querySelector ('base') || document.createElement ('base');
           base.href = args.base_url;
+          base.target = '_blank';
           document.head.appendChild (base);
           doc.head.appendChild (base.cloneNode (true));
 
@@ -1794,8 +1797,8 @@ defineElement ({
           while (n && !(n.localName === 'a' || n.localName === 'area')) {
             n = n.parentElement;
           }
-          if (n &&
-              (n.protocol === 'https:' || n.protocol === 'http:') &&
+          if (!n) return;
+          if ((n.protocol === 'https:' || n.protocol === 'http:') &&
               (n.target === '' || n.target === '_blank') &&
               !n.hasAttribute ('is') &&
               !n.hasAttribute ('download') &&
