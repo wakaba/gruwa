@@ -1792,6 +1792,18 @@ defineElement ({
           grb.focus ();
         }); // setBody
 
+        pcRegisterMethod ('getHTML', args => {
+          var e = document.querySelector ('gr-body').cloneNode (true);
+          var doc = document.implementation.createHTMLDocument ();
+          doc.adoptNode (e);
+          e.querySelectorAll ('[data-gr-editor]').forEach (_ => _.remove ());
+          e.querySelectorAll ('img[data-gr-src]').forEach (_ => {
+            _.src = _.getAttribute ('data-gr-src');
+            _.removeAttribute ('data-gr-src');
+          });
+          return e.innerHTML;
+        }); // getHTML
+
         window.addEventListener ('click', (ev) => {
           var n = ev.target;
           while (n && !(n.localName === 'a' || n.localName === 'area')) {
@@ -2500,18 +2512,6 @@ function replaceSelectionBy (node, hasSelected) {
                 document.querySelector ('gr-toolbar-container').appendChild (contextualToolbar);
               });
             } // showLinkToolbar
-
-            pcRegisterMethod ('getHTML', args => {
-              var e = document.querySelector ('gr-body').cloneNode (true);
-              var doc = document.implementation.createHTMLDocument ();
-              doc.adoptNode (e);
-              e.querySelectorAll ('[data-gr-editor]').forEach (_ => _.remove ());
-              e.querySelectorAll ('img[data-gr-src]').forEach (_ => {
-                _.src = _.getAttribute ('data-gr-src');
-                _.removeAttribute ('data-gr-src');
-              });
-              return e.innerHTML;
-            });
                                              
           `}); // pcEval
 
