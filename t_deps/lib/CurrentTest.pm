@@ -1,8 +1,10 @@
 package CurrentTest;
 use strict;
 use warnings;
+use Path::Tiny;
 use Promise;
 use Promised::Flow;
+use Promised::File;
 use JSON::PS;
 use Web::Encoding;
 use Web::URL;
@@ -403,11 +405,13 @@ sub create_object ($$$) {
   return $self->post_json (['o', 'create.json'], {
     source_page => $opts->{source_page},
     source_site => $opts->{source_site},
+    is_file => !!$opts->{file},
   },
     account => ($opts->{account} // die "No |account|"),
     group => ($opts->{group} // die "No |group|"),
   )->then (sub {
-    $self->{objects}->{$name // 'X'} = $_[0]->{json};
+    my $result = $_[0];
+    $self->{objects}->{$name // 'X'} = $result->{json};
     my %param;
     if (exists $opts->{index}) {
       for (ref $opts->{index} ? @{$opts->{index}} : $opts->{index}) {
@@ -434,12 +438,28 @@ sub create_object ($$$) {
       $param{assigned_account_id} = [map { $self->_get_o ($_)->{account_id} } ref $opts->{assigned_account} ? @{$opts->{assigned_account}} : $opts->{assigned_account}];
       $param{edit_assigned_account_id} = 1;
     }
+
+    my @p;
+    
+    if (defined $opts->{file}) {
+      my $file = delete $opts->{file};
+      $param{mime_type} = $file->{mime_type};
+      push @p, Promised::File->new_from_path (path (__FILE__)->parent->parent->parent->child ('t_deps/files', $file->{file}))->read_byte_string->then (sub {
+        my $body = $_[0];
+        $self->post_json (['o', $result->{json}->{object_id}, 'upload.json'], {
+          token => $result->{json}->{upload_token},
+        }, account => 'a1', group => 'g1', body => $body);
+      });
+    }
+    
     if (keys %param) {
-      return $self->post_json (['o', $_[0]->{json}->{object_id}, 'edit.json'],
+      push @p, $self->post_json (['o', $result->{json}->{object_id}, 'edit.json'],
                                \%param,
                                group => $opts->{group},
                                account => $opts->{account});
     }
+
+    return Promise->all (\@p);
   });
 } # create_object
 

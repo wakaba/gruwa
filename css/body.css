@@ -45,7 +45,7 @@ html.editor gr-body {
   overflow: auto;
 }
 
-body[data-source-type="3"] gr-body {
+gr-body[data-source-type="3"] {
   white-space: normal;
 }
 

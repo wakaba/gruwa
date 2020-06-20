@@ -1569,7 +1569,45 @@ defineElement ({
 
         return Promise.all (wait).then (_ => results);
       });
+
+      this.grViewer.pcRegisterMethod ('getGroupImage', async args => {
+        try {
+          var url = new URL (args.url);
+        } catch (e) {
+          return null;
+        }
+        if (location.origin !== url.origin) return null;
+            
+        var m = url.pathname.match (/^\/g\/([^\/]+)\/imported\/([^\/]+)\/go/);
+        if (m && m[1] == GR._state.group.group_id) {
+          var u = await GR.group.resolveImportedURL (GR._decodeURL (m[2]));
+          try {
+            url = new URL (u);
+          } catch (e) {
+            return null;
+          }
+          if (location.origin !== url.origin) return u;
+        }
+        
+        m = url.pathname.match (/^\/g\/([^\/]+)\/o\/([^\/]+)\/(file|image)/);
+        if (m && m[1] == GR._state.group.group_id) {
+          return fetch (url.pathname + '.json').then (res => {
+            if (res.status !== 200) throw res;
+            return res.json ();
+          }).then (json => {
+            return json.url;
+          });
+        }
+
+        return null;
+      }); // getGroupImage
       
+      this.grViewer.pcRegisterMethod ('getTemplate', args => {
+        var t = document.querySelector ('#editor-' + args.name + '-template');
+        if (!t) throw new Error ('Editor template |'+args.name+'| not found');
+        return t.innerHTML;
+      });
+
       var installMinimum = this.grViewer.pcInvoke ('pcEval', {code: `
         pcRegisterMethod ('appendHead', (args) => {
           var e = document.createElement ('div');
@@ -1579,17 +1617,21 @@ defineElement ({
           }
         });
         pcRegisterMethod ('setBody', (args) => {
-          var fragment = document.createElement ('div');
+          var doc = document.implementation.createHTMLDocument ();
+          var fragment = doc.createElement ('div');
           fragment.innerHTML = args.body;
 
           var base = document.querySelector ('base') || document.createElement ('base');
           base.href = args.base_url;
           document.head.appendChild (base);
+          doc.head.appendChild (base.cloneNode (true));
 
           document.documentElement.setAttribute ('data-group-url', args.group_url);
           document.documentElement.setAttribute ('data-theme', args.theme);
           document.documentElement.classList.toggle ('editor', args.editable);
+          
           var grb = document.querySelector ('gr-body') || document.createElement ('gr-body');
+          grb.setAttribute ('data-source-type', args.body_source_type || 0);
           if (args.editable) {
             grb.setAttribute ('contenteditable', '');
             grb.setAttribute ('autofocus', '');
@@ -1621,6 +1663,23 @@ defineElement ({
             });
           } // imported.length
 
+          fragment.querySelectorAll ('img[src]').forEach (e => {
+            var u = e.getAttribute ('data-gr-src') || e.getAttribute ('src');
+            try {
+              var url = new URL (u, args.base_url);
+            } catch (err) {
+              return;
+            }
+            // url.origin is checked in getGroupImage
+            if (url.pathname.substring (0, args.group_url.length) !== args.group_url) return;
+
+            e.setAttribute ('data-gr-src', u);
+            e.removeAttribute ('src');
+            pcInvoke ('getGroupImage', {url: url+''}).then (uu => {
+              e.src = uu || u;
+            });
+          });
+
           var setStarShadow = (e, data) => {
             var sr = e.attachShadow ({mode: 'open'});
 
@@ -1631,7 +1690,7 @@ defineElement ({
 
             sr.appendChild (document.createElement ('slot'));
             var f = document.createElement ('hatena-star');
-            if (document.querySelector ('gr-body').isContentEditable) {
+            if (args.editable) {
               f.style.pointerEvents = 'none';
               f.onclick = function () { return false };
             }
@@ -1701,27 +1760,29 @@ defineElement ({
                 });
               });
             }
-          });
+          }); // starmap
 
           grb.textContent = '';
-          grb.setAttribute ('data-source-type', args.body_source_type || 0);
           while (fragment.firstChild) {
             grb.appendChild (fragment.firstChild);
           }
 
           if (!grb.parentNode) {
             var ed = document.createElement ('gr-body-container');
-            var tc = document.createElement ('gr-toolbar-container');
-            ed.appendChild (tc);
-            ed.appendChild (grb);
 
-            getTemplate ('default-toolbar').then (t => {
-              var tb = document.createElement ('gr-toolbar');
-              tb.appendChild (t.content.cloneNode (true));
-              tb.querySelectorAll ('button[data-action]').forEach (b => b.onclick = () => runToolbarCommand (b));
-              tc.appendChild (tb);
-            });
+            if (args.editable) {
+              var tc = document.createElement ('gr-toolbar-container');
+              ed.appendChild (tc);
+
+              getTemplate ('default-toolbar').then (t => {
+                var tb = document.createElement ('gr-toolbar');
+                tb.appendChild (t.content.cloneNode (true));
+                tb.querySelectorAll ('button[data-action]').forEach (b => b.onclick = () => runToolbarCommand (b));
+                tc.appendChild (tb);
+              });
+            }
             
+            ed.appendChild (grb);
             document.body.appendChild (ed);
           }
 
@@ -2436,6 +2497,18 @@ function replaceSelectionBy (node, hasSelected) {
                 document.querySelector ('gr-toolbar-container').appendChild (contextualToolbar);
               });
             } // showLinkToolbar
+
+            pcRegisterMethod ('getHTML', args => {
+              var e = document.querySelector ('gr-body').cloneNode (true);
+              var doc = document.implementation.createHTMLDocument ();
+              doc.adoptNode (e);
+              e.querySelectorAll ('[data-gr-editor]').forEach (_ => _.remove ());
+              e.querySelectorAll ('img[data-gr-src]').forEach (_ => {
+                _.src = _.getAttribute ('data-gr-src');
+                _.removeAttribute ('data-gr-src');
+              });
+              return e.innerHTML;
+            });
                                              
           `}); // pcEval
 
@@ -2456,14 +2529,8 @@ function replaceSelectionBy (node, hasSelected) {
             ev.panelName = args.type;
             this.dispatchEvent (ev);
           });
-
-          this.grViewer.pcRegisterMethod ('getTemplate', args => {
-            var t = document.querySelector ('#editor-' + args.name + '-template');
-            if (!t) throw new Error ('Editor template |'+args.name+'| not found');
-            return t.innerHTML;
-          });
         });
-      }
+      } // editor
       
       return installMinimum;
     }, // grInit
@@ -2497,7 +2564,7 @@ function replaceSelectionBy (node, hasSelected) {
       });
     }, // grCreateLink
     grGetHTML: function () {
-      return this.grViewer.pcInvoke ('pcEval', {code: "var e = document.querySelector ('gr-body').cloneNode (true); e.querySelectorAll ('[data-gr-editor]').forEach (_ => _.remove ()); return e.innerHTML"});
+      return this.grViewer.pcInvoke ('getHTML', {});
     }, // grGetHTML
     grSave: function () {
       if (!this.grEditableData) return;
@@ -2539,20 +2606,6 @@ function replaceSelectionBy (node, hasSelected) {
         delete this.grEditableData;
       }
       return GR.group.importedSites ().then (sites => {
-        // XXX image preloading (to avoid cookie SameSite issue)
-        var html = (new DOMParser).parseFromString ("", "text/html").body;
-        html.innerHTML = data.body;
-        html.querySelectorAll ('img[src]').forEach (img => {
-          var url = img.src;
-          if (GR._state.imagePrefetched[url]) return;
-          GR._state.imagePrefetched[url] = true;
-          var link = document.createElement ('link');
-          link.rel = 'prefetch';
-          link.as = 'image';
-          link.href = url;
-          document.head.appendChild (link);
-        });
-        
         return this.grViewer.pcInvoke ('setBody', {
           body: data.body,
           body_source_type: data.body_source_type,
