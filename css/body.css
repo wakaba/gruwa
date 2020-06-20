@@ -11,17 +11,46 @@ html.editor {
 }
 
 body {
-  padding: .5em;
+  padding: 0;
   box-sizing: border-box;
   white-space: pre-wrap;
 }
 
-html.editor > body {
-  min-height: 100%;
+gr-body-container:not([hidden]) {
+  display: flex;
 }
 
-body[data-source-type="3"] {
+gr-body-container {
+  flex-direction: column-reverse;
+}
+
+html.editor gr-body-container {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+gr-body:not([hidden]) {
+  display: block;
+  flex: 1;
+}
+
+gr-body {
+  padding: .5em;
+}
+
+html.editor gr-body {
+  overflow: auto;
+}
+
+gr-body[data-source-type="3"] {
   white-space: normal;
+}
+
+gr-toolbar-container:not([hidden]) {
+  display: block;
 }
 
 section > h1:not([hidden]),

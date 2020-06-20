@@ -231,6 +231,16 @@ Test {
       scroll => 1, shown => 1,
     });
   })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('edit-container body-control gr-html-viewer iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'gr-body[contenteditable]',
+    });
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
     return $current->b (1)->execute (q{
       return document.querySelector ('edit-container body-control gr-html-viewer iframe');
     });
@@ -288,7 +298,8 @@ Test {
     } $current->c;
   });
 } n => 5, name => ['WYSIWYG HTML editor'], browser => 1
-    unless $ENV{TEST_WD_BROWSER} =~ /firefox/; # XXX //keys is Chrome only
+    unless $ENV{CIRCLECI}; # //keys is somewhat broken...
+    #unless $ENV{TEST_WD_BROWSER} =~ /firefox/; # XXX //keys is Chrome only
 
 RUN;
 

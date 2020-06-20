@@ -1536,7 +1536,9 @@ defineElement ({
       var e = document.createElement ('sandboxed-viewer');
       if (this.hasAttribute ('seamlessheight')) e.setAttribute ('seamlessheight', '');
       this.grMode = this.getAttribute ('mode') || 'viewer';
-      if (this.grMode === 'viewer' || this.grMode === 'editor') {
+      if (this.grMode === 'viewer') {
+        e.setAttribute ('allowsandbox', 'allow-popups allow-downloads');
+      } else if (this.grMode === 'editor') {
         e.setAttribute ('allowsandbox', 'allow-popups');
       }
       this.appendChild (e);
@@ -1569,7 +1571,45 @@ defineElement ({
 
         return Promise.all (wait).then (_ => results);
       });
+
+      this.grViewer.pcRegisterMethod ('getGroupImage', async args => {
+        try {
+          var url = new URL (args.url);
+        } catch (e) {
+          return null;
+        }
+        if (location.origin !== url.origin) return null;
+            
+        var m = url.pathname.match (/^\/g\/([^\/]+)\/imported\/([^\/]+)\/go/);
+        if (m && m[1] == GR._state.group.group_id) {
+          var u = await GR.group.resolveImportedURL (GR._decodeURL (m[2]));
+          try {
+            url = new URL (u);
+          } catch (e) {
+            return null;
+          }
+          if (location.origin !== url.origin) return u;
+        }
+        
+        m = url.pathname.match (/^\/g\/([^\/]+)\/o\/([^\/]+)\/(file|image)/);
+        if (m && m[1] == GR._state.group.group_id) {
+          return fetch (url.pathname + '.json').then (res => {
+            if (res.status !== 200) throw res;
+            return res.json ();
+          }).then (json => {
+            return json.url;
+          });
+        }
+
+        return null;
+      }); // getGroupImage
       
+      this.grViewer.pcRegisterMethod ('getTemplate', args => {
+        var t = document.querySelector ('#editor-' + args.name + '-template');
+        if (!t) throw new Error ('Editor template |'+args.name+'| not found');
+        return t.innerHTML;
+      });
+
       var installMinimum = this.grViewer.pcInvoke ('pcEval', {code: `
         pcRegisterMethod ('appendHead', (args) => {
           var e = document.createElement ('div');
@@ -1579,27 +1619,33 @@ defineElement ({
           }
         });
         pcRegisterMethod ('setBody', (args) => {
-          var fragment = document.createElement ('div');
+          var doc = document.implementation.createHTMLDocument ();
+          var fragment = doc.createElement ('div');
           fragment.innerHTML = args.body;
 
           var base = document.querySelector ('base') || document.createElement ('base');
           base.href = args.base_url;
+          base.target = '_blank';
           document.head.appendChild (base);
+          doc.head.appendChild (base.cloneNode (true));
 
           document.documentElement.setAttribute ('data-group-url', args.group_url);
           document.documentElement.setAttribute ('data-theme', args.theme);
           document.documentElement.classList.toggle ('editor', args.editable);
+          
+          var grb = document.querySelector ('gr-body') || document.createElement ('gr-body');
+          grb.setAttribute ('data-source-type', args.body_source_type || 0);
           if (args.editable) {
-            document.body.setAttribute ('contenteditable', '');
-            document.body.setAttribute ('autofocus', '');
+            grb.setAttribute ('contenteditable', '');
+            grb.setAttribute ('autofocus', '');
 
             var s = getSelection ();
             s.removeAllRanges ();
             var r = document.createRange ();
-            r.setStart (document.body, 0);
+            r.setStart (grb, 0);
             s.addRange (r);
           } else {
-            document.body.removeAttribute ('contenteditable');
+            grb.removeAttribute ('contenteditable');
           }
 
           var imported = args.imported_sites || [];
@@ -1620,6 +1666,23 @@ defineElement ({
             });
           } // imported.length
 
+          fragment.querySelectorAll ('img[src]').forEach (e => {
+            var u = e.getAttribute ('data-gr-src') || e.getAttribute ('src');
+            try {
+              var url = new URL (u, args.base_url);
+            } catch (err) {
+              return;
+            }
+            // url.origin is checked in getGroupImage
+            if (url.pathname.substring (0, args.group_url.length) !== args.group_url) return;
+
+            e.setAttribute ('data-gr-src', u);
+            e.removeAttribute ('src');
+            pcInvoke ('getGroupImage', {url: url+''}).then (uu => {
+              e.src = uu || u;
+            });
+          });
+
           var setStarShadow = (e, data) => {
             var sr = e.attachShadow ({mode: 'open'});
 
@@ -1630,7 +1693,7 @@ defineElement ({
 
             sr.appendChild (document.createElement ('slot'));
             var f = document.createElement ('hatena-star');
-            if (document.body.isContentEditable) {
+            if (args.editable) {
               f.style.pointerEvents = 'none';
               f.onclick = function () { return false };
             }
@@ -1700,22 +1763,54 @@ defineElement ({
                 });
               });
             }
-          });
+          }); // starmap
 
-          document.body.textContent = '';
-          document.body.setAttribute ('data-source-type', args.body_source_type || 0);
+          grb.textContent = '';
           while (fragment.firstChild) {
-            document.body.appendChild (fragment.firstChild);
+            grb.appendChild (fragment.firstChild);
           }
-        });
+
+          if (!grb.parentNode) {
+            var ed = document.createElement ('gr-body-container');
+
+            if (args.editable) {
+              var tc = document.createElement ('gr-toolbar-container');
+              ed.appendChild (tc);
+
+              getTemplate ('default-toolbar').then (t => {
+                var tb = document.createElement ('gr-toolbar');
+                tb.appendChild (t.content.cloneNode (true));
+                tb.querySelectorAll ('button[data-action]').forEach (b => b.onclick = () => runToolbarCommand (b));
+                tc.appendChild (tb);
+              });
+            }
+            
+            ed.appendChild (grb);
+            document.body.appendChild (ed);
+          }
+
+          grb.focus ();
+        }); // setBody
+
+        pcRegisterMethod ('getHTML', args => {
+          var e = document.querySelector ('gr-body').cloneNode (true);
+          var doc = document.implementation.createHTMLDocument ();
+          doc.adoptNode (e);
+          e.querySelectorAll ('[data-gr-editor]').forEach (_ => _.remove ());
+          e.querySelectorAll ('img[data-gr-src]').forEach (_ => {
+            _.src = _.getAttribute ('data-gr-src');
+            _.removeAttribute ('data-gr-src');
+          });
+          return e.innerHTML;
+        }); // getHTML
 
         window.addEventListener ('click', (ev) => {
           var n = ev.target;
           while (n && !(n.localName === 'a' || n.localName === 'area')) {
             n = n.parentElement;
           }
-          if (n &&
-              (n.protocol === 'https:' || n.protocol === 'http:') &&
+          if (!n) return;
+          if ((n.protocol === 'https:' || n.protocol === 'http:') &&
               (n.target === '' || n.target === '_blank') &&
               !n.hasAttribute ('is') &&
               !n.hasAttribute ('download') &&
@@ -1734,6 +1829,21 @@ defineElement ({
             });
           }
         });
+
+        window.getTemplate = function (name) {
+          var t = document.querySelector ('#template-' + name);
+          if (!t) {
+            return pcInvoke ('getTemplate', {name: name}).then (_ => {
+              var t = document.createElement ('template');
+              t.innerHTML = _;
+              t.id = 'template-' + name;
+              document.head.appendChild (t);
+              return t;
+            });
+          } else {
+            return Promise.resolve (t);
+          }
+        }; // getTemplate
       `}); // installMinimum
 
       installMinimum.then (() => {
@@ -1857,20 +1967,30 @@ defineElement ({
               return ! getSelection ().isCollapsed;
             });
 
-            pcRegisterMethod ('editorCommand', args => {
+            function editorCommand (args) {
               if (args.action === 'execCommand') {
                 document.execCommand (args.command, args.value);
                 selectChanged ();
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'setBlock') {
                 setBlock (args.value);
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'insertSection') {                
                 insertSection ();
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'indent') {
                 indent ();
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'outdent') {
                 outdent ();
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'insertCheckbox') {
                 document.execCommand ('inserthtml', false, '<input type=checkbox>');
+                document.querySelector ('gr-body').focus ();
+              } else if (args.action === 'grCreateLink') {
+                return pcInvoke ('grCreateLink', {
+                  type: args.command,
+                });
               } else if (args.action === 'setLink') {
                 if (args.dest === undefined) {
                   args.dest = '';
@@ -1884,17 +2004,33 @@ defineElement ({
                 document.querySelectorAll ('a[href="'+randomValue+'"]').forEach (_ => {
                   setLinkAttrs (_, args.destType, args.dest);
                 });
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'insertLink') {
                 insertLink (args.destType, args.dest);
+                document.querySelector ('gr-body').focus ();
+              } else if (args.action === 'gruwatogglepanel') {
+                return pcInvoke ('gruwatogglepanel', {
+                  type: args.command,
+                });
               } else if (args.action === 'insertImage') {
                 insertImage (args.value);
+                document.querySelector ('gr-body').focus ();
               } else if (args.action === 'insertFile') {
                 insertFile (args);
+                document.querySelector ('gr-body').focus ();
               } else {
                 throw new TypeError ('Unknown editorCommand action: |'+args.action+'|');
               }
-            }); // editorCommand
+            } // editorCommand
+                             
+            window.runToolbarCommand = function (button) {
+              editorCommand ({action: button.getAttribute ('data-action'),
+                              command: button.getAttribute ('data-command'),
+                              value: button.getAttribute ('data-value')});
+            }; // runToolbarCommand
 
+            pcRegisterMethod ('editorCommand', editorCommand);
+            
             function setLinkAttrs (a, destType, dest) {
               if (destType === 'wiki-name') {
                 a.href = document.documentElement.getAttribute ('data-group-url') + '/wiki/' + encodeURIComponent (dest);
@@ -2316,21 +2452,6 @@ function replaceSelectionBy (node, hasSelected) {
   sel.selectAllChildren (node);
   if (!hasSelected) sel.collapseToEnd ();
 } // replaceSelectionBy
-
-            function getTemplate (name) {
-              var t = document.querySelector ('#template-' + name);
-              if (!t) {
-                return pcInvoke ('getTemplate', {name: name}).then (_ => {
-                  var t = document.createElement ('template');
-                  t.innerHTML = _;
-                  t.id = 'template-' + name;
-                  document.head.appendChild (t);
-                  return t;
-                });
-              } else {
-                return Promise.resolve (t);
-              }
-            } // getTemplate
                 
             var contextualToolbar;
             function hideContextualToolbar (a) {
@@ -2352,8 +2473,8 @@ function replaceSelectionBy (node, hasSelected) {
                 tb.grAnchor = a;
                 tb.setAttribute ('data-gr-editor', '');
                 tb.setAttribute ('contenteditable', 'false');
-                tb.style.top = a.offsetTop + a.offsetHeight + 'px';
-                tb.style.left = a.offsetLeft + 'px';
+                //tb.style.top = a.offsetTop + a.offsetHeight + 'px';
+                //tb.style.left = a.offsetLeft + 'px';
                 tb.appendChild (t.content.cloneNode (true));
               
                 var destType = a.hasAttribute ('data-wiki-name') ? 'wiki-name' : 'url';
@@ -2388,7 +2509,7 @@ function replaceSelectionBy (node, hasSelected) {
                 });
                 updated ();
                 
-                document.body.appendChild (contextualToolbar);
+                document.querySelector ('gr-toolbar-container').appendChild (contextualToolbar);
               });
             } // showLinkToolbar
                                              
@@ -2402,13 +2523,17 @@ function replaceSelectionBy (node, hasSelected) {
             return prompt (args.label, args.default);
           });
 
-          this.grViewer.pcRegisterMethod ('getTemplate', args => {
-            var t = document.querySelector ('#editor-' + args.name + '-template');
-            if (!t) throw new Error ('Editor template |'+args.name+'| not found');
-            return t.innerHTML;
+          this.grViewer.pcRegisterMethod ('grCreateLink', args => {
+            return this.grCreateLink (args.type);
+          });
+
+          this.grViewer.pcRegisterMethod ('gruwatogglepanel', args => {
+            var ev = new Event ('gruwatogglepanel', {bubbles: true});
+            ev.panelName = args.type;
+            this.dispatchEvent (ev);
           });
         });
-      }
+      } // editor
       
       return installMinimum;
     }, // grInit
@@ -2442,7 +2567,7 @@ function replaceSelectionBy (node, hasSelected) {
       });
     }, // grCreateLink
     grGetHTML: function () {
-      return this.grViewer.pcInvoke ('pcEval', {code: "var e = document.body.cloneNode (true); e.querySelectorAll ('[data-gr-editor]').forEach (_ => _.remove ()); return e.innerHTML"});
+      return this.grViewer.pcInvoke ('getHTML', {});
     }, // grGetHTML
     grSave: function () {
       if (!this.grEditableData) return;
@@ -2484,20 +2609,6 @@ function replaceSelectionBy (node, hasSelected) {
         delete this.grEditableData;
       }
       return GR.group.importedSites ().then (sites => {
-        // XXX image preloading (to avoid cookie SameSite issue)
-        var html = (new DOMParser).parseFromString ("", "text/html").body;
-        html.innerHTML = data.body;
-        html.querySelectorAll ('img[src]').forEach (img => {
-          var url = img.src;
-          if (GR._state.imagePrefetched[url]) return;
-          GR._state.imagePrefetched[url] = true;
-          var link = document.createElement ('link');
-          link.rel = 'prefetch';
-          link.as = 'image';
-          link.href = url;
-          document.head.appendChild (link);
-        });
-        
         return this.grViewer.pcInvoke ('setBody', {
           body: data.body,
           body_source_type: data.body_source_type,
@@ -2981,31 +3092,6 @@ function upgradeBodyControl (e, object, opts) {
     field.value = data;
   }; // loader.iframe
 
-  $$c (e, 'button[data-action=execCommand], button[data-action=setBlock], button[data-action=insertSection], button[data-action=indent], button[data-action=outdent], button[data-action=insertCheckbox]').forEach (function (b) {
-    b.onclick = function () {
-      var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
-      field.grViewer.pcInvoke ('editorCommand', {
-        action: b.getAttribute ('data-action'),
-        command: b.getAttribute ('data-command'),
-        value: b.getAttribute ('data-value'),
-      });
-      e.focus ();
-    };
-  });
-  $$c (e, 'button[data-action=link]').forEach (function (b) {
-    b.onclick = function () {
-      var field = e.querySelector ('body-control-tab[name=iframe] gr-html-viewer');
-      return field.grCreateLink (b.getAttribute ('data-command'));
-    };
-  });
-  $$c (e, 'button[data-action=panel]').forEach (function (b) {
-    b.onclick = function () {
-      var ev = new Event ('gruwatogglepanel', {bubbles: true});
-      ev.panelName = this.getAttribute ('data-value');
-      e.dispatchEvent (ev);
-    };
-  });
-
   var textarea = e.querySelector ('body-control-tab[name=textarea] textarea');
   loader.textarea = function () {
     if (data.body_source_type == 0) { // WYSIWYG
@@ -3211,7 +3297,7 @@ function upgradeList (el) {
               }
               f.querySelectorAll ('details[is=gr-comment-form]').forEach (_ => {
                 _.setAttribute ('data-parentobjectid', object.object_id);
-                _.setAttribute ('data-threadid', object.data.thread_id);
+                _.setAttribute ('data-threadid', object.data.thread_id || object.object_id); // very early objects do not have thread_id
                 if (_.grObjectUpdated) {
                   _.grObjectUpdated (object);
                 } else {
@@ -4600,6 +4686,12 @@ defineElement ({
           this.grObjectUpdated (this.grObject);
           delete this.grObject;
         }
+        
+        setTimeout (() => {
+          if (this.hasAttribute ('open')) {
+            this.querySelectorAll ('textarea[name=body]').forEach (_ => _.focus ());
+          }
+        }, 10);
       });
     }, // grOpen
     grObjectUpdated: function (obj) {
@@ -4765,7 +4857,7 @@ defineElement ({
   templateSet: true,
   props: {
     pcInit: function () {
-      this.grSelected = {account_id: {}, category: {}};
+      this.grSelected = {account_id: {}, category: {}, excluded: {self: true}};
       this.grSelected.category.thread = this.hasAttribute ('threadid');
       this.setAttribute ('formcontrol', '');
       this.addEventListener ('pctemplatesetupdated', (ev) => {
@@ -4858,7 +4950,7 @@ defineElement ({
       }
     }, // grThreadAccountIds
     grReset: function () {
-      this.grSelected = {account_id: {}, category: {}};
+      this.grSelected = {account_id: {}, category: {}, excluded: {self: true}};
       this.grSelected.category.thread = this.hasAttribute ('threadid');
       return this.grRender ();
     }, // grReset
@@ -4893,24 +4985,23 @@ defineElement ({
         });
       });
     }, // gr_updateSelectedView
-    pcModifyFormData: function (fd) {
-      var added = {};
+    pcModifyFormData: async function (fd) {
+      var accountIds = new Set;
       Object.keys (this.grSelected.account_id).forEach (aid => {
-        if (this.grSelected.account_id[aid]) {
-          fd.append ('called_account_id', aid);
-          added[aid] = true;
-        }
+        if (this.grSelected.account_id[aid]) accountIds.add (aid);
       });
       if (this.grSelected.category.thread) {
-        return this.grThreadAccountIds ().then (accountIds => {
-          if (accountIds) accountIds.forEach (aid => {
-            if (!added[aid]) {
-              fd.append ('called_account_id', aid);
-              added[aid] = true;
-            }
-          });
+        await this.grThreadAccountIds ().then (aids => {
+          if (aids) aids.forEach (aid => accountIds.add (aid));
         });
       }
+      if (this.grSelected.excluded.self) {
+        await GR.account.info ().then (account => {
+          if (account.account_id) accountIds.delete (account.account_id);
+        });
+      }
+
+      Array.from (accountIds).forEach (aid => fd.append ('called_account_id', aid));
     }, // pcModifyFormData
   },
 }); // gr-called-editor

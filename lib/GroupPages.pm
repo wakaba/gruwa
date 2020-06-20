@@ -1996,9 +1996,14 @@ sub group_object ($$$$) {
           die $e;
         });
       } elsif (@$path == 5 and
-               ($path->[4] eq 'file' or $path->[4] eq 'image')) {
+               ($path->[4] eq 'file' or
+                $path->[4] eq 'image' or
+                $path->[4] eq 'file.json' or
+                $path->[4] eq 'image.json')) {
         # /g/{group_id}/o/{object_id}/file
         # /g/{group_id}/o/{object_id}/image
+        # /g/{group_id}/o/{object_id}/file.json
+        # /g/{group_id}/o/{object_id}/image.json
         if ($object->{data}->{body_type} != 4) { # file
           return $app->throw_error (404, reason_phrase => 'Not a file');
         }
@@ -2012,11 +2017,12 @@ sub group_object ($$$$) {
           my $file_url = $app->config->{storage}->{client_url_prefix} . '/' . $bucket . '/' . $path->[3] . '?';
 
           my $mime = $object->{data}->{mime_type} // 'application/octet-stream';
-          if ($path->[4] eq 'image' and not $mime =~ m{^image/}) {
+          if (($path->[4] eq 'image' or $path->[4] eq 'image.json') and
+              not $mime =~ m{^image/}) {
             return $app->throw_error (404, reason_phrase => 'Not an image');
           }
           $file_url .= 'response-content-type=' . percent_encode_c $mime;
-          unless ($path->[4] eq 'image') {
+          unless ($path->[4] eq 'image' or $path->[4] eq 'image.json') {
             # XXXX
             my $header = 'attachment';
             my $filename = $object->{data}->{file_name} // '';
@@ -2032,7 +2038,11 @@ sub group_object ($$$$) {
           
           my $signed_url = signed_storage_url ($app, $file_url, 60*10) || die "Bad storage file URL |$file_url|";
           $app->http->add_response_header ('cache-control', 'private,max-age=' . (60*10));
-          return $app->throw_redirect ($signed_url);
+          if ($path->[4] eq 'file.json' or $path->[4] eq 'image.json') {
+            return json $app, {url => $signed_url};
+          } else {
+            return $app->throw_redirect ($signed_url);
+          }
         }
         
         #return $client->request (

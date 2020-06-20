@@ -197,7 +197,7 @@ Test {
     return $current->b (1)->execute (q{
       setTimeout (() => {
         document.querySelector ('form button[type=submit]').click ();
-      }, 100);
+      }, 1000);
     });
   })->then (sub {
     return $current->b (1)->http_post (['frame'], {id => undef});

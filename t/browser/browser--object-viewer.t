@@ -247,11 +247,145 @@ Test {
   });
 } n => 2, name => ['checkbox'], browser => 1;
 
+Test {
+  my $current = shift;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {
+      members => ['a1'],
+    }],
+    [file1 => object => {
+      group => 'g1', account => 'a1',
+      file => {
+        mime_type => 'image/png',
+        file => 'h2o.png',
+      },
+    }],
+  )->then (sub {
+    return $current->create (
+      [o1 => object => {
+        group => 'g1', account => 'a1',
+        body_type => 1, # html
+        body => q{a<img src=../}.$current->o ('file1')->{object_id}.q{/image>b},
+      }],
+    );
+  })->then (sub {
+    return $current->create_browser (1 => {
+      url => ['g', $current->o ('g1')->{group_id}, 'o', $current->o ('o1')->{object_id}, ''],
+      account => 'a1',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'html:not([data-navigating])',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'article.object gr-html-viewer iframe',
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('article.object gr-html-viewer iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'img[data-gr-src][src]',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      code => sub {
+        return $current->b (1)->execute (q{
+          return document.querySelector ('img').complete;
+        })->then (sub {
+          my $res = $_[0];
+          return $res->json->{value};
+        });
+      },
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var img = document.querySelector ('img');
+      return [img.naturalWidth, img.naturalHeight, document.body.innerHTML];
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}->[0], 16, 'width';
+      is $res->json->{value}->[1], 16, 'height';
+      #warn $res->json->{value}->[2];
+    } $current->c, name => 'view';
+  })->then (sub {
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b_wait (1 => {
+      selector => 'article .edit-button',
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      document.querySelector ('article .edit-button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'edit-container body-control gr-html-viewer iframe',
+      scroll => 1, shown => 1,
+    });
+  })->then (sub {
+    return $current->b (1)->switch_to_frame_by_selector ('edit-container body-control gr-html-viewer iframe');
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'img[data-gr-src][src]',
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      code => sub {
+        return $current->b (1)->execute (q{
+          return document.querySelector ('img').complete;
+        })->then (sub {
+          my $res = $_[0];
+          return $res->json->{value};
+        });
+      },
+    });
+  })->then (sub {
+    return $current->b (1)->execute (q{
+      var img = document.querySelector ('img');
+      return [img.naturalWidth, img.naturalHeight, document.body.innerHTML];
+    });
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->json->{value}->[0], 16, 'width';
+      is $res->json->{value}->[1], 16, 'height';
+    } $current->c, name => 'editor';
+    return $current->b (1)->http_post (['frame'], {id => undef});
+  })->then (sub {
+    my $res = $_[0];
+    die $res if $res->is_error;
+    return $current->b (1)->execute (q{
+      return document.querySelector ('edit-container .save-button').click ();
+    });
+  })->then (sub {
+    return $current->b_wait (1 => {
+      selector => 'edit-container .save-button:enabled',
+    });
+  })->then (sub {
+    return $current->get_json (['o', 'get.json'], {
+      object_id => $current->o ('o1')->{object_id},
+      with_data => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      my $obj = $result->{json}->{objects}->{$current->o ('o1')->{object_id}};
+      is $obj->{data}->{body}, q{a<img src="../}.$current->o ('file1')->{object_id}.q{/image">b};
+    } $current->c;
+  });
+} n => 5, name => ['image'], browser => 1;
+
 RUN;
 
 =head1 LICENSE
 
-Copyright 2019 Wakaba <wakaba@suikawiki.org>.
+Copyright 2019-2020 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as

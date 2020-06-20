@@ -563,32 +563,6 @@ edit-container body-control-tab:not([hidden]) {
   flex-direction: column;
 }
 
-edit-container body-control-tab menu {
-  margin: 0;
-  padding: 0;
-}
-
-edit-container body-control-tab button {
-  border-style: none;
-  background: transparent;
-  color: inherit;
-  font-size: 70%;
-  min-width: 2em;
-  min-height: 2em;
-  vertical-align: middle;
-}
-
-edit-container body-control-tab button.active {
-  background: var(--dark-background-color);
-  color: var(--dark-color);
-}
-
-edit-container body-control-tab button:not(.active):hover,
-edit-container body-control-tab button:not(.active):active {
-  background: var(--toolbar-hover-background-color);
-  color: var(--toolbar-hover-color);
-}
-
 edit-container body-control-tab > textarea,
 edit-container body-control-tab > gr-html-viewer {
   flex-grow: 1;

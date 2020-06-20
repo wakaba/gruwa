@@ -14,30 +14,6 @@
             <a href=javascript: data-name=config>設定</a>
           </menu>
           <body-control-tab name=iframe>
-            <menu>
-              <button type=button data-action=execCommand data-command=bold title=太字><b>B</b></button
-          ><button type=button data-action=execCommand data-command=italic title=斜体><i>I</i></button
-          ><button type=button data-action=execCommand data-command=underline title=下線><u>U</u></button
-          ><button type=button data-action=execCommand data-command=strikethrough title=取り消し線><s>S</s></button>
-          <button type=button data-action=execCommand data-command=superscript title=上付き><var>x</var><sup>2</sup></button
-          ><button type=button data-action=execCommand data-command=subscript title=下付き><var>x</var><sub>2</sub></button>
-
-          <button type=button data-action=setBlock data-value=div title=段落>¶</button
-          ><button type=button data-action=setBlock data-value=ol title=順序>1.</button
-          ><button type=button data-action=setBlock data-value=ul title=箇条書き>◦</button>
-
-          <!--<button type=button data-action=insertSection title=章節>§</button>-->
-
-          <button type=button data-action=outdent title=浅く>←</button
-          ><button type=button data-action=indent title=深く>→</button>
-
-          <button type=button data-action=link data-command=url title="Web サイトにリンク">://</button
-          ><button type=button data-action=link data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
-
-              <button type=button data-action=insertCheckbox title=チェック項目>☑</button
-              ><button type=button data-action=panel data-value=image-list title=画像>&#x1F5BC;</button
-              ><button type=button data-action=panel data-value=file-list title=ファイル>&#x1F4C4;</button>
-            </menu>
             <gr-html-viewer mode=editor
                 prompt-link-url=リンク先のURLを指定してください。
                 prompt-link-wiki-name=リンク先のWiki名を指定してください。
@@ -198,6 +174,10 @@
         <button-label>変更</button-label>
       </button>
       <menu-main>
+        <gr-legend>
+          <strong>通知送信先</strong>
+          <a href=/help#called-editor target=help>ヘルプ</a>
+        </gr-legend>
         <p data-called-type=if-in-thread hidden>
           <label title="親記事を書いた人やコメントを書いた人など">
             <input type=checkbox checked data-called-type=category value=thread>
@@ -209,6 +189,12 @@
           -->
         </p>
         <gr-called-editor-menu-items/>
+        <p>
+          <label>
+            <input type=checkbox checked data-called-type=excluded value=self>
+            自分を除外する
+          </label>
+        </p>
       </menu-main>
     </popup-menu>
   </template>
@@ -244,7 +230,33 @@
   </template>
 </template-set>
 
+<template id=editor-default-toolbar-template>
+              <button type=button data-action=execCommand data-command=bold title=太字><b>B</b></button
+          ><button type=button data-action=execCommand data-command=italic title=斜体><i>I</i></button
+          ><button type=button data-action=execCommand data-command=underline title=下線><u>U</u></button
+          ><button type=button data-action=execCommand data-command=strikethrough title=取り消し線><s>S</s></button>
+          <button type=button data-action=execCommand data-command=superscript title=上付き><var>x</var><sup>2</sup></button
+          ><button type=button data-action=execCommand data-command=subscript title=下付き><var>x</var><sub>2</sub></button>
+
+          <button type=button data-action=setBlock data-value=div title=段落>¶</button
+          ><button type=button data-action=setBlock data-value=ol title=順序>1.</button
+          ><button type=button data-action=setBlock data-value=ul title=箇条書き>◦</button>
+
+          <!--<button type=button data-action=insertSection title=章節>§</button>-->
+
+          <button type=button data-action=outdent title=浅く>←</button
+          ><button type=button data-action=indent title=深く>→</button>
+
+          <button type=button data-action=grCreateLink data-command=url title="Web サイトにリンク">://</button
+          ><button type=button data-action=grCreateLink data-command=wiki-name title="Wiki ページにリンク">[[]]</button>
+
+              <button type=button data-action=insertCheckbox title=チェック項目>☑</button
+              ><button type=button data-action=gruwatogglepanel data-command=image-list title=画像>&#x1F5BC;</button
+              ><button type=button data-action=gruwatogglepanel data-command=file-list title=ファイル>&#x1F4C4;</button>
+</template>
+
 <template id=editor-link-toolbar-template>
+  <strong>リンク先</strong>:
   <a href data-href-field=href class=open-button target=_blank rel="noreferrer noopener" data-gr-editor>
     <code data-field=host data-title-field=href hidden></code>
     <span data-field=wikiName hidden />
@@ -268,3 +280,23 @@
   <gr-select-index type=file empty=ファイルフォルダーがありません。 title=ファイルフォルダー />
   <gr-index-viewer type=file selectselector=gr-select-index selectancestor=section />
 </template>
+
+
+<!--
+
+Copyright 2016-2020 Wakaba <wakaba@suikawiki.org>.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Affero General Public License for more details.
+
+You does not have received a copy of the GNU Affero General Public
+License along with this program, see <https://www.gnu.org/licenses/>.
+
+-->

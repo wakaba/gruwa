@@ -46,6 +46,25 @@ Test {
       is $res->header ('content-disposition'), 'attachment; filename=""';
       is $res->body_bytes, $body;
     } $current->c;
+    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'file.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      like $result->{json}->{url}, qr{^http://storage.server.test/.+\?.+$};
+      is $result->{res}->header ('cache-control'), 'private,max-age=600';
+    } $current->c;
+    my $url = Web::URL->parse_string ($result->{json}->{url});
+    return $current->client_for ($url)->request (
+      url => $url,
+    );
+  })->then (sub {
+    my $res = $_[0];
+    test {
+      is $res->status, 200;
+      is $res->header ('content-type'), 'application/octet-stream';
+      is $res->header ('content-disposition'), 'attachment; filename=""';
+      is $res->body_bytes, $body;
+    } $current->c;
     return $current->object ($current->o ('o1'), account => 'a1');
   })->then (sub {
     my $obj = $_[0];
@@ -111,10 +130,12 @@ Test {
       ['GET', ['o', $current->o ('o1')->{object_id}, 'image'], {}, account => 'a1', group => 'g1'],
       [
         {status => 404, name => 'Not an image'},
+        {path => ['o', $current->o ('o1')->{object_id}, 'image.json'],
+         status => 404, name => 'Not an image'},
       ],
     );
   });
-} n => 27, name => 'file upload';
+} n => 33, name => 'file upload';
 
 Test {
   my $current = shift;
@@ -195,8 +216,20 @@ Test {
         {account => undef, status => 302},
       ],
     );
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'file.json'], {
+      }, account => 'a1', group => 'g1'],
+      [
+        {group => 'g2', status => 404},
+        {path => ['o', '524444343', 'file.json'], status => 404},
+        {path => ['o', $current->o ('o2')->{object_id}, 'file.json'], status => 404, name => 'not a file'},
+        {account => '', status => 403},
+        {account => undef, status => 403},
+      ],
+    );
   });
-} n => 4, name => 'file content can be altered until the file is closed';
+} n => 5, name => 'file content can be altered until the file is closed';
 
 Test {
   my $current = shift;
@@ -244,9 +277,12 @@ Test {
 Test {
   my $current = shift;
   my $body = "\xFE\x00\x01\x81" . rand;
-  return $current->create_account (a1 => {})->then (sub {
-    return $current->create_group (g1 => {members => ['a1']});
-  })->then (sub {
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {members => ['a1']}],
+    [g2 => group => {members => ['a1']}],
+    [o2 => object => {group => 'g1', account => 'a1'}],
+  )->then (sub {
     return $current->create_index (i1 => {group => 'g1', account => 'a1'});
   })->then (sub {
     return $current->post_json (['o', 'create.json'], {
@@ -268,11 +304,12 @@ Test {
       title => "aaae\x{5233}",
       mime_type => "Image/PnG",
       file_size => 52523,
-      file_name => "ho\x{2244}ge.pngx",
+      file_name => "ho\x{2244}ge.png",
       file_closed => 1,
       timestamp => 25253151333,
     }, account => 'a1', group => 'g1');
   })->then (sub {
+    $current->set_o (file_urls => []);
     return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'image'], {}, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
@@ -280,28 +317,108 @@ Test {
       like $result->{res}->header ('location'), qr{^http://storage.server.test/.+\?.+$};
       is $result->{res}->header ('cache-control'), 'private,max-age=600';
     } $current->c;
-    my $url = Web::URL->parse_string ($result->{res}->header ('location'));
-    return $current->client_for ($url)->request (
-      url => $url,
+    push @{$current->o ('file_urls')}, [$result->{res}->header ('location'), 0];
+    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      like $result->{res}->header ('location'), qr{^http://storage.server.test/.+\?.+$};
+      is $result->{res}->header ('cache-control'), 'private,max-age=600';
+    } $current->c;
+    push @{$current->o ('file_urls')}, [$result->{res}->header ('location'), 1];
+    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'image.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      like $result->{json}->{url}, qr{^http://storage.server.test/.+\?.+$};
+      is $result->{res}->header ('cache-control'), 'private,max-age=600';
+    } $current->c;
+    push @{$current->o ('file_urls')}, [$result->{json}->{url}, 0];
+    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'file.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      like $result->{json}->{url}, qr{^http://storage.server.test/.+\?.+$};
+      is $result->{res}->header ('cache-control'), 'private,max-age=600';
+    } $current->c;
+    push @{$current->o ('file_urls')}, [$result->{json}->{url}, 1];
+    return promised_for {
+      my ($x, $y) = @{$_[0]};
+      my $url = Web::URL->parse_string ($x);
+      return $current->client_for ($url)->request (
+        url => $url,
+      )->then (sub {
+        my $res = $_[0];
+        test {
+          is $res->status, 200;
+          is $res->header ('content-type'), 'image/png';
+          if ($y) {
+            is $res->header ('content-disposition'), q{attachment; filename=ho%E2%89%84ge.png; filename*=utf-8''ho%E2%89%84ge.png};
+          } else {
+            is $res->header ('content-disposition'), undef;
+          }
+          #is $res->header ('Content-Security-Policy'), 'sandbox';
+          #is $res->header ('last-modified'), 'Sun, 29 Mar 2770 20:15:33 GMT';
+          is $res->body_bytes, $body;
+        } $current->c;
+      });
+    } $current->o ('file_urls');
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'file'], {
+      }, account => 'a1', group => 'g1'],
+      [
+        {group => 'g2', status => 404},
+        {path => ['o', '524444343', 'file'], status => 404},
+        {path => ['o', $current->o ('o2')->{object_id}, 'file'], status => 404, name => 'not a file'},
+        {account => '', status => 403},
+        {account => undef, status => 302},
+      ],
     );
   })->then (sub {
-    my $res = $_[0];
-    test {
-      is $res->status, 200;
-      is $res->header ('content-type'), 'image/png';
-      is $res->header ('content-disposition'), undef;
-      #is $res->header ('Content-Security-Policy'), 'sandbox';
-      #is $res->header ('last-modified'), 'Sun, 29 Mar 2770 20:15:33 GMT';
-      is $res->body_bytes, $body;
-    } $current->c;
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'file.json'], {
+      }, account => 'a1', group => 'g1'],
+      [
+        {group => 'g2', status => 404},
+        {path => ['o', '524444343', 'file.json'], status => 404},
+        {path => ['o', $current->o ('o2')->{object_id}, 'file.json'], status => 404, name => 'not a file'},
+        {account => '', status => 403},
+        {account => undef, status => 403},
+      ],
+    );
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'image'], {
+      }, account => 'a1', group => 'g1'],
+      [
+        {group => 'g2', status => 404},
+        {path => ['o', '524444343', 'image'], status => 404},
+        {path => ['o', $current->o ('o2')->{object_id}, 'image'], status => 404, name => 'not a file'},
+        {account => '', status => 403},
+        {account => undef, status => 302},
+      ],
+    );
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'image.json'], {
+      }, account => 'a1', group => 'g1'],
+      [
+        {group => 'g2', status => 404},
+        {path => ['o', '524444343', 'image.json'], status => 404},
+        {path => ['o', $current->o ('o2')->{object_id}, 'image.json'], status => 404, name => 'not a file'},
+        {account => '', status => 403},
+        {account => undef, status => 403},
+      ],
+    );
   });
-} n => 7, name => 'image file upload';
+} n => 5+2*4+4*4, name => 'image file upload';
 
 RUN;
 
 =head1 LICENSE
 
-Copyright 2017-2019 Wakaba <wakaba@suikawiki.org>.
+Copyright 2017-2020 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
