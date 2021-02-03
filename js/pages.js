@@ -1937,6 +1937,7 @@ defineElement ({
           this.grViewer.pcInvoke ('pcEval', {code: `
             window.addEventListener ('focus', ev => {
               pcInvoke ('focused', {});
+              document.querySelectorAll ('gr-body').forEach (_ => _.focus ());
             });
             
             window.addEventListener ('change', ev => {
