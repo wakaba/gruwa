@@ -2,10 +2,10 @@
    "jobs" : {
       "build" : {
          "environment" : {
-            "CIRCLE_ARTIFACTS" : "/tmp/circle-artifacts"
+            "CIRCLE_ARTIFACTS" : "/tmp/circle-artifacts/build"
          },
          "machine" : {
-            "enabled" : true
+            "image" : "ubuntu-2004:202008-01"
          },
          "steps" : [
             "checkout",
@@ -125,7 +125,7 @@
             },
             {
                "run" : {
-                  "command" : "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env TEST_WD_BROWSER=firefox make test-browser-circleci"
+                  "command" : "TEST_WD_BROWSER=firefox SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-browser-circleci"
                }
             },
             {
@@ -135,7 +135,7 @@
             },
             {
                "store_artifacts" : {
-                  "path" : "/tmp/circle-artifacts"
+                  "path" : "/tmp/circle-artifacts/build"
                }
             },
             {
@@ -147,15 +147,64 @@
                "deploy" : {
                   "command" : "if [ \u0022${CIRCLE_BRANCH}\u0022 == 'master' ]; then\u000Atrue\u000Adocker push quay.io/wakaba/gruwa && curl -sSLf $BWALL_URL -X POST\u000Afi"
                }
-            },
+            }
+         ]
+      },
+      "deploy_nightly" : {
+         "machine" : {
+            "image" : "ubuntu-2004:202008-01"
+         },
+         "steps" : [
+            "checkout",
             {
                "deploy" : {
-                  "command" : "if [ \u0022${CIRCLE_BRANCH}\u0022 == 'nightly' ]; then\u000Atrue\u000Agit rev-parse HEAD > head.txt\u000Acurl -f -s -S --request POST --header \u0022Authorization:token $GITHUB_ACCESS_TOKEN\u0022 --header \u0022Content-Type:application/json\u0022 --data-binary \u0022{\u005C\u0022base\u005C\u0022:\u005C\u0022master\u005C\u0022,\u005C\u0022head\u005C\u0022:\u005C\u0022`cat head.txt`\u005C\u0022,\u005C\u0022commit_message\u005C\u0022:\u005C\u0022auto-merge $CIRCLE_BRANCH into master\u005C\u0022}\u0022 \u0022https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges\u0022\u000Afi"
+                  "command" : "git rev-parse HEAD > head.txt\u000Acurl -f -s -S --request POST --header \u0022Authorization:token $GITHUB_ACCESS_TOKEN\u0022 --header \u0022Content-Type:application/json\u0022 --data-binary \u0022{\u005C\u0022base\u005C\u0022:\u005C\u0022master\u005C\u0022,\u005C\u0022head\u005C\u0022:\u005C\u0022`cat head.txt`\u005C\u0022,\u005C\u0022commit_message\u005C\u0022:\u005C\u0022auto-merge $CIRCLE_BRANCH into master\u005C\u0022}\u0022 \u0022https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges\u0022"
+               }
+            }
+         ]
+      },
+      "deploy_staging" : {
+         "machine" : {
+            "image" : "ubuntu-2004:202008-01"
+         },
+         "steps" : [
+            "checkout",
+            {
+               "deploy" : {
+                  "command" : "git rev-parse HEAD > head.txt\u000Acurl -f -s -S --request POST --header \u0022Authorization:token $GITHUB_ACCESS_TOKEN\u0022 --header \u0022Content-Type:application/json\u0022 --data-binary \u0022{\u005C\u0022base\u005C\u0022:\u005C\u0022master\u005C\u0022,\u005C\u0022head\u005C\u0022:\u005C\u0022`cat head.txt`\u005C\u0022,\u005C\u0022commit_message\u005C\u0022:\u005C\u0022auto-merge $CIRCLE_BRANCH into master\u005C\u0022}\u0022 \u0022https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges\u0022"
+               }
+            }
+         ]
+      },
+      "gaa4" : {
+         "machine" : {
+            "image" : "ubuntu-2004:202008-01"
+         },
+         "steps" : [
+            "checkout",
+            {
+               "run" : {
+                  "command" : "git config --global user.email \u0022temp@circleci.test\u0022;git config --global user.name \u0022CircleCI\u0022"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "make deps"
+               }
+            },
+            {
+               "run" : {
+                  "command" : "make updatenightly"
                }
             },
             {
                "deploy" : {
-                  "command" : "if [ \u0022${CIRCLE_BRANCH}\u0022 == 'staging' ]; then\u000Atrue\u000Agit rev-parse HEAD > head.txt\u000Acurl -f -s -S --request POST --header \u0022Authorization:token $GITHUB_ACCESS_TOKEN\u0022 --header \u0022Content-Type:application/json\u0022 --data-binary \u0022{\u005C\u0022base\u005C\u0022:\u005C\u0022master\u005C\u0022,\u005C\u0022head\u005C\u0022:\u005C\u0022`cat head.txt`\u005C\u0022,\u005C\u0022commit_message\u005C\u0022:\u005C\u0022auto-merge $CIRCLE_BRANCH into master\u005C\u0022}\u0022 \u0022https://api.github.com/repos/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME/merges\u0022\u000Afi"
+                  "command" : "git commit -m auto"
+               }
+            },
+            {
+               "deploy" : {
+                  "command" : "git push origin \u002B`git rev-parse HEAD`:refs/heads/nightly"
                }
             }
          ]
@@ -165,7 +214,54 @@
    "workflows" : {
       "build" : {
          "jobs" : [
-            "build"
+            "build",
+            {
+               "deploy_nightly" : {
+                  "filters" : {
+                     "branches" : {
+                        "only" : [
+                           "nightly"
+                        ]
+                     }
+                  },
+                  "requires" : [
+                     "build"
+                  ]
+               }
+            },
+            {
+               "deploy_staging" : {
+                  "filters" : {
+                     "branches" : {
+                        "only" : [
+                           "staging"
+                        ]
+                     }
+                  },
+                  "requires" : [
+                     "build"
+                  ]
+               }
+            }
+         ]
+      },
+      "gaa4" : {
+         "jobs" : [
+            "gaa4"
+         ],
+         "triggers" : [
+            {
+               "schedule" : {
+                  "cron" : "11 0 * * *",
+                  "filters" : {
+                     "branches" : {
+                        "only" : [
+                           "staging"
+                        ]
+                     }
+                  }
+               }
+            }
          ]
       },
       "version" : 2
