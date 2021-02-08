@@ -43,11 +43,14 @@ js/sha1.js: local/generated
 
 build: build-deps build-main
 build-deps: git-submodules pmbp-install
-build-main: css/themes.css themes.json js/sha1.js \
+build-main: js/sha1.js \
     js/components.js css/components.css db/gruwa.sql
 
 db/gruwa.sql: db/gruwa-*.sql
 	cat db/gruwa-*.sql > $@
+
+## make themes
+themes: css/themes.css themes.json
 
 GRUWA_THEMES_DIR = ../gruwa-themes
 
