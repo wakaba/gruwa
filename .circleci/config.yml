@@ -5,7 +5,7 @@
             "CIRCLE_ARTIFACTS" : "/tmp/circle-artifacts/build"
          },
          "machine" : {
-            "image" : "ubuntu-2004:202008-01"
+            "image" : "ubuntu-2004:202101-01"
          },
          "steps" : [
             "checkout",
@@ -22,7 +22,7 @@
             {
                "run" : {
                   "background" : true,
-                  "command" : "docker pull quay.io/wakaba/docker-perl-app-base && docker pull minio/minio && docker pull mariadb"
+                  "command" : "docker pull quay.io/wakaba/docker-perl-app-base && docker pull minio/minio && docker pull mariadb && docker pull quay.io/wakaba/chromedriver:chromium && docker pull quay.io/wakaba/firefoxdriver:stable"
                }
             },
             {
@@ -152,7 +152,7 @@
       },
       "deploy_nightly" : {
          "machine" : {
-            "image" : "ubuntu-2004:202008-01"
+            "image" : "ubuntu-2004:202101-01"
          },
          "steps" : [
             "checkout",
@@ -165,7 +165,7 @@
       },
       "deploy_staging" : {
          "machine" : {
-            "image" : "ubuntu-2004:202008-01"
+            "image" : "ubuntu-2004:202101-01"
          },
          "steps" : [
             "checkout",
@@ -178,7 +178,7 @@
       },
       "gaa4" : {
          "machine" : {
-            "image" : "ubuntu-2004:202008-01"
+            "image" : "ubuntu-2004:202101-01"
          },
          "steps" : [
             "checkout",
@@ -199,7 +199,7 @@
             },
             {
                "deploy" : {
-                  "command" : "git commit -m auto"
+                  "command" : "git diff-index --quiet HEAD --cached || git commit -m auto"
                }
             },
             {
@@ -258,11 +258,11 @@
          "triggers" : [
             {
                "schedule" : {
-                  "cron" : "11 0 * * *",
+                  "cron" : "42 1 * * *",
                   "filters" : {
                      "branches" : {
                         "only" : [
-                           "staging"
+                           "master"
                         ]
                      }
                   }
