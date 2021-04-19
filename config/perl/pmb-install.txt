@@ -7,7 +7,7 @@ AnyEvent::HTTPD~0.93
 AnyEvent::Util
 Canary::Stability~2013
 Capture::Tiny~0.48
-Carp::Heavy~1.50
+Carp~1.50
 Cwd~3.75
 Data::Dumper~2.173
 Digest::SHA~6.02
