@@ -4,9 +4,10 @@ AnyEvent::FileLock~0.06
 AnyEvent::Fork~1.31
 AnyEvent::HTTP~2.25
 AnyEvent::HTTPD~0.93
+AnyEvent::IO
 Canary::Stability~2013
 Capture::Tiny~0.48
-Carp~1.50
+Carp::Heavy~1.50
 Cwd~3.75
 Data::Dumper~2.181
 Digest::SHA~6.02
@@ -29,7 +30,7 @@ Path::Class~0.37
 Path::Tiny~0.118
 Proc::FastSpawn~1.2
 Scalar::Util~1.56
-Socket~2.031
+Socket~2.032
 Term::ANSIColor~5.01
 Test::Class~0.52
 Test::Differences~0.68
