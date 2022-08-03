@@ -131,8 +131,18 @@ Test {
       like $result->{res}->body_bytes, qr{"group_id"\s*:\s*"};
       like $result->{res}->body_bytes, qr{"object_id"\s*:\s*"};
     } $current->c;
+    return $current->get_json (['o', 'get.json'], {
+      object_id => [0,
+                    $current->o ('o1')->{object_id},
+                    rand],
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is 0+keys %{$result->{json}->{objects}}, 1;
+    } $current->c;
   });
-} n => 7, name => 'multiple';
+} n => 8, name => 'multiple';
 
 Test {
   my $current = shift;

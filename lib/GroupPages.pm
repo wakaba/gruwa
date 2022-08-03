@@ -2458,8 +2458,9 @@ sub group_object_get ($$$$$) {
           } @{$_[0]->all}]}};
         });
       } else {
-        my $list = $app->bare_param_list ('object_id');
+        my $list = $app->bare_param_list ('object_id')->to_a;
         $rev_id = $app->bare_param ('object_revision_id') if @$list == 1;
+        $_ = unpack 'Q', pack 'Q', $_ for @$list;
         return {object_id => {-in => $list},
                 all => 1};
       }
