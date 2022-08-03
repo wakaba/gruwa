@@ -232,7 +232,7 @@ sub run ($%) {
         database_name_suffix => $args->{mysqld_database_name_suffix},
       },
       storage => {
-        docker_net_host => $args->{docker_net_host},
+        #docker_net_host => $args->{docker_net_host},
         no_set_uid => $args->{no_set_uid},
         public_prefixes => [],
       },
@@ -240,7 +240,7 @@ sub run ($%) {
         disabled => $args->{dont_run_accounts},
         config_path => $args->{accounts_config_path}, # or undef
         servers_path => $args->{accounts_servers_path}, # or undef
-        docker_net_host => $args->{docker_net_host},
+        #docker_net_host => $args->{docker_net_host},
       },
       apploach => {
         disabled => $args->{dont_run_apploach},

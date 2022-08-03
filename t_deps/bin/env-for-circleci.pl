@@ -15,7 +15,7 @@ GruwaSS->run (
   mysqld_database_name_suffix => '_test',
   need_browser => $NeedBrowser,
   browser_type => $ENV{TEST_WD_BROWSER}, # or undef
-  docker_net_host => 1,
+  docker_net_host => $ENV{CIRCLECI},
   no_set_uid => 1,
   write_ss_env => 1,
   app_config_path => $RootPath->child ('config/test.json'),
@@ -30,7 +30,7 @@ GruwaSS->run (
 
 =head1 LICENSE
 
-Copyright 2018-2019 Wakaba <wakaba@suikawiki.org>.
+Copyright 2018-2022 Wakaba <wakaba@suikawiki.org>.
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself.
