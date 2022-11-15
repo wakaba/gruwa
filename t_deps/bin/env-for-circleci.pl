@@ -15,7 +15,7 @@ GruwaSS->run (
   mysqld_database_name_suffix => '_test',
   need_browser => $NeedBrowser,
   browser_type => $ENV{TEST_WD_BROWSER}, # or undef
-  docker_net_host => $ENV{CIRCLECI},
+  #docker_net_host => $ENV{CIRCLECI},
   no_set_uid => 1,
   write_ss_env => 1,
   app_config_path => $RootPath->child ('config/test.json'),
