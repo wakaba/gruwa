@@ -2013,7 +2013,8 @@ sub group_object ($$$$) {
         my $url = Web::URL->parse_string ($app->config->{storage}->{url});
         my $client = Web::Transport::BasicClient->new_from_url ($url);
 
-        {
+        if ($app->config->{storage}->{direct} or
+            ($app->config->{is_test_script} and $app->bare_param ('test_direct'))) {
           my $file_url = $app->config->{storage}->{client_url_prefix} . '/' . $bucket . '/' . $path->[3] . '?';
 
           my $mime = $object->{data}->{mime_type} // 'application/octet-stream';
@@ -2043,38 +2044,44 @@ sub group_object ($$$$) {
           } else {
             return $app->throw_redirect ($signed_url);
           }
+        } else {
+          if ($path->[4] eq 'file.json' or $path->[4] eq 'image.json') {
+            my $u = $app->http->url->resolve_string ('')->stringify;
+            $u =~ s/\.json$//;
+            return json $app, {url => $u};
+          }
+          # XXX body streaming
+          return $client->request (
+            method => 'GET',
+            path => [$bucket, $path->[3]],
+            aws4 => $aws4,
+          )->then (sub {
+            if ($_[0]->status == 200) {
+              my $mime = $object->{data}->{mime_type} // 'application/octet-stream';
+              if ($path->[4] eq 'image' and not $mime =~ m{^image/}) {
+                return $app->throw_error (404, reason_phrase => 'Not an image');
+              }
+              $app->http->set_response_header ('content-type', $mime);
+              unless ($path->[4] eq 'image') {
+                $app->http->set_response_disposition
+                    (disposition => 'attachment',
+                     filename => $object->{data}->{file_name} // '');
+              }
+              $app->http->set_response_header
+                  ('content-security-policy', 'sandbox');
+              $app->http->set_response_header
+                  ('x-content-type-options', 'nosniff');
+              $app->http->set_response_last_modified
+                  ($object->{data}->{timestamp} || 0);
+              $app->http->send_response_body_as_ref (\($_[0]->body_bytes));
+              $app->http->close_response_body;
+            } elsif ($_[0]->status == 404) {
+              return $app->throw_error (404, reason_phrase => 'No file content');
+            } else {
+              die $_[0];
+            }
+          });
         }
-        
-        #return $client->request (
-        #  method => 'GET',
-        #  path => [$bucket, $path->[3]],
-        #  aws4 => $aws4,
-        #)->then (sub {
-        #  if ($_[0]->status == 200) {
-        #    my $mime = $object->{data}->{mime_type} // 'application/octet-stream';
-        #    if ($path->[4] eq 'image' and not $mime =~ m{^image/}) {
-        #      return $app->throw_error (404, reason_phrase => 'Not an image');
-        #    }
-        #    $app->http->set_response_header ('content-type', $mime);
-        #    unless ($path->[4] eq 'image') {
-        #      $app->http->set_response_disposition
-        #          (disposition => 'attachment',
-        #           filename => $object->{data}->{file_name} // '');
-        #    }
-        #    $app->http->set_response_header
-        #        ('content-security-policy', 'sandbox');
-        #    $app->http->set_response_header
-        #        ('x-content-type-options', 'nosniff');
-        #    $app->http->set_response_last_modified
-        #        ($object->{data}->{timestamp} || 0);
-        #    $app->http->send_response_body_as_ref (\($_[0]->body_bytes));
-        #    $app->http->close_response_body;
-        #  } elsif ($_[0]->status == 404) {
-        #    return $app->throw_error (404, reason_phrase => 'No file content');
-        #  } else {
-        #    die $_[0];
-        #  }
-        #});
       } elsif (@$path == 5 and $path->[4] eq 'upload.json') {
         # /g/{group_id}/o/{object_id}/upload.json
         $app->requires_request_method ({POST => 1});

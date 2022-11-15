@@ -27,7 +27,9 @@ Test {
       'content-type' => 'application/octet-stream',
     }, body => $body);
   })->then (sub {
-    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'file'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -46,7 +48,9 @@ Test {
       is $res->header ('content-disposition'), 'attachment; filename=""';
       is $res->body_bytes, $body;
     } $current->c;
-    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'file.json'], {}, account => 'a1', group => 'g1');
+    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'file.json'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -95,7 +99,9 @@ Test {
       is $obj->{data}->{file_name}, "ho\x{2244}ge.png";
       is $obj->{data}->{file_closed}, 1;
     } $current->c;
-    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1', redirected => 1);
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1', redirected => 1);
   })->then (sub {
     my $result = $_[0];
     test {
@@ -116,7 +122,9 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1', redirected => 1);
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1', redirected => 1);
   })->then (sub {
     my $result = $_[0];
     test {
@@ -127,7 +135,9 @@ Test {
       is $result->{res}->body_bytes, $body;
     } $current->c, name => 'unchanged';
     return $current->are_errors (
-      ['GET', ['o', $current->o ('o1')->{object_id}, 'image'], {}, account => 'a1', group => 'g1'],
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'image'], {
+        test_direct => 1,
+      }, account => 'a1', group => 'g1'],
       [
         {status => 404, name => 'Not an image'},
         {path => ['o', $current->o ('o1')->{object_id}, 'image.json'],
@@ -135,7 +145,123 @@ Test {
       ],
     );
   });
-} n => 33, name => 'file upload';
+} n => 33, name => 'file upload (direct)';
+
+Test {
+  my $current = shift;
+  my $body = "\xFE\x00\x01\x81" . rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', 'create.json'], {
+      is_file => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok $result->{json}->{upload_token};
+    } $current->c;
+    $current->set_o (o1 => $result->{json});
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'upload.json'], {
+      token => $current->o ('o1')->{upload_token},
+    }, account => 'a1', group => 'g1', headers => {
+      'content-type' => 'application/octet-stream',
+    }, body => $body);
+  })->then (sub {
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('content-type'), 'application/octet-stream';
+      is $result->{res}->header ('content-disposition'), 'attachment; filename=""';
+      is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
+      is $result->{res}->header ('x-content-type-options'), 'nosniff';
+      is $result->{res}->body_bytes, $body;
+    } $current->c;
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $obj = $_[0];
+    test {
+      is $obj->{data}->{upload_token}, $current->o ('o1')->{upload_token};
+      is $obj->{data}->{title}, undef;
+      is $obj->{data}->{mime_type}, undef;
+      is $obj->{data}->{file_size}, undef;
+      is $obj->{data}->{file_name}, undef;
+      is $obj->{data}->{file_closed}, undef;
+    } $current->c;
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      title => "aaae\x{5233}",
+      mime_type => "text/plain; hoge=fuga",
+      file_size => 52523,
+      file_name => "ho\x{2244}ge.png",
+      file_closed => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->object ($current->o ('o1'), account => 'a1');
+  })->then (sub {
+    my $obj = $_[0];
+    test {
+      is $obj->{data}->{upload_token}, undef;
+      is $obj->{data}->{title}, "aaae\x{5233}";
+      is $obj->{data}->{mime_type}, "text/plain;hoge=fuga";
+      is $obj->{data}->{file_size}, 52523;
+      is $obj->{data}->{file_name}, "ho\x{2244}ge.png";
+      is $obj->{data}->{file_closed}, 1;
+    } $current->c;
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('content-type'), 'text/plain;hoge=fuga';
+      is $result->{res}->header ('content-disposition'),
+          q{attachment; filename=ho%E2%89%84ge.png; filename*=utf-8''ho%E2%89%84ge.png};
+      is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
+      is $result->{res}->body_bytes, $body;
+    } $current->c;
+    return $current->are_errors (
+      ['POST', ['o', $current->o ('o1')->{object_id}, 'upload.json'], {
+        token => $current->o ('o1')->{upload_token},
+      }, account => 'a1', group => 'g1', headers => {
+        'content-type' => 'application/octet-stream',
+      }, body => rand],
+      [
+        {status => 403, name => 'File closed'},
+      ],
+    );
+  })->then (sub {
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('content-type'), 'text/plain;hoge=fuga';
+      is $result->{res}->header ('content-disposition'),
+          q{attachment; filename=ho%E2%89%84ge.png; filename*=utf-8''ho%E2%89%84ge.png};
+      is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
+      is $result->{res}->body_bytes, $body;
+    } $current->c, name => 'unchanged';
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'image'], {}, account => 'a1', group => 'g1'],
+      [
+        {status => 404, name => 'Not an image'},
+      ],
+    );
+  })->then (sub {
+    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'file.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{json}->{url}, $current->resolve ('/g/'.$current->o ('g1')->{group_id}.'/o/' . $current->o ('o1')->{object_id} . '/file')->stringify;
+    } $current->c;
+    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'image.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{json}->{url}, $current->resolve ('/g/'.$current->o ('g1')->{group_id}.'/o/' . $current->o ('o1')->{object_id} . '/image')->stringify;
+    } $current->c;
+  });
+} n => 30, name => 'file upload (non-direct)';
 
 Test {
   my $current = shift;
@@ -157,7 +283,9 @@ Test {
     my $result = $_[0];
     $current->set_o (o1 => $result->{json});
   })->then (sub {
-    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'file'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     my $url = Web::URL->parse_string ($result->{res}->header ('location'));
@@ -199,7 +327,9 @@ Test {
       ],
     );
   })->then (sub {
-    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1', redirected => 1);
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1', redirected => 1);
   })->then (sub {
     my $result = $_[0];
     test {
@@ -207,6 +337,7 @@ Test {
     } $current->c;
     return $current->are_errors (
       ['GET', ['o', $current->o ('o1')->{object_id}, 'file'], {
+        test_direct => 1,
       }, account => 'a1', group => 'g1'],
       [
         {group => 'g2', status => 404},
@@ -219,6 +350,7 @@ Test {
   })->then (sub {
     return $current->are_errors (
       ['GET', ['o', $current->o ('o1')->{object_id}, 'file.json'], {
+        test_direct => 1,
       }, account => 'a1', group => 'g1'],
       [
         {group => 'g2', status => 404},
@@ -263,7 +395,9 @@ Test {
       timestamp => 5253111442,
     }, account => 'a1', group => 'g1');
   })->then (sub {
-    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1', redirected => 1);
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1', redirected => 1);
   })->then (sub {
     my $result = $_[0];
     test {
@@ -272,7 +406,57 @@ Test {
       is $result->{res}->header ('content-type'), 'text/plain';
     } $current->c;
   });
-} n => 2, name => 'file last modified timestamp';
+} n => 2, name => 'file last modified timestamp (direct)';
+
+Test {
+  my $current = shift;
+  my $body = "\xFE\x00\x01\x81" . rand;
+  return $current->create_account (a1 => {})->then (sub {
+    return $current->create_group (g1 => {members => ['a1']});
+  })->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', 'create.json'], {
+      is_file => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok $result->{json}->{upload_token};
+    } $current->c;
+    $current->set_o (o1 => $result->{json});
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1'],
+      [
+        {status => 404},
+      ],
+    );
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'upload.json'], {
+      token => $current->o ('o1')->{upload_token},
+    }, account => 'a1', group => 'g1', headers => {
+      'content-type' => 'application/octet-stream',
+    }, body => $body);
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      title => "aaae\x{5233}",
+      mime_type => "text/plain",
+      file_size => 52523,
+      file_name => "ho\x{2244}ge.png",
+      file_closed => 1,
+      timestamp => 5253111442,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('last-modified'),
+          'Mon, 18 Jun 2136 21:37:22 GMT';
+      is $result->{res}->header ('content-type'), 'text/plain';
+    } $current->c;
+  });
+} n => 4, name => 'file last modified timestamp (direct)';
 
 Test {
   my $current = shift;
@@ -310,7 +494,9 @@ Test {
     }, account => 'a1', group => 'g1');
   })->then (sub {
     $current->set_o (file_urls => []);
-    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'image'], {}, account => 'a1', group => 'g1');
+    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'image'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -318,7 +504,9 @@ Test {
       is $result->{res}->header ('cache-control'), 'private,max-age=600';
     } $current->c;
     push @{$current->o ('file_urls')}, [$result->{res}->header ('location'), 0];
-    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+    return $current->get_redirect (['o', $current->o ('o1')->{object_id}, 'file'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -326,7 +514,9 @@ Test {
       is $result->{res}->header ('cache-control'), 'private,max-age=600';
     } $current->c;
     push @{$current->o ('file_urls')}, [$result->{res}->header ('location'), 1];
-    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'image.json'], {}, account => 'a1', group => 'g1');
+    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'image.json'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -334,7 +524,9 @@ Test {
       is $result->{res}->header ('cache-control'), 'private,max-age=600';
     } $current->c;
     push @{$current->o ('file_urls')}, [$result->{json}->{url}, 0];
-    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'file.json'], {}, account => 'a1', group => 'g1');
+    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'file.json'], {
+      test_direct => 1,
+    }, account => 'a1', group => 'g1');
   })->then (sub {
     my $result = $_[0];
     test {
@@ -364,6 +556,130 @@ Test {
       });
     } $current->o ('file_urls');
   })->then (sub {
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'file'], {
+        test_direct => 1,
+      }, account => 'a1', group => 'g1'],
+      [
+        {group => 'g2', status => 404},
+        {path => ['o', '524444343', 'file'], status => 404},
+        {path => ['o', $current->o ('o2')->{object_id}, 'file'], status => 404, name => 'not a file'},
+        {account => '', status => 403},
+        {account => undef, status => 302},
+      ],
+    );
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'file.json'], {
+        test_direct => 1,
+      }, account => 'a1', group => 'g1'],
+      [
+        {group => 'g2', status => 404},
+        {path => ['o', '524444343', 'file.json'], status => 404},
+        {path => ['o', $current->o ('o2')->{object_id}, 'file.json'], status => 404, name => 'not a file'},
+        {account => '', status => 403},
+        {account => undef, status => 403},
+      ],
+    );
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'image'], {
+        test_direct => 1,
+      }, account => 'a1', group => 'g1'],
+      [
+        {group => 'g2', status => 404},
+        {path => ['o', '524444343', 'image'], status => 404},
+        {path => ['o', $current->o ('o2')->{object_id}, 'image'], status => 404, name => 'not a file'},
+        {account => '', status => 403},
+        {account => undef, status => 302},
+      ],
+    );
+  })->then (sub {
+    return $current->are_errors (
+      ['GET', ['o', $current->o ('o1')->{object_id}, 'image.json'], {
+        test_direct => 1,
+      }, account => 'a1', group => 'g1'],
+      [
+        {group => 'g2', status => 404},
+        {path => ['o', '524444343', 'image.json'], status => 404},
+        {path => ['o', $current->o ('o2')->{object_id}, 'image.json'], status => 404, name => 'not a file'},
+        {account => '', status => 403},
+        {account => undef, status => 403},
+      ],
+    );
+  });
+} n => 5+2*4+4*4, name => 'image file upload (direct)';
+
+Test {
+  my $current = shift;
+  my $body = "\xFE\x00\x01\x81" . rand;
+  return $current->create (
+    [a1 => account => {}],
+    [g1 => group => {members => ['a1']}],
+    [g2 => group => {members => ['a1']}],
+    [o2 => object => {group => 'g1', account => 'a1'}],
+  )->then (sub {
+    return $current->create_index (i1 => {group => 'g1', account => 'a1'});
+  })->then (sub {
+    return $current->post_json (['o', 'create.json'], {
+      is_file => 1,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      ok $result->{json}->{upload_token};
+    } $current->c;
+    $current->set_o (o1 => $result->{json});
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'upload.json'], {
+      token => $current->o ('o1')->{upload_token},
+    }, account => 'a1', group => 'g1', headers => {
+      'content-type' => 'application/octet-stream',
+    }, body => $body);
+  })->then (sub {
+    return $current->post_json (['o', $current->o ('o1')->{object_id}, 'edit.json'], {
+      title => "aaae\x{5233}",
+      mime_type => "Image/PnG",
+      file_size => 52523,
+      file_name => "ho\x{2244}ge.png",
+      file_closed => 1,
+      timestamp => 25253151333,
+    }, account => 'a1', group => 'g1');
+  })->then (sub {
+    $current->set_o (file_urls => []);
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'image'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('content-type'), 'image/png';
+      is $result->{res}->header ('content-disposition'), undef;
+      is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
+      is $result->{res}->header ('last-modified'), 'Sun, 29 Mar 2770 20:15:33 GMT';
+      is $result->{res}->body_bytes, $body;
+    } $current->c;
+    return $current->get_file (['o', $current->o ('o1')->{object_id}, 'file'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{res}->header ('content-type'), 'image/png';
+      is $result->{res}->header ('content-disposition'),
+          q{attachment; filename=ho%E2%89%84ge.png; filename*=utf-8''ho%E2%89%84ge.png};
+      is $result->{res}->header ('Content-Security-Policy'), 'sandbox';
+      is $result->{res}->header ('last-modified'), 'Sun, 29 Mar 2770 20:15:33 GMT';
+      is $result->{res}->body_bytes, $body;
+    } $current->c;
+    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'image.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{json}->{url}, $current->resolve ('/g/'.$current->o ('g1')->{group_id}.'/o/' . $current->o ('o1')->{object_id} . '/image')->stringify;
+    } $current->c;
+    push @{$current->o ('file_urls')}, [$result->{json}->{url}, 0];
+    return $current->get_json (['o', $current->o ('o1')->{object_id}, 'file.json'], {}, account => 'a1', group => 'g1');
+  })->then (sub {
+    my $result = $_[0];
+    test {
+      is $result->{json}->{url}, $current->resolve ('/g/'.$current->o ('g1')->{group_id}.'/o/' . $current->o ('o1')->{object_id} . '/file')->stringify;
+    } $current->c;
     return $current->are_errors (
       ['GET', ['o', $current->o ('o1')->{object_id}, 'file'], {
       }, account => 'a1', group => 'g1'],
@@ -412,13 +728,13 @@ Test {
       ],
     );
   });
-} n => 5+2*4+4*4, name => 'image file upload';
+} n => 17, name => 'image file upload (non-direct)';
 
 RUN;
 
 =head1 LICENSE
 
-Copyright 2017-2020 Wakaba <wakaba@suikawiki.org>.
+Copyright 2017-2022 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
