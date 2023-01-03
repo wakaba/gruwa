@@ -1,0 +1,156 @@
+{
+   "jobs" : {
+      "deploy_github_nightly" : {
+         "if" : "${{ github.ref == 'refs/heads/nightly' }}",
+         "needs" : [
+            "test"
+         ],
+         "permissions" : {
+            "contents" : "write"
+         },
+         "runs-on" : "ubuntu-latest",
+         "steps" : [
+            {
+               "env" : {
+                  "GH_ACCESS_TOKEN" : "${{ secrets.GH_ACCESS_TOKEN }}"
+               },
+               "run" : "curl -f -s -S --request POST --header \u0022Authorization:token $GH_ACCESS_TOKEN\u0022 --header \u0022Content-Type:application/json\u0022 --data-binary \u0022{\u005C\u0022base\u005C\u0022:\u005C\u0022master\u005C\u0022,\u005C\u0022head\u005C\u0022:\u005C\u0022$GITHUB_SHA\u005C\u0022,\u005C\u0022commit_message\u005C\u0022:\u005C\u0022auto-merge $GITHUB_REF into master\u005C\u0022}\u0022 \u0022https://api.github.com/repos/$GITHUB_REPOSITORY/merges\u0022"
+            },
+            {
+               "env" : {
+                  "BWALLER_URL" : "${{ secrets.BWALLER_URL }}"
+               },
+               "run" : "curl -sSf $BWALLER_URL | BWALL_GROUP=merger.${GITHUB_REF/refs\u005C/heads\u005C//} BWALL_NAME=${GITHUB_REPOSITORY} bash"
+            }
+         ]
+      },
+      "deploy_github_staging" : {
+         "if" : "${{ github.ref == 'refs/heads/staging' }}",
+         "needs" : [
+            "test"
+         ],
+         "permissions" : {
+            "contents" : "write"
+         },
+         "runs-on" : "ubuntu-latest",
+         "steps" : [
+            {
+               "env" : {
+                  "GH_ACCESS_TOKEN" : "${{ secrets.GH_ACCESS_TOKEN }}"
+               },
+               "run" : "curl -f -s -S --request POST --header \u0022Authorization:token $GH_ACCESS_TOKEN\u0022 --header \u0022Content-Type:application/json\u0022 --data-binary \u0022{\u005C\u0022base\u005C\u0022:\u005C\u0022master\u005C\u0022,\u005C\u0022head\u005C\u0022:\u005C\u0022$GITHUB_SHA\u005C\u0022,\u005C\u0022commit_message\u005C\u0022:\u005C\u0022auto-merge $GITHUB_REF into master\u005C\u0022}\u0022 \u0022https://api.github.com/repos/$GITHUB_REPOSITORY/merges\u0022"
+            },
+            {
+               "env" : {
+                  "BWALLER_URL" : "${{ secrets.BWALLER_URL }}"
+               },
+               "run" : "curl -sSf $BWALLER_URL | BWALL_GROUP=merger.${GITHUB_REF/refs\u005C/heads\u005C//} BWALL_NAME=${GITHUB_REPOSITORY} bash"
+            }
+         ]
+      },
+      "test" : {
+         "env" : {
+            "CIRCLE_ARTIFACTS" : "/tmp/circle-artifacts/test"
+         },
+         "runs-on" : "ubuntu-latest",
+         "steps" : [
+            {
+               "uses" : "actions/checkout@v2"
+            },
+            {
+               "run" : "mkdir -p $CIRCLE_ARTIFACTS"
+            },
+            {
+               "run" : "make deps-circleci"
+            },
+            {
+               "run" : "docker build -t quay\u005C.io\u005C/wakaba\u005C/gruwa \u005C."
+            },
+            {
+               "run" : "rm -fr $CIRCLE_ARTIFACTS/ss.pid"
+            },
+            {
+               "run" : "TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-http-$CIRCLE_NODE_INDEX.txt.dat 2>&1 &"
+            },
+            {
+               "run" : "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done"
+            },
+            {
+               "run" : "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid"
+            },
+            {
+               "run" : "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-http-circleci"
+            },
+            {
+               "run" : "kill `cat $CIRCLE_ARTIFACTS/ss.pid`"
+            },
+            {
+               "run" : "while [ -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done"
+            },
+            {
+               "run" : "IS_BROWSER_TEST=1 TEST_WD_BROWSER=chromium TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-chromium-$CIRCLE_NODE_INDEX.txt.dat 2>&1 &"
+            },
+            {
+               "run" : "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done"
+            },
+            {
+               "run" : "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid"
+            },
+            {
+               "run" : "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-browser-circleci"
+            },
+            {
+               "run" : "kill `cat $CIRCLE_ARTIFACTS/ss.pid`"
+            },
+            {
+               "run" : "while [ -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done"
+            },
+            {
+               "run" : "IS_BROWSER_TEST=1 TEST_WD_BROWSER=firefox TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-firefox-$CIRCLE_NODE_INDEX.txt.dat 2>&1 &"
+            },
+            {
+               "run" : "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done"
+            },
+            {
+               "run" : "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid"
+            },
+            {
+               "run" : "TEST_WD_BROWSER=firefox SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-browser-circleci"
+            },
+            {
+               "env" : {
+                  "DOCKER_PASS" : "${{ secrets.DOCKER_PASS }}",
+                  "DOCKER_USER" : "${{ secrets.DOCKER_USER }}"
+               },
+               "if" : "${{ github.ref == 'refs/heads/master' }}",
+               "run" : "docker login -u $DOCKER_USER -p $DOCKER_PASS quay\u005C.io"
+            },
+            {
+               "if" : "${{ github.ref == 'refs/heads/master' }}",
+               "run" : "docker push quay\u005C.io\u005C/wakaba\u005C/gruwa"
+            },
+            {
+               "env" : {
+                  "BWALLER_URL" : "${{ secrets.BWALLER_URL }}"
+               },
+               "if" : "${{ github.ref == 'refs/heads/master' }}",
+               "run" : "curl -sSf $BWALLER_URL | BWALL_GROUP=docker BWALL_NAME=quay.io/wakaba/gruwa bash"
+            },
+            {
+               "run" : "true"
+            },
+            {
+               "uses" : "actions/upload-artifact@v3",
+               "with" : {
+                  "path" : "/tmp/circle-artifacts/test"
+               }
+            }
+         ]
+      }
+   },
+   "name" : "test",
+   "on" : {
+      "push" : {
+      }
+   }
+}

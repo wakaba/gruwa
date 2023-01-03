@@ -90,10 +90,11 @@ PROVE = ./prove
 test: test-deps test-main
 
 test-deps: git-submodules pmbp-install local/accounts.sql local/apploach.sql
-	./perl local/bin/pmbp.pl $(PMBP_OPTIONS) \
-            --install-commands "make git docker wget curl"
 
 deps-circleci: test-deps deps-rev
+	./perl local/bin/pmbp.pl $(PMBP_OPTIONS) \
+            --install-commands "make git docker wget curl"
+	docker version
 
 local/accounts.sql: local/accounts-2.sql
 	cp $< $@

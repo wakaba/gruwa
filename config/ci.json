@@ -1,52 +1,40 @@
 {
-  "circleci": {
-    "docker-build": "quay.io/wakaba/gruwa",
-    "required_docker_images": [
-      "quay.io/wakaba/docker-perl-app-base",
-      "minio/minio",
-      "mariadb",
-      "quay.io/wakaba/chromedriver:chromium",
-      "quay.io/wakaba/firefoxdriver:stable"
-    ],
+  "github": {
     "merger": 1,
     "gaa": 1,
 
     "build": [
-      "make deps-circleci"
+      "make deps-circleci",
+      {"docker_build": "quay.io/wakaba/gruwa"}
     ],
     "tests": [
       "rm -fr $CIRCLE_ARTIFACTS/ss.pid",
       
-      {"TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-http-$CIRCLE_NODE_INDEX.txt.dat 2>&1": {
-        "background": true}},
+      "TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-http-$CIRCLE_NODE_INDEX.txt.dat 2>&1 &",
       "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done",
       "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid",
 
       "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-http-circleci",
 
-      {"kill `cat $CIRCLE_ARTIFACTS/ss.pid`":
-       {"parallel": true}},
-      {"while [ -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done":
-       {"parallel": true}},
+      "kill `cat $CIRCLE_ARTIFACTS/ss.pid`",
+      "while [ -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done",
       
-      {"IS_BROWSER_TEST=1 TEST_WD_BROWSER=chromium TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-chromium-$CIRCLE_NODE_INDEX.txt.dat 2>&1": {
-        "background": true}},
+      "IS_BROWSER_TEST=1 TEST_WD_BROWSER=chromium TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-chromium-$CIRCLE_NODE_INDEX.txt.dat 2>&1 &",
       "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done",
       "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid",
 
       "SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-browser-circleci",
 
-      {"kill `cat $CIRCLE_ARTIFACTS/ss.pid`":
-       {"parallel": true}},
-      {"while [ -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done":
-       {"parallel": true}},
+      "kill `cat $CIRCLE_ARTIFACTS/ss.pid`",
+      "while [ -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done",
       
-      {"IS_BROWSER_TEST=1 TEST_WD_BROWSER=firefox TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-firefox-$CIRCLE_NODE_INDEX.txt.dat 2>&1": {
-        "background": true}},
+      "IS_BROWSER_TEST=1 TEST_WD_BROWSER=firefox TEST_APP_DOCKER_IMAGE=quay.io/wakaba/gruwa ./perl t_deps/bin/env-for-circleci.pl > $CIRCLE_ARTIFACTS/servers-firefox-$CIRCLE_NODE_INDEX.txt.dat 2>&1 &",
       "while [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; do sleep 1; done",
       "if [ ! -e $CIRCLE_ARTIFACTS/ss.pid ]; then cat $CIRCLE_ARTIFACTS/ss.env; fi; cat $CIRCLE_ARTIFACTS/ss.pid",
 
       "TEST_WD_BROWSER=firefox SS_ENV_FILE=$CIRCLE_ARTIFACTS/ss.env make test-browser-circleci",
+
+      {"docker_push": "quay.io/wakaba/gruwa"},
 
       "true"
     ]
