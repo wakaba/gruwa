@@ -822,12 +822,12 @@ sub are_errors ($$$) {
 sub create_browser ($$$) {
   my ($self, $name, $opts) = @_;
   die "No |browser| option for |Test|"
-      if not defined $self->{server_data}->{wd_local_url};
+      if not defined $self->{server_data}->{wd_actual_url};
   die "Duplicate browser |$name|" if defined $self->{browsers}->{$name};
   $self->{browsers}->{$name} = '';
   require Web::Driver::Client::Connection;
   my $wd = Web::Driver::Client::Connection->new_from_url
-      ($self->{server_data}->{wd_local_url});
+      ($self->{server_data}->{wd_actual_url});
   push @{$self->{wds} ||= []}, $wd;
   return $wd->new_session (
     desired => {},
@@ -1387,7 +1387,7 @@ sub done ($) {
 
 =head1 LICENSE
 
-Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2023 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
