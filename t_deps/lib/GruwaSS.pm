@@ -200,6 +200,7 @@ sub run ($%) {
         }
 
         $data->{wd_local_url} = $self->local_url ('wd');
+        $data->{wd_actual_url} = $self->actual_url ('wd');
         $data->{artifacts_path} = $self->artifacts_path (undef);
 
         my $rev_path = $RootPath->child ('rev');
@@ -280,7 +281,7 @@ sub run ($%) {
 
 =head1 LICENSE
 
-Copyright 2016-2019 Wakaba <wakaba@suikawiki.org>.
+Copyright 2016-2023 Wakaba <wakaba@suikawiki.org>.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
